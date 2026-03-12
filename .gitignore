@@ -73,3 +73,5 @@ dist/
 
 # Vite build
 dist/
+
+.DS_Store
