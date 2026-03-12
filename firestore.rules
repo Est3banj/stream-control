@@ -1,0 +1,228 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============================================
+    // FUNCIONES AUXILIARES
+    // ============================================
+    
+    // Verificar si el usuario está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Obtener el UID del usuario autenticado
+    function getUserId() {
+      return request.auth.uid;
+    }
+    
+    // Obtener el email del usuario autenticado
+    function getUserEmail() {
+      return request.auth.token.email;
+    }
+    
+    // Verificar si el usuario es administrador
+    // Basado en email (más simple y sin get() anidado)
+    function isAdmin() {
+      return isAuthenticated() && getUserEmail() == 'admin@streamcontrol.com';
+    }
+    
+    // Verificar si el documento pertenece al usuario actual
+    function isOwner(resource) {
+      return isAuthenticated() && resource.data.propietarioId == getUserId();
+    }
+    
+    // ============================================
+    // COLECCIÓN: usuarios
+    // ============================================
+    // Análisis del código:
+    // - Lectura: getDoc en AuthContext y Login (propio usuario)
+    // - Lectura: onSnapshot en Usuarios.jsx (todos los usuarios, solo admin)
+    // - Escritura: setDoc en Usuarios.jsx (crear usuario, solo admin)
+    // - Actualización: updateDoc en Usuarios.jsx (solo campo 'estado', solo admin)
+    // - Campos: nombre, correo, rol, estado, activoHasta, createdAt
+    // - El ID del documento es el UID del usuario de Firebase Auth
+    
+    match /usuarios/{userId} {
+      // Lectura: Usuario puede leer su propio documento, admin puede leer todos
+      allow read: if isAuthenticated() && (
+        userId == getUserId() || 
+        isAdmin()
+      );
+      
+      // Creación: Solo admin puede crear usuarios
+      // Validación: El userId debe coincidir con el UID del usuario creado en Auth
+      // Basado en: Usuarios.jsx línea 62 - setDoc con userCred.user.uid
+      allow create: if isAdmin() && 
+        userId == request.resource.data.get('correo', '').split('@')[0] || // Validación básica
+        request.resource.data.keys().hasAll(['nombre', 'correo', 'rol', 'estado']) &&
+        request.resource.data.rol is string &&
+        request.resource.data.rol in ['admin', 'usuario'] &&
+        request.resource.data.estado is string &&
+        request.resource.data.estado in ['activo', 'inactivo'] &&
+        request.resource.data.nombre is string &&
+        request.resource.data.correo is string;
+      
+      // Actualización: Solo admin puede actualizar, y solo el campo 'estado'
+      // Basado en: Usuarios.jsx línea 97 - updateDoc solo actualiza 'estado'
+      allow update: if isAdmin() && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado']) &&
+        request.resource.data.estado is string &&
+        request.resource.data.estado in ['activo', 'inactivo'];
+      
+      // Eliminación: No permitida (no hay deleteDoc en el código)
+      allow delete: if false;
+    }
+    
+    // ============================================
+    // COLECCIÓN: ventas
+    // ============================================
+    // Análisis del código:
+    // - Lectura: onSnapshot en Dashboard, Reportes, GestionClientes
+    //   - Admin: sin filtro (ve todas)
+    //   - Usuario: filtrado por propietarioId == user.uid
+    // - Escritura: addDoc en VentasForm.jsx (todos los usuarios autenticados)
+    // - No hay actualizaciones ni eliminaciones
+    // - Campos: nombre, telefono, correo, plataforma, pantallas, precioVenta, costoServicio,
+    //   fechaInicio, diasServicio, utilidad, fechaRegistro, fechaRegistroSistema,
+    //   propietarioId, usuarioEmail, fechaVencimiento
+    
+    match /ventas/{ventaId} {
+      // Lectura: Usuario puede leer sus propias ventas, admin puede leer todas
+      allow read: if isAuthenticated() && (
+        isAdmin() || 
+        resource.data.propietarioId == getUserId()
+      );
+      
+      // Creación: Cualquier usuario autenticado puede crear ventas
+      allow create: if isAuthenticated() &&
+        request.resource.data.propietarioId == getUserId() &&
+        request.resource.data.usuarioEmail == getUserEmail() &&
+        request.resource.data.nombre is string &&
+        request.resource.data.telefono is string &&
+        request.resource.data.plataforma is string &&
+        request.resource.data.pantallas is int &&
+        request.resource.data.pantallas >= 1 &&
+        request.resource.data.precioVenta is number &&
+        request.resource.data.precioVenta >= 0 &&
+        request.resource.data.costoServicio is number &&
+        request.resource.data.costoServicio >= 0 &&
+        request.resource.data.utilidad is number &&
+        request.resource.data.fechaInicio is string &&
+        request.resource.data.diasServicio is string &&
+        request.resource.data.fechaVencimiento is string &&
+        (request.resource.data.correo == null || request.resource.data.correo is string) &&
+        (request.resource.data.fechaRegistro is timestamp || request.resource.data.fechaRegistro is string) &&
+        (request.resource.data.fechaRegistroSistema == null || request.resource.data.fechaRegistroSistema is timestamp);
+      
+      // Actualización: No permitida
+      allow update: if false;
+      
+      // Eliminación: No permitida
+      allow delete: if false;
+    }
+    
+    // ============================================
+    // COLECCIÓN: clientes
+    // ============================================
+    // Análisis del código:
+    // - Lectura: getDoc en VentasForm.jsx (autocompletar), onSnapshot en GestionClientes, ClientesActivos, ClientesInactivos
+    //   - Admin: sin filtro o email == 'admin@streamcontrol.com'
+    //   - Usuario: filtrado por propietarioId == user.uid
+    // - Escritura: setDoc en VentasForm.jsx (crear/actualizar cliente)
+    //   - ID del documento: `${user.uid}_${venta.nombre}`
+    // - No hay eliminaciones explícitas
+    // - Campos: nombre, telefono, correo, estado, plataforma, propietarioId, usuarioEmail, fechaVencimiento
+    
+    match /clientes/{clienteId} {
+      // Lectura: Usuario puede leer sus propios clientes, admin puede leer todos
+      allow read: if isAuthenticated() && (
+        isAdmin() || 
+        resource.data.propietarioId == getUserId()
+      );
+      
+      // Creación: setDoc desde VentasForm.jsx - requiere todos los campos
+      allow create: if isAuthenticated() &&
+        clienteId.matches('^' + getUserId() + '_.+') &&
+        request.resource.data.propietarioId == getUserId() &&
+        request.resource.data.usuarioEmail == getUserEmail() &&
+        request.resource.data.nombre is string &&
+        request.resource.data.telefono is string &&
+        request.resource.data.plataforma is string &&
+        request.resource.data.estado == 'activo' &&
+        request.resource.data.fechaVencimiento is string &&
+        (request.resource.data.correo == null || request.resource.data.correo is string);
+      
+      // Actualización: permite setDoc completo o updateDoc parcial
+      allow update: if isAuthenticated() &&
+        clienteId.matches('^' + getUserId() + '_.+') &&
+        resource.data.propietarioId == getUserId() &&
+        (
+          // Caso 1: setDoc completo desde VentasForm (actualiza todo)
+          (
+            request.resource.data.propietarioId == getUserId() &&
+            request.resource.data.usuarioEmail == getUserEmail() &&
+            request.resource.data.nombre is string &&
+            request.resource.data.telefono is string &&
+            request.resource.data.plataforma is string &&
+            request.resource.data.estado == 'activo' &&
+            request.resource.data.fechaVencimiento is string &&
+            (request.resource.data.correo == null || request.resource.data.correo is string)
+          ) ||
+          // Caso 2: updateDoc parcial desde GestionClientes (solo campos editables)
+          (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre', 'telefono', 'correo', 'plataforma']) &&
+            (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['nombre']) || request.resource.data.nombre is string) &&
+            (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['telefono']) || request.resource.data.telefono is string) &&
+            (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['plataforma']) || request.resource.data.plataforma is string) &&
+            (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['correo']) || (request.resource.data.correo == null || request.resource.data.correo is string))
+          )
+        );
+      
+      // Eliminación: No permitida
+      allow delete: if false;
+    }
+    
+    // ============================================
+    // COLECCIÓN: movimientos
+    // ============================================
+    // Análisis del código:
+    // - Lectura: No se detecta lectura en el código (solo escritura)
+    // - Escritura: addDoc en VentasForm.jsx (crear movimiento de tipo 'Ingreso')
+    // - No hay actualizaciones ni eliminaciones
+    // - Campos: tipo, monto, descripcion, fecha, propietarioId, usuarioEmail
+    
+    match /movimientos/{movimientoId} {
+      // Lectura: Usuario puede leer sus propios movimientos, admin puede leer todos
+      allow read: if isAuthenticated() && (
+        isAdmin() || 
+        resource.data.propietarioId == getUserId()
+      );
+      
+      // Creación: Cualquier usuario autenticado puede crear movimientos
+      allow create: if isAuthenticated() &&
+        request.resource.data.propietarioId == getUserId() &&
+        request.resource.data.usuarioEmail == getUserEmail() &&
+        request.resource.data.tipo == 'Ingreso' &&
+        request.resource.data.monto is number &&
+        request.resource.data.monto >= 0 &&
+        request.resource.data.descripcion is string &&
+        (request.resource.data.fecha == null || request.resource.data.fecha is timestamp);
+      
+      // Actualización: No permitida
+      allow update: if false;
+      
+      // Eliminación: No permitida
+      allow delete: if false;
+    }
+    
+    // ============================================
+    // DENEGAR ACCESO A OTRAS COLECCIONES
+    // ============================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

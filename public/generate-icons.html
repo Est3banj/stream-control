@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generar Iconos PWA</title>
+</head>
+<body>
+    <h1>Generar Iconos para StreamControl Pro</h1>
+    <p>Haz clic en el botón para generar los iconos. Se descargarán automáticamente.</p>
+    <button onclick="generateIcons()">Generar Iconos</button>
+    
+    <script>
+        function generateIcons() {
+            const sizes = [192, 512];
+            
+            sizes.forEach(size => {
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                
+                // Fondo con gradiente
+                const gradient = ctx.createLinearGradient(0, 0, size, size);
+                gradient.addColorStop(0, '#6B21A8');
+                gradient.addColorStop(0.5, '#3B82F6');
+                gradient.addColorStop(1, '#06B6D4');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, size, size);
+                
+                // Círculo central
+                const center = size / 2;
+                const radius = size * 0.35;
+                ctx.beginPath();
+                ctx.arc(center, center, radius, 0, 2 * Math.PI);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.lineWidth = size * 0.02;
+                ctx.stroke();
+                
+                // Texto "SC"
+                ctx.fillStyle = 'white';
+                ctx.font = `bold ${size * 0.3}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('SC', center, center);
+                
+                // Descargar
+                canvas.toBlob(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `icon-${size}.png`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                });
+            });
+            
+            alert('Iconos generados! Revisa tus descargas y muévelos a la carpeta /public');
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
