@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import PrivateRoute from './components/Auth/PrivateRoute';
 import Layout from './components/Layout';
 import Login from './components/Auth/Login';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Ventas = lazy(() => import('./pages/Ventas'));
@@ -13,8 +14,9 @@ const GestionClientes = lazy(() => import('./pages/GestionClientes'));
 export default function App() {
   return (
     <BrowserRouter>
-      <Suspense fallback={<div className="container">Cargando...</div>}>
-        <Routes>
+      <ErrorBoundary>
+        <Suspense fallback={<div className="container">Cargando...</div>}>
+          <Routes>
           {/* Ruta pública */}
           <Route path="/login" element={<Login />} />
 
@@ -73,8 +75,9 @@ export default function App() {
               </PrivateRoute>
             }
           />
-        </Routes>
-      </Suspense>
+          </Routes>
+        </Suspense>
+      </ErrorBoundary>
     </BrowserRouter>
   );
 }
