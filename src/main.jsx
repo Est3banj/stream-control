@@ -14,14 +14,22 @@ createRoot(document.getElementById('root')).render(
   </React.StrictMode>
 )
 
-// remove old service workers and caches
+// Limpiar solo service workers y caches de StreamControl
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(async (regs) => {
-    for (const r of regs) { await r.unregister(); }
-    if (window.caches) {
-      const keys = await caches.keys();
-      for (const k of keys) await caches.delete(k);
+  navigator.serviceWorker.getRegistrations().then((regs) => {
+    for (const reg of regs) {
+      // Solo tocar SW que pertenezcan a esta app
+      if (reg.scope.includes(location.pathname) || reg.active?.scriptURL?.includes('sw.js')) {
+        reg.unregister();
+        console.log('SW de StreamControl desregistrado');
+      }
     }
-    console.log('SW and caches cleared');
-  }).catch(()=>{});
+    if (window.caches) {
+      caches.keys().then((keys) => {
+        keys
+          .filter((k) => k.startsWith('streamcontrol-'))
+          .forEach((k) => caches.delete(k));
+      });
+    }
+  }).catch(() => {});
 }
