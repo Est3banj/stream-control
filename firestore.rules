@@ -23,9 +23,16 @@ service cloud.firestore {
     }
     
     // Verificar si el usuario es administrador
-    // Basado en email (más simple y sin get() anidado)
+    // Se basa en el rol del documento en la colección 'usuarios'
+    // Fallback temporal por email para migración
     function isAdmin() {
-      return isAuthenticated() && getUserEmail() == 'admin@streamcontrol.com';
+      return isAuthenticated() && (
+        // Deprecado: se mantiene durante migración
+        getUserEmail() == 'admin@streamcontrol.com'
+        ||
+        // Nuevo: verifica rol en el documento del usuario
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin'
+      );
     }
     
     // Verificar si el documento pertenece al usuario actual
