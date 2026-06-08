@@ -24,7 +24,7 @@ export default function useClientesConNotificaciones(user) {
 
     // Construir query según el rol del usuario
     let q;
-    if (user.rol === 'admin' || user.email === 'admin@streamcontrol.com') {
+    if (user.rol === 'admin') {
       q = collection(db, 'clientes');
     } else {
       q = query(collection(db, 'clientes'), where('propietarioId', '==', user.uid));

@@ -28,7 +28,7 @@ export default function GestionClientes() {
     if (!user) return;
 
     let q;
-    if (user.email === 'admin@streamcontrol.com' || user.rol === 'admin') {
+    if (user.rol === 'admin') {
       q = collection(db, 'clientes');
     } else {
       q = query(collection(db, 'clientes'), where('propietarioId', '==', user.uid));
