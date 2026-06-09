@@ -2,15 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { db } from '../firebase';
 import { collection, query, where, onSnapshot, updateDoc, doc } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
+import useClientes from '../hooks/useClientes';
 import toast from 'react-hot-toast';
 import { Search, Download, MessageCircle, Calendar, Users, TrendingUp, X, AlertCircle, Edit, Mail } from 'lucide-react';
 
 export default function GestionClientes() {
   const { user } = useAuth();
+  const { clientes: todosLosClientes, loading } = useClientes(user);
   const [clientes, setClientes] = useState({ activos: [], inactivos: [], todos: [] });
   const [filtro, setFiltro] = useState('activos');
   const [busqueda, setBusqueda] = useState('');
-  const [loading, setLoading] = useState(true);
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
   const [historialVentas, setHistorialVentas] = useState([]);
   const [mostrarHistorial, setMostrarHistorial] = useState(false);
@@ -23,39 +24,13 @@ export default function GestionClientes() {
     plataforma: '',
   });
 
-  // 🔄 Cargar clientes en tiempo real
+  // Clasificar clientes cuando cambian los datos (incluye array vacío)
   useEffect(() => {
-    if (!user) return;
-
-    let q;
-    if (user.rol === 'admin') {
-      q = collection(db, 'clientes');
-    } else {
-      q = query(collection(db, 'clientes'), where('propietarioId', '==', user.uid));
-    }
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const hoy = new Date();
-      const data = snapshot.docs.map(doc => {
-        const c = { id: doc.id, ...doc.data() };
-        const fechaVenc = new Date(c.fechaVencimiento);
-        const diasRestantes = Math.ceil((fechaVenc - hoy) / (1000 * 60 * 60 * 24));
-        return { ...c, diasRestantes };
-      });
-
-      const activos = data.filter(c => c.diasRestantes > 0);
-      const inactivos = data.filter(c => c.diasRestantes <= 0);
-
-      setClientes({ activos, inactivos, todos: data });
-      setLoading(false);
-    }, (error) => {
-      console.error('Error cargando clientes:', error);
-      toast.error('Error al cargar clientes');
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [user]);
+    if (loading) return;
+    const activos = todosLosClientes.filter(c => c.diasRestantes > 0);
+    const inactivos = todosLosClientes.filter(c => c.diasRestantes <= 0);
+    setClientes({ activos, inactivos, todos: todosLosClientes });
+  }, [todosLosClientes, loading]);
 
   // 🔍 Cargar historial de ventas de un cliente
   const cargarHistorial = async (clienteNombre) => {
