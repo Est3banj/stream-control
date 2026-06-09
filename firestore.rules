@@ -27,10 +27,8 @@ service cloud.firestore {
     // Fallback temporal por email para migración
     function isAdmin() {
       return isAuthenticated() && (
-        // Deprecado: se mantiene durante migración
-        getUserEmail() == 'admin@streamcontrol.com'
+        getUserEmail() in ['admin@streamcontrol.com', 'estebanjurado20005@gmail.com']
         ||
-        // Nuevo: verifica rol en el documento del usuario
         get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin'
       );
     }
@@ -99,7 +97,7 @@ service cloud.firestore {
       // Lectura: Usuario puede leer sus propias ventas, admin puede leer todas
       allow read: if isAuthenticated() && (
         isAdmin() || 
-        resource.data.propietarioId == getUserId()
+        resource == null || resource.data.propietarioId == getUserId()
       );
       
       // Creación: Cualquier usuario autenticado puede crear ventas
@@ -146,7 +144,7 @@ service cloud.firestore {
       // Lectura: Usuario puede leer sus propios clientes, admin puede leer todos
       allow read: if isAuthenticated() && (
         isAdmin() || 
-        resource.data.propietarioId == getUserId()
+        resource == null || resource.data.propietarioId == getUserId()
       );
       
       // Creación: setDoc desde VentasForm.jsx - requiere todos los campos
@@ -166,7 +164,7 @@ service cloud.firestore {
         clienteId.matches('^' + getUserId() + '_.+') &&
         resource.data.propietarioId == getUserId() &&
         (
-          // Caso 1: setDoc completo desde VentasForm (actualiza todo)
+          // Caso 1: setDoc completo o con merge desde VentasForm
           (
             request.resource.data.propietarioId == getUserId() &&
             request.resource.data.usuarioEmail == getUserEmail() &&
@@ -184,6 +182,11 @@ service cloud.firestore {
             (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['telefono']) || request.resource.data.telefono is string) &&
             (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['plataforma']) || request.resource.data.plataforma is string) &&
             (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['correo']) || (request.resource.data.correo == null || request.resource.data.correo is string))
+          ) ||
+          // Caso 3: updateDoc de saldoPendiente (increment desde VentasForm / cobro en GestionClientes)
+          (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['saldoPendiente']) &&
+            request.resource.data.saldoPendiente is number
           )
         );
       
@@ -204,7 +207,7 @@ service cloud.firestore {
       // Lectura: Usuario puede leer sus propios movimientos, admin puede leer todos
       allow read: if isAuthenticated() && (
         isAdmin() || 
-        resource.data.propietarioId == getUserId()
+        resource == null || resource.data.propietarioId == getUserId()
       );
       
       // Creación: Cualquier usuario autenticado puede crear movimientos
