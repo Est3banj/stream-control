@@ -100,8 +100,7 @@ export default function VentasForm() {
         costoServicio: Number(venta.costoServicio),
         utilidad: Number(utilidad),
 
-        fechaRegistro: new Date(venta.fechaInicio), // Fecha real de venta
-        fechaRegistroSistema: serverTimestamp(),    // Fecha del sistema
+        fechaRegistro: serverTimestamp(),    // Fecha real del sistema (no alterable por el usuario)
 
         propietarioId: user.uid,
         usuarioEmail: user.email,
