@@ -16,6 +16,8 @@ export default function VentasForm() {
     costoServicio: 0,
     fechaInicio: '',
     diasServicio: '',
+    perfil: '',
+    pinPerfil: '',
     pagado: true,
     saldoPendiente: '',
   });
@@ -159,6 +161,8 @@ export default function VentasForm() {
         costoServicio: 0,
         fechaInicio: '',
         diasServicio: '',
+        perfil: '',
+        pinPerfil: '',
         pagado: true,
         saldoPendiente: '',
       });
@@ -308,6 +312,41 @@ export default function VentasForm() {
               placeholder="Ej: 30, 60, 90"
               required
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Perfil
+            </label>
+            <input
+              type="text"
+              name="perfil"
+              value={venta.perfil}
+              onChange={handleChange}
+              placeholder="Ej: Principal, Kids..."
+              className="w-full"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Opcional — nombre del perfil asignado
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              PIN del perfil
+            </label>
+            <input
+              type="text"
+              name="pinPerfil"
+              value={venta.pinPerfil}
+              onChange={handleChange}
+              placeholder="Ej: 1234"
+              className="w-full"
+              maxLength="10"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Opcional — PIN de bloqueo si aplica
+            </p>
           </div>
         </div>
       </div>

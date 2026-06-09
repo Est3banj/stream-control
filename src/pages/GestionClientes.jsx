@@ -521,6 +521,14 @@ export default function GestionClientes() {
                         <div className="text-sm text-gray-600 mt-1">
                           {venta.pantallas} pantalla(s) • ${(venta.precioVenta * venta.pantallas).toLocaleString()}
                         </div>
+                        {venta.perfil && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            Perfil: <span className="font-medium">{venta.perfil}</span>
+                            {venta.pinPerfil && (
+                              <> • PIN: <span className="font-medium">{venta.pinPerfil}</span></>
+                            )}
+                          </div>
+                        )}
                         {venta.fechaRegistro?.seconds && (
                           <div className="text-xs text-gray-500 mt-1">
                             Fecha venta: {new Date(venta.fechaRegistro.seconds * 1000).toLocaleDateString('es-CO', {
