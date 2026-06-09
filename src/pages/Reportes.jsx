@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { db } from '../firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import React, { useState, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import useVentas from '../hooks/useVentas';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { Search, Download, DollarSign, TrendingUp, TrendingDown, Calendar, Filter, X } from 'lucide-react';
@@ -9,48 +8,29 @@ import toast from 'react-hot-toast';
 
 export default function Reportes() {
   const { user } = useAuth();
-  const [ventas, setVentas] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { ventas: todasLasVentas, loading } = useVentas(user);
   const [fechaInicio, setFechaInicio] = useState('');
   const [fechaFin, setFechaFin] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    if (!user) return;
+  // Filtro por rango de fechas (solo client-side, sin reiniciar el listener)
+  const ventas = useMemo(() => {
+    let data = todasLasVentas;
 
-    setLoading(true);
-    let q = collection(db, 'ventas');
+    if (fechaInicio && fechaFin) {
+      const inicio = new Date(fechaInicio);
+      const fin = new Date(fechaFin);
+      fin.setHours(23, 59, 59, 999);
 
-    // Si el usuario no es admin, filtrar solo sus ventas
-    if (user.rol !== 'admin') {
-      q = query(q, where('propietarioId', '==', user.uid));
+      data = data.filter((v) => {
+        if (!v.fechaRegistro?.seconds) return false;
+        const fechaVenta = new Date(v.fechaRegistro.seconds * 1000);
+        return fechaVenta >= inicio && fechaVenta <= fin;
+      });
     }
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      let data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-      // Filtrar por rango de fechas si el usuario aplica el filtro
-      if (fechaInicio && fechaFin) {
-        const inicio = new Date(fechaInicio);
-        const fin = new Date(fechaFin);
-        fin.setHours(23, 59, 59, 999);
-
-        data = data.filter(v => {
-          if (!v.fechaRegistro?.seconds) return false;
-          const fechaVenta = new Date(v.fechaRegistro.seconds * 1000);
-          return fechaVenta >= inicio && fechaVenta <= fin;
-        });
-      }
-
-      setVentas(data);
-      setLoading(false);
-    }, (error) => {
-      console.error('❌ Error al cargar ventas:', error);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [user, fechaInicio, fechaFin]);
+    return data;
+  }, [todasLasVentas, fechaInicio, fechaFin]);
 
   // 🔹 Función para exportar a Excel
   const exportarExcel = () => {

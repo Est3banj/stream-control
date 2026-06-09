@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { db } from '../firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
+import useVentas from '../hooks/useVentas';
 import { DollarSign, TrendingUp, TrendingDown, Users, Tv } from 'lucide-react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
@@ -9,67 +8,47 @@ const COLORS = ['#6B21A8', '#3B82F6', '#06B6D4', '#8B5CF6', '#EC4899'];
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { ventas, loading } = useVentas(user);
   const [totales, setTotales] = useState({ ingresos: 0, egresos: 0, utilidad: 0 });
-  const [loading, setLoading] = useState(true);
   const [topClientes, setTopClientes] = useState([]);
   const [topPlataformas, setTopPlataformas] = useState([]);
 
+  // Procesar ventas cuando cambian
   useEffect(() => {
-    if (!user) return;
+    if (loading || !ventas.length) return;
 
-    let q = collection(db, 'ventas');
-    // Si no es admin, mostrar solo sus ventas
-    if (user.rol !== 'admin') {
-      q = query(q, where('propietarioId', '==', user.uid));
-    }
+    let ingresos = 0, costos = 0, utilidad = 0;
+    const clientes = {};
+    const plataformas = {};
 
-    const unsub = onSnapshot(q, (snap) => {
-      let ingresos = 0, costos = 0, utilidad = 0;
+    ventas.forEach((v) => {
+      const ingresoVenta = (v.precioVenta * v.pantallas) || 0;
+      ingresos += ingresoVenta;
+      costos += Number(v.costoServicio) || 0;
+      utilidad += Number(v.utilidad) || 0;
 
-      const clientes = {};
-      const plataformas = {};
-
-      snap.docs.forEach(d => {
-        const v = d.data();
-        const ingresoVenta = (v.precioVenta * v.pantallas) || 0;
-        ingresos += ingresoVenta;
-        costos += Number(v.costoServicio) || 0;
-        utilidad += Number(v.utilidad) || 0;
-
-        // Acumular por cliente
-        if (v.nombre) {
-          clientes[v.nombre] = (clientes[v.nombre] || 0) + ingresoVenta;
-        }
-        // Acumular por plataforma
-        if (v.plataforma) {
-          plataformas[v.plataforma] = (plataformas[v.plataforma] || 0) + (v.pantallas || 0);
-        }
-      });
-
-      setTotales({ ingresos, egresos: costos, utilidad });
-
-      // Ordenar y tomar top 5 clientes
-      const topClientesSorted = Object.entries(clientes)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([nombre, ventas]) => ({ nombre, ventas }));
-      setTopClientes(topClientesSorted);
-
-      // Ordenar y tomar top 5 plataformas
-      const topPlataformasSorted = Object.entries(plataformas)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([plataforma, pantallas]) => ({ plataforma, pantallas }));
-      setTopPlataformas(topPlataformasSorted);
-
-      setLoading(false);
-    }, (error) => {
-      console.error(" Error al cargar el Dashboard:", error);
-      setLoading(false);
+      if (v.nombre) {
+        clientes[v.nombre] = (clientes[v.nombre] || 0) + ingresoVenta;
+      }
+      if (v.plataforma) {
+        plataformas[v.plataforma] = (plataformas[v.plataforma] || 0) + (v.pantallas || 0);
+      }
     });
 
-    return () => unsub();
-  }, [user]);
+    setTotales({ ingresos, egresos: costos, utilidad });
+
+    const topClientesSorted = Object.entries(clientes)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([nombre, ventas]) => ({ nombre, ventas }));
+    setTopClientes(topClientesSorted);
+
+    const topPlataformasSorted = Object.entries(plataformas)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([plataforma, pantallas]) => ({ plataforma, pantallas }));
+    setTopPlataformas(topPlataformasSorted);
+  }, [ventas, loading]);
 
   // Datos para gráfico de barras de clientes
   const clientesChartData = useMemo(() => {
