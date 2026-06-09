@@ -19,9 +19,8 @@ export default function useClientesConNotificaciones(user) {
       return;
     }
 
-    // Generar notificaciones para servicios urgentes
-    // Criterios: vencidos (≤0), 1 día, 3 días, 5 días
-    const notifs = clientes
+    // Notificaciones por vencimiento de servicio
+    const notifsVencimiento = clientes
       .filter((c) => {
         if (c.diasRestantes === null) return false;
         return (
@@ -32,7 +31,7 @@ export default function useClientesConNotificaciones(user) {
         );
       })
       .map((c) => ({
-        id: c.id,
+        id: `${c.id}_vencimiento`,
         clienteId: c.id,
         nombreCliente: c.nombre,
         plataforma: c.plataforma || '',
@@ -42,14 +41,37 @@ export default function useClientesConNotificaciones(user) {
         fechaVencimiento: c.fechaVencimiento,
         propietarioId: c.propietarioId,
         usuarioEmail: c.usuarioEmail || '',
-      }))
-      .sort((a, b) => {
-        if (a.diasRestantes <= 0 && b.diasRestantes > 0) return -1;
-        if (a.diasRestantes > 0 && b.diasRestantes <= 0) return 1;
-        return a.diasRestantes - b.diasRestantes;
-      });
+        tipo: 'vencimiento',
+      }));
 
-    setNotificaciones(notifs);
+    // Notificaciones por saldo pendiente (en mora)
+    const notifsMora = clientes
+      .filter((c) => c.saldoPendiente > 0)
+      .map((c) => ({
+        id: `${c.id}_mora`,
+        clienteId: c.id,
+        nombreCliente: c.nombre,
+        plataforma: c.plataforma || '',
+        telefono: c.telefono || '',
+        correo: c.correo || '',
+        diasRestantes: c.diasRestantes,
+        fechaVencimiento: c.fechaVencimiento,
+        propietarioId: c.propietarioId,
+        usuarioEmail: c.usuarioEmail || '',
+        saldoPendiente: c.saldoPendiente,
+        tipo: 'mora',
+      }));
+
+    const todas = [...notifsVencimiento, ...notifsMora].sort((a, b) => {
+      // Primero mora, después vencidos, después próximos a vencer
+      if (a.tipo === 'mora' && b.tipo !== 'mora') return -1;
+      if (a.tipo !== 'mora' && b.tipo === 'mora') return 1;
+      if (a.diasRestantes <= 0 && b.diasRestantes > 0) return -1;
+      if (a.diasRestantes > 0 && b.diasRestantes <= 0) return 1;
+      return (a.diasRestantes ?? 999) - (b.diasRestantes ?? 999);
+    });
+
+    setNotificaciones(todas);
   }, [clientes, loading]);
 
   return { clientes, notificaciones, loading };

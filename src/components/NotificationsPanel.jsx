@@ -197,7 +197,15 @@ export default function NotificationsPanel() {
                                   : '—'}
                               </span>
                             </div>
-                            <div className="mt-2">
+                            {notif.tipo === 'mora' && (
+                              <div className="mt-2">
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                                  <AlertCircle size={12} />
+                                  Debe ${notif.saldoPendiente?.toLocaleString()}
+                                </span>
+                              </div>
+                            )}
+                            <div className="mt-1">
                               <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${colors.text}`}>
                                 {getMensaje(notif.diasRestantes)}
                               </span>

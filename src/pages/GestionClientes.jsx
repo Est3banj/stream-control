@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../firebase';
-import { collection, query, where, onSnapshot, updateDoc, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, updateDoc, doc, increment, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import useClientes from '../hooks/useClientes';
 import toast from 'react-hot-toast';
-import { Search, Download, MessageCircle, Calendar, Users, TrendingUp, X, AlertCircle, Edit, Mail } from 'lucide-react';
+import { Search, Download, MessageCircle, Calendar, Users, TrendingUp, X, AlertCircle, Edit, Mail, DollarSign } from 'lucide-react';
 
 export default function GestionClientes() {
   const { user } = useAuth();
@@ -23,6 +23,9 @@ export default function GestionClientes() {
     correo: '',
     plataforma: '',
   });
+  const [mostrarCobrar, setMostrarCobrar] = useState(false);
+  const [clienteCobrar, setClienteCobrar] = useState(null);
+  const [montoPago, setMontoPago] = useState('');
 
   // Clasificar clientes cuando cambian los datos (incluye array vacío)
   useEffect(() => {
@@ -139,7 +142,7 @@ export default function GestionClientes() {
       return;
     }
 
-    const encabezados = ['Nombre', 'Teléfono', 'Correo', 'Plataforma', 'Fecha de Vencimiento', 'Días Restantes', 'Estado'];
+    const encabezados = ['Nombre', 'Teléfono', 'Correo', 'Plataforma', 'Fecha de Vencimiento', 'Días Restantes', 'Estado', 'Estado Pago'];
     const filas = clientesFiltrados.map((c) => [
       c.nombre,
       c.telefono,
@@ -148,6 +151,7 @@ export default function GestionClientes() {
       c.fechaVencimiento || '-',
       c.diasRestantes || 0,
       c.diasRestantes > 0 ? 'Activo' : 'Inactivo',
+      c.saldoPendiente > 0 ? `Debe $${c.saldoPendiente}` : 'Al día',
     ]);
 
     const csvContent = [encabezados, ...filas].map((e) => e.join(',')).join('\n');
@@ -157,6 +161,42 @@ export default function GestionClientes() {
     enlace.download = `clientes_${filtro}_${new Date().toISOString().split('T')[0]}.csv`;
     enlace.click();
     toast.success('CSV exportado correctamente');
+  };
+
+  // 💰 Registrar pago
+  const registrarPago = async (e) => {
+    e.preventDefault();
+    if (!user || !clienteCobrar) return;
+
+    const monto = Number(montoPago);
+    if (!monto || monto <= 0) return toast.error('El monto debe ser mayor a 0');
+    if (monto > clienteCobrar.saldoPendiente)
+      return toast.error('El pago no puede superar el saldo pendiente');
+
+    try {
+      // Reducir saldo pendiente del cliente
+      await updateDoc(doc(db, 'clientes', clienteCobrar.id), {
+        saldoPendiente: increment(-monto),
+      });
+
+      // Registrar movimiento
+      await addDoc(collection(db, 'movimientos'), {
+        tipo: 'Ingreso',
+        monto,
+        descripcion: `Pago recibido de ${clienteCobrar.nombre}`,
+        fecha: serverTimestamp(),
+        propietarioId: user.uid,
+        usuarioEmail: user.email,
+      });
+
+      toast.success(`✅ Pago de $${monto.toLocaleString()} registrado correctamente`);
+      setMostrarCobrar(false);
+      setClienteCobrar(null);
+      setMontoPago('');
+    } catch (error) {
+      console.error('Error registrando pago:', error);
+      toast.error('Error al registrar el pago');
+    }
   };
 
   const abrirHistorial = (cliente) => {
@@ -239,6 +279,7 @@ export default function GestionClientes() {
                 <th className="px-4 py-4 text-left text-sm font-semibold">Plataforma</th>
                 <th className="px-4 py-4 text-left text-sm font-semibold">Vencimiento</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Días Restantes</th>
+                <th className="px-4 py-4 text-center text-sm font-semibold">Estado Pago</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Acciones</th>
               </tr>
             </thead>
@@ -283,6 +324,18 @@ export default function GestionClientes() {
                         {c.diasRestantes > 0 ? `${c.diasRestantes} días` : 'Vencido'}
                       </span>
                     </td>
+                    <td className="px-4 py-4 text-center">
+                      {c.saldoPendiente > 0 ? (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-red-100 text-red-700 text-sm font-semibold">
+                          <AlertCircle size={14} />
+                          Debe ${c.saldoPendiente.toLocaleString()}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-semibold">
+                          Al día
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-4">
                       <div className="flex items-center justify-center gap-2">
                         <button
@@ -299,6 +352,19 @@ export default function GestionClientes() {
                         >
                           <TrendingUp size={18} />
                         </button>
+                        {c.saldoPendiente > 0 && (
+                          <button
+                            onClick={() => {
+                              setClienteCobrar(c);
+                              setMontoPago(String(c.saldoPendiente));
+                              setMostrarCobrar(true);
+                            }}
+                            className="p-2 rounded-lg bg-orange-100 text-orange-600 hover:bg-orange-200 transition-colors"
+                            title="Registrar pago"
+                          >
+                            <DollarSign size={18} />
+                          </button>
+                        )}
                         <button
                           onClick={() => enviarWhatsApp(c)}
                           className="p-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-colors"
@@ -312,7 +378,7 @@ export default function GestionClientes() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="text-center py-12 text-gray-500">
+                  <td colSpan="7" className="text-center py-12 text-gray-500">
                     <Users size={48} className="mx-auto mb-3 text-gray-300" />
                     <p className="font-medium">No se encontraron clientes {filtro}</p>
                   </td>
@@ -489,6 +555,83 @@ export default function GestionClientes() {
                 <p>No hay ventas registradas para este cliente</p>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal de cobro */}
+      {mostrarCobrar && clienteCobrar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="card max-w-md w-full animate-scale-in">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Registrar Pago</h2>
+                <p className="text-gray-600 mt-1">{clienteCobrar.nombre}</p>
+              </div>
+              <button
+                onClick={() => {
+                  setMostrarCobrar(false);
+                  setClienteCobrar(null);
+                  setMontoPago('');
+                }}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <X size={24} className="text-gray-600" />
+              </button>
+            </div>
+
+            <form onSubmit={registrarPago} className="space-y-4">
+              <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
+                <p className="text-sm text-gray-600">
+                  Saldo pendiente:{' '}
+                  <span className="font-bold text-orange-700">
+                    ${clienteCobrar.saldoPendiente.toLocaleString()}
+                  </span>
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Monto a cobrar <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                  <input
+                    type="number"
+                    value={montoPago}
+                    onChange={(e) => setMontoPago(e.target.value)}
+                    className="w-full pl-8"
+                    min="0.01"
+                    max={clienteCobrar.saldoPendiente}
+                    step="0.01"
+                    required
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Máximo: ${clienteCobrar.saldoPendiente.toLocaleString()}
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMostrarCobrar(false);
+                    setClienteCobrar(null);
+                    setMontoPago('');
+                  }}
+                  className="btn-secondary flex-1"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary flex-1 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
+                >
+                  💰 Cobrar
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

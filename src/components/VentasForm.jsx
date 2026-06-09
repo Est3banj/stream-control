@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, addDoc, setDoc, doc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { collection, addDoc, setDoc, doc, serverTimestamp, getDoc, increment, updateDoc } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
@@ -16,6 +16,8 @@ export default function VentasForm() {
     costoServicio: 0,
     fechaInicio: '',
     diasServicio: '',
+    pagado: true,
+    saldoPendiente: '',
   });
 
   const [utilidad, setUtilidad] = useState(0);
@@ -29,7 +31,8 @@ export default function VentasForm() {
   }, [venta.precioVenta, venta.costoServicio, venta.pantallas]);
 
   const handleChange = (e) => {
-    setVenta({ ...venta, [e.target.name]: e.target.value });
+    const { name, type, value, checked } = e.target;
+    setVenta({ ...venta, [name]: type === 'checkbox' ? checked : value });
   };
 
   // 🔍 Autocompletar si el cliente ya existe
@@ -78,6 +81,9 @@ export default function VentasForm() {
     if (venta.costoServicio === '' || isNaN(venta.costoServicio) || Number(venta.costoServicio) < 0)
       return toast.error("El costo del servicio debe ser válido.");
 
+    if (!venta.pagado && (venta.saldoPendiente === '' || isNaN(venta.saldoPendiente) || Number(venta.saldoPendiente) <= 0))
+      return toast.error("Indicá el saldo pendiente cuando el pago está incompleto.");
+
     if (venta.telefono && !/^\d+$/.test(venta.telefono.trim()))
       return toast.error("El teléfono solo debe contener números.");
 
@@ -99,6 +105,8 @@ export default function VentasForm() {
         precioVenta: Number(venta.precioVenta),
         costoServicio: Number(venta.costoServicio),
         utilidad: Number(utilidad),
+        pagado: venta.pagado,
+        saldoPendiente: venta.pagado ? 0 : Number(venta.saldoPendiente || 0),
 
         fechaRegistro: serverTimestamp(),    // Fecha real del sistema (no alterable por el usuario)
 
@@ -120,7 +128,14 @@ export default function VentasForm() {
         propietarioId: user.uid,
         usuarioEmail: user.email,
         fechaVencimiento,
-      });
+      }, { merge: true });
+
+      // Si el cliente queda debiendo, acumular saldo en su ficha
+      if (!venta.pagado) {
+        await updateDoc(doc(db, 'clientes', `${user.uid}_${venta.nombre}`), {
+          saldoPendiente: increment(Number(venta.saldoPendiente)),
+        });
+      }
 
       // 🟢 Registrar movimiento financiero
       await addDoc(collection(db, 'movimientos'), {
@@ -144,6 +159,8 @@ export default function VentasForm() {
         costoServicio: 0,
         fechaInicio: '',
         diasServicio: '',
+        pagado: true,
+        saldoPendiente: '',
       });
       setUtilidad(0);
 
@@ -365,6 +382,60 @@ export default function VentasForm() {
             Calculado automáticamente: (Pantallas × Precio) - Costo
           </p>
         </div>
+      </div>
+
+      {/* =========================
+          Estado de Pago
+      ========================== */}
+      <div className="space-y-6 mt-8 pt-6 border-t border-gray-200">
+        <div className="flex items-center gap-2 pb-3 border-b border-gray-200">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-500 to-orange-600 flex items-center justify-center">
+            <span className="text-white font-bold text-lg">$</span>
+          </div>
+          <h2 className="text-xl font-bold text-gray-900">Estado de Pago</h2>
+        </div>
+
+        <div className="flex items-center justify-between bg-gray-50 rounded-xl p-4">
+          <div>
+            <p className="font-semibold text-gray-700">Pagó completo</p>
+            <p className="text-sm text-gray-500">El cliente ya pagó el total del servicio</p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              name="pagado"
+              checked={venta.pagado}
+              onChange={handleChange}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-yellow-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-yellow-500 peer-checked:to-orange-600"></div>
+          </label>
+        </div>
+
+        {!venta.pagado && (
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Saldo pendiente <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+              <input
+                type="number"
+                name="saldoPendiente"
+                value={venta.saldoPendiente}
+                onChange={handleChange}
+                className="w-full pl-8"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                required={!venta.pagado}
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Monto que el cliente aún debe pagar
+            </p>
+          </div>
+        )}
       </div>
 
       {/* =========================
