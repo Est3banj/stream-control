@@ -91,7 +91,7 @@ export default function Dashboard() {
       {/* Cards de métricas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Ingresos */}
-        <div className="card group hover:scale-105 transition-all duration-300 cursor-default">
+        <div className="card cursor-default">
           <div className="flex items-center justify-between mb-4">
             <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
               <DollarSign className="text-white" size={28} />
@@ -105,7 +105,7 @@ export default function Dashboard() {
         </div>
 
         {/* Egresos */}
-        <div className="card group hover:scale-105 transition-all duration-300 cursor-default">
+        <div className="card cursor-default">
           <div className="flex items-center justify-between mb-4">
             <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-pink-500 to-red-600 flex items-center justify-center shadow-lg">
               <DollarSign className="text-white" size={28} />
@@ -119,7 +119,7 @@ export default function Dashboard() {
         </div>
 
         {/* Utilidad */}
-        <div className="card group hover:scale-105 transition-all duration-300 cursor-default">
+        <div className="card cursor-default">
           <div className="flex items-center justify-between mb-4">
             <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center shadow-lg">
               <TrendingUp className="text-white" size={28} />
