@@ -225,6 +225,44 @@ service cloud.firestore {
     }
     
     // ============================================
+    // COLECCIÓN: codigosVinculacion (Telegram)
+    // ============================================
+    // Propósito: Códigos temporales para vincular Telegram con la cuenta
+    // - Creación: Solo el propio usuario puede crear su código
+    // - Lectura: La Cloud Function (admin) lee para validar el código
+    // - El usuario nunca lee códigos de otros
+    // - Expiran a los 15 minutos
+    
+    match /codigosVinculacion/{codigo} {
+      // Solo admin (Cloud Function) puede leer códigos
+      allow read: if isAdmin();
+      // Solo el usuario autenticado puede crear su propio código
+      allow create: if isAuthenticated() &&
+        request.resource.data.uid == getUserId() &&
+        request.resource.data.createdAt is timestamp &&
+        request.resource.data.expiresAt is timestamp &&
+        request.resource.data.expirado == false;
+      // Solo el admin (Cloud Function) puede marcar como expirado
+      allow update: if isAdmin() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['expirado']);
+      allow delete: if false;
+    }
+    
+    // ============================================
+    // COLECCIÓN: vinculaciones (Telegram)
+    // ============================================
+    // Propósito: Mapeo chatId de Telegram → Firebase UID
+    // - Solo la Cloud Function (admin) escribe/lee
+    // - Los usuarios pueden leer su propia vinculación
+    
+    match /vinculaciones/{chatId} {
+      allow read: if isAuthenticated() && resource.data.uid == getUserId();
+      allow create: if isAdmin(); // Solo la Cloud Function vincula
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // ============================================
     // DENEGAR ACCESO A OTRAS COLECCIONES
     // ============================================
     match /{document=**} {

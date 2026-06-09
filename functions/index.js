@@ -16,12 +16,47 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 
 /**
- * Función programada que se ejecuta cada 24 horas
- * Revisa todos los clientes y genera notificaciones para los que vencen en 1, 2 o 3 días
+ * Webhook de Telegram Bot
+ * Recibe actualizaciones del bot de Telegram y las procesa
+ * 
+ * Configuración requerida:
+ *   firebase functions:config:set telegram.token="TOKEN" telegram.webhook_secret="SECRET"
+ * 
+ * Para activar el webhook (pegar URL después del primer deploy):
+ *   curl -F "url=DEPLOYED_URL/telegramWebhook" -F "secret_token=SECRET" https://api.telegram.org/botTOKEN/setWebhook
  */
+exports.telegramWebhook = functions.https.onRequest(async (req, res) => {
+  if (req.method !== 'POST') {
+    res.status(405).send('Method Not Allowed');
+    return;
+  }
+
+  const telegram = require('./telegram');
+
+  if (!telegram.verifyWebhook(req)) {
+    console.error('❌ Webhook verification failed — invalid secret token');
+    res.status(403).send('Forbidden');
+    return;
+  }
+
+  try {
+    const result = await telegram.handleUpdate(req.body);
+    console.log('✅ Telegram update processed:', result);
+    res.status(200).send('OK');
+  } catch (error) {
+    console.error('❌ Error processing Telegram update:', error);
+    res.status(200).send('OK');
+  }
+});
+
+/**
+ * Extensión del cron: envía notificaciones por Telegram
+ */
+const telegram = require('./telegram');
+
 exports.generarNotificacionesVencimientos = functions.pubsub
   .schedule('every 24 hours')
-  .timeZone('America/Bogota') // Ajustar según tu zona horaria
+  .timeZone('America/Bogota')
   .onRun(async (context) => {
     console.log('🔔 Iniciando generación de notificaciones de vencimientos...');
 
@@ -29,7 +64,6 @@ exports.generarNotificacionesVencimientos = functions.pubsub
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
 
-      // Obtener todos los clientes
       const clientesSnapshot = await db.collection('clientes').get();
 
       if (clientesSnapshot.empty) {
@@ -38,74 +72,86 @@ exports.generarNotificacionesVencimientos = functions.pubsub
       }
 
       let notificacionesCreadas = 0;
+      let telegramEnviados = 0;
+      let morasNotificadas = 0;
       const batch = db.batch();
       let batchCount = 0;
-      const MAX_BATCH_SIZE = 500; // Límite de Firestore
+      const MAX_BATCH_SIZE = 500;
 
       for (const clienteDoc of clientesSnapshot.docs) {
         const cliente = clienteDoc.data();
-        
-        if (!cliente.fechaVencimiento) {
-          continue;
+
+        // --- Notificaciones de vencimiento ---
+        if (cliente.fechaVencimiento) {
+          const fechaVencimiento = new Date(cliente.fechaVencimiento);
+          fechaVencimiento.setHours(0, 0, 0, 0);
+
+          const diffTime = fechaVencimiento - hoy;
+          const diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+          if (diasRestantes >= 1 && diasRestantes <= 3) {
+            const hoyStr = hoy.toISOString().split('T')[0];
+            const notificacionId = `${cliente.propietarioId}_${clienteDoc.id}_${hoyStr}`;
+
+            const notifRef = db.collection('notificaciones').doc(notificacionId);
+            const notifDoc = await notifRef.get();
+
+            if (!notifDoc.exists) {
+              const notificacion = {
+                clienteId: clienteDoc.id,
+                nombreCliente: cliente.nombre || '',
+                plataforma: cliente.plataforma || '',
+                diasRestantes,
+                fechaVencimiento: cliente.fechaVencimiento,
+                propietarioId: cliente.propietarioId,
+                usuarioEmail: cliente.usuarioEmail || '',
+                fechaGenerada: admin.firestore.FieldValue.serverTimestamp(),
+                leida: false,
+              };
+
+              batch.set(notifRef, notificacion);
+              batchCount++;
+              notificacionesCreadas++;
+
+              try {
+                const enviado = await telegram.enviarNotificacionVencimiento({
+                  ...notificacion,
+                  telefono: cliente.telefono || '',
+                }, {
+                  appUrl: functions.config().app?.url || '',
+                });
+                if (enviado) telegramEnviados++;
+              } catch (err) {
+                console.error(`Error enviando Telegram para ${cliente.nombre}:`, err);
+              }
+
+              if (batchCount >= MAX_BATCH_SIZE) {
+                await batch.commit();
+                batchCount = 0;
+              }
+            }
+          }
         }
 
-        const fechaVencimiento = new Date(cliente.fechaVencimiento);
-        fechaVencimiento.setHours(0, 0, 0, 0);
-
-        // Calcular días restantes
-        const diffTime = fechaVencimiento - hoy;
-        const diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-        // Solo generar notificación si faltan 1, 2 o 3 días
-        if (diasRestantes >= 1 && diasRestantes <= 3) {
-          // Verificar si ya existe una notificación para este cliente hoy
-          const hoyStr = hoy.toISOString().split('T')[0];
-          const notificacionId = `${cliente.propietarioId}_${clienteDoc.id}_${hoyStr}`;
-          
-          const notifRef = db.collection('notificaciones').doc(notificacionId);
-          const notifDoc = await notifRef.get();
-
-          // Solo crear si no existe una notificación para hoy
-          if (!notifDoc.exists) {
-            const notificacion = {
-              clienteId: clienteDoc.id,
-              nombreCliente: cliente.nombre || '',
-              plataforma: cliente.plataforma || '',
-              diasRestantes: diasRestantes,
-              fechaVencimiento: cliente.fechaVencimiento,
-              propietarioId: cliente.propietarioId,
-              usuarioEmail: cliente.usuarioEmail || '',
-              fechaGenerada: admin.firestore.FieldValue.serverTimestamp(),
-              leida: false,
-            };
-
-            batch.set(notifRef, notificacion);
-            batchCount++;
-            notificacionesCreadas++;
-
-            // Si el batch alcanza el límite, ejecutarlo y crear uno nuevo
-            if (batchCount >= MAX_BATCH_SIZE) {
-              await batch.commit();
-              batchCount = 0;
-            }
+        // --- Notificaciones de mora (saldo pendiente) ---
+        if (cliente.saldoPendiente > 0) {
+          try {
+            const enviado = await telegram.enviarNotificacionMora(cliente);
+            if (enviado) morasNotificadas++;
+          } catch (err) {
+            console.error(`Error enviando mora Telegram para ${cliente.nombre}:`, err);
           }
         }
       }
 
-      // Ejecutar el batch final si hay operaciones pendientes
       if (batchCount > 0) {
         await batch.commit();
       }
 
-      console.log(`✅ Notificaciones generadas: ${notificacionesCreadas}`);
+      console.log(`✅ ${notificacionesCreadas} notifs Firestore, ${telegramEnviados} Telegram vencimientos, ${morasNotificadas} Telegram moras`);
       return null;
     } catch (error) {
       console.error('❌ Error generando notificaciones:', error);
       throw error;
     }
   });
-
-
-
-
-
