@@ -181,7 +181,7 @@ export default function TelegramConfig() {
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center flex-shrink-0 text-xs">2</span>
-                <span>Abrí Telegram y buscá <b>@StreamControlBot</b></span>
+                <span>Abrí Telegram y buscá <b>@NotiStream_bot</b></span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center flex-shrink-0 text-xs">3</span>
@@ -255,7 +255,7 @@ export default function TelegramConfig() {
               <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-200">
                 <p className="text-xs text-yellow-700">
                   ⚠️ <b>Importante:</b> No compartas este código con nadie más.
-                  Solo el bot de Telegram @StreamControlBot debe recibirlo.
+                  Solo el bot de Telegram @NotiStream_bot debe recibirlo.
                   Después de usarlo o si expira en 15 minutos, dejará de ser válido.
                 </p>
               </div>
