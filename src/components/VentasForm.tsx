@@ -3,6 +3,24 @@ import { db } from '../firebase';
 import { collection, addDoc, setDoc, doc, serverTimestamp, getDoc, increment, updateDoc } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
+import type { VentaInput } from '../types/venta';
+
+interface VentaFormState {
+  nombre: string;
+  telefono: string;
+  correo: string;
+  plataforma: string;
+  pantallas: number;
+  precioVenta: number;
+  costoServicio: number;
+  fechaInicio: string;
+  diasServicio: string;
+  fechaVenta: string;
+  perfil: string;
+  pinPerfil: string;
+  pagado: boolean;
+  saldoPendiente: string;
+}
 
 const getToday = () => {
   const d = new Date();
@@ -11,7 +29,7 @@ const getToday = () => {
 
 export default function VentasForm() {
   const { user } = useAuth();
-  const [venta, setVenta] = useState({
+  const [venta, setVenta] = useState<VentaFormState>({
     nombre: '',
     telefono: '',
     correo: '',
@@ -40,7 +58,7 @@ export default function VentasForm() {
     setUtilidad((pant * p) - c);
   }, [venta.precioVenta, venta.costoServicio, venta.pantallas]);
 
-  const handleToggleFechaVenta = (e) => {
+  const handleToggleFechaVenta = (e: React.ChangeEvent<HTMLInputElement>) => {
     const checked = e.target.checked;
     setMostrarFechaVenta(checked);
     if (!checked) {
@@ -48,9 +66,9 @@ export default function VentasForm() {
     }
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, type, value, checked } = e.target;
-    setVenta({ ...venta, [name]: type === 'checkbox' ? checked : value });
+    setVenta({ ...venta, [name]: type === 'checkbox' ? checked : value } as VentaFormState);
   };
 
   // 🔍 Autocompletar si el cliente ya existe
@@ -60,7 +78,7 @@ export default function VentasForm() {
       const clienteRef = doc(db, 'clientes', `${user.uid}_${venta.nombre.trim()}`);
       const clienteSnap = await getDoc(clienteRef);
       if (clienteSnap.exists()) {
-        const data = clienteSnap.data();
+        const data = clienteSnap.data() as { telefono?: string; correo?: string; plataforma?: string };
         setVenta(prev => ({
           ...prev,
           telefono: data.telefono || '',
@@ -69,12 +87,12 @@ export default function VentasForm() {
         }));
         toast.success('Cliente existente cargado automáticamente');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error cargando cliente:', error);
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!user) {
       toast.error("Error: Usuario no autenticado.");
@@ -87,19 +105,19 @@ export default function VentasForm() {
     if (!venta.plataforma.trim()) return toast.error("La plataforma o servicio es obligatorio.");
     if (!venta.fechaInicio.trim()) return toast.error("La fecha de inicio es obligatoria.");
 
-    if (!venta.diasServicio || isNaN(venta.diasServicio) || Number(venta.diasServicio) <= 0)
+    if (!venta.diasServicio || isNaN(venta.diasServicio as unknown as number) || Number(venta.diasServicio) <= 0)
       return toast.error("La duración del servicio debe ser válida.");
 
     if (!venta.pantallas || isNaN(venta.pantallas) || Number(venta.pantallas) < 1)
       return toast.error("La cantidad de pantallas debe ser válida.");
 
-    if (venta.precioVenta === '' || isNaN(venta.precioVenta) || Number(venta.precioVenta) < 0)
+    if (venta.precioVenta === 0 || isNaN(venta.precioVenta) || Number(venta.precioVenta) < 0)
       return toast.error("El precio de venta debe ser válido.");
 
-    if (venta.costoServicio === '' || isNaN(venta.costoServicio) || Number(venta.costoServicio) < 0)
+    if (venta.costoServicio === 0 || isNaN(venta.costoServicio) || Number(venta.costoServicio) < 0)
       return toast.error("El costo del servicio debe ser válido.");
 
-    if (!venta.pagado && (venta.saldoPendiente === '' || isNaN(venta.saldoPendiente) || Number(venta.saldoPendiente) <= 0))
+    if (!venta.pagado && (venta.saldoPendiente === '' || isNaN(venta.saldoPendiente as unknown as number) || Number(venta.saldoPendiente) <= 0))
       return toast.error("Indicá el saldo pendiente cuando el pago está incompleto.");
 
     if (venta.telefono && !/^\d+$/.test(venta.telefono.trim()))
@@ -119,8 +137,9 @@ export default function VentasForm() {
       const fechaVencimiento = fechaVencimientoDate.toISOString().split('T')[0];
 
       // 🟢 Datos listos para Firestore (con tipos CORRECTOS)
-      const nuevaVenta = {
+      const nuevaVenta: VentaInput = {
         ...venta,
+        diasServicio: Number(venta.diasServicio),
         pantallas: Number(venta.pantallas),
         precioVenta: Number(venta.precioVenta),
         costoServicio: Number(venta.costoServicio),
@@ -128,20 +147,21 @@ export default function VentasForm() {
         pagado: venta.pagado,
         saldoPendiente: venta.pagado ? 0 : Number(venta.saldoPendiente || 0),
 
-        fechaRegistro: serverTimestamp(),    // Fecha real del sistema (no alterable por el usuario)
-        fechaRegistroSistema: null,          // Reservado para futuro uso
+        fechaRegistro: serverTimestamp(),
+        fechaRegistroSistema: null,
         fechaVenta: venta.fechaVenta,
 
-        propietarioId: user.uid,
-        usuarioEmail: user.email,
+        propietarioId: user.uid!,
+        usuarioEmail: user.email!,
         fechaVencimiento,
       };
 
       // 🟢 Guardar venta
       try {
         await addDoc(collection(db, 'ventas'), nuevaVenta);
-      } catch (err) {
-        console.error('❌ Falló addDoc a ventas:', err.code, err.message);
+      } catch (err: unknown) {
+        const error = err as { code?: string; message?: string };
+        console.error('❌ Falló addDoc a ventas:', error.code, error.message);
         console.log('Datos de venta:', JSON.stringify(nuevaVenta, (k, v) =>
           typeof v === 'function' ? v.name : v
         ));
@@ -162,8 +182,9 @@ export default function VentasForm() {
       };
       try {
         await setDoc(clienteRef, clienteData, { merge: true });
-      } catch (err) {
-        console.error('❌ Falló setDoc a clientes:', err.code, err.message);
+      } catch (err: unknown) {
+        const error = err as { code?: string; message?: string };
+        console.error('❌ Falló setDoc a clientes:', error.code, error.message);
         console.log('Datos de cliente:', JSON.stringify(clienteData));
         throw err;
       }
@@ -174,8 +195,9 @@ export default function VentasForm() {
           await updateDoc(clienteRef, {
             saldoPendiente: increment(Number(venta.saldoPendiente)),
           });
-        } catch (err) {
-          console.error('❌ Falló updateDoc saldoPendiente:', err.code, err.message);
+        } catch (err: unknown) {
+          const error = err as { code?: string; message?: string };
+          console.error('❌ Falló updateDoc saldoPendiente:', error.code, error.message);
           throw err;
         }
       }
@@ -191,8 +213,9 @@ export default function VentasForm() {
       };
       try {
         await addDoc(collection(db, 'movimientos'), movimientoData);
-      } catch (err) {
-        console.error('❌ Falló addDoc a movimientos:', err.code, err.message);
+      } catch (err: unknown) {
+        const error = err as { code?: string; message?: string };
+        console.error('❌ Falló addDoc a movimientos:', error.code, error.message);
         console.log('Datos de movimiento:', JSON.stringify(movimientoData));
         throw err;
       }
@@ -218,7 +241,7 @@ export default function VentasForm() {
       setUtilidad(0);
       setMostrarFechaVenta(false);
 
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('❌ Error al registrar la venta:', error);
       toast.error("Error al registrar la venta. Inténtelo nuevamente.");
     } finally {
@@ -226,13 +249,13 @@ export default function VentasForm() {
     }
   };
 
-  const SectionIcon = ({ number }) => (
+  const SectionIcon = ({ number }: { number: string }) => (
     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-sm flex-shrink-0">
       <span className="text-white font-bold text-sm">{number}</span>
     </div>
   );
 
-  const InputLabel = ({ children, required = false }) => (
+  const InputLabel = ({ children, required = false }: { children: React.ReactNode; required?: boolean }) => (
     <label className="block text-sm font-medium text-gray-600 mb-1.5">
       {children}
       {required && <span className="text-red-400 ml-0.5">*</span>}
@@ -378,7 +401,7 @@ export default function VentasForm() {
                 onChange={handleChange}
                 placeholder="1234"
                 className="w-full"
-                maxLength="10"
+                maxLength={10}
               />
               <p className="text-xs text-gray-400 mt-1">Opcional</p>
             </div>

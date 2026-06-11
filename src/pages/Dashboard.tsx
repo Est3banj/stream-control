@@ -3,25 +3,26 @@ import { useAuth } from '../contexts/AuthContext';
 import useVentas from '../hooks/useVentas';
 import { DollarSign, TrendingUp, TrendingDown, Users, Tv, AlertCircle } from 'lucide-react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import type { Venta } from '../types/venta';
 
 const COLORS = ['#6B21A8', '#3B82F6', '#06B6D4', '#8B5CF6', '#EC4899'];
 
 export default function Dashboard() {
   const { user } = useAuth();
   const { ventas, loading, error } = useVentas(user);
-  const [totales, setTotales] = useState({ ingresos: 0, egresos: 0, utilidad: 0 });
-  const [topClientes, setTopClientes] = useState([]);
-  const [topPlataformas, setTopPlataformas] = useState([]);
+  const [totales, setTotales] = useState<{ ingresos: number; egresos: number; utilidad: number }>({ ingresos: 0, egresos: 0, utilidad: 0 });
+  const [topClientes, setTopClientes] = useState<Array<{ nombre: string; ventas: number }>>([]);
+  const [topPlataformas, setTopPlataformas] = useState<Array<{ plataforma: string; pantallas: number }>>([]);
 
   // Procesar ventas cuando cambian
   useEffect(() => {
     if (loading || !ventas.length) return;
 
     let ingresos = 0, costos = 0, utilidad = 0;
-    const clientes = {};
-    const plataformas = {};
+    const clientes: Record<string, number> = {};
+    const plataformas: Record<string, number> = {};
 
-    ventas.forEach((v) => {
+    ventas.forEach((v: Venta) => {
       const ingresoVenta = (v.precioVenta * v.pantallas) || 0;
       ingresos += ingresoVenta;
       costos += Number(v.costoServicio) || 0;
@@ -38,13 +39,13 @@ export default function Dashboard() {
     setTotales({ ingresos, egresos: costos, utilidad });
 
     const topClientesSorted = Object.entries(clientes)
-      .sort((a, b) => b[1] - a[1])
+      .sort((a: [string, number], b: [string, number]) => b[1] - a[1])
       .slice(0, 5)
       .map(([nombre, ventas]) => ({ nombre, ventas }));
     setTopClientes(topClientesSorted);
 
     const topPlataformasSorted = Object.entries(plataformas)
-      .sort((a, b) => b[1] - a[1])
+      .sort((a: [string, number], b: [string, number]) => b[1] - a[1])
       .slice(0, 5)
       .map(([plataforma, pantallas]) => ({ plataforma, pantallas }));
     setTopPlataformas(topPlataformasSorted);
@@ -158,8 +159,8 @@ export default function Dashboard() {
                 <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip
-                  formatter={(value) => [`$${value.toLocaleString()}`, 'Ventas']}
-                  labelFormatter={(label, payload) => payload?.[0]?.payload?.fullName || label}
+                  formatter={(value: any) => [`$${value.toLocaleString()}`, 'Ventas']}
+                  labelFormatter={(label: any, payload: any) => payload?.[0]?.payload?.fullName || label}
                 />
                 <Bar dataKey="ventas" fill="#6B21A8" radius={[8, 8, 0, 0]} />
               </BarChart>
@@ -185,16 +186,16 @@ export default function Dashboard() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }: { name: string; percent: number }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                   outerRadius={100}
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {plataformasChartData.map((entry, index) => (
+                  {plataformasChartData.map((entry: { name: string; value: number }, index: number) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => [`${value} pantallas`, 'Cantidad']} />
+                <Tooltip formatter={(value: any) => [`${value} pantallas`, 'Cantidad']} />
               </PieChart>
             </ResponsiveContainer>
           ) : (
@@ -224,7 +225,7 @@ export default function Dashboard() {
               <tbody>
                 {topClientes.length === 0 ? (
                   <tr>
-                    <td colSpan="2" className="text-center py-8 text-gray-500">No hay datos</td>
+                    <td colSpan={2} className="text-center py-8 text-gray-500">No hay datos</td>
                   </tr>
                 ) : (
                   topClientes.map((cliente, index) => (
@@ -261,7 +262,7 @@ export default function Dashboard() {
               <tbody>
                 {topPlataformas.length === 0 ? (
                   <tr>
-                    <td colSpan="2" className="text-center py-8 text-gray-500">No hay datos</td>
+                    <td colSpan={2} className="text-center py-8 text-gray-500">No hay datos</td>
                   </tr>
                 ) : (
                   topPlataformas.map((plataforma, index) => (

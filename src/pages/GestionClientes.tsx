@@ -1,41 +1,43 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { db } from '../firebase';
-import { collection, query, where, onSnapshot, updateDoc, doc, increment, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, updateDoc, doc, increment, addDoc, serverTimestamp, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import useClientes from '../hooks/useClientes';
 import Paginador from '../components/Paginador';
 import toast from 'react-hot-toast';
 import { Search, Download, MessageCircle, Calendar, Users, TrendingUp, X, AlertCircle, Edit, Mail, DollarSign } from 'lucide-react';
+import type { Venta } from '../types/venta';
+import type { Cliente } from '../types/cliente';
 
 export default function GestionClientes() {
   const { user } = useAuth();
   const { clientes: todosLosClientes, loading, error } = useClientes(user);
-  const [clientes, setClientes] = useState({ activos: [], inactivos: [], todos: [] });
-  const [filtro, setFiltro] = useState('activos');
+  const [clientes, setClientes] = useState<{ activos: Cliente[]; inactivos: Cliente[]; todos: Cliente[] }>({ activos: [], inactivos: [], todos: [] });
+  const [filtro, setFiltro] = useState<'activos' | 'inactivos' | 'todos'>('activos');
   const [busqueda, setBusqueda] = useState('');
-  const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
-  const [historialVentas, setHistorialVentas] = useState([]);
+  const [clienteSeleccionado, setClienteSeleccionado] = useState<Cliente | null>(null);
+  const [historialVentas, setHistorialVentas] = useState<Venta[]>([]);
   const [mostrarHistorial, setMostrarHistorial] = useState(false);
   const [mostrarEditar, setMostrarEditar] = useState(false);
-  const [clienteEditando, setClienteEditando] = useState(null);
-  const [formEditar, setFormEditar] = useState({
+  const [clienteEditando, setClienteEditando] = useState<Cliente | null>(null);
+  const [formEditar, setFormEditar] = useState<{ nombre: string; telefono: string; correo: string; plataforma: string }>({
     nombre: '',
     telefono: '',
     correo: '',
     plataforma: '',
   });
   const [mostrarCobrar, setMostrarCobrar] = useState(false);
-  const [clienteCobrar, setClienteCobrar] = useState(null);
+  const [clienteCobrar, setClienteCobrar] = useState<Cliente | null>(null);
   const [montoPago, setMontoPago] = useState('');
   const [paginaActual, setPaginaActual] = useState(1);
   const [itemsPorPagina, setItemsPorPagina] = useState(10);
-  const historialUnsubscribeRef = useRef(null);
+  const historialUnsubscribeRef = useRef<(() => void) | null>(null);
 
   // Clasificar clientes cuando cambian los datos (incluye array vacío)
   useEffect(() => {
     if (loading) return;
-    const activos = todosLosClientes.filter(c => c.diasRestantes > 0);
-    const inactivos = todosLosClientes.filter(c => c.diasRestantes <= 0);
+    const activos = todosLosClientes.filter(c => c.diasRestantes! > 0);
+    const inactivos = todosLosClientes.filter(c => c.diasRestantes! <= 0);
     setClientes({ activos, inactivos, todos: todosLosClientes });
   }, [todosLosClientes, loading]);
 
@@ -55,7 +57,7 @@ export default function GestionClientes() {
   }, []);
 
   // 🔍 Cargar historial de ventas de un cliente
-  const cargarHistorial = async (clienteNombre) => {
+  const cargarHistorial = async (clienteNombre: string): Promise<void> => {
     if (!user) return;
 
     // Limpiar listener anterior si existe
@@ -70,11 +72,11 @@ export default function GestionClientes() {
         q = query(q, where('propietarioId', '==', user.uid));
       }
 
-      historialUnsubscribeRef.current = onSnapshot(q, (snapshot) => {
+      historialUnsubscribeRef.current = onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
         const ventas = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
-        })).sort((a, b) => {
+        } as Venta)).sort((a, b) => {
           const fechaA = a.fechaRegistro?.seconds || 0;
           const fechaB = b.fechaRegistro?.seconds || 0;
           return fechaB - fechaA;
@@ -83,14 +85,15 @@ export default function GestionClientes() {
       });
 
       // No devolvemos nada, el ref se encarga del cleanup
-    } catch (error) {
+
+    } catch (error: unknown) {
       console.error('Error cargando historial:', error);
       toast.error('Error al cargar historial de ventas');
     }
   };
 
   // ✏️ Abrir modal de edición
-  const abrirEditar = (cliente) => {
+  const abrirEditar = (cliente: Cliente) => {
     setClienteEditando(cliente);
     setFormEditar({
       nombre: cliente.nombre || '',
@@ -102,7 +105,7 @@ export default function GestionClientes() {
   };
 
   // 💾 Guardar cambios del cliente
-  const guardarEdicion = async (e) => {
+  const guardarEdicion = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     // Validaciones
@@ -128,7 +131,7 @@ export default function GestionClientes() {
     }
 
     try {
-      const clienteRef = doc(db, 'clientes', clienteEditando.id);
+      const clienteRef = doc(db, 'clientes', clienteEditando!.id);
       await updateDoc(clienteRef, {
         nombre: formEditar.nombre.trim(),
         telefono: formEditar.telefono.trim(),
@@ -139,22 +142,22 @@ export default function GestionClientes() {
       toast.success('✅ Cliente actualizado correctamente');
       setMostrarEditar(false);
       setClienteEditando(null);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error actualizando cliente:', error);
       toast.error('Error al actualizar el cliente');
     }
   };
 
   // 📱 Enviar WhatsApp
-  const enviarWhatsApp = (cliente) => {
+  const enviarWhatsApp = (cliente: Cliente) => {
     const mensaje = `Hola ${cliente.nombre}, tu servicio de ${cliente.plataforma || 'streaming'} vence en ${cliente.diasRestantes} día(s). Te invitamos a renovarlo para seguir disfrutando sin interrupciones.`;
     const url = `https://wa.me/57${cliente.telefono}?text=${encodeURIComponent(mensaje)}`;
     window.open(url, '_blank');
   };
 
   // 🔍 Filtrado por búsqueda
-  const clientesFiltrados = clientes[filtro]?.filter(
-    (c) =>
+  const clientesFiltrados: Cliente[] = clientes[filtro]?.filter(
+    (c: Cliente) =>
       c.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
       (c.plataforma && c.plataforma.toLowerCase().includes(busqueda.toLowerCase())) ||
       (c.telefono && c.telefono.includes(busqueda))
@@ -172,14 +175,14 @@ export default function GestionClientes() {
     }
 
     const encabezados = ['Nombre', 'Teléfono', 'Correo', 'Plataforma', 'Fecha de Vencimiento', 'Días Restantes', 'Estado', 'Estado Pago'];
-    const filas = clientesFiltrados.map((c) => [
+    const filas = clientesFiltrados.map((c: Cliente) => [
       c.nombre,
       c.telefono,
       c.correo || '-',
       c.plataforma || '-',
       c.fechaVencimiento || '-',
       c.diasRestantes || 0,
-      c.diasRestantes > 0 ? 'Activo' : 'Inactivo',
+      c.diasRestantes! > 0 ? 'Activo' : 'Inactivo',
       c.saldoPendiente > 0 ? `Debe $${c.saldoPendiente}` : 'Al día',
     ]);
 
@@ -193,7 +196,7 @@ export default function GestionClientes() {
   };
 
   // 💰 Registrar pago
-  const registrarPago = async (e) => {
+  const registrarPago = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!user || !clienteCobrar) return;
 
@@ -222,13 +225,13 @@ export default function GestionClientes() {
       setMostrarCobrar(false);
       setClienteCobrar(null);
       setMontoPago('');
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error registrando pago:', error);
       toast.error('Error al registrar el pago');
     }
   };
 
-  const abrirHistorial = (cliente) => {
+  const abrirHistorial = (cliente: Cliente) => {
     setClienteSeleccionado(cliente);
     setMostrarHistorial(true);
     cargarHistorial(cliente.nombre);
@@ -266,7 +269,7 @@ export default function GestionClientes() {
         <div className="flex flex-col md:flex-row gap-4 items-center">
           {/* Filtros */}
           <div className="flex gap-2 flex-wrap">
-            {['activos', 'inactivos', 'todos'].map((tipo) => (
+            {(['activos', 'inactivos', 'todos'] as const).map((tipo) => (
               <button
                 key={tipo}
                 onClick={() => setFiltro(tipo)}
@@ -287,7 +290,7 @@ export default function GestionClientes() {
               type="text"
               placeholder="Buscar cliente, plataforma o teléfono..."
               value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBusqueda(e.target.value)}
               className="w-full pl-10 pr-4"
             />
           </div>
@@ -320,7 +323,7 @@ export default function GestionClientes() {
             </thead>
             <tbody>
               {clientesFiltrados.length > 0 ? (
-                clientesPaginados.map((c) => (
+                clientesPaginados.map((c: Cliente) => (
                   <tr
                     key={c.id}
                     className="border-b border-gray-100 hover:bg-indigo-50/30 transition-colors"
@@ -349,14 +352,14 @@ export default function GestionClientes() {
                     </td>
                     <td className="px-4 py-4 text-center">
                       <span
-                        className={`px-3 py-1 rounded-full text-sm font-semibold ${c.diasRestantes > 7
+                        className={`px-3 py-1 rounded-full text-sm font-semibold ${c.diasRestantes! > 7
                             ? 'bg-green-100 text-green-700'
-                            : c.diasRestantes > 0
+                            : c.diasRestantes! > 0
                               ? 'bg-yellow-100 text-yellow-700'
                               : 'bg-red-100 text-red-700'
                           }`}
                       >
-                        {c.diasRestantes > 0 ? `${c.diasRestantes} días` : 'Vencido'}
+                        {c.diasRestantes! > 0 ? `${c.diasRestantes} días` : 'Vencido'}
                       </span>
                     </td>
                     <td className="px-4 py-4 text-center">
@@ -413,7 +416,7 @@ export default function GestionClientes() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="text-center py-12 text-gray-500">
+                  <td colSpan={7} className="text-center py-12 text-gray-500">
                     <Users size={48} className="mx-auto mb-3 text-gray-300" />
                     <p className="font-medium">No se encontraron clientes {filtro}</p>
                   </td>
@@ -430,7 +433,7 @@ export default function GestionClientes() {
         totalItems={clientesFiltrados.length}
         itemsPerPage={itemsPorPagina}
         onPageChange={setPaginaActual}
-        onItemsPerPageChange={(val) => {
+        onItemsPerPageChange={(val: number) => {
           setItemsPorPagina(val);
           setPaginaActual(1);
         }}
@@ -464,7 +467,7 @@ export default function GestionClientes() {
                 <input
                   type="text"
                   value={formEditar.nombre}
-                  onChange={(e) => setFormEditar({ ...formEditar, nombre: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEditar({ ...formEditar, nombre: e.target.value })}
                   className="w-full"
                   required
                 />
@@ -477,7 +480,7 @@ export default function GestionClientes() {
                 <input
                   type="text"
                   value={formEditar.telefono}
-                  onChange={(e) => setFormEditar({ ...formEditar, telefono: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEditar({ ...formEditar, telefono: e.target.value })}
                   className="w-full"
                   required
                 />
@@ -490,7 +493,7 @@ export default function GestionClientes() {
                 <input
                   type="email"
                   value={formEditar.correo}
-                  onChange={(e) => setFormEditar({ ...formEditar, correo: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEditar({ ...formEditar, correo: e.target.value })}
                   className="w-full"
                 />
               </div>
@@ -502,7 +505,7 @@ export default function GestionClientes() {
                 <input
                   type="text"
                   value={formEditar.plataforma}
-                  onChange={(e) => setFormEditar({ ...formEditar, plataforma: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEditar({ ...formEditar, plataforma: e.target.value })}
                   className="w-full"
                   required
                 />
@@ -555,7 +558,7 @@ export default function GestionClientes() {
 
             {historialVentas.length > 0 ? (
               <div className="space-y-3">
-                {historialVentas.map((venta) => (
+                {historialVentas.map((venta: Venta) => (
                   <div
                     key={venta.id}
                     className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100"
@@ -658,7 +661,7 @@ export default function GestionClientes() {
                   <input
                     type="number"
                     value={montoPago}
-                    onChange={(e) => setMontoPago(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMontoPago(e.target.value)}
                     className="w-full pl-8"
                     min="0.01"
                     max={clienteCobrar.saldoPendiente}

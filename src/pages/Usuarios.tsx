@@ -1,15 +1,25 @@
-// src/pages/Usuarios.jsx
+// src/pages/Usuarios.tsx
 import React, { useEffect, useState } from 'react';
-import { collection, getDocs, doc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, updateDoc, onSnapshot, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, sendPasswordResetEmail, signOut as signOutAuth } from 'firebase/auth';
 import { auth, db, secondaryAuth } from '../firebase';
 import { UserPlus, Users, Shield, UserCheck, UserX, Mail } from 'lucide-react';
 import toast from 'react-hot-toast';
+import type { Usuario } from '../types/usuario';
+
+interface UsuarioFormState {
+  nombre: string;
+  correo: string;
+  password: string;
+  rol: 'admin' | 'usuario';
+  estado: 'activo' | 'inactivo';
+  activoHasta: string;
+}
 
 export default function Usuarios() {
-  const [usuarios, setUsuarios] = useState([]);
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<UsuarioFormState>({
     nombre: '',
     correo: '',
     password: '',
@@ -19,9 +29,9 @@ export default function Usuarios() {
   });
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'usuarios'), (snapshot) => {
-      setUsuarios(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-    }, (error) => {
+    const unsubscribe = onSnapshot(collection(db, 'usuarios'), (snapshot: QuerySnapshot<DocumentData>) => {
+      setUsuarios(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Usuario)));
+    }, (error: Error) => {
       console.error('Error cargando usuarios:', error);
       toast.error('Error al cargar usuarios');
     });
@@ -29,14 +39,16 @@ export default function Usuarios() {
     return () => unsubscribe();
   }, []);
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value } as UsuarioFormState);
+  };
 
   // Genera contraseña temporal si el admin no escribe una
   const generarPasswordTemporal = () => {
     return `Tmp-${Math.random().toString(36).slice(2, 10)}A!`;
   };
 
-  const handleCrearUsuario = async (e) => {
+  const handleCrearUsuario = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!form.nombre || !form.correo) {
@@ -65,7 +77,7 @@ export default function Usuarios() {
       if (!form.password?.trim()) {
         try {
           await sendPasswordResetEmail(secondaryAuth, form.correo);
-        } catch (err) {
+        } catch (err: unknown) {
           console.warn('No se pudo enviar email de restablecimiento:', err);
         }
       }
@@ -73,15 +85,16 @@ export default function Usuarios() {
       // Cerrar sesión secundaria para evitar interferencias
       try {
         await signOutAuth(secondaryAuth);
-      } catch (e) {
+      } catch (e: unknown) {
         console.warn('No se pudo cerrar secondaryAuth:', e);
       }
 
       toast.success('Usuario creado correctamente.');
       setForm({ nombre: '', correo: '', password: '', rol: 'usuario', estado: 'activo', activoHasta: '' });
-    } catch (err) {
-      console.error('Error creando usuario:', err);
-      if (err.code === 'auth/email-already-in-use') {
+    } catch (err: unknown) {
+      const error = err as { code?: string; message?: string };
+      console.error('Error creando usuario:', error);
+      if (error.code === 'auth/email-already-in-use') {
         toast.error('Ese correo ya existe en Authentication.');
       } else {
         toast.error('Error al crear usuario. Revisa la consola.');
@@ -91,12 +104,12 @@ export default function Usuarios() {
     }
   };
 
-  const toggleEstado = async (uid, estadoActual) => {
+  const toggleEstado = async (uid: string, estadoActual: string) => {
     try {
       const ref = doc(db, 'usuarios', uid);
       await updateDoc(ref, { estado: estadoActual === 'activo' ? 'inactivo' : 'activo' });
       toast.success(`Usuario ${estadoActual === 'activo' ? 'desactivado' : 'activado'} correctamente`);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
       toast.error('No se pudo actualizar el estado');
     }
@@ -267,7 +280,7 @@ export default function Usuarios() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5" className="text-center py-12 text-gray-500">
+                  <td colSpan={5} className="text-center py-12 text-gray-500">
                     <Users size={48} className="mx-auto mb-3 text-gray-300" />
                     <p className="font-medium">No hay usuarios registrados</p>
                   </td>

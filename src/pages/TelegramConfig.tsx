@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { doc, setDoc, deleteDoc, collection, Timestamp, query, where, getDocs } from 'firebase/firestore';
+import { doc, setDoc, deleteDoc, collection, Timestamp, query, where, getDocs, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import { MessageCircle, Link2, Unlink, Copy, Check, RefreshCw, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -12,7 +12,7 @@ export default function TelegramConfig() {
   const [generando, setGenerando] = useState(false);
   const [copiado, setCopiado] = useState(false);
   const [desvinculando, setDesvinculando] = useState(false);
-  const [expiraEn, setExpiraEn] = useState(null);
+  const [expiraEn, setExpiraEn] = useState<number | null>(null);
 
   // Verificar si el usuario ya tiene Telegram vinculado
   useEffect(() => {
@@ -20,11 +20,11 @@ export default function TelegramConfig() {
 
     const verificarVinculacion = async () => {
       try {
-        const snapshot = await getDocs(
+        const snapshot: QuerySnapshot<DocumentData> = await getDocs(
           query(collection(db, 'vinculaciones'), where('uid', '==', user.uid))
         );
         setVinculado(!snapshot.empty);
-      } catch (error) {
+      } catch (error: unknown) {
         // Si la colección no existe o no hay permisos, asumir no vinculado
         console.log('Error verificando vinculación:', error);
         setVinculado(false);
@@ -82,7 +82,7 @@ export default function TelegramConfig() {
       setExpiraEn(expira.getTime());
       setCopiado(false);
       toast.success('✅ Código generado. Tenés 15 minutos para usarlo.');
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error generando código:', error);
       toast.error('Error al generar el código. Verificá los permisos de Firestore.');
     } finally {
@@ -96,7 +96,7 @@ export default function TelegramConfig() {
       setCopiado(true);
       setTimeout(() => setCopiado(false), 2000);
       toast.success('📋 Código copiado al portapapeles');
-    } catch {
+    } catch (error: unknown) {
       toast.error('No se pudo copiar automáticamente');
     }
   };
@@ -107,7 +107,7 @@ export default function TelegramConfig() {
 
     try {
       // Buscar la vinculación del usuario
-      const snapshot = await getDocs(
+      const snapshot: QuerySnapshot<DocumentData> = await getDocs(
         query(collection(db, 'vinculaciones'), where('uid', '==', user.uid))
       );
 
@@ -116,7 +116,7 @@ export default function TelegramConfig() {
 
       setVinculado(false);
       toast.success('✅ Telegram desvinculado correctamente');
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error desvinculando:', error);
       toast.error('Error al desvincular');
     } finally {

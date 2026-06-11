@@ -6,6 +6,7 @@ import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { Search, Download, DollarSign, TrendingUp, TrendingDown, Calendar, Filter, X, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import type { Venta } from '../types/venta';
 
 export default function Reportes() {
   const { user } = useAuth();
@@ -18,11 +19,11 @@ export default function Reportes() {
 
   // Filtro por rango de fechas (solo client-side, sin reiniciar el listener)
   const ventas = useMemo(() => {
-    let data = todasLasVentas;
+    let data = todasLasVentas as Venta[];
 
     if (fechaInicio && fechaFin) {
-      data = data.filter((v) => {
-        let fechaStr;
+      data = data.filter((v: Venta) => {
+        let fechaStr: string | undefined;
         if (v.fechaVenta) {
           fechaStr = v.fechaVenta;
         } else if (v.fechaRegistro?.seconds) {
@@ -136,7 +137,7 @@ export default function Reportes() {
             <input
               type="date"
               value={fechaInicio}
-              onChange={(e) => setFechaInicio(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFechaInicio(e.target.value)}
               className="w-full"
             />
           </div>
@@ -149,7 +150,7 @@ export default function Reportes() {
             <input
               type="date"
               value={fechaFin}
-              onChange={(e) => setFechaFin(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFechaFin(e.target.value)}
               className="w-full"
             />
           </div>
@@ -163,7 +164,7 @@ export default function Reportes() {
               <input
                 type="text"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                 placeholder="Cliente o Plataforma"
                 className="w-full pl-10"
               />
@@ -253,7 +254,7 @@ export default function Reportes() {
             </thead>
             <tbody>
               {filteredVentas.length > 0 ? (
-                ventasPaginadas.map((v) => (
+                ventasPaginadas.map((v: Venta) => (
                   <tr
                     key={v.id}
                     className="border-b border-gray-100 hover:bg-indigo-50/50 transition-all duration-200"
@@ -297,7 +298,7 @@ export default function Reportes() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" className="text-center py-12 text-gray-500">
+                  <td colSpan={8} className="text-center py-12 text-gray-500">
                     <p className="font-medium">No se encontraron ventas en el rango seleccionado</p>
                   </td>
                 </tr>
@@ -313,7 +314,7 @@ export default function Reportes() {
         totalItems={filteredVentas.length}
         itemsPerPage={itemsPorPagina}
         onPageChange={setPaginaActual}
-        onItemsPerPageChange={(val) => {
+        onItemsPerPageChange={(val: number) => {
           setItemsPorPagina(val);
           setPaginaActual(1);
         }}
