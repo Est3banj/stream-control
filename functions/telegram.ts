@@ -13,9 +13,42 @@
  * - Rate limiting básico contra brute force
  */
 
-const functions = require('firebase-functions');
-const admin = require('firebase-admin');
-const fetch = require('node-fetch');
+import * as functions from 'firebase-functions';
+import * as admin from 'firebase-admin';
+import * as crypto from 'crypto';
+
+interface TelegramMessage {
+  chat_id: string;
+  text: string;
+  parse_mode?: string;
+  reply_markup?: object;
+}
+
+interface WebhookResult {
+  success: boolean;
+  message: string;
+}
+
+interface UpdateResult {
+  status: string;
+  action?: string;
+  reason?: string;
+  success?: boolean;
+}
+
+interface NotificacionPayload {
+  clienteId: string;
+  nombreCliente: string;
+  plataforma: string;
+  diasRestantes: number;
+  fechaVencimiento?: string;
+  propietarioId: string;
+  telefono?: string;
+}
+
+interface NotificacionOptions {
+  appUrl?: string;
+}
 
 const db = admin.firestore();
 
@@ -31,14 +64,7 @@ const TELEGRAM_API = 'https://api.telegram.org/bot';
 // TELEGRAM API HELPERS
 // ============================================================
 
-/**
- * Enviar mensaje a un chat de Telegram
- * @param {string} chatId - ID del chat de Telegram
- * @param {string} text - Texto del mensaje
- * @param {Object} extra - Opciones adicionales (reply_markup, parse_mode, etc.)
- * @returns {Promise<Object>}
- */
-async function sendMessage(chatId, text, extra = {}) {
+export async function sendMessage(chatId: string, text: string, extra: Record<string, unknown> = {}): Promise<unknown> {
   const token = BOT_TOKEN();
   if (!token) throw new Error('TELEGRAM_TOKEN_NO_CONFIGURED');
 
@@ -62,19 +88,14 @@ async function sendMessage(chatId, text, extra = {}) {
     throw new Error(`Telegram API error: ${response.status}`);
   }
 
-  return response.json();
+  return response.json() as Promise<unknown>;
 }
 
-/**
- * Verificar que el webhook request viene de Telegram
- * @param {Object} req - Express request object
- * @returns {boolean}
- */
-function verifyWebhook(req) {
+export function verifyWebhook(req: functions.https.Request): boolean {
   const secret = WEBHOOK_SECRET();
-  if (!secret) return true; // Si no hay secret configurado, permitir (desarrollo)
+  if (!secret) return true;
   
-  const headerSecret = req.headers['x-telegram-bot-api-secret-token'];
+  const headerSecret = (req.headers as Record<string, string>)['x-telegram-bot-api-secret-token'];
   return headerSecret === secret;
 }
 
@@ -82,13 +103,7 @@ function verifyWebhook(req) {
 // LÓGICA DE VINCULACIÓN
 // ============================================================
 
-/**
- * Generar un código de vinculación para un usuario
- * @param {string} uid - Firebase UID del usuario
- * @returns {Promise<string>} - Código de 8 caracteres
- */
-async function generarCodigo(uid) {
-  // Limpiar códigos vencidos del mismo usuario
+export async function generarCodigo(uid: string): Promise<string> {
   const codigosExistentes = await db
     .collection('codigosVinculacion')
     .where('uid', '==', uid)
@@ -101,15 +116,13 @@ async function generarCodigo(uid) {
   });
   await batch.commit();
 
-  // Generar código criptográficamente seguro: 8 chars alfanuméricos
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'; // Sin caracteres ambiguos (0,O,1,l,I)
-  const randomBytes = require('crypto').randomBytes(8);
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  const randomBytes = crypto.randomBytes(8);
   let code = '';
   for (let i = 0; i < 8; i++) {
     code += chars[randomBytes[i] % chars.length];
   }
 
-  // Guardar con expiración de 15 minutos
   const ahora = admin.firestore.Timestamp.now();
   const expiraEn = new Date(ahora.toMillis() + 15 * 60 * 1000);
 
@@ -123,14 +136,7 @@ async function generarCodigo(uid) {
   return code;
 }
 
-/**
- * Procesar un código enviado por el usuario al bot
- * @param {string} codigo - Código de 8 caracteres
- * @param {string} chatId - Telegram chat ID del usuario
- * @param {string} telegramUsername - Username de Telegram (opcional)
- * @returns {Promise<{success: boolean, message: string}>}
- */
-async function procesarCodigo(codigo, chatId, telegramUsername = '') {
+export async function procesarCodigo(codigo: string, chatId: string, telegramUsername = ''): Promise<WebhookResult> {
   const docRef = db.collection('codigosVinculacion').doc(codigo);
   const docSnap = await docRef.get();
 
@@ -138,20 +144,18 @@ async function procesarCodigo(codigo, chatId, telegramUsername = '') {
     return { success: false, message: '❌ Código inválido. Verificá que sea correcto o generá uno nuevo en la app.' };
   }
 
-  const data = docSnap.data();
+  const data = docSnap.data() as admin.firestore.DocumentData;
 
   if (data.expirado) {
     return { success: false, message: '⏰ Este código ya fue usado o está vencido. Generá uno nuevo en la app.' };
   }
 
-  // Verificar expiración
   const ahora = admin.firestore.Timestamp.now();
   if (data.expiresAt.toMillis() < ahora.toMillis()) {
     await docRef.update({ expirado: true });
     return { success: false, message: '⏰ El código expiró. Generá uno nuevo en la app (tienen validez de 15 minutos).' };
   }
 
-  // Vincular: crear/actualizar el documento del chatId
   await db.collection('vinculaciones').doc(String(chatId)).set({
     uid: data.uid,
     telegramChatId: String(chatId),
@@ -160,26 +164,16 @@ async function procesarCodigo(codigo, chatId, telegramUsername = '') {
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
-  // Marcar código como usado
   await docRef.update({ expirado: true });
 
   return { success: true, message: '✅ ¡Vinculación exitosa! A partir de ahora recibirás notificaciones de tus clientes aquí.' };
 }
 
-/**
- * Eliminar una vinculación (desconectar)
- * @param {string} chatId - Telegram chat ID
- */
-async function eliminarVinculacion(chatId) {
+export async function eliminarVinculacion(chatId: string): Promise<void> {
   await db.collection('vinculaciones').doc(String(chatId)).delete();
 }
 
-/**
- * Obtener el chatId de Telegram para un usuario
- * @param {string} uid - Firebase UID
- * @returns {Promise<string|null>}
- */
-async function getChatIdPorUid(uid) {
+export async function getChatIdPorUid(uid: string): Promise<string | null> {
   const snapshot = await db
     .collection('vinculaciones')
     .where('uid', '==', uid)
@@ -187,15 +181,10 @@ async function getChatIdPorUid(uid) {
     .get();
 
   if (snapshot.empty) return null;
-  return snapshot.docs[0].data().telegramChatId;
+  return (snapshot.docs[0].data() as admin.firestore.DocumentData).telegramChatId as string;
 }
 
-/**
- * Verificar si un usuario tiene Telegram vinculado
- * @param {string} uid - Firebase UID
- * @returns {Promise<boolean>}
- */
-async function tieneVinculacion(uid) {
+export async function tieneVinculacion(uid: string): Promise<boolean> {
   const chatId = await getChatIdPorUid(uid);
   return chatId !== null;
 }
@@ -204,22 +193,17 @@ async function tieneVinculacion(uid) {
 // MANEJO DE COMANDOS DEL BOT
 // ============================================================
 
-/**
- * Manejar un mensaje entrante del bot de Telegram
- * @param {Object} update - Update object de Telegram
- * @returns {Promise<Object>} - Respuesta formateada
- */
-async function handleUpdate(update) {
-  const message = update.message;
+export async function handleUpdate(update: Record<string, unknown>): Promise<UpdateResult> {
+  const message = update.message as Record<string, unknown> | undefined;
   if (!message) return { status: 'ignored', reason: 'no_message' };
 
-  const chatId = message.chat.id;
-  const text = (message.text || '').trim();
-  const username = message.from?.username || '';
+  const chatId = message.chat as Record<string, unknown>;
+  const chatIdStr = String(chatId.id);
+  const text = ((message.text as string) || '').trim();
+  const username = (message.from as Record<string, unknown> | undefined)?.username as string || '';
 
-  // Comando /start
   if (text === '/start') {
-    await sendMessage(chatId,
+    await sendMessage(chatIdStr,
       `👋 <b>¡Bienvenido a StreamControl Pro!</b>\n\n` +
       `Soy el bot de notificaciones para vendedores. Te avisaré cuando los servicios de tus clientes estén por vencer.\n\n` +
       `📌 <b>¿Cómo vincular tu cuenta?</b>\n` +
@@ -235,9 +219,8 @@ async function handleUpdate(update) {
     return { status: 'ok', action: 'start' };
   }
 
-  // Comando /ayuda
   if (text === '/ayuda' || text === '/help') {
-    await sendMessage(chatId,
+    await sendMessage(chatIdStr,
       `<b>🤖 Ayuda - StreamControl Bot</b>\n\n` +
       `<b>¿Cómo vincular?</b>\n` +
       `En la app web, andá a <b>Configuración → Conectar Telegram</b> y generá un código. Luego enviame ese código.\n\n` +
@@ -253,27 +236,24 @@ async function handleUpdate(update) {
     return { status: 'ok', action: 'help' };
   }
 
-  // Comando /desvincular
   if (text === '/desvincular' || text === '/unlink') {
-    const vinculacion = await db.collection('vinculaciones').doc(String(chatId)).get();
+    const vinculacion = await db.collection('vinculaciones').doc(String(chatIdStr)).get();
     if (!vinculacion.exists) {
-      await sendMessage(chatId, 'ℹ️ No hay ninguna cuenta vinculada a este chat.');
+      await sendMessage(chatIdStr, 'ℹ️ No hay ninguna cuenta vinculada a este chat.');
       return { status: 'ok', action: 'unlink_not_found' };
     }
-    await eliminarVinculacion(chatId);
-    await sendMessage(chatId, '✅ <b>Cuenta desvinculada.</b> Ya no recibirás notificaciones aquí. Podés volver a vincular cuando quieras.');
+    await eliminarVinculacion(chatIdStr);
+    await sendMessage(chatIdStr, '✅ <b>Cuenta desvinculada.</b> Ya no recibirás notificaciones aquí. Podés volver a vincular cuando quieras.');
     return { status: 'ok', action: 'unlinked' };
   }
 
-  // Código de vinculación (exactamente 8 caracteres alfanuméricos)
   if (/^[A-Za-z0-9]{8}$/.test(text)) {
-    const result = await procesarCodigo(text, chatId, username);
-    await sendMessage(chatId, result.message);
+    const result = await procesarCodigo(text, chatIdStr, username);
+    await sendMessage(chatIdStr, result.message);
     return { status: 'ok', action: 'code_processed', success: result.success };
   }
 
-  // Mensaje no reconocido
-  await sendMessage(chatId,
+  await sendMessage(chatIdStr,
     `❌ No entendí ese mensaje.\n\n` +
     `📌 Si tenés un código de vinculación, enviámelo tal cual aparece en la app.\n` +
     `📌 Usá /ayuda para ver los comandos disponibles.`
@@ -285,18 +265,13 @@ async function handleUpdate(update) {
 // NOTIFICACIONES
 // ============================================================
 
-/**
- * Enviar notificación de vencimiento a un vendedor por Telegram
- * @param {Object} notificacion - Datos de la notificación
- * @param {Object} options - Opciones (incluir botones)
- * @returns {Promise<boolean>}
- */
-async function enviarNotificacionVencimiento(notificacion, options = {}) {
+export async function enviarNotificacionVencimiento(notificacion: NotificacionPayload, options: NotificacionOptions = {}): Promise<boolean> {
   try {
     const chatId = await getChatIdPorUid(notificacion.propietarioId);
     if (!chatId) return false;
 
-    const diasTexto = notificacion.diasRestantes <= 0
+    const estadoVencido = notificacion.diasRestantes <= 0;
+    const diasTexto = estadoVencido
       ? `⚠️ <b>VENCIDO</b> hace ${Math.abs(notificacion.diasRestantes)} día(s)`
       : `📅 Vence en <b>${notificacion.diasRestantes}</b> día(s)`;
 
@@ -306,13 +281,20 @@ async function enviarNotificacionVencimiento(notificacion, options = {}) {
       `📺 <b>Servicio:</b> ${notificacion.plataforma || '—'}\n` +
       `📅 <b>Vence:</b> ${notificacion.fechaVencimiento || '—'}\n` +
       `${diasTexto}\n\n` +
-      `<i>Contactá al cliente para gestionar la renovación.</i>`;
+      `<i>Contactá al cliente para consultar si desea renovar. Si no renueva, marcalo como inactivo desde la app.</i>`;
 
-    // Inline keyboard con opciones
+    const saludo = `Hola ${notificacion.nombreCliente}, me comunico de StreamControl.`;
+    const motivo = estadoVencido
+      ? `Le recuerdo que su servicio de ${notificacion.plataforma || 'streaming'} se encuentra VENCIDO desde el ${notificacion.fechaVencimiento}.`
+      : `Le recuerdo que su servicio de ${notificacion.plataforma || 'streaming'} está próximo a vencer el ${notificacion.fechaVencimiento}.`;
+    const cierre = `Quedo atento a su confirmación. Si no desea renovar, puede ignorar este mensaje sin problema. Saludos.`;
+
+    const waTexto = encodeURIComponent(`${saludo}\n\n${motivo}\n\n¿Desea renovarlo?\n\n${cierre}`);
+
     const reply_markup = {
       inline_keyboard: [
         [
-          { text: '📱 Contactar', url: `https://wa.me/57${notificacion.telefono}?text=${encodeURIComponent(`Hola ${notificacion.nombreCliente}, te escribo para recordarte que tu servicio de ${notificacion.plataforma || 'streaming'} está por vencer.`)}` },
+          { text: '📱 Contactar', url: `https://wa.me/57${notificacion.telefono}?text=${waTexto}` },
         ],
         [
           { text: '👤 Ver cliente', url: `${options.appUrl || ''}/gestion-clientes` },
@@ -328,27 +310,31 @@ async function enviarNotificacionVencimiento(notificacion, options = {}) {
   }
 }
 
-/**
- * Enviar notificación de mora (saldo pendiente) a un vendedor por Telegram
- * @param {Object} cliente - Datos del cliente
- * @returns {Promise<boolean>}
- */
-async function enviarNotificacionMora(cliente, options = {}) {
+export async function enviarNotificacionMora(cliente: Record<string, unknown>, options: NotificacionOptions = {}): Promise<boolean> {
   try {
-    const chatId = await getChatIdPorUid(cliente.propietarioId);
+    const chatId = await getChatIdPorUid(cliente.propietarioId as string);
     if (!chatId) return false;
 
     const mensaje =
       `<b>💰 Alerta de pago pendiente</b>\n\n` +
-      `👤 <b>Cliente:</b> ${cliente.nombre}\n` +
-      `📺 <b>Servicio:</b> ${cliente.plataforma || '—'}\n` +
-      `💵 <b>Saldo pendiente:</b> <b>$${cliente.saldoPendiente.toLocaleString()}</b>\n\n` +
-      `<i>Gestioná el cobro desde la app.</i>`;
+      `👤 <b>Cliente:</b> ${cliente.nombre as string}\n` +
+      `📺 <b>Servicio:</b> ${(cliente.plataforma as string) || '—'}\n` +
+      `💵 <b>Saldo pendiente:</b> <b>$${Number(cliente.saldoPendiente).toLocaleString('es-CO')}</b>\n\n` +
+      `<i>Contactá al cliente para gestionar el cobro. Una vez pagado, registralo desde la app.</i>`;
+
+    const waTexto = encodeURIComponent(
+      `Hola ${cliente.nombre as string}, me comunico de StreamControl para recordarle que tiene un saldo pendiente de $${Number(cliente.saldoPendiente).toLocaleString('es-CO')} por el servicio de ${(cliente.plataforma as string) || 'streaming'}.\n\n` +
+      `Le agradecería realizar el pago para evitar la suspensión del servicio. Si ya realizó el pago, por favor ignore este mensaje.\n\n` +
+      `Quedo atento. Saludos.`
+    );
 
     const reply_markup = {
       inline_keyboard: [
         [
-          { text: '💰 Cobrar', url: `${options.appUrl || ''}/gestion-clientes` },
+          { text: '📱 Contactar', url: `https://wa.me/57${(cliente.telefono as string) || ''}?text=${waTexto}` },
+        ],
+        [
+          { text: '💰 Cobrado', url: `${options.appUrl || ''}/gestion-clientes` },
         ],
       ],
     };
@@ -360,16 +346,3 @@ async function enviarNotificacionMora(cliente, options = {}) {
     return false;
   }
 }
-
-module.exports = {
-  sendMessage,
-  verifyWebhook,
-  handleUpdate,
-  generarCodigo,
-  procesarCodigo,
-  eliminarVinculacion,
-  getChatIdPorUid,
-  tieneVinculacion,
-  enviarNotificacionVencimiento,
-  enviarNotificacionMora,
-};

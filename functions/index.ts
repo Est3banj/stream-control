@@ -5,8 +5,9 @@
  * cuando los clientes están próximos a vencer (1, 2 o 3 días)
  */
 
-const functions = require('firebase-functions');
-const admin = require('firebase-admin');
+import * as functions from 'firebase-functions';
+import * as admin from 'firebase-admin';
+import * as telegram from './telegram';
 
 // Inicializar Firebase Admin si no está inicializado
 if (!admin.apps.length) {
@@ -25,13 +26,11 @@ const db = admin.firestore();
  * Para activar el webhook (pegar URL después del primer deploy):
  *   curl -F "url=DEPLOYED_URL/telegramWebhook" -F "secret_token=SECRET" https://api.telegram.org/botTOKEN/setWebhook
  */
-exports.telegramWebhook = functions.https.onRequest(async (req, res) => {
+export const telegramWebhook = functions.https.onRequest(async (req: functions.https.Request, res: functions.Response) => {
   if (req.method !== 'POST') {
     res.status(405).send('Method Not Allowed');
     return;
   }
-
-  const telegram = require('./telegram');
 
   if (!telegram.verifyWebhook(req)) {
     console.error('❌ Webhook verification failed — invalid secret token');
@@ -40,7 +39,7 @@ exports.telegramWebhook = functions.https.onRequest(async (req, res) => {
   }
 
   try {
-    const result = await telegram.handleUpdate(req.body);
+    const result = await telegram.handleUpdate(req.body as Record<string, unknown>);
     console.log('✅ Telegram update processed:', result);
     res.status(200).send('OK');
   } catch (error) {
@@ -52,12 +51,10 @@ exports.telegramWebhook = functions.https.onRequest(async (req, res) => {
 /**
  * Extensión del cron: envía notificaciones por Telegram
  */
-const telegram = require('./telegram');
-
-exports.generarNotificacionesVencimientos = functions.pubsub
+export const generarNotificacionesVencimientos = functions.pubsub
   .schedule('every 24 hours')
   .timeZone('America/Bogota')
-  .onRun(async (context) => {
+  .onRun(async (context: functions.EventContext) => {
     console.log('🔔 Iniciando generación de notificaciones de vencimientos...');
 
     try {
@@ -94,13 +91,13 @@ exports.generarNotificacionesVencimientos = functions.pubsub
 
       // Procesar vencimientos
       for (const clienteDoc of vencimientoSnapshot.docs) {
-        const cliente = clienteDoc.data();
+        const cliente = clienteDoc.data() as admin.firestore.DocumentData;
 
         if (cliente.fechaVencimiento) {
           const fechaVencimiento = new Date(cliente.fechaVencimiento);
           fechaVencimiento.setHours(0, 0, 0, 0);
 
-          const diffTime = fechaVencimiento - hoy;
+          const diffTime = fechaVencimiento.getTime() - hoy.getTime();
           const diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
           if (diasRestantes >= 1 && diasRestantes <= 3) {
@@ -150,7 +147,7 @@ exports.generarNotificacionesVencimientos = functions.pubsub
 
       // ── Procesar mora (saldo pendiente) ──
       for (const clienteDoc of moraSnapshot.docs) {
-        const cliente = clienteDoc.data();
+        const cliente = clienteDoc.data() as admin.firestore.DocumentData;
 
         if (cliente.saldoPendiente > 0) {
           try {
