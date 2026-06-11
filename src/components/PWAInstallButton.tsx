@@ -2,23 +2,39 @@ import React, { useState, useEffect } from 'react';
 import { Download, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export default function PWAInstallButton({ showInSidebar = false }) {
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
+interface PWAInstallButtonProps {
+  showInSidebar?: boolean;
+}
+
+declare global {
+  interface WindowEventMap {
+    beforeinstallprompt: BeforeInstallPromptEvent;
+  }
+
+  interface Navigator {
+    standalone?: boolean;
+  }
+}
+
+export default function PWAInstallButton({ showInSidebar = false }: PWAInstallButtonProps) {
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showBanner, setShowBanner] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
-    // Verificar si ya está instalado
     if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
       setIsInstalled(true);
       return;
     }
 
-    // Detectar beforeinstallprompt
-    const handleBeforeInstallPrompt = (e) => {
+    const handleBeforeInstallPrompt = (e: BeforeInstallPromptEvent) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      // Mostrar banner después de 3 segundos si el usuario no ha instalado
       const hasSeenBanner = localStorage.getItem('pwa-banner-seen');
       if (!hasSeenBanner) {
         setTimeout(() => setShowBanner(true), 3000);
@@ -27,7 +43,6 @@ export default function PWAInstallButton({ showInSidebar = false }) {
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    // Detectar si se instaló
     window.addEventListener('appinstalled', () => {
       setIsInstalled(true);
       setShowBanner(false);
@@ -50,13 +65,13 @@ export default function PWAInstallButton({ showInSidebar = false }) {
     try {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
-      
+
       if (outcome === 'accepted') {
         toast.success('Instalación iniciada...');
       } else {
         toast('Instalación cancelada', { icon: 'ℹ️' });
       }
-      
+
       setDeferredPrompt(null);
       setShowBanner(false);
       localStorage.setItem('pwa-banner-seen', 'true');
@@ -71,17 +86,14 @@ export default function PWAInstallButton({ showInSidebar = false }) {
     localStorage.setItem('pwa-banner-seen', 'true');
   };
 
-  // Si está en sidebar y no hay prompt, no mostrar nada
   if (showInSidebar && (!deferredPrompt || isInstalled)) {
     return null;
   }
 
-  // Si no está en sidebar y no hay prompt ni banner, no mostrar nada
   if (!showInSidebar && (isInstalled || (!deferredPrompt && !showBanner))) {
     return null;
   }
 
-  // Botón para sidebar
   if (showInSidebar && deferredPrompt) {
     return (
       <button
@@ -97,7 +109,6 @@ export default function PWAInstallButton({ showInSidebar = false }) {
 
   return (
     <>
-      {/* Botón flotante de instalación */}
       {deferredPrompt && !showBanner && (
         <button
           onClick={handleInstallClick}
@@ -109,7 +120,6 @@ export default function PWAInstallButton({ showInSidebar = false }) {
         </button>
       )}
 
-      {/* Banner de instalación */}
       {showBanner && deferredPrompt && (
         <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md mx-4 animate-scale-in">
           <div className="glass-strong rounded-2xl p-6 shadow-2xl border border-white/40">
@@ -152,4 +162,3 @@ export default function PWAInstallButton({ showInSidebar = false }) {
     </>
   );
 }
-

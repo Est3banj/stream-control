@@ -1,14 +1,21 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-export default function Paginador({ currentPage, totalItems, itemsPerPage, onPageChange, onItemsPerPageChange }) {
+interface PaginadorProps {
+  currentPage: number;
+  totalItems: number;
+  itemsPerPage: number;
+  onPageChange: (page: number) => void;
+  onItemsPerPageChange?: (itemsPerPage: number) => void;
+}
+
+export default function Paginador({ currentPage, totalItems, itemsPerPage, onPageChange, onItemsPerPageChange }: PaginadorProps) {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   if (totalPages <= 1) return null;
 
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
-  // Generar números de página visibles (máx 5)
   const getPageNumbers = () => {
     const pages = [];
     const maxVisible = 5;

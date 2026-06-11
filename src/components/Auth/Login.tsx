@@ -11,7 +11,7 @@ export default function Login(){
   const [loading,setLoading]=useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const submit = async (e) => {
+  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) {
       toast.error('Por favor complete todos los campos');
@@ -25,12 +25,12 @@ export default function Login(){
       nav('/');
     } catch (error) {
       console.error(error);
-
-      if (error.message.includes("inactivo")) {
+      const err = error as { code?: string; message?: string };
+      if (err.message?.includes("inactivo")) {
         toast.error("Tu cuenta está inactiva. Contacta al administrador.");
-      } else if (error.message.includes("no registrado")) {
+      } else if (err.message?.includes("no registrado")) {
         toast.error("Este usuario no está registrado en la base de datos.");
-      } else if (error.code === "auth/invalid-credential" || error.code === "auth/wrong-password") {
+      } else if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password") {
         toast.error("Correo o contraseña incorrectos.");
       } else {
         toast.error("Error al iniciar sesión. Inténtelo nuevamente.");
@@ -42,7 +42,6 @@ export default function Login(){
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center relative bg-gradient-to-tr from-indigo-900 via-purple-900 to-pink-900 overflow-hidden px-4 font-sans">
-      {/* Animated wave background */}
       <svg className="absolute bottom-0 left-0 w-full h-48 md:h-64 opacity-30 animate-wave" viewBox="0 0 1440 320" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
         <path fill="url(#gradient)" fillOpacity="0.7" d="M0,64L48,80C96,96,192,128,288,160C384,192,480,224,576,213.3C672,203,768,149,864,117.3C960,85,1056,75,1152,90.7C1248,107,1344,149,1392,170.7L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
         <defs>
