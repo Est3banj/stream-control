@@ -1,26 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { db } from '../firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
+import type { UseClientesReturn } from '../types/hooks';
+import type { Cliente } from '../types/cliente';
 
-/**
- * Hook compartido para obtener clientes en tiempo real.
- * 
- * Usa un listener singleton a nivel de módulo para que múltiples componentes
- * compartan la MISMA conexión a Firestore, evitando reads duplicados.
- * 
- * @param {Object} user - Usuario autenticado con uid y rol
- * @returns {{ clientes: Array, loading: boolean, error: string|null }}
- */
-
-// ─── Estado singleton compartido ──────────────────────────────
-// Todas las instancias del hook comparten este mismo listener.
-let sharedUid = null;
+let sharedUid: string | null = null;
 let sharedIsAdmin = false;
-let sharedData = [];
+let sharedData: Cliente[] = [];
 let sharedLoading = true;
-let sharedError = null;
-let sharedUnsubscribe = null;
-const subscribers = new Map();
+let sharedError: string | null = null;
+let sharedUnsubscribe: (() => void) | null = null;
+const subscribers = new Map<number, React.Dispatch<React.SetStateAction<Pick<UseClientesReturn, 'clientes' | 'loading' | 'error'>>>>();
 let nextSubId = 0;
 
 function broadcast() {
@@ -29,8 +19,7 @@ function broadcast() {
   });
 }
 
-function startListener(uid, isAdmin) {
-  // Limpiar listener anterior si el usuario cambió
+function startListener(uid: string, isAdmin: boolean) {
   if (sharedUnsubscribe) {
     sharedUnsubscribe();
     sharedUnsubscribe = null;
@@ -47,16 +36,16 @@ function startListener(uid, isAdmin) {
 
   sharedUnsubscribe = onSnapshot(
     q,
-    (snapshot) => {
+    (snapshot: QuerySnapshot<DocumentData>) => {
       sharedError = null;
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
 
       sharedData = snapshot.docs.map((doc) => {
-        const c = { id: doc.id, ...doc.data() };
+        const c = { id: doc.id, ...doc.data() } as Cliente;
         if (c.fechaVencimiento) {
           const venc = new Date(c.fechaVencimiento + 'T00:00:00');
-          const diff = venc - hoy;
+          const diff = venc.getTime() - hoy.getTime();
           c.diasRestantes = Math.ceil(diff / (1000 * 60 * 60 * 24));
         } else {
           c.diasRestantes = null;
@@ -67,7 +56,7 @@ function startListener(uid, isAdmin) {
       sharedLoading = false;
       broadcast();
     },
-    (error) => {
+    (error: Error) => {
       console.error('Error en listener de clientes:', error);
       sharedError = error.message || 'Error al cargar clientes';
       sharedLoading = false;
@@ -86,16 +75,14 @@ function stopListener() {
   sharedLoading = true;
 }
 
-// ─── Hook ─────────────────────────────────────────────────────
-
-export default function useClientes(user) {
-  const [state, setState] = useState(() => ({
+export default function useClientes(user: { uid?: string; rol?: string } | null): Pick<UseClientesReturn, 'clientes' | 'loading' | 'error'> {
+  const [state, setState] = useState<Pick<UseClientesReturn, 'clientes' | 'loading' | 'error'>>(() => ({
     clientes: sharedData,
     loading: sharedLoading,
     error: sharedError,
   }));
 
-  const idRef = useRef(null);
+  const idRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!idRef.current) idRef.current = ++nextSubId;
@@ -108,15 +95,12 @@ export default function useClientes(user) {
       return;
     }
 
-    // Registrar este componente como subscriptor
     subscribers.set(subId, setState);
 
-    // Sincronizar con el estado actual
     if (sharedUid === uid) {
       setState({ clientes: sharedData, loading: sharedLoading, error: sharedError });
     }
 
-    // Iniciar listener si no hay uno activo o el usuario cambió
     if (!sharedUnsubscribe || sharedUid !== uid) {
       startListener(uid, isAdmin);
     }

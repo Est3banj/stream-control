@@ -1,26 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { db } from '../firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
+import type { UseVentasReturn } from '../types/hooks';
+import type { Venta } from '../types/venta';
 
-/**
- * Hook compartido para obtener ventas en tiempo real.
- * 
- * Usa listener singleton a nivel de módulo para que múltiples componentes
- * compartan la misma conexión a Firestore (aunque en la práctica Dashboard
- * y Reportes no se montan simultáneamente).
- * 
- * @param {Object} user - Usuario autenticado con uid y rol
- * @returns {{ ventas: Array, loading: boolean, error: string|null }}
- */
-
-// ─── Estado singleton compartido ──────────────────────────────
-let sharedUid = null;
+let sharedUid: string | null = null;
 let sharedIsAdmin = false;
-let sharedData = [];
+let sharedData: Venta[] = [];
 let sharedLoading = true;
-let sharedError = null;
-let sharedUnsubscribe = null;
-const subscribers = new Map();
+let sharedError: string | null = null;
+let sharedUnsubscribe: (() => void) | null = null;
+const subscribers = new Map<number, React.Dispatch<React.SetStateAction<Pick<UseVentasReturn, 'ventas' | 'loading' | 'error'>>>>();
 let nextSubId = 0;
 
 function broadcast() {
@@ -29,7 +19,7 @@ function broadcast() {
   });
 }
 
-function startListener(uid, isAdmin) {
+function startListener(uid: string, isAdmin: boolean) {
   if (sharedUnsubscribe) {
     sharedUnsubscribe();
     sharedUnsubscribe = null;
@@ -46,16 +36,16 @@ function startListener(uid, isAdmin) {
 
   sharedUnsubscribe = onSnapshot(
     q,
-    (snapshot) => {
+    (snapshot: QuerySnapshot<DocumentData>) => {
       sharedError = null;
       sharedData = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-      }));
+      })) as Venta[];
       sharedLoading = false;
       broadcast();
     },
-    (error) => {
+    (error: Error) => {
       console.error('Error en listener de ventas:', error);
       sharedError = error.message || 'Error al cargar ventas';
       sharedLoading = false;
@@ -74,16 +64,14 @@ function stopListener() {
   sharedLoading = true;
 }
 
-// ─── Hook ─────────────────────────────────────────────────────
-
-export default function useVentas(user) {
-  const [state, setState] = useState(() => ({
+export default function useVentas(user: { uid?: string; rol?: string } | null): Pick<UseVentasReturn, 'ventas' | 'loading' | 'error'> {
+  const [state, setState] = useState<Pick<UseVentasReturn, 'ventas' | 'loading' | 'error'>>(() => ({
     ventas: sharedData,
     loading: sharedLoading,
     error: sharedError,
   }));
 
-  const idRef = useRef(null);
+  const idRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!idRef.current) idRef.current = ++nextSubId;

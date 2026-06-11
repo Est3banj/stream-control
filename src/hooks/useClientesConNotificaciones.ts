@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
 import useClientes from './useClientes';
+import type { NotificacionDerivada } from '../types/hooks';
+import type { Cliente } from '../types/cliente';
 
-/**
- * Hook personalizado para obtener clientes con notificaciones de vencimiento.
- * Usa el hook compartido useClientes para evitar listeners duplicados.
- * 
- * @param {Object} user - Usuario autenticado con uid, email y rol
- * @returns {Object} { clientes, notificaciones, loading, error }
- */
-export default function useClientesConNotificaciones(user) {
+interface UseClientesConNotificacionesReturn {
+  clientes: Cliente[];
+  notificaciones: NotificacionDerivada[];
+  loading: boolean;
+  error: string | null;
+}
+
+export default function useClientesConNotificaciones(user: { uid?: string; rol?: string } | null): UseClientesConNotificacionesReturn {
   const { clientes, loading, error } = useClientes(user);
-  const [notificaciones, setNotificaciones] = useState([]);
+  const [notificaciones, setNotificaciones] = useState<NotificacionDerivada[]>([]);
 
   useEffect(() => {
     if (loading) return;
@@ -19,10 +21,9 @@ export default function useClientesConNotificaciones(user) {
       return;
     }
 
-    // Notificaciones por vencimiento de servicio
-    const notifsVencimiento = clientes
+    const notifsVencimiento: NotificacionDerivada[] = clientes
       .filter((c) => {
-        if (c.diasRestantes === null) return false;
+        if (c.diasRestantes === null || c.diasRestantes === undefined) return false;
         return (
           c.diasRestantes <= 0 ||
           c.diasRestantes === 1 ||
@@ -37,15 +38,14 @@ export default function useClientesConNotificaciones(user) {
         plataforma: c.plataforma || '',
         telefono: c.telefono || '',
         correo: c.correo || '',
-        diasRestantes: c.diasRestantes,
+        diasRestantes: c.diasRestantes ?? null,
         fechaVencimiento: c.fechaVencimiento,
         propietarioId: c.propietarioId,
         usuarioEmail: c.usuarioEmail || '',
-        tipo: 'vencimiento',
+        tipo: 'vencimiento' as const,
       }));
 
-    // Notificaciones por saldo pendiente (en mora)
-    const notifsMora = clientes
+    const notifsMora: NotificacionDerivada[] = clientes
       .filter((c) => c.saldoPendiente > 0)
       .map((c) => ({
         id: `${c.id}_mora`,
@@ -54,20 +54,19 @@ export default function useClientesConNotificaciones(user) {
         plataforma: c.plataforma || '',
         telefono: c.telefono || '',
         correo: c.correo || '',
-        diasRestantes: c.diasRestantes,
+        diasRestantes: c.diasRestantes ?? null,
         fechaVencimiento: c.fechaVencimiento,
         propietarioId: c.propietarioId,
         usuarioEmail: c.usuarioEmail || '',
         saldoPendiente: c.saldoPendiente,
-        tipo: 'mora',
+        tipo: 'mora' as const,
       }));
 
     const todas = [...notifsVencimiento, ...notifsMora].sort((a, b) => {
-      // Primero mora, después vencidos, después próximos a vencer
       if (a.tipo === 'mora' && b.tipo !== 'mora') return -1;
       if (a.tipo !== 'mora' && b.tipo === 'mora') return 1;
-      if (a.diasRestantes <= 0 && b.diasRestantes > 0) return -1;
-      if (a.diasRestantes > 0 && b.diasRestantes <= 0) return 1;
+      if ((a.diasRestantes ?? 0) <= 0 && (b.diasRestantes ?? 0) > 0) return -1;
+      if ((a.diasRestantes ?? 0) > 0 && (b.diasRestantes ?? 0) <= 0) return 1;
       return (a.diasRestantes ?? 999) - (b.diasRestantes ?? 999);
     });
 
