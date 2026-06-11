@@ -6,14 +6,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // MOCKS
 // ═══════════════════════════════════════════════════════════════
 
-const mockAddDoc = vi.fn(() => Promise.resolve({ id: 'new-venta-id' }));
-const mockSetDoc = vi.fn(() => Promise.resolve());
-const mockUpdateDoc = vi.fn(() => Promise.resolve());
-const mockGetDoc = vi.fn();
-const mockCollection = vi.fn((_db, path) => ({ _path: path }));
-const mockDoc = vi.fn((_db, path, ...ids) => ({
-  _path: path,
-  _id: path === 'clientes' ? ids.join('_') : ids[0],
+const mockAddDoc = vi.fn((...args: any[]) => Promise.resolve({ id: 'new-venta-id' }));
+const mockSetDoc = vi.fn((...args: any[]) => Promise.resolve());
+const mockUpdateDoc = vi.fn((...args: any[]) => Promise.resolve());
+const mockGetDoc = vi.fn((...args: any[]) => undefined as any);
+const mockCollection = vi.fn((...args: any[]) => ({ _path: args[1] as string }));
+const mockDoc = vi.fn((...args: any[]) => ({
+  _path: args[1] as string,
+  _id: args[1] === 'clientes' ? (args.slice(2) as string[]).join('_') : args[2] as string,
 }));
 
 vi.mock('../firebase', () => ({
@@ -21,14 +21,14 @@ vi.mock('../firebase', () => ({
 }));
 
 vi.mock('firebase/firestore', () => ({
-  collection: (...args) => mockCollection(...args),
-  doc: (...args) => mockDoc(...args),
-  addDoc: (...args) => mockAddDoc(...args),
-  setDoc: (...args) => mockSetDoc(...args),
-  updateDoc: (...args) => mockUpdateDoc(...args),
-  getDoc: (...args) => mockGetDoc(...args),
+  collection: (...args: any[]) => mockCollection(...args),
+  doc: (...args: any[]) => mockDoc(...args),
+  addDoc: (...args: any[]) => mockAddDoc(...args),
+  setDoc: (...args: any[]) => mockSetDoc(...args),
+  updateDoc: (...args: any[]) => mockUpdateDoc(...args),
+  getDoc: (...args: any[]) => mockGetDoc(...args),
   serverTimestamp: () => ({ _methodName: 'serverTimestamp' }),
-  increment: (n) => ({ _methodName: 'increment', _value: n }),
+  increment: (n: number) => ({ _methodName: 'increment', _value: n }),
 }));
 
 const mockUser = { uid: 'test-uid-123', email: 'test@streamcontrol.com' };
@@ -53,13 +53,13 @@ import VentasForm from './VentasForm';
 // ═══════════════════════════════════════════════════════════════
 
 /** Busca un input por su atributo name dentro del container */
-function getInput(container, name) {
-  const el = container.querySelector(`input[name="${name}"]`);
+function getInput(container: HTMLElement, name: string): HTMLInputElement {
+  const el = container.querySelector<HTMLInputElement>(`input[name="${name}"]`);
   if (!el) throw new Error(`Input with name "${name}" not found`);
   return el;
 }
 
-function createDocSnapshot(id, data, exists = true) {
+function createDocSnapshot(id: string, data: Record<string, unknown> | null, exists = true) {
   return {
     id,
     exists: () => exists,
@@ -68,7 +68,7 @@ function createDocSnapshot(id, data, exists = true) {
 }
 
 /** Completa los campos obligatorios del formulario excepto saldoPendiente */
-async function fillRequiredFields(user, container) {
+async function fillRequiredFields(user: ReturnType<typeof userEvent.setup>, container: HTMLElement): Promise<void> {
   await user.type(screen.getByPlaceholderText('Ej: Juan Pérez'), 'Cliente Test');
   await user.type(screen.getByPlaceholderText('Ej: 3104567890'), '3001234567');
   await user.type(
@@ -145,7 +145,7 @@ describe('VentasForm — Renderizado', () => {
 });
 
 describe('VentasForm — Validaciones', () => {
-  let container;
+  let container: HTMLElement;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -154,9 +154,9 @@ describe('VentasForm — Validaciones', () => {
     container = renderResult.container;
   });
 
-  function submitForm() {
+  function submitForm(): void {
     const form = container.querySelector('form');
-    fireEvent.submit(form);
+    if (form) fireEvent.submit(form);
   }
 
   it('muestra error si el nombre está vacío al hacer submit', () => {
@@ -202,15 +202,15 @@ describe('VentasForm — Validaciones', () => {
 });
 
 describe('VentasForm — Submit y Firestore', () => {
-  let user;
-  let container;
+  let user: ReturnType<typeof userEvent.setup>;
+  let container: HTMLElement;
 
   beforeEach(async () => {
     vi.clearAllMocks();
     // Mockeamos addDoc/resolves para que todas las promesas resuelvan
     mockAddDoc.mockResolvedValue({ id: 'new-venta-id' });
-    mockSetDoc.mockResolvedValue();
-    mockUpdateDoc.mockResolvedValue();
+    mockSetDoc.mockResolvedValue(undefined);
+    mockUpdateDoc.mockResolvedValue(undefined);
     mockGetDoc.mockResolvedValue(createDocSnapshot('no-existe', null, false));
 
     const renderResult = render(<VentasForm />);
@@ -231,11 +231,12 @@ describe('VentasForm — Submit y Firestore', () => {
     });
 
     // Verificar datos de la venta
-    const ventaCall = mockAddDoc.mock.calls.find(
-      ([ref]) => ref._path === 'ventas',
+    const ventaCalls = mockAddDoc.mock.calls as Array<[unknown, Record<string, unknown>]>;
+    const ventaCall = ventaCalls.find(
+      ([ref]) => (ref as { _path: string })._path === 'ventas',
     );
     expect(ventaCall).toBeDefined();
-    const ventaData = ventaCall[1];
+    const ventaData = ventaCall![1];
     expect(ventaData.nombre).toBe('Cliente Test');
     expect(ventaData.plataforma).toBe('Netflix');
     expect(ventaData.pagado).toBe(true);
@@ -275,18 +276,21 @@ describe('VentasForm — Submit y Firestore', () => {
     });
 
     // Verificar que updateDoc usa increment con el monto correcto
-    const updateCall = mockUpdateDoc.mock.calls[0];
-    expect(updateCall[0]._path).toBe('clientes');
+    const updateCalls = mockUpdateDoc.mock.calls as Array<[unknown, Record<string, unknown>]>;
+    const updateCall = updateCalls[0]!;
+    expect((updateCall[0] as { _path: string })._path).toBe('clientes');
     expect(updateCall[1]).toEqual({
       saldoPendiente: { _methodName: 'increment', _value: 10000 },
     });
 
     // Verificar saldoPendiente en la venta
-    const ventaCall = mockAddDoc.mock.calls.find(
-      ([ref]) => ref._path === 'ventas',
+    const ventaCalls2 = mockAddDoc.mock.calls as Array<[unknown, Record<string, unknown>]>;
+    const ventaCall2 = ventaCalls2.find(
+      ([ref]) => (ref as { _path: string })._path === 'ventas',
     );
-    expect(ventaCall[1].pagado).toBe(false);
-    expect(ventaCall[1].saldoPendiente).toBe(10000);
+    expect(ventaCall2).toBeDefined();
+    expect(ventaCall2![1].pagado).toBe(false);
+    expect(ventaCall2![1].saldoPendiente).toBe(10000);
   });
 });
 

@@ -2,6 +2,9 @@
  * Mocks compartidos para tests de StreamControl
  */
 
+import { vi } from 'vitest';
+import type { Cliente } from '../types/cliente';
+
 // Mock de Firebase Firestore
 export const mockFirestore = {
   collection: vi.fn((db, path) => ({ _path: path, _db: db })),
@@ -39,25 +42,29 @@ export const mockAuthContext = {
 };
 
 // Helper: crear un snapshot simulado de Firestore
-export function createDocSnapshot(id, data, exists = true) {
+export function createDocSnapshot(id: string, data: Record<string, unknown> | null, existsVal = true): {
+  id: string;
+  exists: () => boolean;
+  data: () => Record<string, unknown> | null | undefined;
+} {
   return {
     id,
-    exists: () => exists,
-    data: () => exists ? data : undefined,
+    exists: () => existsVal,
+    data: () => existsVal ? data : undefined,
   };
 }
 
 // Helper: crear un snapshot de query simulado
-export function createQuerySnapshot(docs) {
+export function createQuerySnapshot(docs: Array<{ id: string; data: () => Record<string, unknown> }>) {
   return {
     docs,
     empty: docs.length === 0,
-    forEach: (cb) => docs.forEach(cb),
+    forEach: (cb: (doc: { id: string; data: () => Record<string, unknown> }) => void) => docs.forEach(cb),
   };
 }
 
 // Helper: cliente simulado para tests
-export function createMockCliente(overrides = {}) {
+export function createMockCliente(overrides: Partial<Cliente> = {}): Cliente {
   return {
     id: `test-uid_${overrides.nombre || 'Test'}`,
     nombre: 'Test Client',

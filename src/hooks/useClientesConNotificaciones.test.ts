@@ -1,21 +1,23 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Cliente } from '../types/cliente';
 
 // Mocks
 const mockUseClientes = vi.fn();
 vi.mock('./useClientes', () => ({
-  default: (...args) => mockUseClientes(...args),
+  default: (...args: unknown[]) => mockUseClientes(...args),
 }));
 
 import useClientesConNotificaciones from './useClientesConNotificaciones';
 
-function createMockCliente(overrides = {}) {
+function createMockCliente(overrides: Partial<Cliente> = {}): Cliente {
   return {
     id: `uid_${overrides.nombre || 'Test'}`,
     nombre: overrides.nombre || 'Test Client',
     telefono: '3001234567',
     correo: 'test@client.com',
     plataforma: overrides.plataforma || 'Netflix',
+    estado: 'activo',
     propietarioId: 'test-uid',
     usuarioEmail: 'test@streamcontrol.com',
     fechaVencimiento: overrides.fechaVencimiento || '2026-06-15',

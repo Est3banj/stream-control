@@ -8,13 +8,13 @@ vi.mock('../firebase', () => ({
 }));
 
 vi.mock('firebase/firestore', () => ({
-  collection: vi.fn((db, path) => ({ _path: path })),
+  collection: vi.fn(),
   query: vi.fn(),
   where: vi.fn(),
-  onSnapshot: (...args) => mockOnSnapshot(...args),
+  onSnapshot: (...args: unknown[]) => mockOnSnapshot(...args),
 }));
 
-function createDocSnapshot(id, data) {
+function createDocSnapshot<T extends Record<string, unknown>>(id: string, data: T) {
   return {
     id,
     data: () => data,
@@ -22,12 +22,12 @@ function createDocSnapshot(id, data) {
   };
 }
 
-function createQuerySnapshot(docs) {
+function createQuerySnapshot<T>(docs: T[]) {
   return { docs, empty: docs.length === 0 };
 }
 
 describe('useVentas', () => {
-  let useVentas;
+  let useVentas: (user: { uid: string; email: string; rol: string } | null) => { ventas: any[]; loading: boolean };
   const mockUser = { uid: 'test-uid', email: 'test@test.com', rol: 'usuario' };
 
   beforeEach(async () => {
@@ -38,7 +38,7 @@ describe('useVentas', () => {
   });
 
   it('returns ventas from snapshot', async () => {
-    mockOnSnapshot.mockImplementation((q, onNext) => {
+    mockOnSnapshot.mockImplementation((q: unknown, onNext: (snapshot: ReturnType<typeof createQuerySnapshot>) => void) => {
       const snapshot = createQuerySnapshot([
         createDocSnapshot('venta1', {
           nombre: 'Cliente A',
@@ -74,7 +74,7 @@ describe('useVentas', () => {
   });
 
   it('handles empty snapshot', async () => {
-    mockOnSnapshot.mockImplementation((q, onNext) => {
+    mockOnSnapshot.mockImplementation((q: unknown, onNext: (snapshot: ReturnType<typeof createQuerySnapshot>) => void) => {
       const snapshot = createQuerySnapshot([]);
       setTimeout(() => onNext(snapshot), 0);
       return vi.fn();
@@ -103,7 +103,7 @@ describe('useVentas', () => {
       saldoPendiente: 0,
     };
 
-    mockOnSnapshot.mockImplementation((q, onNext) => {
+    mockOnSnapshot.mockImplementation((q: unknown, onNext: (snapshot: ReturnType<typeof createQuerySnapshot>) => void) => {
       const snapshot = createQuerySnapshot([
         createDocSnapshot('venta2', mockData),
       ]);

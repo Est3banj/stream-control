@@ -9,13 +9,13 @@ vi.mock('../firebase', () => ({
 }));
 
 vi.mock('firebase/firestore', () => ({
-  collection: vi.fn((db, path) => ({ _path: path })),
+  collection: vi.fn(),
   query: vi.fn(),
   where: vi.fn(),
-  onSnapshot: (...args) => mockOnSnapshot(...args),
+  onSnapshot: (...args: unknown[]) => mockOnSnapshot(...args),
 }));
 
-function createDocSnapshot(id, data) {
+function createDocSnapshot<T extends Record<string, unknown>>(id: string, data: T) {
   return {
     id,
     data: () => data,
@@ -23,12 +23,12 @@ function createDocSnapshot(id, data) {
   };
 }
 
-function createQuerySnapshot(docs) {
+function createQuerySnapshot<T>(docs: T[]) {
   return { docs, empty: docs.length === 0 };
 }
 
 describe('useClientes', () => {
-  let useClientes;
+  let useClientes: (user: { uid: string; email: string; rol: string } | null) => { clientes: any[]; loading: boolean };
   const mockUser = { uid: 'test-uid', email: 'test@test.com', rol: 'usuario' };
 
   beforeEach(async () => {
@@ -45,7 +45,7 @@ describe('useClientes', () => {
     futureDate.setDate(futureDate.getDate() + 5);
     const fechaStr = futureDate.toISOString().split('T')[0];
 
-    mockOnSnapshot.mockImplementation((q, onNext) => {
+    mockOnSnapshot.mockImplementation((q: unknown, onNext: (snapshot: ReturnType<typeof createQuerySnapshot>) => void) => {
       const snapshot = createQuerySnapshot([
         createDocSnapshot('uid_Cliente1', {
           nombre: 'Cliente1',
@@ -71,7 +71,7 @@ describe('useClientes', () => {
   });
 
   it('sets diasRestantes to null when no fechaVencimiento', async () => {
-    mockOnSnapshot.mockImplementation((q, onNext) => {
+    mockOnSnapshot.mockImplementation((q: unknown, onNext: (snapshot: ReturnType<typeof createQuerySnapshot>) => void) => {
       const snapshot = createQuerySnapshot([
         createDocSnapshot('uid_Cliente1', {
           nombre: 'Cliente1',
@@ -97,7 +97,7 @@ describe('useClientes', () => {
     pastDate.setDate(pastDate.getDate() - 3);
     const fechaStr = pastDate.toISOString().split('T')[0];
 
-    mockOnSnapshot.mockImplementation((q, onNext) => {
+    mockOnSnapshot.mockImplementation((q: unknown, onNext: (snapshot: ReturnType<typeof createQuerySnapshot>) => void) => {
       const snapshot = createQuerySnapshot([
         createDocSnapshot('uid_Expired', {
           nombre: 'Expired',
