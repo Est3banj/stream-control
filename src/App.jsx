@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import PrivateRoute from './components/Auth/PrivateRoute';
 import Layout from './components/Layout';
 import Login from './components/Auth/Login';
@@ -87,6 +87,9 @@ export default function App() {
               </PrivateRoute>
             }
           />
+
+          {/* Catch-all: redirigir a dashboard */}
+          <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
       </ErrorBoundary>

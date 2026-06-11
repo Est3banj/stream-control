@@ -24,10 +24,10 @@ service cloud.firestore {
     
     // Verificar si el usuario es administrador
     // Se basa en el rol del documento en la colección 'usuarios'
-    // Fallback temporal por email para migración
+    // Fallback por email mientras se completa la migración a usuarios/rol
     function isAdmin() {
       return isAuthenticated() && (
-        getUserEmail() in ['admin@streamcontrol.com', 'estebanjurado20005@gmail.com']
+        getUserEmail() in ['estebanjurado20005@gmail.com']
         ||
         get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin'
       );
@@ -59,15 +59,16 @@ service cloud.firestore {
       // Creación: Solo admin puede crear usuarios
       // Validación: El userId debe coincidir con el UID del usuario creado en Auth
       // Basado en: Usuarios.jsx línea 62 - setDoc con userCred.user.uid
-      allow create: if isAdmin() && 
-        userId == request.resource.data.get('correo', '').split('@')[0] || // Validación básica
+      allow create: if isAdmin() && (
+        userId == request.resource.data.get('correo', '').split('@')[0] &&
         request.resource.data.keys().hasAll(['nombre', 'correo', 'rol', 'estado']) &&
         request.resource.data.rol is string &&
         request.resource.data.rol in ['admin', 'usuario'] &&
         request.resource.data.estado is string &&
         request.resource.data.estado in ['activo', 'inactivo'] &&
         request.resource.data.nombre is string &&
-        request.resource.data.correo is string;
+        request.resource.data.correo is string
+      );
       
       // Actualización: Solo admin puede actualizar, y solo el campo 'estado'
       // Basado en: Usuarios.jsx línea 97 - updateDoc solo actualiza 'estado'
@@ -107,7 +108,7 @@ service cloud.firestore {
         request.resource.data.nombre is string &&
         request.resource.data.telefono is string &&
         request.resource.data.plataforma is string &&
-        request.resource.data.pantallas is int &&
+        request.resource.data.pantallas is number &&
         request.resource.data.pantallas >= 1 &&
         request.resource.data.precioVenta is number &&
         request.resource.data.precioVenta >= 0 &&
@@ -117,10 +118,7 @@ service cloud.firestore {
         request.resource.data.fechaInicio is string &&
         request.resource.data.diasServicio is string &&
         request.resource.data.fechaVencimiento is string &&
-        (request.resource.data.correo == null || request.resource.data.correo is string) &&
-        (request.resource.data.fechaRegistro is timestamp || request.resource.data.fechaRegistro is string) &&
-        (request.resource.data.fechaRegistroSistema == null || request.resource.data.fechaRegistroSistema is timestamp);
-      
+        (request.resource.data.correo == null || request.resource.data.correo is string);
       // Actualización: No permitida
       allow update: if false;
       

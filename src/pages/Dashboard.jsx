@@ -1,14 +1,14 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import useVentas from '../hooks/useVentas';
-import { DollarSign, TrendingUp, TrendingDown, Users, Tv } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, Users, Tv, AlertCircle } from 'lucide-react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const COLORS = ['#6B21A8', '#3B82F6', '#06B6D4', '#8B5CF6', '#EC4899'];
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { ventas, loading } = useVentas(user);
+  const { ventas, loading, error } = useVentas(user);
   const [totales, setTotales] = useState({ ingresos: 0, egresos: 0, utilidad: 0 });
   const [topClientes, setTopClientes] = useState([]);
   const [topPlataformas, setTopPlataformas] = useState([]);
@@ -80,6 +80,12 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
+          <AlertCircle className="text-red-500 shrink-0" size={20} />
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
       {/* Título */}
       <div className="mb-8">
         <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600">

@@ -64,12 +64,26 @@ exports.generarNotificacionesVencimientos = functions.pubsub
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
 
-      const clientesSnapshot = await db.collection('clientes').get();
+      // Rango de vencimiento: clientes que vencen en 1 a 3 días
+      const manana = new Date(hoy);
+      manana.setDate(hoy.getDate() + 1);
+      const dentroDe3Dias = new Date(hoy);
+      dentroDe3Dias.setDate(hoy.getDate() + 3);
 
-      if (clientesSnapshot.empty) {
-        console.log('No hay clientes para revisar');
-        return null;
-      }
+      // fechaVencimiento se almacena como string YYYY-MM-DD (orden lexicográfico = cronológico)
+      const mananaStr = manana.toISOString().split('T')[0];
+      const dentroDe3DiasStr = dentroDe3Dias.toISOString().split('T')[0];
+
+      // ── Query 1: Clientes próximos a vencer ──
+      const vencimientoSnapshot = await db.collection('clientes')
+        .where('fechaVencimiento', '>=', mananaStr)
+        .where('fechaVencimiento', '<=', dentroDe3DiasStr)
+        .get();
+
+      // ── Query 2: Clientes con saldo pendiente (mora) ──
+      const moraSnapshot = await db.collection('clientes')
+        .where('saldoPendiente', '>', 0)
+        .get();
 
       let notificacionesCreadas = 0;
       let telegramEnviados = 0;
@@ -78,10 +92,10 @@ exports.generarNotificacionesVencimientos = functions.pubsub
       let batchCount = 0;
       const MAX_BATCH_SIZE = 500;
 
-      for (const clienteDoc of clientesSnapshot.docs) {
+      // Procesar vencimientos
+      for (const clienteDoc of vencimientoSnapshot.docs) {
         const cliente = clienteDoc.data();
 
-        // --- Notificaciones de vencimiento ---
         if (cliente.fechaVencimiento) {
           const fechaVencimiento = new Date(cliente.fechaVencimiento);
           fechaVencimiento.setHours(0, 0, 0, 0);
@@ -132,11 +146,17 @@ exports.generarNotificacionesVencimientos = functions.pubsub
             }
           }
         }
+      }
 
-        // --- Notificaciones de mora (saldo pendiente) ---
+      // ── Procesar mora (saldo pendiente) ──
+      for (const clienteDoc of moraSnapshot.docs) {
+        const cliente = clienteDoc.data();
+
         if (cliente.saldoPendiente > 0) {
           try {
-            const enviado = await telegram.enviarNotificacionMora(cliente);
+            const enviado = await telegram.enviarNotificacionMora(cliente, {
+              appUrl: functions.config().app?.url || '',
+            });
             if (enviado) morasNotificadas++;
           } catch (err) {
             console.error(`Error enviando mora Telegram para ${cliente.nombre}:`, err);

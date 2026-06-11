@@ -333,7 +333,7 @@ async function enviarNotificacionVencimiento(notificacion, options = {}) {
  * @param {Object} cliente - Datos del cliente
  * @returns {Promise<boolean>}
  */
-async function enviarNotificacionMora(cliente) {
+async function enviarNotificacionMora(cliente, options = {}) {
   try {
     const chatId = await getChatIdPorUid(cliente.propietarioId);
     if (!chatId) return false;
@@ -348,7 +348,7 @@ async function enviarNotificacionMora(cliente) {
     const reply_markup = {
       inline_keyboard: [
         [
-          { text: '💰 Cobrar', url: `${process.env.APP_URL || ''}/gestion-clientes` },
+          { text: '💰 Cobrar', url: `${options.appUrl || ''}/gestion-clientes` },
         ],
       ],
     };

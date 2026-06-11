@@ -6,10 +6,10 @@ import useClientes from './useClientes';
  * Usa el hook compartido useClientes para evitar listeners duplicados.
  * 
  * @param {Object} user - Usuario autenticado con uid, email y rol
- * @returns {Object} { clientes, notificaciones, loading }
+ * @returns {Object} { clientes, notificaciones, loading, error }
  */
 export default function useClientesConNotificaciones(user) {
-  const { clientes, loading } = useClientes(user);
+  const { clientes, loading, error } = useClientes(user);
   const [notificaciones, setNotificaciones] = useState([]);
 
   useEffect(() => {
@@ -74,5 +74,5 @@ export default function useClientesConNotificaciones(user) {
     setNotificaciones(todas);
   }, [clientes, loading]);
 
-  return { clientes, notificaciones, loading };
+  return { clientes, notificaciones, loading, error };
 }

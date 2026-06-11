@@ -1,14 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { db } from '../firebase';
 import { collection, query, where, onSnapshot, updateDoc, doc, increment, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import useClientes from '../hooks/useClientes';
+import Paginador from '../components/Paginador';
 import toast from 'react-hot-toast';
 import { Search, Download, MessageCircle, Calendar, Users, TrendingUp, X, AlertCircle, Edit, Mail, DollarSign } from 'lucide-react';
 
 export default function GestionClientes() {
   const { user } = useAuth();
-  const { clientes: todosLosClientes, loading } = useClientes(user);
+  const { clientes: todosLosClientes, loading, error } = useClientes(user);
   const [clientes, setClientes] = useState({ activos: [], inactivos: [], todos: [] });
   const [filtro, setFiltro] = useState('activos');
   const [busqueda, setBusqueda] = useState('');
@@ -26,6 +27,9 @@ export default function GestionClientes() {
   const [mostrarCobrar, setMostrarCobrar] = useState(false);
   const [clienteCobrar, setClienteCobrar] = useState(null);
   const [montoPago, setMontoPago] = useState('');
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [itemsPorPagina, setItemsPorPagina] = useState(10);
+  const historialUnsubscribeRef = useRef(null);
 
   // Clasificar clientes cuando cambian los datos (incluye array vacío)
   useEffect(() => {
@@ -35,9 +39,30 @@ export default function GestionClientes() {
     setClientes({ activos, inactivos, todos: todosLosClientes });
   }, [todosLosClientes, loading]);
 
+  // Resetear página al cambiar filtros o búsqueda
+  useEffect(() => {
+    setPaginaActual(1);
+  }, [filtro, busqueda]);
+
+  // Limpiar listener de historial al desmontar el componente
+  useEffect(() => {
+    return () => {
+      if (historialUnsubscribeRef.current) {
+        historialUnsubscribeRef.current();
+        historialUnsubscribeRef.current = null;
+      }
+    };
+  }, []);
+
   // 🔍 Cargar historial de ventas de un cliente
   const cargarHistorial = async (clienteNombre) => {
     if (!user) return;
+
+    // Limpiar listener anterior si existe
+    if (historialUnsubscribeRef.current) {
+      historialUnsubscribeRef.current();
+      historialUnsubscribeRef.current = null;
+    }
 
     try {
       let q = query(collection(db, 'ventas'), where('nombre', '==', clienteNombre));
@@ -45,7 +70,7 @@ export default function GestionClientes() {
         q = query(q, where('propietarioId', '==', user.uid));
       }
 
-      const unsubscribe = onSnapshot(q, (snapshot) => {
+      historialUnsubscribeRef.current = onSnapshot(q, (snapshot) => {
         const ventas = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
@@ -57,7 +82,7 @@ export default function GestionClientes() {
         setHistorialVentas(ventas);
       });
 
-      return unsubscribe;
+      // No devolvemos nada, el ref se encarga del cleanup
     } catch (error) {
       console.error('Error cargando historial:', error);
       toast.error('Error al cargar historial de ventas');
@@ -134,6 +159,10 @@ export default function GestionClientes() {
       (c.plataforma && c.plataforma.toLowerCase().includes(busqueda.toLowerCase())) ||
       (c.telefono && c.telefono.includes(busqueda))
   ) || [];
+
+  const indexUltimo = paginaActual * itemsPorPagina;
+  const indexPrimero = indexUltimo - itemsPorPagina;
+  const clientesPaginados = clientesFiltrados.slice(indexPrimero, indexUltimo);
 
   // 📤 Exportar datos a CSV
   const exportarCSV = () => {
@@ -218,16 +247,22 @@ export default function GestionClientes() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
+          <AlertCircle className="text-red-500 shrink-0" size={20} />
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600">
+        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-indigo-700">
           Gestión de Clientes
         </h1>
         <p className="text-gray-600">Administra y contacta a tus clientes</p>
       </div>
 
       {/* Controles */}
-      <div className="card">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         <div className="flex flex-col md:flex-row gap-4 items-center">
           {/* Filtros */}
           <div className="flex gap-2 flex-wrap">
@@ -236,7 +271,7 @@ export default function GestionClientes() {
                 key={tipo}
                 onClick={() => setFiltro(tipo)}
                 className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${filtro === tipo
-                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
+                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg'
                     : 'bg-white/80 text-gray-700 hover:bg-white'
                   }`}
               >
@@ -269,11 +304,11 @@ export default function GestionClientes() {
       </div>
 
       {/* Lista de clientes */}
-      <div className="card overflow-hidden p-0">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+              <tr className="bg-indigo-600 text-white">
                 <th className="px-4 py-4 text-left text-sm font-semibold">Cliente</th>
                 <th className="px-4 py-4 text-left text-sm font-semibold">Contacto</th>
                 <th className="px-4 py-4 text-left text-sm font-semibold">Plataforma</th>
@@ -285,7 +320,7 @@ export default function GestionClientes() {
             </thead>
             <tbody>
               {clientesFiltrados.length > 0 ? (
-                clientesFiltrados.map((c) => (
+                clientesPaginados.map((c) => (
                   <tr
                     key={c.id}
                     className="border-b border-gray-100 hover:bg-indigo-50/30 transition-colors"
@@ -300,7 +335,7 @@ export default function GestionClientes() {
                       <div className="text-gray-700">{c.telefono}</div>
                     </td>
                     <td className="px-4 py-4">
-                      <span className="px-3 py-1 rounded-full bg-purple-100 text-purple-700 text-sm font-medium">
+                      <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-sm font-medium">
                         {c.plataforma || '—'}
                       </span>
                     </td>
@@ -388,6 +423,18 @@ export default function GestionClientes() {
           </table>
         </div>
       </div>
+
+      {/* Paginación */}
+      <Paginador
+        currentPage={paginaActual}
+        totalItems={clientesFiltrados.length}
+        itemsPerPage={itemsPorPagina}
+        onPageChange={setPaginaActual}
+        onItemsPerPageChange={(val) => {
+          setItemsPorPagina(val);
+          setPaginaActual(1);
+        }}
+      />
 
       {/* Modal de edición */}
       {mostrarEditar && clienteEditando && (
@@ -492,6 +539,10 @@ export default function GestionClientes() {
               </div>
               <button
                 onClick={() => {
+                  if (historialUnsubscribeRef.current) {
+                    historialUnsubscribeRef.current();
+                    historialUnsubscribeRef.current = null;
+                  }
                   setMostrarHistorial(false);
                   setClienteSeleccionado(null);
                   setHistorialVentas([]);

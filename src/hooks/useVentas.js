@@ -10,7 +10,7 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
  * y Reportes no se montan simultáneamente).
  * 
  * @param {Object} user - Usuario autenticado con uid y rol
- * @returns {{ ventas: Array, loading: boolean }}
+ * @returns {{ ventas: Array, loading: boolean, error: string|null }}
  */
 
 // ─── Estado singleton compartido ──────────────────────────────
@@ -18,13 +18,14 @@ let sharedUid = null;
 let sharedIsAdmin = false;
 let sharedData = [];
 let sharedLoading = true;
+let sharedError = null;
 let sharedUnsubscribe = null;
 const subscribers = new Map();
 let nextSubId = 0;
 
 function broadcast() {
   subscribers.forEach((setState) => {
-    setState({ ventas: sharedData, loading: sharedLoading });
+    setState({ ventas: sharedData, loading: sharedLoading, error: sharedError });
   });
 }
 
@@ -46,6 +47,7 @@ function startListener(uid, isAdmin) {
   sharedUnsubscribe = onSnapshot(
     q,
     (snapshot) => {
+      sharedError = null;
       sharedData = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
@@ -55,6 +57,7 @@ function startListener(uid, isAdmin) {
     },
     (error) => {
       console.error('Error en listener de ventas:', error);
+      sharedError = error.message || 'Error al cargar ventas';
       sharedLoading = false;
       broadcast();
     },
@@ -77,6 +80,7 @@ export default function useVentas(user) {
   const [state, setState] = useState(() => ({
     ventas: sharedData,
     loading: sharedLoading,
+    error: sharedError,
   }));
 
   const idRef = useRef(null);
@@ -88,14 +92,14 @@ export default function useVentas(user) {
     const isAdmin = user?.rol === 'admin';
 
     if (!uid) {
-      setState({ ventas: [], loading: false });
+      setState({ ventas: [], loading: false, error: null });
       return;
     }
 
     subscribers.set(subId, setState);
 
     if (sharedUid === uid) {
-      setState({ ventas: sharedData, loading: sharedLoading });
+      setState({ ventas: sharedData, loading: sharedLoading, error: sharedError });
     }
 
     if (!sharedUnsubscribe || sharedUid !== uid) {

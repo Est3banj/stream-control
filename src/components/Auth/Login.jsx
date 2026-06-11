@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { auth, db } from '../../firebase';
-import { doc, getDoc } from 'firebase/firestore';
 
 export default function Login(){
   const { login } = useAuth();
@@ -23,28 +21,7 @@ export default function Login(){
     setLoading(true);
     try {
       const userCredential = await login(email, password);
-
-      if (!userCredential || !userCredential.user) {
-        throw new Error("Error de autenticación: usuario no encontrado");
-      }
-
-      const user = userCredential.user;
-
-      // Verificar estado en Firestore
-      const docRef = doc(db, "usuarios", user.uid);
-      const docSnap = await getDoc(docRef);
-
-      if (!docSnap.exists()) {
-        throw new Error("Usuario no registrado en la base de datos");
-      }
-
-      const userData = docSnap.data();
-      if (userData.estado !== "activo") {
-        await auth.signOut();
-        throw new Error("Usuario inactivo. Contacte con el administrador.");
-      }
-
-      toast.success(`Bienvenido ${userData.nombre || ''}`);
+      toast.success('Bienvenido');
       nav('/');
     } catch (error) {
       console.error(error);
@@ -77,7 +54,15 @@ export default function Login(){
       </svg>
 
       <div className="relative z-10 w-full max-w-md bg-white bg-opacity-15 backdrop-blur-lg rounded-3xl shadow-2xl p-10 animate-fadeInUp transition-all duration-700 ease-in-out">
-        <h2 className="text-3xl font-extrabold mb-8 text-white drop-shadow-lg text-center tracking-wide">Iniciar sesión</h2>
+        <div className="flex justify-center mb-6">
+          <img 
+            src="/icon_stream.webp" 
+            alt="StreamControl Pro"
+            className="w-28 h-28 md:w-32 md:h-32 object-contain drop-shadow-2xl animate-fadeInUp"
+            style={{ animationDelay: '0.1s', animationFillMode: 'both' }}
+          />
+        </div>
+        <h2 className="text-3xl font-extrabold mb-8 text-white drop-shadow-lg text-center tracking-wide">StreamControl Pro</h2>
         <form onSubmit={submit} className="flex flex-col gap-6">
           <input 
             type="email"

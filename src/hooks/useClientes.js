@@ -9,7 +9,7 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
  * compartan la MISMA conexión a Firestore, evitando reads duplicados.
  * 
  * @param {Object} user - Usuario autenticado con uid y rol
- * @returns {{ clientes: Array, loading: boolean }}
+ * @returns {{ clientes: Array, loading: boolean, error: string|null }}
  */
 
 // ─── Estado singleton compartido ──────────────────────────────
@@ -18,13 +18,14 @@ let sharedUid = null;
 let sharedIsAdmin = false;
 let sharedData = [];
 let sharedLoading = true;
+let sharedError = null;
 let sharedUnsubscribe = null;
 const subscribers = new Map();
 let nextSubId = 0;
 
 function broadcast() {
   subscribers.forEach((setState) => {
-    setState({ clientes: sharedData, loading: sharedLoading });
+    setState({ clientes: sharedData, loading: sharedLoading, error: sharedError });
   });
 }
 
@@ -47,13 +48,15 @@ function startListener(uid, isAdmin) {
   sharedUnsubscribe = onSnapshot(
     q,
     (snapshot) => {
+      sharedError = null;
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
 
       sharedData = snapshot.docs.map((doc) => {
         const c = { id: doc.id, ...doc.data() };
         if (c.fechaVencimiento) {
-          const diff = new Date(c.fechaVencimiento) - hoy;
+          const venc = new Date(c.fechaVencimiento + 'T00:00:00');
+          const diff = venc - hoy;
           c.diasRestantes = Math.ceil(diff / (1000 * 60 * 60 * 24));
         } else {
           c.diasRestantes = null;
@@ -66,6 +69,7 @@ function startListener(uid, isAdmin) {
     },
     (error) => {
       console.error('Error en listener de clientes:', error);
+      sharedError = error.message || 'Error al cargar clientes';
       sharedLoading = false;
       broadcast();
     },
@@ -88,6 +92,7 @@ export default function useClientes(user) {
   const [state, setState] = useState(() => ({
     clientes: sharedData,
     loading: sharedLoading,
+    error: sharedError,
   }));
 
   const idRef = useRef(null);
@@ -99,7 +104,7 @@ export default function useClientes(user) {
     const isAdmin = user?.rol === 'admin';
 
     if (!uid) {
-      setState({ clientes: [], loading: false });
+      setState({ clientes: [], loading: false, error: null });
       return;
     }
 
@@ -108,7 +113,7 @@ export default function useClientes(user) {
 
     // Sincronizar con el estado actual
     if (sharedUid === uid) {
-      setState({ clientes: sharedData, loading: sharedLoading });
+      setState({ clientes: sharedData, loading: sharedLoading, error: sharedError });
     }
 
     // Iniciar listener si no hay uno activo o el usuario cambió

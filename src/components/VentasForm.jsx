@@ -4,6 +4,11 @@ import { collection, addDoc, setDoc, doc, serverTimestamp, getDoc, increment, up
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
+const getToday = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 export default function VentasForm() {
   const { user } = useAuth();
   const [venta, setVenta] = useState({
@@ -16,6 +21,7 @@ export default function VentasForm() {
     costoServicio: 0,
     fechaInicio: '',
     diasServicio: '',
+    fechaVenta: getToday(),
     perfil: '',
     pinPerfil: '',
     pagado: true,
@@ -23,6 +29,8 @@ export default function VentasForm() {
   });
 
   const [utilidad, setUtilidad] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const [mostrarFechaVenta, setMostrarFechaVenta] = useState(false);
 
   // 🧮 Calcula utilidad
   useEffect(() => {
@@ -31,6 +39,14 @@ export default function VentasForm() {
     const pant = Number(venta.pantallas) || 0;
     setUtilidad((pant * p) - c);
   }, [venta.precioVenta, venta.costoServicio, venta.pantallas]);
+
+  const handleToggleFechaVenta = (e) => {
+    const checked = e.target.checked;
+    setMostrarFechaVenta(checked);
+    if (!checked) {
+      setVenta(prev => ({ ...prev, fechaVenta: getToday() }));
+    }
+  };
 
   const handleChange = (e) => {
     const { name, type, value, checked } = e.target;
@@ -92,6 +108,8 @@ export default function VentasForm() {
     if (venta.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(venta.correo.trim()))
       return toast.error("El correo electrónico no es válido.");
 
+    setSubmitting(true);
+
     try {
       // Calcular fecha de vencimiento
       const fechaInicioDate = new Date(venta.fechaInicio);
@@ -111,6 +129,8 @@ export default function VentasForm() {
         saldoPendiente: venta.pagado ? 0 : Number(venta.saldoPendiente || 0),
 
         fechaRegistro: serverTimestamp(),    // Fecha real del sistema (no alterable por el usuario)
+        fechaRegistroSistema: null,          // Reservado para futuro uso
+        fechaVenta: venta.fechaVenta,
 
         propietarioId: user.uid,
         usuarioEmail: user.email,
@@ -118,10 +138,19 @@ export default function VentasForm() {
       };
 
       // 🟢 Guardar venta
-      await addDoc(collection(db, 'ventas'), nuevaVenta);
+      try {
+        await addDoc(collection(db, 'ventas'), nuevaVenta);
+      } catch (err) {
+        console.error('❌ Falló addDoc a ventas:', err.code, err.message);
+        console.log('Datos de venta:', JSON.stringify(nuevaVenta, (k, v) =>
+          typeof v === 'function' ? v.name : v
+        ));
+        throw err;
+      }
 
       // 🟢 Registrar / actualizar cliente
-      await setDoc(doc(db, 'clientes', `${user.uid}_${venta.nombre}`), {
+      const clienteRef = doc(db, 'clientes', `${user.uid}_${venta.nombre}`);
+      const clienteData = {
         nombre: venta.nombre,
         telefono: venta.telefono,
         correo: venta.correo,
@@ -130,24 +159,43 @@ export default function VentasForm() {
         propietarioId: user.uid,
         usuarioEmail: user.email,
         fechaVencimiento,
-      }, { merge: true });
+      };
+      try {
+        await setDoc(clienteRef, clienteData, { merge: true });
+      } catch (err) {
+        console.error('❌ Falló setDoc a clientes:', err.code, err.message);
+        console.log('Datos de cliente:', JSON.stringify(clienteData));
+        throw err;
+      }
 
       // Si el cliente queda debiendo, acumular saldo en su ficha
       if (!venta.pagado) {
-        await updateDoc(doc(db, 'clientes', `${user.uid}_${venta.nombre}`), {
-          saldoPendiente: increment(Number(venta.saldoPendiente)),
-        });
+        try {
+          await updateDoc(clienteRef, {
+            saldoPendiente: increment(Number(venta.saldoPendiente)),
+          });
+        } catch (err) {
+          console.error('❌ Falló updateDoc saldoPendiente:', err.code, err.message);
+          throw err;
+        }
       }
 
       // 🟢 Registrar movimiento financiero
-      await addDoc(collection(db, 'movimientos'), {
+      const movimientoData = {
         tipo: 'Ingreso',
         monto: Number(venta.pantallas) * Number(venta.precioVenta),
         descripcion: `Venta de ${venta.plataforma} (${venta.pantallas} pantallas)`,
         fecha: serverTimestamp(),
         propietarioId: user.uid,
         usuarioEmail: user.email,
-      });
+      };
+      try {
+        await addDoc(collection(db, 'movimientos'), movimientoData);
+      } catch (err) {
+        console.error('❌ Falló addDoc a movimientos:', err.code, err.message);
+        console.log('Datos de movimiento:', JSON.stringify(movimientoData));
+        throw err;
+      }
 
       toast.success('Venta registrada correctamente');
 
@@ -161,39 +209,51 @@ export default function VentasForm() {
         costoServicio: 0,
         fechaInicio: '',
         diasServicio: '',
+        fechaVenta: getToday(),
         perfil: '',
         pinPerfil: '',
         pagado: true,
         saldoPendiente: '',
       });
       setUtilidad(0);
+      setMostrarFechaVenta(false);
 
     } catch (error) {
       console.error('❌ Error al registrar la venta:', error);
       toast.error("Error al registrar la venta. Inténtelo nuevamente.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
+  const SectionIcon = ({ number }) => (
+    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-sm flex-shrink-0">
+      <span className="text-white font-bold text-sm">{number}</span>
+    </div>
+  );
+
+  const InputLabel = ({ children, required = false }) => (
+    <label className="block text-sm font-medium text-gray-600 mb-1.5">
+      {children}
+      {required && <span className="text-red-400 ml-0.5">*</span>}
+    </label>
+  );
+
   return (
-    <form onSubmit={handleSubmit} className="card max-w-4xl mx-auto space-y-8">
+    <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-6">
 
       {/* =========================
           1. Información del Cliente
       ========================== */}
-      <div className="space-y-6">
-        <div className="flex items-center gap-2 pb-3 border-b border-gray-200">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-            <span className="text-white font-bold text-lg">1</span>
-          </div>
-          <h2 className="text-xl font-bold text-gray-900">Información del Cliente</h2>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-5">
+        <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
+          <SectionIcon number="1" />
+          <h2 className="text-lg font-semibold text-gray-900">Información del Cliente</h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-          <div className="md:col-span-1">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Nombre del cliente <span className="text-red-500">*</span>
-            </label>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div>
+            <InputLabel required>Nombre del cliente</InputLabel>
             <input
               type="text"
               name="nombre"
@@ -204,15 +264,11 @@ export default function VentasForm() {
               className="w-full"
               required
             />
-            <p className="text-xs text-gray-500 mt-1">
-              Se autocompletará si el cliente existe
-            </p>
+            <p className="text-xs text-gray-400 mt-1">Se autocompletará si el cliente existe</p>
           </div>
 
-          <div className="md:col-span-1">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Teléfono <span className="text-red-500">*</span>
-            </label>
+          <div>
+            <InputLabel required>Teléfono</InputLabel>
             <input
               type="text"
               name="telefono"
@@ -224,10 +280,8 @@ export default function VentasForm() {
             />
           </div>
 
-          <div className="md:col-span-1">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Correo electrónico
-            </label>
+          <div>
+            <InputLabel>Correo electrónico</InputLabel>
             <input
               type="email"
               name="correo"
@@ -237,27 +291,21 @@ export default function VentasForm() {
               className="w-full"
             />
           </div>
-
         </div>
       </div>
 
       {/* =========================
           2. Detalles del Servicio
       ========================== */}
-      <div className="space-y-6">
-        <div className="flex items-center gap-2 pb-3 border-b border-gray-200">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
-            <span className="text-white font-bold text-lg">2</span>
-          </div>
-          <h2 className="text-xl font-bold text-gray-900">Detalles del Servicio</h2>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-5">
+        <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
+          <SectionIcon number="2" />
+          <h2 className="text-lg font-semibold text-gray-900">Detalles del Servicio</h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Plataforma o servicio <span className="text-red-500">*</span>
-            </label>
+            <InputLabel required>Plataforma o servicio</InputLabel>
             <input
               type="text"
               name="plataforma"
@@ -270,9 +318,7 @@ export default function VentasForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Cantidad de pantallas <span className="text-red-500">*</span>
-            </label>
+            <InputLabel required>Cantidad de pantallas</InputLabel>
             <input
               type="number"
               name="pantallas"
@@ -285,9 +331,7 @@ export default function VentasForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Fecha de inicio <span className="text-red-500">*</span>
-            </label>
+            <InputLabel required>Fecha de inicio</InputLabel>
             <input
               type="date"
               name="fechaInicio"
@@ -299,9 +343,7 @@ export default function VentasForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Duración del servicio (días) <span className="text-red-500">*</span>
-            </label>
+            <InputLabel required>Duración (días)</InputLabel>
             <input
               type="number"
               name="diasServicio"
@@ -309,73 +351,93 @@ export default function VentasForm() {
               onChange={handleChange}
               className="w-full"
               min="1"
-              placeholder="Ej: 30, 60, 90"
+              placeholder="Ej: 30"
               required
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Perfil
-            </label>
-            <input
-              type="text"
-              name="perfil"
-              value={venta.perfil}
-              onChange={handleChange}
-              placeholder="Ej: Principal, Kids..."
-              className="w-full"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Opcional — nombre del perfil asignado
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              PIN del perfil
-            </label>
-            <input
-              type="text"
-              name="pinPerfil"
-              value={venta.pinPerfil}
-              onChange={handleChange}
-              placeholder="Ej: 1234"
-              className="w-full"
-              maxLength="10"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Opcional — PIN de bloqueo si aplica
-            </p>
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <InputLabel>Perfil</InputLabel>
+              <input
+                type="text"
+                name="perfil"
+                value={venta.perfil}
+                onChange={handleChange}
+                placeholder="Principal"
+                className="w-full"
+              />
+              <p className="text-xs text-gray-400 mt-1">Opcional</p>
+            </div>
+            <div className="flex-1">
+              <InputLabel>PIN del perfil</InputLabel>
+              <input
+                type="text"
+                name="pinPerfil"
+                value={venta.pinPerfil}
+                onChange={handleChange}
+                placeholder="1234"
+                className="w-full"
+                maxLength="10"
+              />
+              <p className="text-xs text-gray-400 mt-1">Opcional</p>
+            </div>
           </div>
         </div>
+
+        {/* Fecha de venta */}
+        <div className="flex items-center justify-between bg-gray-50 rounded-xl px-5 py-4">
+          <div>
+            <p className="font-medium text-gray-700">La venta fue otro día</p>
+            <p className="text-sm text-gray-400">Si estás cargando una venta anterior, marcá esta opción</p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={mostrarFechaVenta}
+              onChange={handleToggleFechaVenta}
+              className="sr-only peer"
+              aria-label="La venta fue otro día"
+            />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-indigo-500 peer-checked:to-indigo-600"></div>
+          </label>
+        </div>
+
+        {mostrarFechaVenta && (
+          <div>
+            <InputLabel>Fecha de la venta</InputLabel>
+            <input
+              type="date"
+              name="fechaVenta"
+              value={venta.fechaVenta}
+              onChange={handleChange}
+              className="w-full"
+            />
+            <p className="text-xs text-gray-400 mt-1">Fecha real en que se realizó la venta</p>
+          </div>
+        )}
       </div>
 
       {/* =========================
           3. Valores Financieros
       ========================== */}
-      <div className="space-y-6">
-        <div className="flex items-center gap-2 pb-3 border-b border-gray-200">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-teal-600 flex items-center justify-center">
-            <span className="text-white font-bold text-lg">3</span>
-          </div>
-          <h2 className="text-xl font-bold text-gray-900">Valores Financieros</h2>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-5">
+        <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
+          <SectionIcon number="3" />
+          <h2 className="text-lg font-semibold text-gray-900">Valores Financieros</h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Precio de venta (por pantalla) <span className="text-red-500">*</span>
-            </label>
+            <InputLabel required>Precio de venta (por pantalla)</InputLabel>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
               <input
                 type="number"
                 name="precioVenta"
                 value={venta.precioVenta}
                 onChange={handleChange}
-                className="w-full pl-8"
+                className="w-full pl-7"
                 min="0"
                 step="0.01"
                 required
@@ -384,41 +446,33 @@ export default function VentasForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Costo del servicio <span className="text-red-500">*</span>
-            </label>
+            <InputLabel required>Costo del servicio</InputLabel>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
               <input
                 type="number"
                 name="costoServicio"
                 value={venta.costoServicio}
                 onChange={handleChange}
-                className="w-full pl-8"
+                className="w-full pl-7"
                 min="0"
                 step="0.01"
                 required
               />
             </div>
           </div>
-
         </div>
 
         {/* Utilidad calculada */}
-        <div className="bg-gradient-to-r from-green-50 to-teal-50 rounded-xl p-6 border border-green-200">
+        <div className="bg-indigo-50 rounded-xl px-5 py-4 border border-indigo-100">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 mb-1">Utilidad estimada</p>
-              <p className="text-3xl font-bold text-green-600">
-                ${utilidad.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-              </p>
-            </div>
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-400 to-teal-500 flex items-center justify-center shadow-lg">
-              <span className="text-white text-2xl">💰</span>
-            </div>
+            <p className="text-sm font-medium text-indigo-600">Utilidad estimada</p>
+            <p className="text-2xl font-bold text-indigo-700">
+              ${utilidad.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+            </p>
           </div>
-          <p className="text-xs text-gray-500 mt-2">
-            Calculado automáticamente: (Pantallas × Precio) - Costo
+          <p className="text-xs text-indigo-400 mt-1">
+            (Pantallas × Precio) - Costo
           </p>
         </div>
       </div>
@@ -426,18 +480,16 @@ export default function VentasForm() {
       {/* =========================
           Estado de Pago
       ========================== */}
-      <div className="space-y-6 mt-8 pt-6 border-t border-gray-200">
-        <div className="flex items-center gap-2 pb-3 border-b border-gray-200">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-500 to-orange-600 flex items-center justify-center">
-            <span className="text-white font-bold text-lg">$</span>
-          </div>
-          <h2 className="text-xl font-bold text-gray-900">Estado de Pago</h2>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-5">
+        <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
+          <SectionIcon number="$" />
+          <h2 className="text-lg font-semibold text-gray-900">Estado de Pago</h2>
         </div>
 
-        <div className="flex items-center justify-between bg-gray-50 rounded-xl p-4">
+        <div className="flex items-center justify-between bg-gray-50 rounded-xl px-5 py-4">
           <div>
-            <p className="font-semibold text-gray-700">Pagó completo</p>
-            <p className="text-sm text-gray-500">El cliente ya pagó el total del servicio</p>
+            <p className="font-medium text-gray-700">Pagó completo</p>
+            <p className="text-sm text-gray-400">El cliente ya pagó el total del servicio</p>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
@@ -446,33 +498,30 @@ export default function VentasForm() {
               checked={venta.pagado}
               onChange={handleChange}
               className="sr-only peer"
+              aria-label="Pagó completo"
             />
-            <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-yellow-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-yellow-500 peer-checked:to-orange-600"></div>
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-indigo-500 peer-checked:to-indigo-600"></div>
           </label>
         </div>
 
         {!venta.pagado && (
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Saldo pendiente <span className="text-red-500">*</span>
-            </label>
+            <InputLabel required>Saldo pendiente</InputLabel>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
               <input
                 type="number"
                 name="saldoPendiente"
                 value={venta.saldoPendiente}
                 onChange={handleChange}
-                className="w-full pl-8"
+                className="w-full pl-7"
                 min="0"
                 step="0.01"
                 placeholder="0.00"
                 required={!venta.pagado}
               />
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Monto que el cliente aún debe pagar
-            </p>
+            <p className="text-xs text-gray-400 mt-1">Monto que el cliente aún debe pagar</p>
           </div>
         )}
       </div>
@@ -480,15 +529,13 @@ export default function VentasForm() {
       {/* =========================
           Botón de Envío
       ========================== */}
-      <div className="pt-4 border-t border-gray-200">
-        <button
-          type="submit"
-          className="btn-primary w-full py-4 text-lg font-semibold flex items-center justify-center gap-2"
-        >
-          <span></span>
-          Registrar Venta
-        </button>
-      </div>
+      <button
+        type="submit"
+        disabled={submitting}
+        className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-semibold text-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {submitting ? 'Registrando...' : 'Registrar Venta'}
+      </button>
 
     </form>
   );
