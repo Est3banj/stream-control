@@ -2,24 +2,25 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Bell, X, Calendar, AlertCircle } from 'lucide-react';
 import useClientesConNotificaciones from '../hooks/useClientesConNotificaciones';
+import type { NotificacionDerivada } from '../types/hooks';
 
 export default function NotificationsPanel() {
   const { user } = useAuth();
   const { notificaciones, loading } = useClientesConNotificaciones(user);
   const [mostrarPanel, setMostrarPanel] = useState(false);
-  const [notificacionesLeidas, setNotificacionesLeidas] = useState([]);
-  const panelRef = useRef(null);
+  const [notificacionesLeidas, setNotificacionesLeidas] = useState<string[]>([]);
+  const panelRef = useRef<HTMLDivElement | null>(null);
 
   // Cargar notificaciones leídas desde localStorage
   useEffect(() => {
-    const leidas = JSON.parse(localStorage.getItem('notificacionesLeidas') || '[]');
+    const leidas: string[] = JSON.parse(localStorage.getItem('notificacionesLeidas') || '[]');
     setNotificacionesLeidas(leidas);
   }, []);
 
   // Cerrar dropdown al hacer clic fuera
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (panelRef.current && !panelRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
         setMostrarPanel(false);
       }
     };
@@ -33,27 +34,25 @@ export default function NotificationsPanel() {
     };
   }, [mostrarPanel]);
 
-  const marcarComoLeida = (notifId) => {
+  const marcarComoLeida = (notifId: string) => {
     const nuevasLeidas = [...notificacionesLeidas, notifId];
     setNotificacionesLeidas(nuevasLeidas);
     localStorage.setItem('notificacionesLeidas', JSON.stringify(nuevasLeidas));
   };
 
   const marcarTodasComoLeidas = () => {
-    const todasLasIds = notificaciones.map((n) => n.id);
+    const todasLasIds = notificaciones.map((n: NotificacionDerivada) => n.id);
     setNotificacionesLeidas(todasLasIds);
     localStorage.setItem('notificacionesLeidas', JSON.stringify(todasLasIds));
   };
 
-  // Filtrar notificaciones no leídas
   const notificacionesNoLeidas = notificaciones.filter(
-    (n) => !notificacionesLeidas.includes(n.id)
+    (n: NotificacionDerivada) => !notificacionesLeidas.includes(n.id)
   );
 
   const notificacionesNoLeidasCount = notificacionesNoLeidas.length;
 
-  // Función para obtener el color según días restantes
-  const getColorClasses = (diasRestantes) => {
+  const getColorClasses = (diasRestantes: number) => {
     if (diasRestantes <= 0) {
       return {
         bg: 'bg-red-50/70',
@@ -76,7 +75,6 @@ export default function NotificationsPanel() {
         text: 'bg-yellow-100 text-yellow-700',
       };
     } else {
-      // 5 días
       return {
         bg: 'bg-orange-50/50',
         badge: 'bg-orange-100',
@@ -86,8 +84,7 @@ export default function NotificationsPanel() {
     }
   };
 
-  // Función para obtener el mensaje según días restantes
-  const getMensaje = (diasRestantes) => {
+  const getMensaje = (diasRestantes: number) => {
     if (diasRestantes <= 0) {
       return `⚠️ Vencido hace ${Math.abs(diasRestantes)} día(s)`;
     } else if (diasRestantes === 1) {
@@ -162,8 +159,8 @@ export default function NotificationsPanel() {
                   </div>
                 )}
                 <div className="divide-y divide-gray-100">
-                  {notificacionesNoLeidas.map((notif) => {
-                    const colors = getColorClasses(notif.diasRestantes);
+                  {notificacionesNoLeidas.map((notif: NotificacionDerivada) => {
+                    const colors = getColorClasses(notif.diasRestantes as number);
                     return (
                       <div
                         key={notif.id}
@@ -207,7 +204,7 @@ export default function NotificationsPanel() {
                             )}
                             <div className="mt-1">
                               <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${colors.text}`}>
-                                {getMensaje(notif.diasRestantes)}
+                                {getMensaje(notif.diasRestantes as number)}
                               </span>
                             </div>
                           </div>

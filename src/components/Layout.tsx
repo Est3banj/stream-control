@@ -5,7 +5,7 @@ import { Menu, X, LayoutDashboard, DollarSign, BarChart3, Users, UserCog, LogOut
 import PWAInstallButton from './PWAInstallButton';
 import NotificationsPanel from './NotificationsPanel';
 
-export default function Layout({ children }) {
+export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -31,7 +31,7 @@ export default function Layout({ children }) {
     }
   }, [location, isMobile]);
 
-  const navItems = [
+  const navItems: { to: string; icon: React.ComponentType<{ size?: number; className?: string }>; label: string }[] = [
     { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/ventas', icon: DollarSign, label: 'Ventas' },
     { to: '/reportes', icon: BarChart3, label: 'Reportes' },
@@ -42,7 +42,7 @@ export default function Layout({ children }) {
     navItems.push({ to: '/usuarios', icon: UserCog, label: 'Usuarios' });
   }
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path: string) => location.pathname === path;
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen font-inter bg-gradient-to-br from-indigo-50 via-white to-cyan-50">

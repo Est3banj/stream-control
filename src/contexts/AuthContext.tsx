@@ -6,41 +6,54 @@ import {
   signOut,
 } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+import type { UserCredential } from 'firebase/auth';
+import type { FirebaseUserWithData } from '../types/usuario';
 
-const AuthContext = createContext();
-export function useAuth() {
-  return useContext(AuthContext);
+interface AuthContextValue {
+  user: FirebaseUserWithData | null;
+  login: (email: string, password: string) => Promise<UserCredential>;
+  logout: () => Promise<void>;
+  loading: boolean;
+}
+
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+export function useAuth(): AuthContextValue {
+  const ctx = useContext(AuthContext);
+  if (ctx === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return ctx;
 }
 
 /**
  * Verifica si activoHasta está vencido.
  * Soporta string YYYY-MM-DD y Firestore Timestamp.
  */
-function isExpired(activoHasta) {
-  if (!activoHasta) return false; // sin fecha = sin restricción
+function isExpired(activoHasta: unknown): boolean {
+  if (!activoHasta) return false;
 
   const hoy = new Date();
   hoy.setHours(0, 0, 0, 0);
 
-  let fechaLimite;
+  let fechaLimite: Date;
 
   if (typeof activoHasta === "string") {
     fechaLimite = new Date(activoHasta);
-  } else if (typeof activoHasta.toDate === "function") {
-    // Firestore Timestamp
-    fechaLimite = activoHasta.toDate();
+  } else if (typeof (activoHasta as { toDate?: () => Date }).toDate === 'function') {
+    fechaLimite = (activoHasta as { toDate: () => Date }).toDate();
   } else if (activoHasta instanceof Date) {
     fechaLimite = activoHasta;
   } else {
-    return false; // formato desconocido, no bloquear
+    return false;
   }
 
   fechaLimite.setHours(0, 0, 0, 0);
   return fechaLimite < hoy;
 }
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<FirebaseUserWithData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -48,16 +61,15 @@ export function AuthProvider({ children }) {
       if (firebaseUser) {
         const ref = doc(db, "usuarios", firebaseUser.uid);
         const snap = await getDoc(ref);
-        const userData = snap.exists() ? snap.data() : {};
+        const userData = snap.exists() ? (snap.data() as Record<string, unknown>) : {};
 
         // 🔒 Cuenta vencida → cerrar sesión automáticamente
         if (isExpired(userData.activoHasta)) {
           await signOut(auth);
-          // signOut re-dispara onAuthStateChanged con null → setUser(null), loading=false
           return;
         }
 
-        setUser({ ...firebaseUser, ...userData });
+        setUser({ ...firebaseUser, ...userData } as FirebaseUserWithData);
       } else {
         setUser(null);
       }
@@ -66,8 +78,7 @@ export function AuthProvider({ children }) {
     return () => unsub();
   }, []);
 
-  // 🔹 Corrección importante: esperar la autenticación antes del navigate
-  const login = async (email, password) => {
+  const login = async (email: string, password: string) => {
     try {
       setLoading(true);
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -77,7 +88,6 @@ export function AuthProvider({ children }) {
 
       const firebaseUser = userCredential.user;
 
-      // Consultar datos del usuario en Firestore
       const ref = doc(db, "usuarios", firebaseUser.uid);
       const snap = await getDoc(ref);
       if (!snap.exists()) {
@@ -85,23 +95,21 @@ export function AuthProvider({ children }) {
         setLoading(false);
         throw new Error("Usuario no registrado en la base de datos");
       }
-      const userData = snap.data();
+      const userData = snap.data() as Record<string, unknown>;
 
-      // 🔒 Verificar estado del usuario
       if (userData.estado === "inactivo") {
         await signOut(auth);
         setLoading(false);
         throw new Error("Tu cuenta está inactiva. Contacta al administrador.");
       }
 
-      // 🔒 Verificar vencimiento de la cuenta
       if (isExpired(userData.activoHasta)) {
         await signOut(auth);
         setLoading(false);
         throw new Error("Tu cuenta ha vencido. Contacta al administrador para renovar.");
       }
 
-      setUser({ ...firebaseUser, ...userData });
+      setUser({ ...firebaseUser, ...userData } as FirebaseUserWithData);
       setLoading(false);
       return userCredential;
     } catch (error) {
