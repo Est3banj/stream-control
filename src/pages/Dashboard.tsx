@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import useVentas from '../hooks/useVentas';
-import { DollarSign, TrendingUp, TrendingDown, Users, Tv, AlertCircle } from 'lucide-react';
+import useClientes from '../hooks/useClientes';
+import { DollarSign, TrendingUp, TrendingDown, Users, Tv, ShoppingCart, AlertCircle } from 'lucide-react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import type { Venta } from '../types/venta';
 
@@ -9,7 +10,19 @@ const COLORS = ['#6B21A8', '#3B82F6', '#06B6D4', '#8B5CF6', '#EC4899'];
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const isAdmin = user?.rol === 'admin';
   const { ventas, loading, error } = useVentas(user);
+  const { clientes } = useClientes(user);
+
+  const adminMetrics = useMemo(() => {
+    if (!isAdmin) return null;
+    const totalIngresos = ventas.reduce((sum, v) => sum + (v.precioVenta * v.pantallas || 0), 0);
+    const totalUtilidad = ventas.reduce((sum, v) => sum + Number(v.utilidad || 0), 0);
+    return { totalIngresos, totalUtilidad };
+  }, [ventas, isAdmin]);
+
+  const ultimasVentas = useMemo(() => ventas.slice(0, 10), [ventas]);
+
   const [totales, setTotales] = useState<{ ingresos: number; egresos: number; utilidad: number }>({ ingresos: 0, egresos: 0, utilidad: 0 });
   const [topClientes, setTopClientes] = useState<Array<{ nombre: string; ventas: number }>>([]);
   const [topPlataformas, setTopPlataformas] = useState<Array<{ plataforma: string; pantallas: number }>>([]);
@@ -90,59 +103,125 @@ export default function Dashboard() {
       {/* Título */}
       <div className="mb-8">
         <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600">
-          Dashboard
+          {isAdmin ? 'Panel de Control — Plataforma' : 'Dashboard'}
         </h1>
-        <p className="text-gray-600">Resumen de tus ventas y métricas principales</p>
+        <p className="text-gray-600">
+          {isAdmin ? 'Métricas globales de la plataforma' : 'Resumen de tus ventas y métricas principales'}
+        </p>
       </div>
 
       {/* Cards de métricas */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Ingresos */}
-        <div className="card cursor-default">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
-              <DollarSign className="text-white" size={28} />
+      {isAdmin ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Clientes totales */}
+          <div className="card cursor-default">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg">
+                <Users className="text-white" size={28} />
+              </div>
+              <Users className="text-blue-400" size={24} />
             </div>
-            <TrendingUp className="text-green-500" size={24} />
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Clientes Totales</p>
+              <p className="text-3xl font-bold text-gray-900">{clientes.length.toLocaleString()}</p>
+            </div>
           </div>
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Ingresos</p>
-            <p className="text-3xl font-bold text-gray-900">${totales.ingresos.toLocaleString()}</p>
-          </div>
-        </div>
 
-        {/* Egresos */}
-        <div className="card cursor-default">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-pink-500 to-red-600 flex items-center justify-center shadow-lg">
-              <DollarSign className="text-white" size={28} />
+          {/* Ventas totales */}
+          <div className="card cursor-default">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg">
+                <ShoppingCart className="text-white" size={28} />
+              </div>
+              <ShoppingCart className="text-amber-400" size={24} />
             </div>
-            <TrendingDown className="text-red-500" size={24} />
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Ventas Totales</p>
+              <p className="text-3xl font-bold text-gray-900">{ventas.length.toLocaleString()}</p>
+            </div>
           </div>
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Egresos</p>
-            <p className="text-3xl font-bold text-gray-900">${totales.egresos.toLocaleString()}</p>
-          </div>
-        </div>
 
-        {/* Utilidad */}
-        <div className="card cursor-default">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center shadow-lg">
-              <TrendingUp className="text-white" size={28} />
+          {/* Ingresos totales */}
+          <div className="card cursor-default">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+                <DollarSign className="text-white" size={28} />
+              </div>
+              <TrendingUp className="text-green-500" size={24} />
             </div>
-            <div className={`text-2xl font-bold ${totales.utilidad >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-              {totales.utilidad >= 0 ? '↑' : '↓'}
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Ingresos Totales</p>
+              <p className="text-3xl font-bold text-gray-900">${(adminMetrics?.totalIngresos ?? 0).toLocaleString()}</p>
             </div>
           </div>
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Utilidad</p>
-            <p className={`text-3xl font-bold ${totales.utilidad >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              ${totales.utilidad.toLocaleString()}
-            </p>
+
+          {/* Utilidad total */}
+          <div className="card cursor-default">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center shadow-lg">
+                <TrendingUp className="text-white" size={28} />
+              </div>
+              <div className={`text-2xl font-bold ${(adminMetrics?.totalUtilidad ?? 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {(adminMetrics?.totalUtilidad ?? 0) >= 0 ? '↑' : '↓'}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Utilidad Total</p>
+              <p className={`text-3xl font-bold ${(adminMetrics?.totalUtilidad ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                ${(adminMetrics?.totalUtilidad ?? 0).toLocaleString()}
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Ingresos */}
+          <div className="card cursor-default">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+                <DollarSign className="text-white" size={28} />
+              </div>
+              <TrendingUp className="text-green-500" size={24} />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Ingresos</p>
+              <p className="text-3xl font-bold text-gray-900">${totales.ingresos.toLocaleString()}</p>
+            </div>
+          </div>
+
+          {/* Egresos */}
+          <div className="card cursor-default">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-pink-500 to-red-600 flex items-center justify-center shadow-lg">
+                <DollarSign className="text-white" size={28} />
+              </div>
+              <TrendingDown className="text-red-500" size={24} />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Egresos</p>
+              <p className="text-3xl font-bold text-gray-900">${totales.egresos.toLocaleString()}</p>
+            </div>
+          </div>
+
+          {/* Utilidad */}
+          <div className="card cursor-default">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center shadow-lg">
+                <TrendingUp className="text-white" size={28} />
+              </div>
+              <div className={`text-2xl font-bold ${totales.utilidad >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {totales.utilidad >= 0 ? '↑' : '↓'}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Utilidad</p>
+              <p className={`text-3xl font-bold ${totales.utilidad >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                ${totales.utilidad.toLocaleString()}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Gráficos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
@@ -205,6 +284,55 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* Últimas Ventas - Admin */}
+      {isAdmin && (
+        <div className="card overflow-hidden mt-6">
+          <div className="flex items-center gap-2 mb-4">
+            <ShoppingCart className="text-cyan-600" size={20} />
+            <h3 className="text-lg font-semibold text-gray-900">Últimas Ventas</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white">
+                  <th className="px-4 py-3 text-left text-sm font-semibold rounded-tl-xl">Cliente</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Plataforma</th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold">Ingreso</th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold">Utilidad</th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold rounded-tr-xl">Fecha</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ultimasVentas.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="text-center py-8 text-gray-500">No hay datos</td>
+                  </tr>
+                ) : (
+                  ultimasVentas.map((v) => (
+                    <tr
+                      key={v.id}
+                      className="border-b border-gray-100 hover:bg-cyan-50/50 transition-colors"
+                    >
+                      <td className="px-4 py-3 font-medium text-gray-700">{v.nombre}</td>
+                      <td className="px-4 py-3 text-gray-600">{v.plataforma}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-indigo-600">
+                        ${(v.precioVenta * v.pantallas).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3 text-right font-semibold text-green-600">
+                        ${v.utilidad.toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3 text-right text-gray-500 text-sm">
+                        {new Date(v.fechaVenta).toLocaleDateString('es-MX')}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Tablas de resumen */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">

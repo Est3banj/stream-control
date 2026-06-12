@@ -105,6 +105,8 @@ export default function Reportes() {
   const totalIngresos = ventas.reduce((acc, v) => acc + (v.precioVenta * v.pantallas), 0);
   const totalCostos = ventas.reduce((acc, v) => acc + Number(v.costoServicio || 0), 0);
   const totalUtilidad = totalIngresos - totalCostos;
+  const esAdmin = user.rol === 'admin';
+  const colCount = esAdmin ? 9 : 8;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -117,7 +119,7 @@ export default function Reportes() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-indigo-700">
-          Reportes de Ventas
+          {esAdmin ? 'Reportes de la Plataforma' : 'Reportes de Ventas'}
         </h1>
         <p className="text-gray-600">Analiza y exporta tus datos de ventas</p>
       </div>
@@ -248,6 +250,7 @@ export default function Reportes() {
                 <th className="px-4 py-4 text-right text-sm font-semibold">Ingreso</th>
                 <th className="px-4 py-4 text-right text-sm font-semibold">Costo</th>
                 <th className="px-4 py-4 text-right text-sm font-semibold">Utilidad</th>
+                {esAdmin && <th className="px-4 py-4 text-left text-sm font-semibold">Registrado por</th>}
                 <th className="px-4 py-4 text-left text-sm font-semibold">Fecha Venta</th>
                 <th className="px-4 py-4 text-left text-sm font-semibold">Vencimiento</th>
               </tr>
@@ -275,6 +278,7 @@ export default function Reportes() {
                     <td className="px-4 py-4 text-right font-semibold text-indigo-600">
                       ${Number(v.utilidad || 0).toLocaleString()}
                     </td>
+                    {esAdmin && <td className="px-4 py-4 text-gray-600">{v.usuarioEmail || '—'}</td>}
                     <td className="px-4 py-4 text-gray-600">
                       {v.fechaVenta
                         ? new Date(v.fechaVenta + 'T00:00:00').toLocaleDateString('es-CO')
@@ -298,7 +302,7 @@ export default function Reportes() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="text-center py-12 text-gray-500">
+                  <td colSpan={colCount} className="text-center py-12 text-gray-500">
                     <p className="font-medium">No se encontraron ventas en el rango seleccionado</p>
                   </td>
                 </tr>
