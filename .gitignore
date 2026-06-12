@@ -74,4 +74,7 @@ dist/
 # Vite build
 dist/
 
+# SDD artifacts
+.atl/
+
 .DS_Store

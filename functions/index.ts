@@ -5,9 +5,10 @@
  * cuando los clientes están próximos a vencer (1, 2 o 3 días)
  */
 
-import * as functions from 'firebase-functions';
+import * as functions from 'firebase-functions/v1';
 import * as admin from 'firebase-admin';
 import * as telegram from './telegram';
+import { APP_URL } from './telegram';
 
 // Inicializar Firebase Admin si no está inicializado
 if (!admin.apps.length) {
@@ -26,7 +27,9 @@ const db = admin.firestore();
  * Para activar el webhook (pegar URL después del primer deploy):
  *   curl -F "url=DEPLOYED_URL/telegramWebhook" -F "secret_token=SECRET" https://api.telegram.org/botTOKEN/setWebhook
  */
-export const telegramWebhook = functions.https.onRequest(async (req: functions.https.Request, res: functions.Response) => {
+export const telegramWebhook = functions
+  .runWith({ secrets: ['TELEGRAM_TOKEN', 'TELEGRAM_WEBHOOK_SECRET'] })
+  .https.onRequest(async (req: functions.https.Request, res: functions.Response) => {
   if (req.method !== 'POST') {
     res.status(405).send('Method Not Allowed');
     return;
@@ -51,7 +54,9 @@ export const telegramWebhook = functions.https.onRequest(async (req: functions.h
 /**
  * Extensión del cron: envía notificaciones por Telegram
  */
-export const generarNotificacionesVencimientos = functions.pubsub
+export const generarNotificacionesVencimientos = functions
+  .runWith({ secrets: ['TELEGRAM_TOKEN', 'TELEGRAM_WEBHOOK_SECRET'] })
+  .pubsub
   .schedule('every 24 hours')
   .timeZone('America/Bogota')
   .onRun(async (context: functions.EventContext) => {
@@ -129,7 +134,7 @@ export const generarNotificacionesVencimientos = functions.pubsub
                   ...notificacion,
                   telefono: cliente.telefono || '',
                 }, {
-                  appUrl: functions.config().app?.url || '',
+                  appUrl: APP_URL.value(),
                 });
                 if (enviado) telegramEnviados++;
               } catch (err) {
@@ -152,7 +157,7 @@ export const generarNotificacionesVencimientos = functions.pubsub
         if (cliente.saldoPendiente > 0) {
           try {
             const enviado = await telegram.enviarNotificacionMora(cliente, {
-              appUrl: functions.config().app?.url || '',
+              appUrl: APP_URL.value(),
             });
             if (enviado) morasNotificadas++;
           } catch (err) {

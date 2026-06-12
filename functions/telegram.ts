@@ -13,9 +13,10 @@
  * - Rate limiting básico contra brute force
  */
 
-import * as functions from 'firebase-functions';
+import { defineSecret, defineString } from 'firebase-functions/params';
 import * as admin from 'firebase-admin';
 import * as crypto from 'crypto';
+import type * as functions from 'firebase-functions/v1';
 
 interface TelegramMessage {
   chat_id: string;
@@ -50,14 +51,27 @@ interface NotificacionOptions {
   appUrl?: string;
 }
 
+// Inicializar Firebase Admin si no está inicializado
+// Necesario acá porque los imports se resuelven antes que el código de index.ts
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 const db = admin.firestore();
 
 // ============================================================
 // CONFIGURACIÓN
 // ============================================================
 
-const BOT_TOKEN = () => functions.config().telegram?.token;
-const WEBHOOK_SECRET = () => functions.config().telegram?.webhook_secret;
+// ============================================================
+// PARAMS & SECRETS (reemplaza functions.config())
+// ============================================================
+
+export const TELEGRAM_TOKEN = defineSecret('TELEGRAM_TOKEN');
+export const TELEGRAM_WEBHOOK_SECRET = defineSecret('TELEGRAM_WEBHOOK_SECRET');
+export const APP_URL = defineString('APP_URL');
+
+const BOT_TOKEN = () => TELEGRAM_TOKEN.value();
+const WEBHOOK_SECRET = () => TELEGRAM_WEBHOOK_SECRET.value();
 const TELEGRAM_API = 'https://api.telegram.org/bot';
 
 // ============================================================
