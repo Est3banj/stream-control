@@ -166,6 +166,62 @@ export const generarNotificacionesVencimientos = functions
         }
       }
 
+      // ── Procesar suscripciones próximas a vencer ──
+      const suscripcionesSnapshot = await db.collection('suscripciones')
+        .where('estado', '==', 'activa')
+        .get();
+
+      for (const susDoc of suscripcionesSnapshot.docs) {
+        const sus = susDoc.data() as admin.firestore.DocumentData;
+        const fechaFin = (sus.fechaFin as admin.firestore.Timestamp).toDate();
+        fechaFin.setHours(0, 0, 0, 0);
+
+        const diffTime = fechaFin.getTime() - hoy.getTime();
+        const diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diasRestantes >= 0 && diasRestantes <= 3) {
+          const hoyStr = hoy.toISOString().split('T')[0];
+          const notifId = `sub_${susDoc.id}_${hoyStr}`;
+
+          const notifRef = db.collection('notificaciones').doc(notifId);
+          const notifDoc = await notifRef.get();
+
+          if (!notifDoc.exists) {
+            batch.set(notifRef, {
+              suscripcionId: susDoc.id,
+              usuarioNombre: sus.usuarioNombre || '',
+              planNombre: sus.planNombre || '',
+              diasRestantes,
+              fechaFin: sus.fechaFin,
+              fechaGenerada: admin.firestore.FieldValue.serverTimestamp(),
+              leida: false,
+            });
+            batchCount++;
+            notificacionesCreadas++;
+
+            try {
+              const enviado = await telegram.enviarNotificacionSuscripcion({
+                usuarioNombre: sus.usuarioNombre || '',
+                planNombre: sus.planNombre || '',
+                fechaFin: sus.fechaFin as admin.firestore.Timestamp,
+                diasRestantes,
+                estado: sus.estado || 'activa',
+              }, {
+                appUrl: APP_URL.value(),
+              });
+              if (enviado) telegramEnviados++;
+            } catch (err) {
+              console.error(`Error enviando Telegram suscripción para ${sus.usuarioNombre}:`, err);
+            }
+
+            if (batchCount >= MAX_BATCH_SIZE) {
+              await batch.commit();
+              batchCount = 0;
+            }
+          }
+        }
+      }
+
       if (batchCount > 0) {
         await batch.commit();
       }
