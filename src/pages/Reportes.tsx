@@ -4,7 +4,7 @@ import useVentas from '../hooks/useVentas';
 import Paginador from '../components/Paginador';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
-import { Search, Download, DollarSign, TrendingUp, TrendingDown, Calendar, Filter, X, AlertCircle } from 'lucide-react';
+import { Search, Download, DollarSign, TrendingUp, TrendingDown, Calendar, Filter, X, AlertCircle, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { Venta } from '../types/venta';
 
@@ -107,6 +107,9 @@ export default function Reportes() {
   const totalUtilidad = totalIngresos - totalCostos;
   const esAdmin = user.rol === 'admin';
   const colCount = esAdmin ? 9 : 8;
+  const totalVentas = ventas.length;
+  const promedioPorVenta = totalVentas > 0 ? totalIngresos / totalVentas : 0;
+  const vendedoresActivos = new Set(ventas.map(v => v.usuarioEmail).filter(Boolean)).size;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -235,94 +238,133 @@ export default function Reportes() {
         </div>
       </div>
 
-      {/* Tabla de ventas */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-6 border-b border-gray-100">
-          <h2 className="text-xl font-bold text-gray-900">Historial de Ventas</h2>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-indigo-600 text-white">
-                <th className="px-4 py-4 text-left text-sm font-semibold">Cliente</th>
-                <th className="px-4 py-4 text-left text-sm font-semibold">Plataforma</th>
-                <th className="px-4 py-4 text-center text-sm font-semibold">Pantallas</th>
-                <th className="px-4 py-4 text-right text-sm font-semibold">Ingreso</th>
-                <th className="px-4 py-4 text-right text-sm font-semibold">Costo</th>
-                <th className="px-4 py-4 text-right text-sm font-semibold">Utilidad</th>
-                {esAdmin && <th className="px-4 py-4 text-left text-sm font-semibold">Registrado por</th>}
-                <th className="px-4 py-4 text-left text-sm font-semibold">Fecha Venta</th>
-                <th className="px-4 py-4 text-left text-sm font-semibold">Vencimiento</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredVentas.length > 0 ? (
-                ventasPaginadas.map((v: Venta) => (
-                  <tr
-                    key={v.id}
-                    className="border-b border-gray-100 hover:bg-indigo-50/50 transition-all duration-200"
-                  >
-                    <td className="px-4 py-4 font-medium text-gray-900">{v.nombre}</td>
-                    <td className="px-4 py-4">
-                      <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-sm font-medium">
-                        {v.plataforma}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 text-center text-gray-700">{v.pantallas}</td>
-                    <td className="px-4 py-4 text-right font-semibold text-green-600">
-                      ${((v.precioVenta || 0) * (v.pantallas || 0)).toLocaleString()}
-                    </td>
-                    <td className="px-4 py-4 text-right font-semibold text-red-600">
-                      ${Number(v.costoServicio || 0).toLocaleString()}
-                    </td>
-                    <td className="px-4 py-4 text-right font-semibold text-indigo-600">
-                      ${Number(v.utilidad || 0).toLocaleString()}
-                    </td>
-                    {esAdmin && <td className="px-4 py-4 text-gray-600">{v.usuarioEmail || '—'}</td>}
-                    <td className="px-4 py-4 text-gray-600">
-                      {v.fechaVenta
-                        ? new Date(v.fechaVenta + 'T00:00:00').toLocaleDateString('es-CO')
-                        : v.fechaRegistro?.seconds
-                          ? new Date(v.fechaRegistro.seconds * 1000).toLocaleDateString('es-CO')
-                          : '—'}
-                    </td>
-                    <td className="px-4 py-4">
-                      {v.fechaVencimiento ? (
-                        <div className="flex items-center gap-2">
-                          <Calendar size={14} className="text-indigo-500" />
-                          <span className="text-gray-700 font-medium">
-                            {new Date(v.fechaVencimiento).toLocaleDateString('es-CO')}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={colCount} className="text-center py-12 text-gray-500">
-                    <p className="font-medium">No se encontraron ventas en el rango seleccionado</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {esAdmin ? (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-sm flex items-center justify-center">
+                <DollarSign className="text-white" size={22} />
+              </div>
+              <TrendingUp className="text-indigo-500" size={24} />
+            </div>
+            <p className="text-sm font-medium text-gray-600 mb-1">Promedio por Venta</p>
+            <p className="text-3xl font-bold text-indigo-600">${promedioPorVenta.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          </div>
 
-      {/* Paginación */}
-      <Paginador
-        currentPage={paginaActual}
-        totalItems={filteredVentas.length}
-        itemsPerPage={itemsPorPagina}
-        onPageChange={setPaginaActual}
-        onItemsPerPageChange={(val: number) => {
-          setItemsPorPagina(val);
-          setPaginaActual(1);
-        }}
-      />
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-sm flex items-center justify-center">
+                <DollarSign className="text-white" size={22} />
+              </div>
+              <TrendingUp className="text-indigo-500" size={24} />
+            </div>
+            <p className="text-sm font-medium text-gray-600 mb-1">Total Ventas</p>
+            <p className="text-3xl font-bold text-indigo-600">{totalVentas.toLocaleString()}</p>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-sm flex items-center justify-center">
+                <Users className="text-white" size={22} />
+              </div>
+              <TrendingUp className="text-indigo-500" size={24} />
+            </div>
+            <p className="text-sm font-medium text-gray-600 mb-1">Vendedores Activos</p>
+            <p className="text-3xl font-bold text-indigo-600">{vendedoresActivos}</p>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Tabla de ventas */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-6 border-b border-gray-100">
+              <h2 className="text-xl font-bold text-gray-900">Historial de Ventas</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-indigo-600 text-white">
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Cliente</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Plataforma</th>
+                    <th className="px-4 py-4 text-center text-sm font-semibold">Pantallas</th>
+                    <th className="px-4 py-4 text-right text-sm font-semibold">Ingreso</th>
+                    <th className="px-4 py-4 text-right text-sm font-semibold">Costo</th>
+                    <th className="px-4 py-4 text-right text-sm font-semibold">Utilidad</th>
+                    {esAdmin && <th className="px-4 py-4 text-left text-sm font-semibold">Registrado por</th>}
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Fecha Venta</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Vencimiento</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredVentas.length > 0 ? (
+                    ventasPaginadas.map((v: Venta) => (
+                      <tr
+                        key={v.id}
+                        className="border-b border-gray-100 hover:bg-indigo-50/50 transition-all duration-200"
+                      >
+                        <td className="px-4 py-4 font-medium text-gray-900">{v.nombre}</td>
+                        <td className="px-4 py-4">
+                          <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-sm font-medium">
+                            {v.plataforma}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-center text-gray-700">{v.pantallas}</td>
+                        <td className="px-4 py-4 text-right font-semibold text-green-600">
+                          ${((v.precioVenta || 0) * (v.pantallas || 0)).toLocaleString()}
+                        </td>
+                        <td className="px-4 py-4 text-right font-semibold text-red-600">
+                          ${Number(v.costoServicio || 0).toLocaleString()}
+                        </td>
+                        <td className="px-4 py-4 text-right font-semibold text-indigo-600">
+                          ${Number(v.utilidad || 0).toLocaleString()}
+                        </td>
+                        {esAdmin && <td className="px-4 py-4 text-gray-600">{v.usuarioEmail || '—'}</td>}
+                        <td className="px-4 py-4 text-gray-600">
+                          {v.fechaVenta
+                            ? new Date(v.fechaVenta + 'T00:00:00').toLocaleDateString('es-CO')
+                            : v.fechaRegistro?.seconds
+                              ? new Date(v.fechaRegistro.seconds * 1000).toLocaleDateString('es-CO')
+                              : '—'}
+                        </td>
+                        <td className="px-4 py-4">
+                          {v.fechaVencimiento ? (
+                            <div className="flex items-center gap-2">
+                              <Calendar size={14} className="text-indigo-500" />
+                              <span className="text-gray-700 font-medium">
+                                {new Date(v.fechaVencimiento).toLocaleDateString('es-CO')}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={colCount} className="text-center py-12 text-gray-500">
+                        <p className="font-medium">No se encontraron ventas en el rango seleccionado</p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Paginación */}
+          <Paginador
+            currentPage={paginaActual}
+            totalItems={filteredVentas.length}
+            itemsPerPage={itemsPorPagina}
+            onPageChange={setPaginaActual}
+            onItemsPerPageChange={(val: number) => {
+              setItemsPorPagina(val);
+              setPaginaActual(1);
+            }}
+          />
+        </>
+      )}
     </div>
   );
 }

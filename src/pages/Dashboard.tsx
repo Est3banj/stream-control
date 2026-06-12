@@ -21,10 +21,9 @@ export default function Dashboard() {
     return { totalIngresos, totalUtilidad };
   }, [ventas, isAdmin]);
 
-  const ultimasVentas = useMemo(() => ventas.slice(0, 10), [ventas]);
-
   const [totales, setTotales] = useState<{ ingresos: number; egresos: number; utilidad: number }>({ ingresos: 0, egresos: 0, utilidad: 0 });
   const [topClientes, setTopClientes] = useState<Array<{ nombre: string; ventas: number }>>([]);
+  const [topVendedores, setTopVendedores] = useState<Array<{ email: string; ventas: number }>>([]);
   const [topPlataformas, setTopPlataformas] = useState<Array<{ plataforma: string; pantallas: number }>>([]);
 
   // Procesar ventas cuando cambian
@@ -34,6 +33,7 @@ export default function Dashboard() {
     let ingresos = 0, costos = 0, utilidad = 0;
     const clientes: Record<string, number> = {};
     const plataformas: Record<string, number> = {};
+    const vendedores: Record<string, number> = {};
 
     ventas.forEach((v: Venta) => {
       const ingresoVenta = (v.precioVenta * v.pantallas) || 0;
@@ -46,6 +46,9 @@ export default function Dashboard() {
       }
       if (v.plataforma) {
         plataformas[v.plataforma] = (plataformas[v.plataforma] || 0) + (v.pantallas || 0);
+      }
+      if (v.usuarioEmail) {
+        vendedores[v.usuarioEmail] = (vendedores[v.usuarioEmail] || 0) + ingresoVenta;
       }
     });
 
@@ -62,16 +65,33 @@ export default function Dashboard() {
       .slice(0, 5)
       .map(([plataforma, pantallas]) => ({ plataforma, pantallas }));
     setTopPlataformas(topPlataformasSorted);
+
+    const topVendedoresSorted = Object.entries(vendedores)
+      .sort((a: [string, number], b: [string, number]) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([email, ventas]) => ({ email, ventas }));
+    setTopVendedores(topVendedoresSorted);
   }, [ventas, loading]);
 
   // Datos para gráfico de barras de clientes
   const clientesChartData = useMemo(() => {
-    return topClientes.map((item, index) => ({
+    return topClientes.map((item) => ({
       name: item.nombre.length > 15 ? item.nombre.substring(0, 15) + '...' : item.nombre,
       ventas: item.ventas,
       fullName: item.nombre,
     }));
   }, [topClientes]);
+
+  const vendedoresChartData = useMemo(() => {
+    return topVendedores.map((item) => ({
+      name: item.email.length > 15 ? item.email.substring(0, 15) + '...' : item.email,
+      ventas: item.ventas,
+      fullName: item.email,
+    }));
+  }, [topVendedores]);
+
+  const barChartTitle = isAdmin ? 'Top 5 Vendedores' : 'Top 5 Clientes por Ventas';
+  const barChartData = isAdmin ? vendedoresChartData : clientesChartData;
 
   // Datos para gráfico de pie de plataformas
   const plataformasChartData = useMemo(() => {
@@ -225,15 +245,15 @@ export default function Dashboard() {
 
       {/* Gráficos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-        {/* Gráfico de barras - Top Clientes */}
+        {/* Gráfico de barras - Top Clientes / Top Vendedores */}
         <div className="card">
           <div className="flex items-center gap-2 mb-6">
             <Users className="text-indigo-600" size={24} />
-            <h2 className="text-xl font-bold text-gray-900">Top 5 Clientes por Ventas</h2>
+            <h2 className="text-xl font-bold text-gray-900">{barChartTitle}</h2>
           </div>
-          {clientesChartData.length > 0 ? (
+          {barChartData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={clientesChartData}>
+              <BarChart data={barChartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
@@ -284,55 +304,6 @@ export default function Dashboard() {
           )}
         </div>
       </div>
-
-      {/* Últimas Ventas - Admin */}
-      {isAdmin && (
-        <div className="card overflow-hidden mt-6">
-          <div className="flex items-center gap-2 mb-4">
-            <ShoppingCart className="text-cyan-600" size={20} />
-            <h3 className="text-lg font-semibold text-gray-900">Últimas Ventas</h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white">
-                  <th className="px-4 py-3 text-left text-sm font-semibold rounded-tl-xl">Cliente</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Plataforma</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold">Ingreso</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold">Utilidad</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold rounded-tr-xl">Fecha</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ultimasVentas.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="text-center py-8 text-gray-500">No hay datos</td>
-                  </tr>
-                ) : (
-                  ultimasVentas.map((v) => (
-                    <tr
-                      key={v.id}
-                      className="border-b border-gray-100 hover:bg-cyan-50/50 transition-colors"
-                    >
-                      <td className="px-4 py-3 font-medium text-gray-700">{v.nombre}</td>
-                      <td className="px-4 py-3 text-gray-600">{v.plataforma}</td>
-                      <td className="px-4 py-3 text-right font-semibold text-indigo-600">
-                        ${(v.precioVenta * v.pantallas).toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-right font-semibold text-green-600">
-                        ${v.utilidad.toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-right text-gray-500 text-sm">
-                        {new Date(v.fechaVenta).toLocaleDateString('es-MX')}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
 
       {/* Tablas de resumen */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">

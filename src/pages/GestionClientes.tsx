@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import useClientes from '../hooks/useClientes';
 import Paginador from '../components/Paginador';
 import toast from 'react-hot-toast';
-import { Search, Download, MessageCircle, Calendar, Users, TrendingUp, X, AlertCircle, Edit, Mail, DollarSign } from 'lucide-react';
+import { Search, Download, MessageCircle, Calendar, Users, TrendingUp, X, AlertCircle, Edit, Mail, DollarSign, CheckCircle, UserCheck } from 'lucide-react';
 import type { Venta } from '../types/venta';
 import type { Cliente } from '../types/cliente';
 
@@ -306,15 +306,76 @@ export default function GestionClientes() {
         </div>
       </div>
 
+      {/* Resumen agregado para admin */}
+      {user?.rol === 'admin' && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="card cursor-default">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg">
+                <Users className="text-white" size={24} />
+              </div>
+              <Users className="text-blue-400" size={20} />
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Total Clientes</p>
+              <p className="text-2xl font-bold text-gray-900">{clientes.todos.length.toLocaleString()}</p>
+            </div>
+          </div>
+          <div className="card cursor-default">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center shadow-lg">
+                <CheckCircle className="text-white" size={24} />
+              </div>
+              <CheckCircle className="text-green-400" size={20} />
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Clientes Activos</p>
+              <p className="text-2xl font-bold text-gray-900">{clientes.activos.length.toLocaleString()}</p>
+            </div>
+          </div>
+          <div className="card cursor-default">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-pink-600 flex items-center justify-center shadow-lg">
+                <AlertTriangle className="text-white" size={24} />
+              </div>
+              <AlertTriangle className="text-red-400" size={20} />
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Clientes Vencidos</p>
+              <p className="text-2xl font-bold text-gray-900">{clientes.inactivos.length.toLocaleString()}</p>
+            </div>
+          </div>
+          <div className="card cursor-default">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                <UserCheck className="text-white" size={24} />
+              </div>
+              <UserCheck className="text-purple-400" size={20} />
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Vendedores</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {new Set(clientes.todos.map(c => c.propietarioId).filter(Boolean)).size.toLocaleString()}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Lista de clientes */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        {user?.rol === 'admin' && (
+          <div className="px-6 pt-4 pb-2">
+            <p className="text-sm text-gray-500 italic">Vista general de todos los vendedores de la plataforma</p>
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="bg-indigo-600 text-white">
                 <th className="px-4 py-4 text-left text-sm font-semibold">Cliente</th>
                 {user?.rol === 'admin' && (
-                  <th className="px-4 py-4 text-left text-sm font-semibold">Usuario</th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold">Vendedor</th>
                 )}
                 <th className="px-4 py-4 text-left text-sm font-semibold">Contacto</th>
                 <th className="px-4 py-4 text-left text-sm font-semibold">Plataforma</th>
