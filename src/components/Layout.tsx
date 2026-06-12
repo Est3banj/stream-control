@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Menu, X, LayoutDashboard, DollarSign, BarChart3, Users, UserCog, LogOut, User, Download, MessageCircle } from 'lucide-react';
+import { Menu, X, LayoutDashboard, DollarSign, BarChart3, Users, UserCog, LogOut, User, Download, MessageCircle, Package, ClipboardList } from 'lucide-react';
 import PWAInstallButton from './PWAInstallButton';
 import NotificationsPanel from './NotificationsPanel';
 
@@ -40,6 +40,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   if (user?.rol === 'admin') {
     navItems.push({ to: '/usuarios', icon: UserCog, label: 'Usuarios' });
+    navItems.push({ to: '/admin/planes', icon: Package, label: 'Planes' });
+    navItems.push({ to: '/admin/suscripciones', icon: ClipboardList, label: 'Suscripciones' });
   }
 
   const isActive = (path: string) => location.pathname === path;

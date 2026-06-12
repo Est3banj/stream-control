@@ -264,6 +264,50 @@ service cloud.firestore {
     }
     
     // ============================================
+    // COLECCIÓN: planes
+    // ============================================
+    // Propósito: Planes de suscripción configurables
+    // - Lectura: Cualquier usuario autenticado puede ver planes
+    // - Creación: Solo admin con validación de campos
+    // - Actualización: Solo admin
+    // - Eliminación: Solo admin
+    // - Campos: nombre, descripcion, precio, duracionDias, features, activo, createdAt
+    
+    match /planes/{planId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin() &&
+        request.resource.data.nombre is string &&
+        request.resource.data.nombre.size() > 0 &&
+        request.resource.data.nombre.size() <= 100 &&
+        request.resource.data.precio is number &&
+        request.resource.data.precio >= 0 &&
+        request.resource.data.duracionDias is number &&
+        request.resource.data.duracionDias >= 1 &&
+        request.resource.data.features is list &&
+        request.resource.data.features.size() <= 20;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // ============================================
+    // COLECCIÓN: suscripciones
+    // ============================================
+    // Propósito: Suscripciones de usuarios a planes
+    // - Lectura: Admin puede leer todas, usuario puede leer las propias
+    // - Creación: Solo admin
+    // - Actualización: Solo admin
+    // - Eliminación: No permitida
+    // - Campos: usuarioId, usuarioNombre, planId, planNombre, fechaInicio, fechaFin,
+    //   estado, pagoEstado, monto, notas, createdAt, updatedAt
+    
+    match /suscripciones/{suscripcionId} {
+      allow read: if isAuthenticated() && (isAdmin() || resource.data.usuarioId == request.auth.uid);
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+    
+    // ============================================
     // DENEGAR ACCESO A OTRAS COLECCIONES
     // ============================================
     match /{document=**} {
