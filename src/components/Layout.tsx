@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Menu, X, LayoutDashboard, DollarSign, BarChart3, Users, UserCog, LogOut, User, Download, MessageCircle, Package, ClipboardList } from 'lucide-react';
+import { Menu, X, LayoutDashboard, DollarSign, BarChart3, Users, UserCog, LogOut, User, Download, MessageCircle, Package, ClipboardList, Send } from 'lucide-react';
 import PWAInstallButton from './PWAInstallButton';
 import NotificationsPanel from './NotificationsPanel';
 
@@ -31,18 +31,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     }
   }, [location, isMobile]);
 
-  const navItems: { to: string; icon: React.ComponentType<{ size?: number; className?: string }>; label: string }[] = [
-    { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/ventas', icon: DollarSign, label: 'Ventas' },
-    { to: '/reportes', icon: BarChart3, label: 'Reportes' },
-    { to: '/GestionClientes', icon: Users, label: 'Clientes' },
-  ];
-
-  if (user?.rol === 'admin') {
-    navItems.push({ to: '/usuarios', icon: UserCog, label: 'Usuarios' });
-    navItems.push({ to: '/admin/planes', icon: Package, label: 'Planes' });
-    navItems.push({ to: '/admin/suscripciones', icon: ClipboardList, label: 'Suscripciones' });
-  }
+  const navItems: { to: string; icon: React.ComponentType<{ size?: number; className?: string }>; label: string }[] = user?.rol === 'admin'
+    ? [
+        { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+        { to: '/admin/planes', icon: Package, label: 'Planes' },
+        { to: '/admin/suscripciones', icon: ClipboardList, label: 'Suscripciones' },
+        { to: '/usuarios', icon: UserCog, label: 'Usuarios' },
+        { to: '/telegram', icon: Send, label: 'Telegram' },
+      ]
+    : [
+        { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+        { to: '/ventas', icon: DollarSign, label: 'Ventas' },
+        { to: '/reportes', icon: BarChart3, label: 'Reportes' },
+        { to: '/GestionClientes', icon: Users, label: 'Clientes' },
+      ];
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -116,20 +118,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* Configuración */}
-            <div className="mt-2 pt-2 border-t border-white/20">
-              <Link
-                to="/telegram"
-                onClick={() => isMobile && setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                  isActive('/telegram')
-                    ? 'bg-white/20 shadow-lg scale-105'
-                    : 'hover:bg-white/10 hover:translate-x-1'
-                }`}
-              >
-                <MessageCircle size={20} className={isActive('/telegram') ? 'text-cyan-200' : ''} />
-                <span className="font-medium">Telegram</span>
-              </Link>
-            </div>
+            {user?.rol !== 'admin' && (
+              <div className="mt-2 pt-2 border-t border-white/20">
+                <Link
+                  to="/telegram"
+                  onClick={() => isMobile && setSidebarOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                    isActive('/telegram')
+                      ? 'bg-white/20 shadow-lg scale-105'
+                      : 'hover:bg-white/10 hover:translate-x-1'
+                  }`}
+                >
+                  <MessageCircle size={20} className={isActive('/telegram') ? 'text-cyan-200' : ''} />
+                  <span className="font-medium">Telegram</span>
+                </Link>
+              </div>
+            )}
           </nav>
         </div>
 

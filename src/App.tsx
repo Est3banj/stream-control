@@ -27,9 +27,9 @@ export default function App() {
           <Route
             path="/"
             element={
-              <PrivateRoute roles={['admin', 'usuario']}>
+              <PrivateRoute roles={['usuario']}>
                 <Layout>
-                  <Dashboard />
+                  <GestionClientes />
                 </Layout>
               </PrivateRoute>
             }
@@ -38,7 +38,7 @@ export default function App() {
           <Route
             path="/ventas"
             element={
-              <PrivateRoute roles={['admin', 'usuario']}>
+              <PrivateRoute roles={['usuario']}>
                 <Layout>
                   <Ventas />
                 </Layout>
@@ -49,7 +49,7 @@ export default function App() {
           <Route
             path="/reportes"
             element={
-              <PrivateRoute roles={['admin', 'usuario']}>
+              <PrivateRoute roles={['usuario']}>
                 <Layout>
                   <Reportes />
                 </Layout>
@@ -71,9 +71,9 @@ export default function App() {
           <Route
             path="/GestionClientes"
             element={
-              <PrivateRoute roles={['admin', 'usuario']}>
+              <PrivateRoute roles={['usuario']}>
                 <Layout>
-                  <GestionClientes />
+                  <Reportes />
                 </Layout>
               </PrivateRoute>
             }
