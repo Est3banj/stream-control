@@ -259,7 +259,7 @@ export default function GestionClientes() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-indigo-700">
-          Gestión de Clientes
+          {user?.rol === 'admin' ? 'Gestión de Clientes — Plataforma' : 'Gestión de Clientes'}
         </h1>
         <p className="text-gray-600">Administra y contacta a tus clientes</p>
       </div>
@@ -313,6 +313,9 @@ export default function GestionClientes() {
             <thead>
               <tr className="bg-indigo-600 text-white">
                 <th className="px-4 py-4 text-left text-sm font-semibold">Cliente</th>
+                {user?.rol === 'admin' && (
+                  <th className="px-4 py-4 text-left text-sm font-semibold">Usuario</th>
+                )}
                 <th className="px-4 py-4 text-left text-sm font-semibold">Contacto</th>
                 <th className="px-4 py-4 text-left text-sm font-semibold">Plataforma</th>
                 <th className="px-4 py-4 text-left text-sm font-semibold">Vencimiento</th>
@@ -334,6 +337,11 @@ export default function GestionClientes() {
                         <div className="text-xs text-gray-500 mt-1">{c.correo}</div>
                       )}
                     </td>
+                    {user?.rol === 'admin' && (
+                      <td className="px-4 py-4">
+                        <div className="text-gray-700">{c.usuarioEmail || '—'}</div>
+                      </td>
+                    )}
                     <td className="px-4 py-4">
                       <div className="text-gray-700">{c.telefono}</div>
                     </td>
@@ -416,7 +424,7 @@ export default function GestionClientes() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-gray-500">
+                  <td colSpan={user?.rol === 'admin' ? 8 : 7} className="text-center py-12 text-gray-500">
                     <Users size={48} className="mx-auto mb-3 text-gray-300" />
                     <p className="font-medium">No se encontraron clientes {filtro}</p>
                   </td>
