@@ -116,7 +116,8 @@ service cloud.firestore {
         request.resource.data.costoServicio >= 0 &&
         request.resource.data.utilidad is number &&
         request.resource.data.fechaInicio is string &&
-        request.resource.data.diasServicio is string &&
+        request.resource.data.diasServicio is number &&
+        request.resource.data.diasServicio >= 1 &&
         request.resource.data.fechaVencimiento is string &&
         (request.resource.data.correo == null || request.resource.data.correo is string);
       // Actualización: No permitida
