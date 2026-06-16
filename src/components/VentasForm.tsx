@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, addDoc, setDoc, doc, serverTimestamp, getDoc, increment, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, setDoc, doc, serverTimestamp, getDoc, increment, updateDoc, query, where, getDocs } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import type { VentaInput } from '../types/venta';
@@ -71,7 +71,7 @@ export default function VentasForm() {
     setVenta({ ...venta, [name]: type === 'checkbox' ? checked : value } as VentaFormState);
   };
 
-  // 🔍 Autocompletar si el cliente ya existe
+  // 🔍 Autocompletar si el nombre ya existe
   const handleBlurNombre = async () => {
     if (!user || !venta.nombre.trim()) return;
     try {
@@ -89,6 +89,31 @@ export default function VentasForm() {
       }
     } catch (error: unknown) {
       console.error('Error cargando cliente:', error);
+    }
+  };
+
+  // 🔍 Autocompletar por teléfono
+  const handleBlurTelefono = async () => {
+    if (!user || !venta.telefono.trim()) return;
+    try {
+      const q = query(
+        collection(db, 'clientes'),
+        where('propietarioId', '==', user.uid),
+        where('telefono', '==', venta.telefono.trim())
+      );
+      const snapshot = await getDocs(q);
+      if (!snapshot.empty) {
+        const data = snapshot.docs[0].data() as { nombre?: string; correo?: string; plataforma?: string };
+        setVenta(prev => ({
+          ...prev,
+          nombre: data.nombre || prev.nombre,
+          correo: data.correo || '',
+          plataforma: data.plataforma || '',
+        }));
+        toast.success('Cliente encontrado por teléfono');
+      }
+    } catch (error: unknown) {
+      console.error('Error buscando por teléfono:', error);
     }
   };
 
@@ -297,10 +322,12 @@ export default function VentasForm() {
               name="telefono"
               value={venta.telefono}
               onChange={handleChange}
+              onBlur={handleBlurTelefono}
               placeholder="Ej: 3104567890"
               className="w-full"
               required
             />
+            <p className="text-xs text-gray-400 mt-1">Si el cliente existe, se autocompleta</p>
           </div>
 
           <div>
