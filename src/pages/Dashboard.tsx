@@ -3,6 +3,8 @@ import { useAuth } from '../contexts/AuthContext';
 import useVentas from '../hooks/useVentas';
 import useClientes from '../hooks/useClientes';
 import useSuscripciones from '../hooks/useSuscripciones';
+import usePermisos from '../hooks/usePermisos';
+import FeatureBlocked from '../components/FeatureBlocked';
 import { DollarSign, TrendingUp, TrendingDown, Users, Tv, ShoppingCart, AlertCircle, CreditCard } from 'lucide-react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { collection, getDocs } from 'firebase/firestore';
@@ -13,6 +15,7 @@ const COLORS = ['#6B21A8', '#3B82F6', '#06B6D4', '#8B5CF6', '#EC4899'];
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const permisos = usePermisos(user);
   const isAdmin = user?.rol === 'admin';
   const { ventas, loading, error } = useVentas(user);
   const { clientes } = useClientes(user);
@@ -35,23 +38,29 @@ export default function Dashboard() {
     return () => { mounted = false; };
   }, [isAdmin]);
 
-  // Admin KPIs
+  // Admin KPIs — solo desde suscripciones, NO desde ventas
   const activeSuscripciones = useMemo(
     () => suscripciones.filter((s) => s.estado === 'activa').length,
     [suscripciones]
   );
 
   const totalIngresos = useMemo(
-    () => ventas.reduce((sum, v) => sum + (v.precioVenta * v.pantallas || 0), 0),
-    [ventas]
+    () => suscripciones
+      .filter((s) => s.pagoEstado === 'pagado')
+      .reduce((sum, s) => sum + (s.monto || 0), 0),
+    [suscripciones]
   );
 
   const ingresosEsteMes = useMemo(() => {
     const prefix = new Date().toISOString().slice(0, 7);
-    return ventas
-      .filter((v) => v.fechaVenta?.startsWith(prefix))
-      .reduce((sum, v) => sum + (v.precioVenta * v.pantallas || 0), 0);
-  }, [ventas]);
+    return suscripciones
+      .filter((s) => {
+        if (s.pagoEstado !== 'pagado') return false;
+        if (!s.fechaInicio?.seconds) return false;
+        return new Date(s.fechaInicio.seconds * 1000).toISOString().startsWith(prefix);
+      })
+      .reduce((sum, s) => sum + (s.monto || 0), 0);
+  }, [suscripciones]);
 
   // Procesar ventas cuando cambian
   useEffect(() => {
@@ -135,6 +144,24 @@ export default function Dashboard() {
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
           <p className="text-gray-600 font-medium">Cargando datos...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (!permisos.puedeVerDashboardEjecutivo) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <div className="mb-6">
+          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600">
+            Dashboard
+          </h1>
+          <p className="text-gray-600">Panel ejecutivo con métricas y reportes</p>
+        </div>
+        <FeatureBlocked
+          feature="Dashboard Ejecutivo"
+          description="Accedé a métricas avanzadas, indicadores y gráficos de tu negocio."
+          plan="Enterprise"
+        />
       </div>
     );
   }

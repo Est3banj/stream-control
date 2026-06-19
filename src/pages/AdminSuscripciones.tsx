@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import useSuscripciones, { crearSuscripcion, actualizarSuscripcion, marcarPagada } from '../hooks/useSuscripciones';
 import usePlanes from '../hooks/usePlanes';
 import SuscripcionCard from '../components/SuscripcionCard';
-import { CreditCard, Plus, X, Eye, AlertCircle } from 'lucide-react';
+import { CreditCard, Plus, X, Eye, AlertCircle, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { Suscripcion, EstadoSuscripcion, PagoEstado } from '../types/suscripcion';
 
@@ -108,6 +108,20 @@ export default function AdminSuscripciones() {
       console.error('Error actualizando pago:', error);
       toast.error('Error al actualizar el estado de pago');
     }
+  };
+
+  const handleRenovar = (s: Suscripcion) => {
+    const fechaFin = new Date(s.fechaFin.seconds * 1000);
+    const nextDay = new Date(fechaFin);
+    nextDay.setDate(nextDay.getDate() + 1);
+    const nextDayStr = nextDay.toISOString().split('T')[0];
+
+    setCreateForm({
+      usuarioId: s.usuarioId,
+      planId: s.planId,
+      fechaInicio: nextDayStr,
+    });
+    setShowCreate(true);
   };
 
   const formatTimestamp = (ts: Timestamp) => {
@@ -259,6 +273,13 @@ export default function AdminSuscripciones() {
                             <option value="pendiente">Pendiente</option>
                             <option value="vencido">Vencido</option>
                           </select>
+                          <button
+                            onClick={() => handleRenovar(s)}
+                            className="p-2 rounded-lg bg-amber-100 text-amber-600 hover:bg-amber-200 transition-colors"
+                            title="Renovar suscripción"
+                          >
+                            <RefreshCw size={18} />
+                          </button>
                           <button
                             onClick={() => setViewSuscripcion(s)}
                             className="p-2 rounded-lg bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-colors"

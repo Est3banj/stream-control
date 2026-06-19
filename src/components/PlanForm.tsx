@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2 } from 'lucide-react';
+import { X, Plus, Trash2, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
-import type { Plan, PlanInput } from '../types/plan';
+import type { Plan, PlanInput, PreciosPeriodo } from '../types/plan';
 
 interface PlanFormProps {
   plan?: Plan | null;
@@ -9,10 +9,19 @@ interface PlanFormProps {
   onSave: (data: PlanInput) => Promise<void>;
 }
 
+const PERIODOS = [
+  { key: 'trimestral' as const, label: 'Trimestral', meses: 3 },
+  { key: 'semestral' as const, label: 'Semestral', meses: 6 },
+  { key: 'anual' as const, label: 'Anual', meses: 12 },
+];
+
 export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [precio, setPrecio] = useState('');
+  const [precioTrimestral, setPrecioTrimestral] = useState('');
+  const [precioSemestral, setPrecioSemestral] = useState('');
+  const [precioAnual, setPrecioAnual] = useState('');
   const [duracionDias, setDuracionDias] = useState('');
   const [features, setFeatures] = useState<string[]>([]);
   const [newFeature, setNewFeature] = useState('');
@@ -26,6 +35,9 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
       setNombre(plan.nombre);
       setDescripcion(plan.descripcion);
       setPrecio(String(plan.precio));
+      setPrecioTrimestral(plan.precios?.trimestral ? String(plan.precios.trimestral) : '');
+      setPrecioSemestral(plan.precios?.semestral ? String(plan.precios.semestral) : '');
+      setPrecioAnual(plan.precios?.anual ? String(plan.precios.anual) : '');
       setDuracionDias(String(plan.duracionDias));
       setFeatures([...plan.features]);
       setActivo(plan.activo);
@@ -98,10 +110,19 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
 
     setSubmitting(true);
     try {
+      const precios: PreciosPeriodo = { mensual: Number(precio) };
+      const trimNum = Number(precioTrimestral);
+      const semNum = Number(precioSemestral);
+      const anuNum = Number(precioAnual);
+      if (!isNaN(trimNum) && trimNum > 0) precios.trimestral = trimNum;
+      if (!isNaN(semNum) && semNum > 0) precios.semestral = semNum;
+      if (!isNaN(anuNum) && anuNum > 0) precios.anual = anuNum;
+
       await onSave({
         nombre: nombre.trim(),
         descripcion: descripcion.trim(),
         precio: Number(precio),
+        precios,
         duracionDias: Number(duracionDias),
         features: features.filter(f => f.trim()),
         activo,
@@ -165,25 +186,60 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Precio <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
-                <input
-                  type="number"
-                  value={precio}
-                  onChange={(e) => setPrecio(e.target.value)}
-                  className="w-full pl-7"
-                  min="0"
-                  step="0.01"
-                  required
-                />
+          <div className="space-y-3">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              Precios por período
+            </label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Mensual *</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
+                  <input
+                    type="number"
+                    value={precio}
+                    onChange={(e) => setPrecio(e.target.value)}
+                    className="w-full pl-7"
+                    min="0"
+                    step="0.01"
+                    required
+                  />
+                </div>
               </div>
+              {PERIODOS.map(({ key, label, meses }) => {
+                const setter = key === 'trimestral' ? setPrecioTrimestral
+                  : key === 'semestral' ? setPrecioSemestral
+                  : setPrecioAnual;
+                const val = key === 'trimestral' ? precioTrimestral
+                  : key === 'semestral' ? precioSemestral
+                  : precioAnual;
+                const sugerido = Number(precio) * meses;
+                return (
+                  <div key={key}>
+                    <label className="block text-xs text-gray-500 mb-1">{label}</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
+                      <input
+                        type="number"
+                        value={val}
+                        onChange={(e) => setter(e.target.value)}
+                        className="w-full pl-7"
+                        min="0"
+                        step="0.01"
+                        placeholder={sugerido > 0 ? `~${sugerido.toLocaleString()}` : ''}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
+            <p className="text-xs text-gray-400 flex items-center gap-1">
+              <Info size={12} />
+              Dejá vacío para usar el valor sugerido. El precio mensual es obligatorio.
+            </p>
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Duración (días) <span className="text-red-500">*</span>

@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import useVentas from '../hooks/useVentas';
+import usePermisos from '../hooks/usePermisos';
+import FeatureBlocked from '../components/FeatureBlocked';
 import Paginador from '../components/Paginador';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
@@ -10,6 +12,7 @@ import type { Venta } from '../types/venta';
 
 export default function Reportes() {
   const { user } = useAuth();
+  const permisos = usePermisos(user);
   const { ventas: todasLasVentas, loading, error } = useVentas(user);
   const [fechaInicio, setFechaInicio] = useState('');
   const [fechaFin, setFechaFin] = useState('');
@@ -90,13 +93,46 @@ export default function Reportes() {
     );
   }
 
-  const filteredVentas = ventas.filter(v => {
-    const term = searchTerm.toLowerCase();
+  if (!permisos.puedeVerReportesAvanzados) {
     return (
-      v.nombre?.toLowerCase().includes(term) ||
-      v.plataforma?.toLowerCase().includes(term)
+      <div className="space-y-6 animate-fade-in">
+        <div className="mb-6">
+          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600">
+            Reportes
+          </h1>
+          <p className="text-gray-600">Reportes avanzados y exportación de datos</p>
+        </div>
+        <FeatureBlocked
+          feature="Reportes Avanzados"
+          description="Analizá tus ventas con filtros por fecha, búsqueda avanzada y exportación a Excel."
+          plan="Professional y Enterprise"
+        />
+      </div>
     );
-  });
+  }
+
+  const filteredVentas = ventas
+    .filter(v => {
+      const term = searchTerm.toLowerCase();
+      return (
+        v.nombre?.toLowerCase().includes(term) ||
+        v.plataforma?.toLowerCase().includes(term)
+      );
+    })
+    .sort((a, b) => {
+      // Más recientes primero (fechaVenta DESC)
+      const dateA = a.fechaVenta
+        ? new Date(a.fechaVenta + 'T00:00:00').getTime()
+        : a.fechaRegistro?.seconds
+          ? new Date(a.fechaRegistro.seconds * 1000).getTime()
+          : 0;
+      const dateB = b.fechaVenta
+        ? new Date(b.fechaVenta + 'T00:00:00').getTime()
+        : b.fechaRegistro?.seconds
+          ? new Date(b.fechaRegistro.seconds * 1000).getTime()
+          : 0;
+      return dateB - dateA;
+    });
 
   const indexUltimo = paginaActual * itemsPorPagina;
   const indexPrimero = indexUltimo - itemsPorPagina;

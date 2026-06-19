@@ -27,11 +27,28 @@ vi.mock('firebase/firestore', () => ({
   setDoc: (...args: any[]) => mockSetDoc(...args),
   updateDoc: (...args: any[]) => mockUpdateDoc(...args),
   getDoc: (...args: any[]) => mockGetDoc(...args),
+  getDocs: () => Promise.resolve({ empty: true, docs: [], size: 0 }),
+  query: (...args: any[]) => ({ _query: true, args }),
+  where: (...args: any[]) => ({ _where: true, args }),
   serverTimestamp: () => ({ _methodName: 'serverTimestamp' }),
   increment: (n: number) => ({ _methodName: 'increment', _value: n }),
 }));
 
 const mockUser = { uid: 'test-uid-123', email: 'test@streamcontrol.com' };
+
+vi.mock('../hooks/usePermisos', () => ({
+  default: () => ({
+    planNombre: 'Starter',
+    loading: false,
+    clienteLimit: Infinity,
+    puedeUsarTelegram: false,
+    puedeVerReportesAvanzados: false,
+    puedeExportarExcel: true,
+    puedeVerDashboardEjecutivo: false,
+    tieneSoportePrioritario: false,
+    tieneSoporte247: false,
+  }),
+}));
 
 vi.mock('../contexts/AuthContext', () => ({
   useAuth: () => ({ user: mockUser }),

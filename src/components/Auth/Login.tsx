@@ -55,7 +55,7 @@ export default function Login(){
       <div className="relative z-10 w-full max-w-md bg-white bg-opacity-15 backdrop-blur-lg rounded-3xl shadow-2xl p-10 animate-fadeInUp transition-all duration-700 ease-in-out">
         <div className="flex justify-center mb-6">
           <img 
-            src="/icon_stream.webp" 
+            src="/stream.webp" 
             alt="StreamControl Pro"
             className="w-28 h-28 md:w-32 md:h-32 object-contain drop-shadow-2xl animate-fadeInUp"
             style={{ animationDelay: '0.1s', animationFillMode: 'both' }}

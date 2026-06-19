@@ -27,7 +27,7 @@ service cloud.firestore {
     // Fallback por email mientras se completa la migración a usuarios/rol
     function isAdmin() {
       return isAuthenticated() && (
-        getUserEmail() in ['estebanjurado20005@gmail.com']
+        getUserEmail() in ['estebanjurado20005@gmail.com', 'estebanjurado2005@gmail.com']
         ||
         get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin'
       );
@@ -57,10 +57,8 @@ service cloud.firestore {
       );
       
       // Creación: Solo admin puede crear usuarios
-      // Validación: El userId debe coincidir con el UID del usuario creado en Auth
-      // Basado en: Usuarios.jsx línea 62 - setDoc con userCred.user.uid
+      // El userId es el UID generado por Firebase Auth (autoincremental)
       allow create: if isAdmin() && (
-        userId == request.resource.data.get('correo', '').split('@')[0] &&
         request.resource.data.keys().hasAll(['nombre', 'correo', 'rol', 'estado']) &&
         request.resource.data.rol is string &&
         request.resource.data.rol in ['admin', 'usuario'] &&
@@ -306,6 +304,19 @@ service cloud.firestore {
       allow create: if isAdmin();
       allow update: if isAdmin();
       allow delete: if false;
+    }
+    
+    // ============================================
+    // COLECCIÓN: config
+    // ============================================
+    // Propósito: Configuración general de la aplicación
+    // - Lectura: Cualquier usuario autenticado puede leer (para ver WhatsApp del admin)
+    // - Escritura: Solo admin (AdminPlanes)
+    // - Documentos: general (whatsapp: string)
+    
+    match /config/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
     }
     
     // ============================================

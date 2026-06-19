@@ -4,9 +4,35 @@ import { doc, setDoc, deleteDoc, collection, Timestamp, query, where, getDocs, t
 import { useAuth } from '../contexts/AuthContext';
 import { MessageCircle, Link2, Unlink, Copy, Check, RefreshCw, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
+import usePermisos from '../hooks/usePermisos';
+import FeatureBlocked from '../components/FeatureBlocked';
 
 export default function TelegramConfig() {
   const { user } = useAuth();
+  const permisos = usePermisos(user);
+
+  if (!permisos.puedeUsarTelegram) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <div className="mb-6">
+          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600">
+            Telegram
+          </h1>
+          <p className="text-gray-600">Recibí notificaciones de vencimientos en tu Telegram</p>
+        </div>
+        <FeatureBlocked
+          feature="Notificaciones Telegram"
+          description="Recibí alertas automáticas cuando un cliente esté por vencer, directamente en tu Telegram."
+          plan="Professional y Enterprise"
+        />
+      </div>
+    );
+  }
+
+  return <TelegramConfigContent user={user} />;
+}
+
+function TelegramConfigContent({ user }: { user: ReturnType<typeof useAuth>['user'] }) {
   const [vinculado, setVinculado] = useState(false);
   const [codigo, setCodigo] = useState('');
   const [generando, setGenerando] = useState(false);

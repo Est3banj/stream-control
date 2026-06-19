@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { collection, getDocs, doc, setDoc, updateDoc, onSnapshot, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, sendPasswordResetEmail, signOut as signOutAuth } from 'firebase/auth';
 import { auth, db, secondaryAuth } from '../firebase';
-import { UserPlus, Users, Shield, UserCheck, UserX, Mail } from 'lucide-react';
+import { UserPlus, Users, Shield, UserCheck, UserX, Mail, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { Usuario } from '../types/usuario';
 
@@ -19,6 +19,7 @@ interface UsuarioFormState {
 export default function Usuarios() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState<UsuarioFormState>({
     nombre: '',
     correo: '',
@@ -164,14 +165,24 @@ export default function Usuarios() {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Contraseña</label>
-              <input
-                name="password"
-                type="password"
-                placeholder="Opcional (se generará automática)"
-                value={form.password}
-                onChange={handleChange}
-                className="w-full"
-              />
+              <div className="relative">
+                <input
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Opcional (se generará automática)"
+                  value={form.password}
+                  onChange={handleChange}
+                  className="w-full pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             <div>

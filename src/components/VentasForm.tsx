@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, addDoc, setDoc, doc, serverTimestamp, getDoc, increment, updateDoc, query, where, getDocs } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
+import usePermisos from '../hooks/usePermisos';
 import toast from 'react-hot-toast';
 import type { VentaInput } from '../types/venta';
 
@@ -22,29 +23,40 @@ interface VentaFormState {
   saldoPendiente: string;
 }
 
+interface VentasFormProps {
+  initialData?: Partial<VentaFormState>;
+}
+
 const getToday = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-export default function VentasForm() {
+export default function VentasForm({ initialData }: VentasFormProps) {
   const { user } = useAuth();
+  const permisos = usePermisos(user);
   const [venta, setVenta] = useState<VentaFormState>({
-    nombre: '',
-    telefono: '',
-    correo: '',
-    plataforma: '',
-    pantallas: 1,
-    precioVenta: 0,
-    costoServicio: 0,
-    fechaInicio: '',
-    diasServicio: '',
-    fechaVenta: getToday(),
-    perfil: '',
-    pinPerfil: '',
-    pagado: true,
-    saldoPendiente: '',
+    nombre: initialData?.nombre ?? '',
+    telefono: initialData?.telefono ?? '',
+    correo: initialData?.correo ?? '',
+    plataforma: initialData?.plataforma ?? '',
+    pantallas: initialData?.pantallas ?? 1,
+    precioVenta: initialData?.precioVenta ?? 0,
+    costoServicio: initialData?.costoServicio ?? 0,
+    fechaInicio: initialData?.fechaInicio ?? '',
+    diasServicio: initialData?.diasServicio ?? '',
+    fechaVenta: initialData?.fechaVenta ?? getToday(),
+    perfil: initialData?.perfil ?? '',
+    pinPerfil: initialData?.pinPerfil ?? '',
+    pagado: initialData?.pagado ?? true,
+    saldoPendiente: initialData?.saldoPendiente ?? '',
   });
+
+  useEffect(() => {
+    if (initialData) {
+      setVenta(prev => ({ ...prev, ...initialData }));
+    }
+  }, [initialData]);
 
   const [utilidad, setUtilidad] = useState(0);
   const [submitting, setSubmitting] = useState(false);
@@ -150,6 +162,46 @@ export default function VentasForm() {
 
     if (venta.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(venta.correo.trim()))
       return toast.error("El correo electrónico no es válido.");
+
+    // 🚫 Validar que el teléfono no esté registrado con otro cliente
+    try {
+      const dupQuery = query(
+        collection(db, 'clientes'),
+        where('propietarioId', '==', user.uid),
+        where('telefono', '==', venta.telefono.trim())
+      );
+      const dupSnap = await getDocs(dupQuery);
+      if (!dupSnap.empty) {
+        const existingName = dupSnap.docs[0].data().nombre as string;
+        if (existingName !== venta.nombre.trim()) {
+          return toast.error(
+            `El teléfono ${venta.telefono} ya está registrado con "${existingName}". Usá otro teléfono o editá el cliente existente.`
+          );
+        }
+      }
+    } catch (_e) {
+      // Si falla la verificación, permitimos seguir
+      console.warn('No se pudo verificar teléfono duplicado');
+    }
+
+    // 🚫 Hard-block: límite de clientes para Starter
+    if (permisos.clienteLimit !== Infinity) {
+      try {
+        const countQuery = query(
+          collection(db, 'clientes'),
+          where('propietarioId', '==', user.uid)
+        );
+        const countSnap = await getDocs(countQuery);
+        if (countSnap.size >= permisos.clienteLimit) {
+          return toast.error(
+            `Alcanzaste el límite de ${permisos.clienteLimit} clientes del plan Starter. ` +
+            'Actualizá a Professional para clientes ilimitados.'
+          );
+        }
+      } catch (_e) {
+        console.warn('No se pudo verificar límite de clientes');
+      }
+    }
 
     setSubmitting(true);
 

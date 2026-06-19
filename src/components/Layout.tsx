@@ -4,12 +4,25 @@ import { useAuth } from '../contexts/AuthContext';
 import { Menu, X, LayoutDashboard, DollarSign, BarChart3, Users, UserCog, LogOut, User, Download, MessageCircle, Package, ClipboardList, Send } from 'lucide-react';
 import PWAInstallButton from './PWAInstallButton';
 import NotificationsPanel from './NotificationsPanel';
+import UpgradeModal from './UpgradeModal';
+import UpgradeModalContext from '../contexts/UpgradeModalContext';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [mostrarUpgrade, setMostrarUpgrade] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (!sessionStorage.getItem('upgrade_modal_shown')) {
+        setMostrarUpgrade(true);
+      }
+    } catch {
+      setMostrarUpgrade(true);
+    }
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -48,7 +61,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const isActive = (path: string) => location.pathname === path;
 
+  const upgradeModalContextValue = { show: () => setMostrarUpgrade(true) };
+
   return (
+    <UpgradeModalContext.Provider value={upgradeModalContextValue}>
     <div className="flex flex-col lg:flex-row min-h-screen font-inter bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
       {/* Overlay para móvil */}
       {sidebarOpen && isMobile && (
@@ -73,8 +89,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {/* Header del sidebar */}
         <div>
           <div className="flex items-center justify-between mb-8">
-            <div className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-cyan-200 to-white tracking-wide">
-              StreamControl <span className="font-extrabold">Pro</span>
+            <div className="flex items-center gap-3">
+              <img src="/stream.webp" alt="StreamControl" className="w-8 h-8 object-contain" />
+              <div className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-cyan-200 to-white tracking-wide">
+                StreamControl <span className="font-extrabold">Pro</span>
+              </div>
             </div>
             {isMobile && (
               <button
@@ -163,8 +182,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {/* Header superior */}
         <header className="sticky top-0 z-30 glass-strong border-b border-white/40 px-4 sm:px-6 lg:px-8 py-3 lg:py-4 flex items-center justify-between">
           {/* Logo/Título - Solo móvil */}
-          <div className="lg:hidden text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-            StreamControl Pro
+          <div className="lg:hidden flex items-center gap-2">
+            <img src="/stream.webp" alt="" className="w-6 h-6 object-contain" />
+            <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+              StreamControl Pro
+            </span>
           </div>
           
           {/* Spacer para desktop */}
@@ -196,6 +218,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Botón de instalación PWA */}
       <PWAInstallButton />
+
+      {/* Upgrade modal */}
+      {mostrarUpgrade && (
+        <UpgradeModal
+          user={user}
+          onClose={() => {
+            try {
+              sessionStorage.setItem('upgrade_modal_shown', 'true');
+            } catch {
+              // fail silently (private browsing, etc.)
+            }
+            setMostrarUpgrade(false);
+          }}
+        />
+      )}
     </div>
+    </UpgradeModalContext.Provider>
   );
 }

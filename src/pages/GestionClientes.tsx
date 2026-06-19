@@ -1,17 +1,20 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
 import { collection, query, where, onSnapshot, updateDoc, doc, increment, addDoc, serverTimestamp, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import useClientes from '../hooks/useClientes';
+import usePermisos from '../hooks/usePermisos';
 import Paginador from '../components/Paginador';
 import toast from 'react-hot-toast';
-import { Search, Download, MessageCircle, Calendar, Users, TrendingUp, X, AlertCircle, Edit, Mail, DollarSign, CheckCircle, UserCheck } from 'lucide-react';
+import { Search, Download, MessageCircle, Calendar, Users, TrendingUp, X, AlertCircle, Edit, Mail, DollarSign, CheckCircle, UserCheck, AlertTriangle, RefreshCw, Sparkles } from 'lucide-react';
 import type { Venta } from '../types/venta';
 import type { Cliente } from '../types/cliente';
 
 export default function GestionClientes() {
   const { user } = useAuth();
   const { clientes: todosLosClientes, loading, error } = useClientes(user);
+  const permisos = usePermisos(user);
   const [clientes, setClientes] = useState<{ activos: Cliente[]; inactivos: Cliente[]; todos: Cliente[] }>({ activos: [], inactivos: [], todos: [] });
   const [filtro, setFiltro] = useState<'activos' | 'inactivos' | 'todos'>('activos');
   const [busqueda, setBusqueda] = useState('');
@@ -150,18 +153,35 @@ export default function GestionClientes() {
 
   // 📱 Enviar WhatsApp
   const enviarWhatsApp = (cliente: Cliente) => {
-    const mensaje = `Hola ${cliente.nombre}, tu servicio de ${cliente.plataforma || 'streaming'} vence en ${cliente.diasRestantes} día(s). Te invitamos a renovarlo para seguir disfrutando sin interrupciones.`;
+    const dias = Math.abs(cliente.diasRestantes ?? 0);
+    const mensaje = (cliente.diasRestantes ?? 0) > 0
+      ? `Hola ${cliente.nombre}, tu servicio de ${cliente.plataforma || 'streaming'} vence en ${dias} día(s). Te invitamos a renovarlo para seguir disfrutando sin interrupciones.`
+      : `Hola ${cliente.nombre}, te informamos que tu servicio de ${cliente.plataforma || 'streaming'} finalizó hace ${dias} días. Para seguir accediendo a tus series y películas favoritas sin interrupciones, podés renovar tu plan. Si no deseas continuar, no es necesario que hagas nada. ¡Gracias por confiar en nosotros!`;
     const url = `https://wa.me/57${cliente.telefono}?text=${encodeURIComponent(mensaje)}`;
     window.open(url, '_blank');
   };
 
-  // 🔍 Filtrado por búsqueda
-  const clientesFiltrados: Cliente[] = clientes[filtro]?.filter(
+  // 🔍 Filtrado por búsqueda + ordenado por fecha de vencimiento
+  const clientesFiltrados: Cliente[] = (clientes[filtro]?.filter(
     (c: Cliente) =>
       c.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
       (c.plataforma && c.plataforma.toLowerCase().includes(busqueda.toLowerCase())) ||
       (c.telefono && c.telefono.includes(busqueda))
-  ) || [];
+  ) || []).sort((a, b) => {
+    const aDias = a.diasRestantes ?? 0;
+    const bDias = b.diasRestantes ?? 0;
+
+    // Vencidos: más recientes primero (fecha descendente)
+    if (aDias <= 0 && bDias <= 0) {
+      return b.fechaVencimiento.localeCompare(a.fechaVencimiento);
+    }
+    // Activos: próximo a vencer primero (fecha ascendente)
+    if (aDias > 0 && bDias > 0) {
+      return a.fechaVencimiento.localeCompare(b.fechaVencimiento);
+    }
+    // Mixto: vencidos primero
+    return aDias <= 0 ? -1 : 1;
+  });
 
   const indexUltimo = paginaActual * itemsPorPagina;
   const indexPrimero = indexUltimo - itemsPorPagina;
@@ -362,6 +382,21 @@ export default function GestionClientes() {
         </div>
       )}
 
+      {/* Banner de límite para Starter */}
+      {user?.rol !== 'admin' && permisos.planNombre === 'Starter' && (
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3">
+          <Sparkles className="text-amber-500 shrink-0" size={20} />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-amber-800">
+              Plan Starter — <strong>{clientes.todos.length}</strong> de {permisos.clienteLimit} clientes usados
+            </p>
+            <p className="text-xs text-amber-600 mt-0.5">
+              Actualizá a Professional para clientes ilimitados.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Lista de clientes */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         {user?.rol === 'admin' && (
@@ -471,7 +506,14 @@ export default function GestionClientes() {
                           >
                             <DollarSign size={18} />
                           </button>
-                        )}
+                          )}
+                        <button
+                          onClick={() => navigate('/ventas', { state: { cliente: c } })}
+                          className="p-2 rounded-lg bg-amber-100 text-amber-600 hover:bg-amber-200 transition-colors"
+                          title="Renovar cliente"
+                        >
+                          <RefreshCw size={18} />
+                        </button>
                         <button
                           onClick={() => enviarWhatsApp(c)}
                           className="p-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-colors"

@@ -1,19 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import usePlanes, { crearPlan, actualizarPlan, togglePlanActive, eliminarPlan } from '../hooks/usePlanes';
 import useSuscripciones from '../hooks/useSuscripciones';
+import { useAdminConfig, updateAdminConfig, sanitizarWhatsApp } from '../hooks/useAdminConfig';
 import PlanForm from '../components/PlanForm';
-import { Package, Plus, Edit, ToggleLeft, Trash2, AlertCircle } from 'lucide-react';
+import { Package, Plus, Edit, ToggleLeft, Trash2, AlertCircle, MessageCircle, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
-import type { Plan, PlanInput } from '../types/plan';
+import { PERIODOS_LABELS, PERIODOS_MESES, type Periodo, type Plan, type PlanInput } from '../types/plan';
 
 export default function AdminPlanes() {
   const { user } = useAuth();
   const { planes, loading, error } = usePlanes(user);
   const { suscripciones } = useSuscripciones(user);
+  const { config, loading: configLoading } = useAdminConfig();
+  const [whatsapp, setWhatsapp] = useState(config.whatsapp);
+  const [guardandoWhatsapp, setGuardandoWhatsapp] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Sincroniza el input cuando se carga la config desde Firestore
+  useEffect(() => {
+    if (!configLoading) {
+      setWhatsapp(config.whatsapp);
+    }
+  }, [config.whatsapp, configLoading]);
+
+  const handleGuardarWhatsapp = async () => {
+    setGuardandoWhatsapp(true);
+    try {
+      await updateAdminConfig({ whatsapp });
+      toast.success('WhatsApp guardado correctamente');
+    } catch (err) {
+      console.error('Error guardando WhatsApp:', err);
+      toast.error('Error al guardar el número de WhatsApp');
+    } finally {
+      setGuardandoWhatsapp(false);
+    }
+  };
 
   const activeSubsByPlan = suscripciones
     .filter(s => s.estado === 'activa')
@@ -67,12 +91,12 @@ export default function AdminPlanes() {
     }
   };
 
-  if (loading) {
+  if (loading || configLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
-          <p className="text-gray-600 font-medium">Cargando planes...</p>
+          <p className="text-gray-600 font-medium">Cargando...</p>
         </div>
       </div>
     );
@@ -101,6 +125,40 @@ export default function AdminPlanes() {
         </button>
       </div>
 
+      {/* Configuración General */}
+      <div className="card p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <MessageCircle className="text-green-600" size={24} />
+          <h2 className="text-xl font-bold text-gray-900">Configuración General</h2>
+        </div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
+          <div className="flex-1 w-full">
+            <label htmlFor="whatsapp-admin" className="block text-sm font-medium text-gray-700 mb-1">
+              WhatsApp del Administrador
+            </label>
+            <input
+              id="whatsapp-admin"
+              type="tel"
+              value={whatsapp}
+              onChange={(e) => setWhatsapp(e.target.value)}
+              placeholder="Ej: +57 324 7349128"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-shadow"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Este número se usará en el botón "Actualizar plan" para que los clientes te contacten por WhatsApp.
+            </p>
+          </div>
+          <button
+            onClick={handleGuardarWhatsapp}
+            disabled={guardandoWhatsapp}
+            className="btn-primary flex items-center gap-2 shrink-0 bg-green-600 hover:bg-green-700"
+          >
+            <Save size={18} />
+            {guardandoWhatsapp ? 'Guardando...' : 'Guardar'}
+          </button>
+        </div>
+      </div>
+
       <div className="card overflow-hidden p-0">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center gap-2">
@@ -113,7 +171,8 @@ export default function AdminPlanes() {
             <thead>
               <tr className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
                 <th className="px-4 py-4 text-left text-sm font-semibold">Nombre</th>
-                <th className="px-4 py-4 text-left text-sm font-semibold">Precio</th>
+                <th className="px-4 py-4 text-left text-sm font-semibold">Precio Mensual</th>
+                <th className="px-4 py-4 text-left text-sm font-semibold">Trim / Sem / Anual</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Duración</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Características</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Activo</th>
@@ -124,7 +183,7 @@ export default function AdminPlanes() {
             </thead>
             <tbody>
               {planes.length > 0 ? (
-                planes.map(plan => {
+                [...planes].sort((a, b) => a.nombre.localeCompare(b.nombre)).map(plan => {
                   const activeCount = activeSubsByPlan[plan.id] || 0;
                   const monthlyRevenue = activeCount > 0
                     ? (activeCount * plan.precio) / (plan.duracionDias / 30)
@@ -139,7 +198,22 @@ export default function AdminPlanes() {
                         )}
                       </td>
                       <td className="px-4 py-4 font-medium text-gray-900">
-                        ${plan.precio.toLocaleString()}
+                        ${plan.precio.toLocaleString()} /mes
+                      </td>
+                      <td className="px-4 py-4 text-sm text-gray-600">
+                        <div className="flex flex-col gap-0.5">
+                          {([['trimestral', 3], ['semestral', 6], ['anual', 12]] as const).map(([key, meses]) => {
+                            const precioPeriodo = plan.precios?.[key];
+                            const label = PERIODOS_LABELS[key];
+                            if (precioPeriodo) {
+                              return <span key={key}>{label}: ${precioPeriodo.toLocaleString()}</span>;
+                            }
+                            return null;
+                          })}
+                          {!plan.precios?.trimestral && !plan.precios?.semestral && !plan.precios?.anual && (
+                            <span className="text-gray-400 italic">—</span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-4 text-center text-gray-700">
                         {plan.duracionDias} días

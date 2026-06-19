@@ -24,6 +24,12 @@ vi.mock('react-hot-toast', () => ({
   default: { success: vi.fn(), error: vi.fn() },
 }));
 
+vi.mock('../hooks/useAdminConfig', () => ({
+  useAdminConfig: () => ({ config: { whatsapp: '' }, loading: false }),
+  updateAdminConfig: vi.fn(),
+  sanitizarWhatsApp: (n: string) => n.replace(/[^0-9]/g, ''),
+}));
+
 describe('AdminPlanes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -46,7 +52,7 @@ describe('AdminPlanes', () => {
     const AdminPlanes = (await import('./AdminPlanes')).default;
     render(<AdminPlanes />);
 
-    expect(screen.getByText('Cargando planes...')).toBeInTheDocument();
+    expect(screen.getByText('Cargando...')).toBeInTheDocument();
   });
 
   it('shows empty state', async () => {
