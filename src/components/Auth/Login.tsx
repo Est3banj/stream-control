@@ -41,7 +41,7 @@ export default function Login(){
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center relative bg-gradient-to-tr from-indigo-900 via-purple-900 to-pink-900 overflow-hidden px-4 font-sans">
+    <div className="min-h-screen flex flex-col items-center justify-center relative bg-gradient-to-tr from-indigo-900 via-indigo-800 to-violet-900 overflow-hidden px-4 font-sans">
       <svg className="absolute bottom-0 left-0 w-full h-48 md:h-64 opacity-30 animate-wave" viewBox="0 0 1440 320" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
         <path fill="url(#gradient)" fillOpacity="0.7" d="M0,64L48,80C96,96,192,128,288,160C384,192,480,224,576,213.3C672,203,768,149,864,117.3C960,85,1056,75,1152,90.7C1248,107,1344,149,1392,170.7L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
         <defs>
@@ -54,12 +54,14 @@ export default function Login(){
 
       <div className="relative z-10 w-full max-w-md bg-white bg-opacity-15 backdrop-blur-lg rounded-3xl shadow-2xl p-10 animate-fadeInUp transition-all duration-700 ease-in-out">
         <div className="flex justify-center mb-6">
-          <img 
-            src="/stream.webp" 
-            alt="StreamControl Pro"
-            className="w-28 h-28 md:w-32 md:h-32 object-contain drop-shadow-2xl animate-fadeInUp"
-            style={{ animationDelay: '0.1s', animationFillMode: 'both' }}
-          />
+          <div className="w-32 h-32 md:w-36 md:h-36 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center p-3 shadow-lg">
+            <img 
+              src="/stream.webp" 
+              alt="StreamControl Pro"
+              className="w-full h-full object-contain drop-shadow-2xl animate-fadeInUp"
+              style={{ animationDelay: '0.1s', animationFillMode: 'both' }}
+            />
+          </div>
         </div>
         <h2 className="text-3xl font-extrabold mb-8 text-white drop-shadow-lg text-center tracking-wide">StreamControl Pro</h2>
         <form onSubmit={submit} className="flex flex-col gap-6">
@@ -90,7 +92,7 @@ export default function Login(){
             </button>
           </div>
           <button 
-            className="btn rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-purple-600 hover:to-indigo-600 transition-colors duration-500 text-white font-semibold py-4 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-lg tracking-wide"
+            className="btn rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-violet-600 hover:to-indigo-600 transition-colors duration-500 text-white font-semibold py-4 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-lg tracking-wide"
             disabled={loading}
           >
             {loading ? 'Entrando...' : 'Entrar'}

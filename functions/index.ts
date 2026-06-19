@@ -155,13 +155,35 @@ export const generarNotificacionesVencimientos = functions
         const cliente = clienteDoc.data() as admin.firestore.DocumentData;
 
         if (cliente.saldoPendiente > 0) {
-          try {
-            const enviado = await telegram.enviarNotificacionMora(cliente, {
-              appUrl: APP_URL.value(),
+          const hoyStr = hoy.toISOString().split('T')[0];
+          const notifId = `mora_${clienteDoc.id}_${hoyStr}`;
+          const notifRef = db.collection('notificaciones').doc(notifId);
+          const notifDoc = await notifRef.get();
+
+          if (!notifDoc.exists) {
+            batch.set(notifRef, {
+              clienteId: clienteDoc.id,
+              nombreCliente: cliente.nombre || '',
+              tipo: 'mora',
+              saldoPendiente: cliente.saldoPendiente,
+              propietarioId: cliente.propietarioId,
+              fechaGenerada: admin.firestore.FieldValue.serverTimestamp(),
             });
-            if (enviado) morasNotificadas++;
-          } catch (err) {
-            console.error(`Error enviando mora Telegram para ${cliente.nombre}:`, err);
+            batchCount++;
+
+            try {
+              const enviado = await telegram.enviarNotificacionMora(cliente, {
+                appUrl: APP_URL.value(),
+              });
+              if (enviado) morasNotificadas++;
+            } catch (err) {
+              console.error(`Error enviando mora Telegram para ${cliente.nombre}:`, err);
+            }
+
+            if (batchCount >= MAX_BATCH_SIZE) {
+              await batch.commit();
+              batchCount = 0;
+            }
           }
         }
       }

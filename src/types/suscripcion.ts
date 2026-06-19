@@ -22,4 +22,4 @@ export interface Suscripcion {
 
 export type CreateSuscripcionInput = Omit<Suscripcion, 'id' | 'createdAt' | 'updatedAt'>;
 
-export type UpdateSuscripcionInput = Partial<Omit<Suscripcion, 'id' | 'createdAt' | 'usuarioId' | 'planId' | 'monto'>>;
+export type UpdateSuscripcionInput = Partial<Omit<Suscripcion, 'id' | 'createdAt' | 'usuarioId' | 'monto'>>;

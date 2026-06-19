@@ -82,10 +82,6 @@ export async function crearSuscripcion(data: CreateSuscripcionInput): Promise<st
     updatedAt: serverTimestamp(),
   });
 
-  if (data.estado === 'activa') {
-    await updateDoc(doc(db, 'usuarios', data.usuarioId), { plan: data.planNombre });
-  }
-
   return docRef.id;
 }
 

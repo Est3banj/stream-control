@@ -23,19 +23,11 @@ service cloud.firestore {
     }
     
     // Verificar si el usuario es administrador
-    // Se basa en el rol del documento en la colección 'usuarios'
-    // Fallback por email mientras se completa la migración a usuarios/rol
     function isAdmin() {
       return isAuthenticated() && (
-        getUserEmail() in ['estebanjurado20005@gmail.com', 'estebanjurado2005@gmail.com']
-        ||
+        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
         get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin'
       );
-    }
-    
-    // Verificar si el documento pertenece al usuario actual
-    function isOwner(resource) {
-      return isAuthenticated() && resource.data.propietarioId == getUserId();
     }
     
     // ============================================
@@ -68,12 +60,14 @@ service cloud.firestore {
         request.resource.data.correo is string
       );
       
-      // Actualización: Solo admin puede actualizar, y solo el campo 'estado'
+      // Actualización: Solo admin puede actualizar, y solo campos permitidos
       // Basado en: Usuarios.jsx línea 97 - updateDoc solo actualiza 'estado'
       allow update: if isAdmin() && 
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado']) &&
-        request.resource.data.estado is string &&
-        request.resource.data.estado in ['activo', 'inactivo'];
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado', 'plan']) &&
+        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['estado']) || 
+          (request.resource.data.estado is string && request.resource.data.estado in ['activo', 'inactivo'])) &&
+        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan']) || 
+          request.resource.data.plan is string);
       
       // Eliminación: No permitida (no hay deleteDoc en el código)
       allow delete: if false;
@@ -96,7 +90,7 @@ service cloud.firestore {
       // Lectura: Usuario puede leer sus propias ventas, admin puede leer todas
       allow read: if isAuthenticated() && (
         isAdmin() || 
-        resource == null || resource.data.propietarioId == getUserId()
+        resource.data.propietarioId == getUserId()
       );
       
       // Creación: Cualquier usuario autenticado puede crear ventas
@@ -141,7 +135,7 @@ service cloud.firestore {
       // Lectura: Usuario puede leer sus propios clientes, admin puede leer todos
       allow read: if isAuthenticated() && (
         isAdmin() || 
-        resource == null || resource.data.propietarioId == getUserId()
+        resource.data.propietarioId == getUserId()
       );
       
       // Creación: setDoc desde VentasForm.jsx - requiere todos los campos
@@ -204,7 +198,7 @@ service cloud.firestore {
       // Lectura: Usuario puede leer sus propios movimientos, admin puede leer todos
       allow read: if isAuthenticated() && (
         isAdmin() || 
-        resource == null || resource.data.propietarioId == getUserId()
+        resource.data.propietarioId == getUserId()
       );
       
       // Creación: Cualquier usuario autenticado puede crear movimientos
@@ -284,7 +278,16 @@ service cloud.firestore {
         request.resource.data.duracionDias >= 1 &&
         request.resource.data.features is list &&
         request.resource.data.features.size() <= 20;
-      allow update: if isAdmin();
+      allow update: if isAdmin() &&
+        request.resource.data.nombre is string &&
+        request.resource.data.nombre.size() > 0 &&
+        request.resource.data.nombre.size() <= 100 &&
+        request.resource.data.precio is number &&
+        request.resource.data.precio >= 0 &&
+        request.resource.data.duracionDias is number &&
+        request.resource.data.duracionDias >= 1 &&
+        request.resource.data.features is list &&
+        request.resource.data.features.size() <= 20;
       allow delete: if isAdmin();
     }
     
@@ -301,8 +304,22 @@ service cloud.firestore {
     
     match /suscripciones/{suscripcionId} {
       allow read: if isAuthenticated() && (isAdmin() || resource.data.usuarioId == request.auth.uid);
-      allow create: if isAdmin();
-      allow update: if isAdmin();
+      allow create: if isAdmin() &&
+        request.resource.data.usuarioId is string &&
+        request.resource.data.planId is string &&
+        request.resource.data.planNombre is string &&
+        request.resource.data.fechaInicio is timestamp &&
+        request.resource.data.fechaFin is timestamp &&
+        request.resource.data.estado is string &&
+        request.resource.data.estado in ['activa', 'expirada', 'cancelada'] &&
+        request.resource.data.monto is number &&
+        request.resource.data.monto >= 0;
+      allow update: if isAdmin() &&
+        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['usuarioId', 'monto']) &&
+        request.resource.data.planId is string &&
+        request.resource.data.planNombre is string &&
+        request.resource.data.estado is string &&
+        request.resource.data.estado in ['activa', 'expirada', 'cancelada']);
       allow delete: if false;
     }
     

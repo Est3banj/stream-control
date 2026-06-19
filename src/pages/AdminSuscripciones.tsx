@@ -149,7 +149,7 @@ export default function AdminSuscripciones() {
       )}
 
       <div className="mb-6">
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600">
+        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
           Gestión de Suscripciones
         </h1>
         <p className="text-gray-600">Administra las suscripciones de los usuarios</p>
@@ -201,7 +201,7 @@ export default function AdminSuscripciones() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+              <tr className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white">
                 <th className="px-4 py-4 text-left text-sm font-semibold">Usuario</th>
                 <th className="px-4 py-4 text-left text-sm font-semibold">Plan</th>
                 <th className="px-4 py-4 text-left text-sm font-semibold">Inicio</th>

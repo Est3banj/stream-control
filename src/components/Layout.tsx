@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Menu, X, LayoutDashboard, DollarSign, BarChart3, Users, UserCog, LogOut, User, Download, MessageCircle, Package, ClipboardList, Send } from 'lucide-react';
+import { Menu, LayoutDashboard, DollarSign, BarChart3, Users, UserCog, LogOut, User, Download, MessageCircle, Package, ClipboardList, Send } from 'lucide-react';
 import PWAInstallButton from './PWAInstallButton';
 import NotificationsPanel from './NotificationsPanel';
 import UpgradeModal from './UpgradeModal';
@@ -65,7 +65,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <UpgradeModalContext.Provider value={upgradeModalContextValue}>
-    <div className="flex flex-col lg:flex-row min-h-screen font-inter bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
+    <div className="flex flex-col lg:flex-row min-h-screen font-inter bg-gradient-to-br from-indigo-50 via-white to-indigo-50">
       {/* Overlay para móvil */}
       {sidebarOpen && isMobile && (
         <div
@@ -79,7 +79,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         className={`
           fixed lg:static inset-y-0 left-0 z-50
           w-64 p-6
-          backdrop-blur-xl bg-gradient-to-b from-indigo-600/95 via-purple-600/90 to-cyan-600/95
+          backdrop-blur-xl bg-gradient-to-b from-indigo-700 to-indigo-900
           text-white shadow-2xl
           flex flex-col justify-between
           transform transition-transform duration-300 ease-in-out
@@ -88,22 +88,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       >
         {/* Header del sidebar */}
         <div>
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center mb-8">
             <div className="flex items-center gap-3">
-              <img src="/stream.webp" alt="StreamControl" className="w-8 h-8 object-contain" />
-              <div className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-cyan-200 to-white tracking-wide">
+              <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center p-1.5 shadow-inner">
+                <img src="/stream.webp" alt="StreamControl" className="w-full h-full object-contain drop-shadow-lg" />
+              </div>
+              <div className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-violet-200 to-white tracking-wide">
                 StreamControl <span className="font-extrabold">Pro</span>
               </div>
             </div>
-            {isMobile && (
-              <button
-                onClick={() => setSidebarOpen(false)}
-                className="lg:hidden text-white hover:text-cyan-200 transition-colors"
-                aria-label="Cerrar menú"
-              >
-                <X size={24} />
-              </button>
-            )}
           </div>
 
           {/* Navegación */}
@@ -183,8 +176,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <header className="sticky top-0 z-30 glass-strong border-b border-white/40 px-4 sm:px-6 lg:px-8 py-3 lg:py-4 flex items-center justify-between">
           {/* Logo/Título - Solo móvil */}
           <div className="lg:hidden flex items-center gap-2">
-            <img src="/stream.webp" alt="" className="w-6 h-6 object-contain" />
-            <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+            <div className="w-7 h-7 rounded-lg bg-indigo-100 flex items-center justify-center p-1">
+              <img src="/stream.webp" alt="" className="w-full h-full object-contain" />
+            </div>
+            <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
               StreamControl Pro
             </span>
           </div>

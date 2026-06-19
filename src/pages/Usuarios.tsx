@@ -1,10 +1,13 @@
 // src/pages/Usuarios.tsx
 import React, { useEffect, useState } from 'react';
-import { collection, getDocs, doc, setDoc, updateDoc, onSnapshot, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
+import { collection, doc, setDoc, updateDoc, onSnapshot, Timestamp, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, sendPasswordResetEmail, signOut as signOutAuth } from 'firebase/auth';
 import { auth, db, secondaryAuth } from '../firebase';
-import { UserPlus, Users, Shield, UserCheck, UserX, Mail, Eye, EyeOff } from 'lucide-react';
+import { UserPlus, Users, Shield, UserCheck, UserX, Mail, Eye, EyeOff, Package, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext';
+import useSuscripciones, { crearSuscripcion, actualizarSuscripcion } from '../hooks/useSuscripciones';
+import usePlanes from '../hooks/usePlanes';
 import type { Usuario } from '../types/usuario';
 
 interface UsuarioFormState {
@@ -17,6 +20,9 @@ interface UsuarioFormState {
 }
 
 export default function Usuarios() {
+  const { user } = useAuth();
+  const { suscripciones } = useSuscripciones(user);
+  const { planes } = usePlanes(user);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -116,11 +122,87 @@ export default function Usuarios() {
     }
   };
 
+  // Estado para el modal de cambio de plan
+  const [planModal, setPlanModal] = useState<{
+    usuarioId: string;
+    usuarioNombre: string;
+    suscripcionId: string | null;
+    planActual: string;
+  } | null>(null);
+
+  const [nuevoPlanId, setNuevoPlanId] = useState('');
+  const [guardandoPlan, setGuardandoPlan] = useState(false);
+
+  const abrirCambiarPlan = (uid: string, nombre: string) => {
+    const susc = suscripciones.find(s => s.usuarioId === uid && s.estado === 'activa');
+    setPlanModal({
+      usuarioId: uid,
+      usuarioNombre: nombre,
+      suscripcionId: susc?.id ?? null,
+      planActual: susc?.planNombre ?? 'Starter (sin suscripción)',
+    });
+    setNuevoPlanId('');
+  };
+
+  const handleCambiarPlan = async () => {
+    if (!planModal || !nuevoPlanId) {
+      toast.error('Seleccioná un plan');
+      return;
+    }
+
+    const plan = planes.find(p => p.id === nuevoPlanId);
+    if (!plan) {
+      toast.error('Plan no encontrado');
+      return;
+    }
+
+    setGuardandoPlan(true);
+    try {
+      if (planModal.suscripcionId) {
+        // Actualizar suscripción existente
+        await actualizarSuscripcion(planModal.suscripcionId, {
+          planId: plan.id,
+          planNombre: plan.nombre,
+        });
+        toast.success(`Plan de ${planModal.usuarioNombre} cambiado a ${plan.nombre}`);
+      } else {
+        // Crear nueva suscripción activa
+        const hoy = new Date();
+        const fechaFin = new Date(hoy);
+        fechaFin.setDate(fechaFin.getDate() + plan.duracionDias);
+
+        await crearSuscripcion({
+          usuarioId: planModal.usuarioId,
+          usuarioNombre: planModal.usuarioNombre,
+          planId: plan.id,
+          planNombre: plan.nombre,
+          fechaInicio: Timestamp.fromDate(hoy),
+          fechaFin: Timestamp.fromDate(fechaFin),
+          estado: 'activa',
+          pagoEstado: 'pendiente',
+          monto: plan.precio,
+        });
+        toast.success(`Suscripción creada para ${planModal.usuarioNombre} — ${plan.nombre}`);
+      }
+      setPlanModal(null);
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error('Error cambiando plan:', error);
+      toast.error(error.message || 'Error al cambiar el plan');
+    } finally {
+      setGuardandoPlan(false);
+    }
+  };
+
+  /** Obtiene la suscripción activa de un usuario */
+  const getSuscripcionActiva = (uid: string) =>
+    suscripciones.find(s => s.usuarioId === uid && s.estado === 'activa');
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600">
+        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
           Gestión de Usuarios
         </h1>
         <p className="text-gray-600">Administra los usuarios del sistema</p>
@@ -235,10 +317,11 @@ export default function Usuarios() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+              <tr className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white">
                 <th className="px-4 py-4 text-left text-sm font-semibold">Nombre</th>
                 <th className="px-4 py-4 text-left text-sm font-semibold">Correo</th>
                 <th className="px-4 py-4 text-left text-sm font-semibold">Rol</th>
+                <th className="px-4 py-4 text-center text-sm font-semibold">Plan Actual</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Estado</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Acciones</th>
               </tr>
@@ -262,6 +345,19 @@ export default function Usuarios() {
                       </span>
                     </td>
                     <td className="px-4 py-4 text-center">
+                      {(() => {
+                        const s = getSuscripcionActiva(u.id);
+                        return s ? (
+                          <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-sm font-medium">
+                            <Package size={14} className="inline mr-1" />
+                            {s.planNombre}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-sm">—</span>
+                        );
+                      })()}
+                    </td>
+                    <td className="px-4 py-4 text-center">
                       <span className={`px-3 py-1 rounded-full text-sm font-semibold ${u.estado === 'activo'
                           ? 'bg-green-100 text-green-700'
                           : 'bg-red-100 text-red-700'
@@ -280,18 +376,32 @@ export default function Usuarios() {
                       </span>
                     </td>
                     <td className="px-4 py-4">
-                      <button
-                        onClick={() => toggleEstado(u.id, u.estado)}
-                        className="btn-secondary px-4 py-2 text-sm"
-                      >
-                        {u.estado === 'activo' ? 'Desactivar' : 'Activar'}
-                      </button>
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => abrirCambiarPlan(u.id, u.nombre)}
+                          className="px-3 py-2 rounded-lg bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-colors text-sm font-medium"
+                          title="Cambiar plan"
+                        >
+                          <Package size={16} className="inline mr-1" />
+                          Plan
+                        </button>
+                        <button
+                          onClick={() => toggleEstado(u.id, u.estado)}
+                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            u.estado === 'activo'
+                              ? 'bg-orange-100 text-orange-600 hover:bg-orange-200'
+                              : 'bg-green-100 text-green-600 hover:bg-green-200'
+                          }`}
+                        >
+                          {u.estado === 'activo' ? 'Desactivar' : 'Activar'}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="text-center py-12 text-gray-500">
+                  <td colSpan={6} className="text-center py-12 text-gray-500">
                     <Users size={48} className="mx-auto mb-3 text-gray-300" />
                     <p className="font-medium">No hay usuarios registrados</p>
                   </td>
@@ -301,6 +411,62 @@ export default function Usuarios() {
           </table>
         </div>
       </div>
+
+      {/* Modal: Cambiar plan */}
+      {planModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="card max-w-md w-full animate-scale-in">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Cambiar plan</h2>
+                <p className="text-gray-600 mt-1 text-sm">{planModal.usuarioNombre}</p>
+              </div>
+              <button onClick={() => setPlanModal(null)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                <X size={20} className="text-gray-600" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-gray-50 rounded-xl px-4 py-3">
+                <span className="text-sm text-gray-500">Plan actual:</span>
+                <p className="font-semibold text-gray-900 mt-0.5">{planModal.planActual}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Nuevo plan</label>
+                <select
+                  value={nuevoPlanId}
+                  onChange={(e) => setNuevoPlanId(e.target.value)}
+                  className="w-full"
+                >
+                  <option value="">Seleccionar plan...</option>
+                  {planes.filter(p => p.activo).map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.nombre} — ${p.precio.toLocaleString()} ({p.duracionDias} días)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => setPlanModal(null)}
+                  className="btn-secondary flex-1"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleCambiarPlan}
+                  disabled={guardandoPlan || !nuevoPlanId}
+                  className="btn-primary flex-1"
+                >
+                  {guardandoPlan ? 'Guardando...' : 'Guardar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

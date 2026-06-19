@@ -6,7 +6,7 @@ import { useAdminConfig, updateAdminConfig, sanitizarWhatsApp } from '../hooks/u
 import PlanForm from '../components/PlanForm';
 import { Package, Plus, Edit, ToggleLeft, Trash2, AlertCircle, MessageCircle, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { PERIODOS_LABELS, PERIODOS_MESES, type Periodo, type Plan, type PlanInput } from '../types/plan';
+import { type Plan, type PlanInput } from '../types/plan';
 
 export default function AdminPlanes() {
   const { user } = useAuth();
@@ -112,7 +112,7 @@ export default function AdminPlanes() {
       )}
 
       <div className="mb-6">
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600">
+        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
           Gestión de Planes
         </h1>
         <p className="text-gray-600">Administra los planes de suscripción</p>
@@ -169,10 +169,9 @@ export default function AdminPlanes() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+              <tr className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white">
                 <th className="px-4 py-4 text-left text-sm font-semibold">Nombre</th>
-                <th className="px-4 py-4 text-left text-sm font-semibold">Precio Mensual</th>
-                <th className="px-4 py-4 text-left text-sm font-semibold">Trim / Sem / Anual</th>
+                <th className="px-4 py-4 text-left text-sm font-semibold">Precio /mes</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Duración</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Características</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Activo</th>
@@ -199,21 +198,6 @@ export default function AdminPlanes() {
                       </td>
                       <td className="px-4 py-4 font-medium text-gray-900">
                         ${plan.precio.toLocaleString()} /mes
-                      </td>
-                      <td className="px-4 py-4 text-sm text-gray-600">
-                        <div className="flex flex-col gap-0.5">
-                          {([['trimestral', 3], ['semestral', 6], ['anual', 12]] as const).map(([key, meses]) => {
-                            const precioPeriodo = plan.precios?.[key];
-                            const label = PERIODOS_LABELS[key];
-                            if (precioPeriodo) {
-                              return <span key={key}>{label}: ${precioPeriodo.toLocaleString()}</span>;
-                            }
-                            return null;
-                          })}
-                          {!plan.precios?.trimestral && !plan.precios?.semestral && !plan.precios?.anual && (
-                            <span className="text-gray-400 italic">—</span>
-                          )}
-                        </div>
                       </td>
                       <td className="px-4 py-4 text-center text-gray-700">
                         {plan.duracionDias} días

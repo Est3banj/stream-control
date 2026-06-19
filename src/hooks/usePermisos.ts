@@ -66,22 +66,34 @@ const DEFAULT_PERMISOS: Permisos = {
 };
 
 export function detectarFamilia(nombre: string): string {
-  if (nombre === 'Admin') return 'Admin';
-  if (nombre.startsWith('Enterprise')) return 'Enterprise';
-  if (nombre.startsWith('Professional')) return 'Professional';
-  if (nombre === 'Starter') return 'Starter';
+  if (!nombre) return 'Starter';
+  const n = nombre.toLowerCase().trim();
+  if (n === 'admin') return 'Admin';
+  if (n.startsWith('enterprise')) return 'Enterprise';
+  if (n.startsWith('professional')) return 'Professional';
+  if (n === 'starter') return 'Starter';
+  // Fallback: si contiene palabras clave en cualquier posición
+  if (n.includes('enterprise')) return 'Enterprise';
+  if (n.includes('professional') || n.includes('pro')) return 'Professional';
   return 'Starter';
 }
 
 export default function usePermisos(
   user: { uid?: string; rol?: string } | null
 ): Permisos {
-  const { suscripciones, loading } = useSuscripciones(user);
+  const { suscripciones, loading, error } = useSuscripciones(user);
   const isAdmin = user?.rol === 'admin';
+
+  if (import.meta.env.DEV && error) {
+    console.warn('[usePermisos] Error en listener de suscripciones:', error);
+  }
 
   return useMemo(() => {
     // Admin no tiene restricciones
     if (isAdmin) {
+      if (import.meta.env.DEV) {
+        console.log('[usePermisos] Admin detectado — todos los permisos concedidos');
+      }
       return {
         planNombre: 'Admin',
         loading: false,
@@ -103,10 +115,19 @@ export default function usePermisos(
       (s) => s.estado === 'activa'
     );
 
-    if (!activa) return { ...DEFAULT_PERMISOS, loading: false, planNombre: 'Starter' };
+    if (!activa) {
+      if (import.meta.env.DEV) {
+        console.log('[usePermisos] Sin suscripción activa para', user.uid, '- plan Starter');
+      }
+      return { ...DEFAULT_PERMISOS, loading: false, planNombre: 'Starter' };
+    }
 
     const familia = detectarFamilia(activa.planNombre);
     const features = PLAN_FEATURES[familia] || PLAN_FEATURES.Starter;
+
+    if (import.meta.env.DEV) {
+      console.log('[usePermisos] Plan detectado:', activa.planNombre, '→ familia:', familia, '→ features:', features);
+    }
 
     return {
       planNombre: activa.planNombre,

@@ -15,7 +15,7 @@ export default function TelegramConfig() {
     return (
       <div className="space-y-6 animate-fade-in">
         <div className="mb-6">
-          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600">
+          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
             Telegram
           </h1>
           <p className="text-gray-600">Recibí notificaciones de vencimientos en tu Telegram</p>
@@ -154,7 +154,7 @@ function TelegramConfigContent({ user }: { user: ReturnType<typeof useAuth>['use
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600">
+        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
           Telegram
         </h1>
         <p className="text-gray-600">Conectá tu cuenta de Telegram para recibir notificaciones</p>
@@ -238,7 +238,7 @@ function TelegramConfigContent({ user }: { user: ReturnType<typeof useAuth>['use
             </button>
           ) : (
             <div className="space-y-4">
-              <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-6 border border-blue-200 text-center">
+              <div className="bg-gradient-to-r from-indigo-50 to-indigo-50 rounded-xl p-6 border border-indigo-200 text-center">
                 <p className="text-sm text-gray-500 mb-2">Tu código de vinculación</p>
                 <p className="text-3xl font-mono font-bold tracking-widest text-blue-700 select-all">
                   {codigo}
@@ -291,7 +291,7 @@ function TelegramConfigContent({ user }: { user: ReturnType<typeof useAuth>['use
       )}
 
       {/* Información adicional */}
-      <div className="card bg-gradient-to-r from-gray-50 to-blue-50">
+      <div className="card bg-gradient-to-r from-gray-50 to-indigo-50">
         <h3 className="text-lg font-bold text-gray-900 mb-3">¿Qué notificaciones vas a recibir?</h3>
         <ul className="space-y-2 text-sm text-gray-600">
           <li className="flex items-start gap-3">

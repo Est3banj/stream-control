@@ -88,7 +88,7 @@ describe('useSuscripciones', () => {
     expect(result.current.loading).toBe(false);
   });
 
-  it('crearSuscripcion calls addDoc and updates user plan when active', async () => {
+  it('crearSuscripcion calls addDoc and returns the new id', async () => {
     mockGetDocs.mockResolvedValue(createQuerySnapshot([]));
     mockAddDoc.mockResolvedValue({ id: 'new-susc-id' });
 
@@ -113,9 +113,8 @@ describe('useSuscripciones', () => {
       createdAt: { _methodName: 'serverTimestamp' },
       updatedAt: { _methodName: 'serverTimestamp' },
     });
-    expect(mockUpdateDoc).toHaveBeenCalledTimes(1);
-    expect(mockDoc).toHaveBeenCalledWith(expect.anything(), 'usuarios', 'user1');
-    expect(mockUpdateDoc).toHaveBeenCalledWith(expect.anything(), { plan: 'Premium' });
+    // Ya no se actualiza plan en el documento del usuario (usePermisos lee desde suscripciones)
+    expect(mockUpdateDoc).not.toHaveBeenCalled();
     expect(id).toBe('new-susc-id');
   });
 

@@ -319,7 +319,7 @@ export default function UpgradeModal({ user, onClose }: UpgradeModalProps) {
                     rel="noopener noreferrer"
                     className={`block w-full py-3 px-6 rounded-xl text-white font-bold text-center shadow-lg hover:shadow-xl transition-all mb-1 ${
                       plan.esRecomendado
-                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
+                        ? 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700'
                         : 'bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900'
                     }`}
                   >

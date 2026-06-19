@@ -13,8 +13,15 @@ interface UseClientesConNotificacionesReturn {
 export default function useClientesConNotificaciones(user: { uid?: string; rol?: string } | null): UseClientesConNotificacionesReturn {
   const { clientes, loading, error } = useClientes(user);
   const [notificaciones, setNotificaciones] = useState<NotificacionDerivada[]>([]);
+  const isAdmin = user?.rol === 'admin';
 
   useEffect(() => {
+    // El admin no necesita notificaciones de clientes individuales
+    if (isAdmin) {
+      setNotificaciones([]);
+      return;
+    }
+
     if (loading) return;
     if (!clientes.length) {
       setNotificaciones([]);
@@ -71,7 +78,7 @@ export default function useClientesConNotificaciones(user: { uid?: string; rol?:
     });
 
     setNotificaciones(todas);
-  }, [clientes, loading]);
+  }, [clientes, loading, isAdmin]);
 
   return { clientes, notificaciones, loading, error };
 }

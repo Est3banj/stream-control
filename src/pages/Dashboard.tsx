@@ -11,7 +11,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { Venta } from '../types/venta';
 
-const COLORS = ['#6B21A8', '#3B82F6', '#06B6D4', '#8B5CF6', '#EC4899'];
+const COLORS = ['#4F46E5', '#3B82F6', '#06B6D4', '#8B5CF6', '#EC4899'];
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -152,7 +152,7 @@ export default function Dashboard() {
     return (
       <div className="space-y-6 animate-fade-in">
         <div className="mb-6">
-          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600">
+          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
             Dashboard
           </h1>
           <p className="text-gray-600">Panel ejecutivo con métricas y reportes</p>
@@ -176,7 +176,7 @@ export default function Dashboard() {
       )}
       {/* Título */}
       <div className="mb-8">
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600">
+        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
           {isAdmin ? 'Panel de Administración' : 'Dashboard'}
         </h1>
         <p className="text-gray-600">
@@ -190,7 +190,7 @@ export default function Dashboard() {
           {/* Usuarios Registrados */}
           <div className="card cursor-default">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg">
                 <Users className="text-white" size={28} />
               </div>
               <Users className="text-blue-400" size={24} />
@@ -218,7 +218,7 @@ export default function Dashboard() {
           {/* Ingresos Totales */}
           <div className="card cursor-default">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg">
                 <DollarSign className="text-white" size={28} />
               </div>
               <DollarSign className="text-indigo-400" size={24} />
@@ -248,7 +248,7 @@ export default function Dashboard() {
           {/* Ingresos */}
           <div className="card cursor-default">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg">
                 <DollarSign className="text-white" size={28} />
               </div>
               <TrendingUp className="text-green-500" size={24} />
@@ -313,7 +313,7 @@ export default function Dashboard() {
                       formatter={(value: any) => [`$${value.toLocaleString()}`, 'Ventas']}
                       labelFormatter={(label: any, payload: any) => payload?.[0]?.payload?.fullName || label}
                     />
-                    <Bar dataKey="ventas" fill="#6B21A8" radius={[8, 8, 0, 0]} />
+                    <Bar dataKey="ventas" fill="#4F46E5" radius={[8, 8, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -368,7 +368,7 @@ export default function Dashboard() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+                    <tr className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white">
                       <th className="px-4 py-3 text-left text-sm font-semibold rounded-tl-xl">Cliente</th>
                       <th className="px-4 py-3 text-right text-sm font-semibold rounded-tr-xl">Ventas</th>
                     </tr>
@@ -405,7 +405,7 @@ export default function Dashboard() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-gradient-to-r from-purple-500 to-pink-600 text-white">
+                    <tr className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white">
                       <th className="px-4 py-3 text-left text-sm font-semibold rounded-tl-xl">Plataforma</th>
                       <th className="px-4 py-3 text-right text-sm font-semibold rounded-tr-xl">Pantallas</th>
                     </tr>

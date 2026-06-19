@@ -56,7 +56,7 @@ function pagoBadge(pagoEstado: string) {
 
 export default function SuscripcionCard({ suscripcion, onMarcarPagada }: SuscripcionCardProps) {
   return (
-    <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100">
+    <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="flex-1 space-y-2">
           <div className="flex items-center gap-2 flex-wrap">

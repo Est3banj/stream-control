@@ -331,7 +331,7 @@ export default function GestionClientes() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="card cursor-default">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg">
                 <Users className="text-white" size={24} />
               </div>
               <Users className="text-blue-400" size={20} />
@@ -367,7 +367,7 @@ export default function GestionClientes() {
           </div>
           <div className="card cursor-default">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg">
                 <UserCheck className="text-white" size={24} />
               </div>
               <UserCheck className="text-purple-400" size={20} />
@@ -672,7 +672,7 @@ export default function GestionClientes() {
                 {historialVentas.map((venta: Venta) => (
                   <div
                     key={venta.id}
-                    className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100"
+                    className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <div className="flex-1">

@@ -316,7 +316,7 @@ export async function enviarNotificacionVencimiento(notificacion: NotificacionPa
     const reply_markup = {
       inline_keyboard: [
         [
-          { text: '📱 Contactar', url: `https://wa.me/57${notificacion.telefono}?text=${waTexto}` },
+          { text: '📱 Contactar', url: `https://wa.me/${notificacion.telefono?.replace(/[^0-9]/g, '') || ''}?text=${waTexto}` },
         ],
         [
           { text: '👤 Ver cliente', url: `${options.appUrl || ''}/gestion-clientes` },
@@ -337,7 +337,19 @@ export async function enviarNotificacionSuscripcion(
   options: NotificacionOptions = {}
 ): Promise<boolean> {
   try {
-    const vinculacionesSnapshot = await db.collection('vinculaciones').get();
+    // Solo enviar a admins (las suscripciones no son para usuarios regulares)
+    const usersSnapshot = await db.collection('usuarios')
+      .where('rol', '==', 'admin')
+      .get();
+
+    if (usersSnapshot.empty) return false;
+
+    // Obtener los chatIds de los admins que tienen Telegram vinculado
+    const adminUids = usersSnapshot.docs.map(d => d.id);
+    const vinculacionesSnapshot = await db.collection('vinculaciones')
+      .where('uid', 'in', adminUids)
+      .get();
+
     if (vinculacionesSnapshot.empty) return false;
 
     const estadoVencido = suscripcion.diasRestantes <= 0;
@@ -403,7 +415,7 @@ export async function enviarNotificacionMora(cliente: Record<string, unknown>, o
     const reply_markup = {
       inline_keyboard: [
         [
-          { text: '📱 Contactar', url: `https://wa.me/57${(cliente.telefono as string) || ''}?text=${waTexto}` },
+          { text: '📱 Contactar', url: `https://wa.me/${(cliente.telefono as string)?.replace(/[^0-9]/g, '') || ''}?text=${waTexto}` },
         ],
         [
           { text: '💰 Cobrado', url: `${options.appUrl || ''}/gestion-clientes` },
