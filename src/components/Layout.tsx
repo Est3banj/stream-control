@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Menu, LayoutDashboard, DollarSign, BarChart3, Users, UserCog, LogOut, User, Download, MessageCircle, Package, ClipboardList, Send } from 'lucide-react';
+import { Menu, LayoutDashboard, DollarSign, BarChart3, Users, UserCog, LogOut, User, Download, MessageCircle, Package, ClipboardList, Send, Settings } from 'lucide-react';
 import PWAInstallButton from './PWAInstallButton';
 import NotificationsPanel from './NotificationsPanel';
 import UpgradeModal from './UpgradeModal';
@@ -51,12 +51,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { to: '/admin/suscripciones', icon: ClipboardList, label: 'Suscripciones' },
         { to: '/usuarios', icon: UserCog, label: 'Usuarios' },
         { to: '/telegram', icon: Send, label: 'Telegram' },
+        { to: '/ajustes', icon: Settings, label: 'Ajustes' },
       ]
     : [
         { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
         { to: '/ventas', icon: DollarSign, label: 'Ventas' },
         { to: '/reportes', icon: BarChart3, label: 'Reportes' },
         { to: '/GestionClientes', icon: Users, label: 'Clientes' },
+        { to: '/ajustes', icon: Settings, label: 'Ajustes' },
       ];
 
   const isActive = (path: string) => location.pathname === path;

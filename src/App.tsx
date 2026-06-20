@@ -13,6 +13,7 @@ const GestionClientes = lazy(() => import('./pages/GestionClientes'));
 const TelegramConfig = lazy(() => import('./pages/TelegramConfig'));
 const AdminPlanes = lazy(() => import('./pages/AdminPlanes'));
 const AdminSuscripciones = lazy(() => import('./pages/AdminSuscripciones'));
+const Ajustes = lazy(() => import('./pages/Ajustes'));
 
 export default function App() {
   return (
@@ -107,6 +108,17 @@ export default function App() {
               <PrivateRoute roles={['admin']}>
                 <Layout>
                   <AdminSuscripciones />
+                </Layout>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/ajustes"
+            element={
+              <PrivateRoute roles={['admin', 'usuario']}>
+                <Layout>
+                  <Ajustes />
                 </Layout>
               </PrivateRoute>
             }
