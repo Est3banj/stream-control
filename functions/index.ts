@@ -9,6 +9,7 @@ import * as functions from 'firebase-functions/v1';
 import * as admin from 'firebase-admin';
 import * as telegram from './telegram';
 import { APP_URL } from './telegram';
+import { sendWelcomeEmail, sendPasswordChangedEmail, sendEmailChangedEmail, sendResetPasswordEmail } from './email';
 
 // Inicializar Firebase Admin si no está inicializado
 if (!admin.apps.length) {
@@ -50,6 +51,34 @@ export const telegramWebhook = functions
     res.status(200).send('OK');
   }
 });
+
+/**
+ * Cuando se crea un nuevo documento en usuarios/{uid} (registro),
+ * envía un email de bienvenida vía SMTP (nodemailer + Gmail).
+ * 
+ * Configuración requerida:
+ *   firebase functions:secrets:set SMTP_USER
+ *   firebase functions:secrets:set SMTP_PASS
+ */
+export const onNuevoUsuario = functions
+  .runWith({ secrets: ['SMTP_USER', 'SMTP_PASS'] })
+  .firestore
+  .document('usuarios/{uid}')
+  .onCreate(async (snap, context) => {
+    const { correo, nombre } = snap.data() as { correo?: string; nombre?: string };
+
+    if (!correo) {
+      console.log('⏭️ No correo field on new user doc, skipping welcome email');
+      return;
+    }
+
+    try {
+      await sendWelcomeEmail(correo, nombre || 'Usuario');
+      console.log('✅ Welcome email process completed for', correo);
+    } catch (error) {
+      console.error('❌ Welcome email failed for', correo, error);
+    }
+  });
 
 /**
  * Extensión del cron: envía notificaciones por Telegram
@@ -253,5 +282,73 @@ export const generarNotificacionesVencimientos = functions
     } catch (error) {
       console.error('❌ Error generando notificaciones:', error);
       throw error;
+    }
+  });
+
+/**
+ * Cuando se crea una notificación de cambio en notificacionesEmail,
+ * envía un email de confirmación al usuario.
+ * 
+ * Tipos: 'password_changed', 'email_changed'
+ */
+export const onNotificacionEmail = functions
+  .runWith({ secrets: ['SMTP_USER', 'SMTP_PASS'] })
+  .firestore
+  .document('notificacionesEmail/{docId}')
+  .onCreate(async (snap, context) => {
+    const data = snap.data();
+    const { tipo, nombre, correo, nuevoCorreo } = data as Record<string, string>;
+
+    if (!tipo) {
+      console.log('⏭️ Notificación sin tipo, ignorando');
+      return;
+    }
+
+    try {
+      if (tipo === 'password_changed') {
+        const userDoc = await admin.firestore().collection('usuarios').doc(data.uid).get();
+        const userData = userDoc.data();
+        const userEmail = userData?.correo || data.correo;
+        if (userEmail) {
+          await sendPasswordChangedEmail(userEmail, nombre || 'Usuario');
+        }
+      } else if (tipo === 'email_changed') {
+        if (nuevoCorreo) {
+          await sendEmailChangedEmail(nuevoCorreo, nombre || 'Usuario', nuevoCorreo);
+        }
+      }
+      console.log(`✅ ${tipo} email sent for`, nombre);
+    } catch (error) {
+      console.error(`❌ Failed to send ${tipo} email:`, error);
+    }
+  });
+
+/**
+ * Envía un correo con un enlace para restablecer la contraseña.
+ * Usa Firebase Admin SDK para generar el link + nuestro nodemailer para enviarlo.
+ */
+export const enviarCorreoRecuperacion = functions
+  .runWith({ secrets: ['SMTP_USER', 'SMTP_PASS'] })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión');
+    }
+
+    const { email, nombre } = data;
+    if (!email) {
+      throw new functions.https.HttpsError('invalid-argument', 'Email es requerido');
+    }
+
+    try {
+      const resetLink = await admin.auth().generatePasswordResetLink(email, {
+        url: 'https://streamcontrol-10837.firebaseapp.com',
+      });
+
+      await sendResetPasswordEmail(email, nombre || 'Usuario', resetLink);
+
+      return { success: true };
+    } catch (error) {
+      console.error('❌ Error sending recovery email:', error);
+      throw new functions.https.HttpsError('internal', 'Error al enviar el correo de recuperación');
     }
   });
