@@ -1,28 +1,30 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const mockOnSnapshot = vi.fn();
-const mockAddDoc = vi.fn();
-const mockUpdateDoc = vi.fn();
-const mockGetDocs = vi.fn();
-const mockCollection = vi.fn((_db: unknown, path: string) => ({ _path: path }));
-const mockDoc = vi.fn((_db: unknown, path: string, ...ids: string[]) => ({ _path: path, _id: ids.join('_') }));
-const mockQuery = vi.fn();
-const mockWhere = vi.fn();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyFn = (...args: any[]) => any;
+const mockOnSnapshot = vi.fn<AnyFn>();
+const mockAddDoc = vi.fn<AnyFn>();
+const mockUpdateDoc = vi.fn<AnyFn>();
+const mockGetDocs = vi.fn<AnyFn>();
+const mockCollection = vi.fn<AnyFn>().mockImplementation((_db: unknown, path: string) => ({ _path: path }));
+const mockDoc = vi.fn<AnyFn>().mockImplementation((_db: unknown, path: string, ...ids: string[]) => ({ _path: path, _id: ids.join('_') }));
+const mockQuery = vi.fn<AnyFn>();
+const mockWhere = vi.fn<AnyFn>();
 
 vi.mock('../firebase', () => ({
   db: { _mock: true },
 }));
 
 vi.mock('firebase/firestore', () => ({
-  collection: (...args: unknown[]) => mockCollection(...args),
-  doc: (...args: unknown[]) => mockDoc(...args),
-  query: (...args: unknown[]) => mockQuery(...args),
-  where: (...args: unknown[]) => mockWhere(...args),
-  addDoc: (...args: unknown[]) => mockAddDoc(...args),
-  updateDoc: (...args: unknown[]) => mockUpdateDoc(...args),
-  getDocs: (...args: unknown[]) => mockGetDocs(...args),
-  onSnapshot: (...args: unknown[]) => mockOnSnapshot(...args),
+  collection: (...args: any[]) => mockCollection(...args),
+  doc: (...args: any[]) => mockDoc(...args),
+  query: (...args: any[]) => mockQuery(...args),
+  where: (...args: any[]) => mockWhere(...args),
+  addDoc: (...args: any[]) => mockAddDoc(...args),
+  updateDoc: (...args: any[]) => mockUpdateDoc(...args),
+  getDocs: (...args: any[]) => mockGetDocs(...args),
+  onSnapshot: (...args: any[]) => mockOnSnapshot(...args),
   serverTimestamp: () => ({ _methodName: 'serverTimestamp' }),
 }));
 

@@ -141,7 +141,7 @@ export default function Reportes() {
   const totalIngresos = ventas.reduce((acc, v) => acc + (v.precioVenta * v.pantallas), 0);
   const totalCostos = ventas.reduce((acc, v) => acc + Number(v.costoServicio || 0), 0);
   const totalUtilidad = totalIngresos - totalCostos;
-  const esAdmin = user.rol === 'admin';
+  const esAdmin = user?.rol === 'admin';
   const colCount = esAdmin ? 9 : 8;
   const totalVentas = ventas.length;
   const promedioPorVenta = totalVentas > 0 ? totalIngresos / totalVentas : 0;

@@ -12,6 +12,7 @@ import type { Venta } from '../types/venta';
 import type { Cliente } from '../types/cliente';
 
 export default function GestionClientes() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { clientes: todosLosClientes, loading, error } = useClientes(user);
   const permisos = usePermisos(user);
