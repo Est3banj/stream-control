@@ -46,7 +46,7 @@ firebase login
 
 3. Seleccionar el proyecto:
 ```bash
-firebase use streamcontrol-10837
+firebase use <project-id>
 ```
 
 ### Instalación de Dependencias
