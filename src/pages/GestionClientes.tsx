@@ -1,17 +1,21 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
 import { collection, query, where, onSnapshot, updateDoc, doc, increment, addDoc, serverTimestamp, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import useClientes from '../hooks/useClientes';
+import usePermisos from '../hooks/usePermisos';
 import Paginador from '../components/Paginador';
 import toast from 'react-hot-toast';
-import { Search, Download, MessageCircle, Calendar, Users, TrendingUp, X, AlertCircle, Edit, Mail, DollarSign } from 'lucide-react';
+import { Search, Download, MessageCircle, Calendar, Users, TrendingUp, X, AlertCircle, Edit, Mail, DollarSign, CheckCircle, UserCheck, AlertTriangle, RefreshCw, Sparkles } from 'lucide-react';
 import type { Venta } from '../types/venta';
 import type { Cliente } from '../types/cliente';
 
 export default function GestionClientes() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { clientes: todosLosClientes, loading, error } = useClientes(user);
+  const permisos = usePermisos(user);
   const [clientes, setClientes] = useState<{ activos: Cliente[]; inactivos: Cliente[]; todos: Cliente[] }>({ activos: [], inactivos: [], todos: [] });
   const [filtro, setFiltro] = useState<'activos' | 'inactivos' | 'todos'>('activos');
   const [busqueda, setBusqueda] = useState('');
@@ -150,18 +154,35 @@ export default function GestionClientes() {
 
   // 📱 Enviar WhatsApp
   const enviarWhatsApp = (cliente: Cliente) => {
-    const mensaje = `Hola ${cliente.nombre}, tu servicio de ${cliente.plataforma || 'streaming'} vence en ${cliente.diasRestantes} día(s). Te invitamos a renovarlo para seguir disfrutando sin interrupciones.`;
+    const dias = Math.abs(cliente.diasRestantes ?? 0);
+    const mensaje = (cliente.diasRestantes ?? 0) > 0
+      ? `Hola ${cliente.nombre}, tu servicio de ${cliente.plataforma || 'streaming'} vence en ${dias} día(s). Te invitamos a renovarlo para seguir disfrutando sin interrupciones.`
+      : `Hola ${cliente.nombre}, te informamos que tu servicio de ${cliente.plataforma || 'streaming'} finalizó hace ${dias} días. Para seguir accediendo a tus series y películas favoritas sin interrupciones, podés renovar tu plan. Si no deseas continuar, no es necesario que hagas nada. ¡Gracias por confiar en nosotros!`;
     const url = `https://wa.me/57${cliente.telefono}?text=${encodeURIComponent(mensaje)}`;
     window.open(url, '_blank');
   };
 
-  // 🔍 Filtrado por búsqueda
-  const clientesFiltrados: Cliente[] = clientes[filtro]?.filter(
+  // 🔍 Filtrado por búsqueda + ordenado por fecha de vencimiento
+  const clientesFiltrados: Cliente[] = (clientes[filtro]?.filter(
     (c: Cliente) =>
       c.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
       (c.plataforma && c.plataforma.toLowerCase().includes(busqueda.toLowerCase())) ||
       (c.telefono && c.telefono.includes(busqueda))
-  ) || [];
+  ) || []).sort((a, b) => {
+    const aDias = a.diasRestantes ?? 0;
+    const bDias = b.diasRestantes ?? 0;
+
+    // Vencidos: más recientes primero (fecha descendente)
+    if (aDias <= 0 && bDias <= 0) {
+      return b.fechaVencimiento.localeCompare(a.fechaVencimiento);
+    }
+    // Activos: próximo a vencer primero (fecha ascendente)
+    if (aDias > 0 && bDias > 0) {
+      return a.fechaVencimiento.localeCompare(b.fechaVencimiento);
+    }
+    // Mixto: vencidos primero
+    return aDias <= 0 ? -1 : 1;
+  });
 
   const indexUltimo = paginaActual * itemsPorPagina;
   const indexPrimero = indexUltimo - itemsPorPagina;
@@ -259,7 +280,7 @@ export default function GestionClientes() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-indigo-700">
-          Gestión de Clientes
+          {user?.rol === 'admin' ? 'Gestión de Clientes — Plataforma' : 'Gestión de Clientes'}
         </h1>
         <p className="text-gray-600">Administra y contacta a tus clientes</p>
       </div>
@@ -306,13 +327,92 @@ export default function GestionClientes() {
         </div>
       </div>
 
+      {/* Resumen agregado para admin */}
+      {user?.rol === 'admin' && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="card cursor-default">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                <Users className="text-white" size={24} />
+              </div>
+              <Users className="text-blue-400" size={20} />
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Total Clientes</p>
+              <p className="text-2xl font-bold text-gray-900">{clientes.todos.length.toLocaleString()}</p>
+            </div>
+          </div>
+          <div className="card cursor-default">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center shadow-lg">
+                <CheckCircle className="text-white" size={24} />
+              </div>
+              <CheckCircle className="text-green-400" size={20} />
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Clientes Activos</p>
+              <p className="text-2xl font-bold text-gray-900">{clientes.activos.length.toLocaleString()}</p>
+            </div>
+          </div>
+          <div className="card cursor-default">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-pink-600 flex items-center justify-center shadow-lg">
+                <AlertTriangle className="text-white" size={24} />
+              </div>
+              <AlertTriangle className="text-red-400" size={20} />
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Clientes Vencidos</p>
+              <p className="text-2xl font-bold text-gray-900">{clientes.inactivos.length.toLocaleString()}</p>
+            </div>
+          </div>
+          <div className="card cursor-default">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                <UserCheck className="text-white" size={24} />
+              </div>
+              <UserCheck className="text-purple-400" size={20} />
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Vendedores</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {new Set(clientes.todos.map(c => c.propietarioId).filter(Boolean)).size.toLocaleString()}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Banner de límite para Starter */}
+      {user?.rol !== 'admin' && permisos.planNombre === 'Starter' && (
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3">
+          <Sparkles className="text-amber-500 shrink-0" size={20} />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-amber-800">
+              Plan Starter — <strong>{clientes.todos.length}</strong> de {permisos.clienteLimit} clientes usados
+            </p>
+            <p className="text-xs text-amber-600 mt-0.5">
+              Actualizá a Professional para clientes ilimitados.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Lista de clientes */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        {user?.rol === 'admin' && (
+          <div className="px-6 pt-4 pb-2">
+            <p className="text-sm text-gray-500 italic">Vista general de todos los vendedores de la plataforma</p>
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="bg-indigo-600 text-white">
                 <th className="px-4 py-4 text-left text-sm font-semibold">Cliente</th>
+                {user?.rol === 'admin' && (
+                  <th className="px-4 py-4 text-left text-sm font-semibold">Vendedor</th>
+                )}
                 <th className="px-4 py-4 text-left text-sm font-semibold">Contacto</th>
                 <th className="px-4 py-4 text-left text-sm font-semibold">Plataforma</th>
                 <th className="px-4 py-4 text-left text-sm font-semibold">Vencimiento</th>
@@ -334,6 +434,11 @@ export default function GestionClientes() {
                         <div className="text-xs text-gray-500 mt-1">{c.correo}</div>
                       )}
                     </td>
+                    {user?.rol === 'admin' && (
+                      <td className="px-4 py-4">
+                        <div className="text-gray-700">{c.usuarioEmail || '—'}</div>
+                      </td>
+                    )}
                     <td className="px-4 py-4">
                       <div className="text-gray-700">{c.telefono}</div>
                     </td>
@@ -402,7 +507,14 @@ export default function GestionClientes() {
                           >
                             <DollarSign size={18} />
                           </button>
-                        )}
+                          )}
+                        <button
+                          onClick={() => navigate('/ventas', { state: { cliente: c } })}
+                          className="p-2 rounded-lg bg-amber-100 text-amber-600 hover:bg-amber-200 transition-colors"
+                          title="Renovar cliente"
+                        >
+                          <RefreshCw size={18} />
+                        </button>
                         <button
                           onClick={() => enviarWhatsApp(c)}
                           className="p-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-colors"
@@ -416,7 +528,7 @@ export default function GestionClientes() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-gray-500">
+                  <td colSpan={user?.rol === 'admin' ? 8 : 7} className="text-center py-12 text-gray-500">
                     <Users size={48} className="mx-auto mb-3 text-gray-300" />
                     <p className="font-medium">No se encontraron clientes {filtro}</p>
                   </td>
@@ -561,7 +673,7 @@ export default function GestionClientes() {
                 {historialVentas.map((venta: Venta) => (
                   <div
                     key={venta.id}
-                    className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100"
+                    className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <div className="flex-1">

@@ -13,9 +13,10 @@
  * - Rate limiting básico contra brute force
  */
 
-import * as functions from 'firebase-functions';
+import { defineSecret, defineString } from 'firebase-functions/params';
 import * as admin from 'firebase-admin';
 import * as crypto from 'crypto';
+import type * as functions from 'firebase-functions/v1';
 
 interface TelegramMessage {
   chat_id: string;
@@ -50,14 +51,35 @@ interface NotificacionOptions {
   appUrl?: string;
 }
 
+interface SuscripcionNotificacionPayload {
+  usuarioNombre: string;
+  planNombre: string;
+  fechaFin: admin.firestore.Timestamp;
+  diasRestantes: number;
+  estado: string;
+}
+
+// Inicializar Firebase Admin si no está inicializado
+// Necesario acá porque los imports se resuelven antes que el código de index.ts
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 const db = admin.firestore();
 
 // ============================================================
 // CONFIGURACIÓN
 // ============================================================
 
-const BOT_TOKEN = () => functions.config().telegram?.token;
-const WEBHOOK_SECRET = () => functions.config().telegram?.webhook_secret;
+// ============================================================
+// PARAMS & SECRETS (reemplaza functions.config())
+// ============================================================
+
+export const TELEGRAM_TOKEN = defineSecret('TELEGRAM_TOKEN');
+export const TELEGRAM_WEBHOOK_SECRET = defineSecret('TELEGRAM_WEBHOOK_SECRET');
+export const APP_URL = defineString('APP_URL');
+
+const BOT_TOKEN = () => TELEGRAM_TOKEN.value();
+const WEBHOOK_SECRET = () => TELEGRAM_WEBHOOK_SECRET.value();
 const TELEGRAM_API = 'https://api.telegram.org/bot';
 
 // ============================================================
@@ -294,7 +316,7 @@ export async function enviarNotificacionVencimiento(notificacion: NotificacionPa
     const reply_markup = {
       inline_keyboard: [
         [
-          { text: '📱 Contactar', url: `https://wa.me/57${notificacion.telefono}?text=${waTexto}` },
+          { text: '📱 Contactar', url: `https://wa.me/${notificacion.telefono?.replace(/[^0-9]/g, '') || ''}?text=${waTexto}` },
         ],
         [
           { text: '👤 Ver cliente', url: `${options.appUrl || ''}/gestion-clientes` },
@@ -306,6 +328,68 @@ export async function enviarNotificacionVencimiento(notificacion: NotificacionPa
     return true;
   } catch (error) {
     console.error(`❌ Error enviando notif Telegram a ${notificacion.propietarioId}:`, error);
+    return false;
+  }
+}
+
+export async function enviarNotificacionSuscripcion(
+  suscripcion: SuscripcionNotificacionPayload,
+  options: NotificacionOptions = {}
+): Promise<boolean> {
+  try {
+    // Solo enviar a admins (las suscripciones no son para usuarios regulares)
+    const usersSnapshot = await db.collection('usuarios')
+      .where('rol', '==', 'admin')
+      .get();
+
+    if (usersSnapshot.empty) return false;
+
+    // Obtener los chatIds de los admins que tienen Telegram vinculado
+    const adminUids = usersSnapshot.docs.map(d => d.id);
+    const vinculacionesSnapshot = await db.collection('vinculaciones')
+      .where('uid', 'in', adminUids)
+      .get();
+
+    if (vinculacionesSnapshot.empty) return false;
+
+    const estadoVencido = suscripcion.diasRestantes <= 0;
+    const fechaFinDate = suscripcion.fechaFin.toDate();
+    const fechaFinStr = `${fechaFinDate.getDate()}/${fechaFinDate.getMonth() + 1}/${fechaFinDate.getFullYear()}`;
+    const estadoTexto = estadoVencido
+      ? `⚠️ <b>VENCIDA</b> hace ${Math.abs(suscripcion.diasRestantes)} día(s)`
+      : `📅 Vence en <b>${suscripcion.diasRestantes}</b> día(s)`;
+
+    const mensaje =
+      `<b>⏰ Recordatorio de suscripción</b>\n\n` +
+      `👤 <b>Usuario:</b> ${suscripcion.usuarioNombre}\n` +
+      `📺 <b>Plan:</b> ${suscripcion.planNombre}\n` +
+      `📅 <b>Fecha de fin:</b> ${fechaFinStr}\n` +
+      `${estadoTexto}\n\n` +
+      `<i>Gestioná la suscripción desde el panel de administración.</i>`;
+
+    const reply_markup = {
+      inline_keyboard: [
+        [
+          { text: '👤 Ver suscripciones', url: `${options.appUrl || ''}/admin/suscripciones` },
+        ],
+      ],
+    };
+
+    let sentCount = 0;
+    for (const doc of vinculacionesSnapshot.docs) {
+      const chatId = doc.data().telegramChatId as string;
+      if (!chatId) continue;
+      try {
+        await sendMessage(chatId, mensaje, { reply_markup });
+        sentCount++;
+      } catch (err) {
+        console.error(`Error enviando notif suscripción a chat ${chatId}:`, err);
+      }
+    }
+
+    return sentCount > 0;
+  } catch (error) {
+    console.error('❌ Error enviando notif suscripción Telegram:', error);
     return false;
   }
 }
@@ -331,7 +415,7 @@ export async function enviarNotificacionMora(cliente: Record<string, unknown>, o
     const reply_markup = {
       inline_keyboard: [
         [
-          { text: '📱 Contactar', url: `https://wa.me/57${(cliente.telefono as string) || ''}?text=${waTexto}` },
+          { text: '📱 Contactar', url: `https://wa.me/${(cliente.telefono as string)?.replace(/[^0-9]/g, '') || ''}?text=${waTexto}` },
         ],
         [
           { text: '💰 Cobrado', url: `${options.appUrl || ''}/gestion-clientes` },

@@ -114,7 +114,7 @@ export default function NotificationsPanel() {
       {mostrarPanel && (
         <div className="absolute right-0 top-12 z-50 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-[80vh] flex flex-col animate-slide-down">
           {/* Header */}
-          <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-indigo-50 to-purple-50 rounded-t-2xl">
+          <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-indigo-50 to-violet-50 rounded-t-2xl">
             <div className="flex items-center gap-2">
               <Bell className="text-indigo-600" size={20} />
               <h3 className="font-bold text-gray-900">Notificaciones</h3>

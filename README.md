@@ -1,87 +1,175 @@
-# 🚀 StreamControl: Sistema de Gestión de Suscripciones
+# StreamControl Pro — Sistema de Gestión de Suscripciones
 
-StreamControl es una plataforma premium diseñada para la gestión eficiente de negocios de reventa de servicios de streaming. Permite el control total de clientes, ventas, vencimientos y reportes financieros con un enfoque en la automatización y la experiencia de usuario.
-
----
-
-## 🛠️ Stack Tecnológico
-
-El proyecto utiliza tecnologías modernas de alto rendimiento:
-
-- **Frontend**: [React.js](https://reactjs.org/) (v18) con [Vite](https://vitejs.dev/) para un desarrollo ultrarrápido.
-- **Estilos**: [Tailwind CSS](https://tailwindcss.com/) para un diseño responsivo y moderno.
-- **Animaciones**: [Framer Motion](https://www.framer.com/motion/) para micro-interacciones fluidas.
-- **Backend/Base de Datos**: [Firebase](https://firebase.google.com/) (Firestore para tiempo real, Auth para seguridad).
-- **Visualización**: [Recharts](https://recharts.org/) para analíticas visuales.
-- **PWA**: Soporte nativo para instalación como aplicación de escritorio y móvil.
+StreamControl Pro es una plataforma premium para la gestión eficiente de negocios de reventa de servicios de streaming. Permite el control total de clientes, ventas, vencimientos y reportes financieros con automatización y multi-moneda.
 
 ---
 
-## 📂 Estructura del Proyecto
+## Stack Tecnológico
 
-```text
-streamcontrol_streamlined/
+| Capa | Tecnología |
+|------|-----------|
+| **Frontend** | React 18 + TypeScript + Vite |
+| **Estilos** | Tailwind CSS |
+| **Backend** | Firebase (Firestore, Auth, Functions, Hosting) |
+| **Cloud Functions** | Node.js 22 (1ª Gen) con TypeScript |
+| **Notificaciones** | Telegram Bot API + nodemailer (SMTP Gmail) |
+| **Estado global** | React Context + hooks |
+| **Testing** | Vitest + Testing Library |
+| **PWA** | Service Worker con Workbox (vite-plugin-pwa) |
+
+---
+
+## Estructura del Proyecto
+
+```
+streamcontrol/
 ├── src/
-│   ├── components/       # Componentes reutilizables (Layout, Auth, Forms)
-│   ├── contexts/         # Estado global (Autenticación y Sesión)
-│   ├── hooks/            # Lógica de negocio extraída (Vencimientos, Notificaciones)
-│   ├── pages/            # Vistas principales (Dashboard, Ventas, Reportes, Clientes)
-│   ├── firebase.js       # Configuración e inicialización de servicios
-│   └── main.jsx          # Punto de entrada de la aplicación
-├── firestore.rules       # Seguridad y reglas de acceso a datos
-├── firebase.json         # Configuración de Hosting y Firestore
-├── tailwind.config.js    # Definición del sistema de diseño
-└── vite.config.js        # Configuración del empaquetador
+│   ├── components/         # Componentes reutilizables
+│   │   ├── Auth/           # Login, PrivateRoute
+│   │   ├── ErrorBoundary.tsx
+│   │   ├── Layout.tsx      # Sidebar + navegación
+│   │   ├── UpgradeModal.tsx
+│   │   ├── NotificationsPanel.tsx
+│   │   └── ...
+│   ├── contexts/           # Estado global
+│   │   ├── AuthContext.tsx     # Autenticación + registro
+│   │   └── UpgradeModalContext.tsx
+│   ├── hooks/              # Lógica de negocio
+│   │   ├── useClientes.ts
+│   │   ├── useVentas.ts
+│   │   ├── useNotificaciones.ts
+│   │   ├── usePermisos.ts
+│   │   ├── usePlanes.ts
+│   │   ├── useSuscripciones.ts
+│   │   └── useMoneda.ts        # Formateo multi-moneda
+│   ├── pages/              # Vistas principales
+│   │   ├── Dashboard.tsx
+│   │   ├── Ventas.tsx
+│   │   ├── Reportes.tsx
+│   │   ├── GestionClientes.tsx
+│   │   ├── Ajustes.tsx         # Perfil de usuario
+│   │   ├── AdminPlanes.tsx
+│   │   ├── AdminSuscripciones.tsx
+│   │   ├── TelegramConfig.tsx
+│   │   └── Usuarios.tsx
+│   ├── types/              # Tipos TypeScript
+│   │   ├── usuario.ts
+│   │   ├── cliente.ts
+│   │   ├── venta.ts
+│   │   ├── plan.ts
+│   │   ├── suscripcion.ts
+│   │   └── ...
+│   ├── utils/              # Utilidades
+│   │   └── formatearPrecio.ts  # Conversión COP -> moneda destino
+│   ├── firebase.ts         # Configuración Firebase (desde .env)
+│   └── App.tsx             # Router principal
+├── functions/              # Cloud Functions
+│   ├── index.ts            # Triggers + endpoint
+│   ├── email.ts            # Módulo de correos (nodemailer)
+│   ├── telegram.ts         # Bot de Telegram
+│   └── package.json
+├── firestore.rules         # Reglas de seguridad
+├── firestore.indexes.json  # Índices compuestos
+├── firebase.json           # Configuración de deploy
+└── .env.example            # Template de variables de entorno
 ```
 
 ---
 
-## 🧠 Lógica de Negocio y Flujo de Datos
+## Funcionalidades Principales
 
-### Propósito Principal
-Centralizar el ciclo de vida de una suscripción: desde la venta inicial hasta el seguimiento de renovaciones y el cálculo de utilidades.
+### Autenticación y Usuarios
+- **Login/Registro dual** en una misma pantalla con toggle
+- **Registro con multi-moneda**: el usuario selecciona su moneda preferida (COP, USD, MXN, CLP, ARS, PEN) al crearse la cuenta
+- **Roles**: `admin` (visibilidad global) y `usuario` (solo sus datos)
 
-### Flujo de Información
-1. **Autenticación**: El sistema utiliza Firebase Auth con roles persistidos en Firestore (`admin` vs `usuario`).
-2. **Registro de Ventas**: Al vender un servicio, se crea un registro en `ventas` y se actualiza/crea el registro maestro en `clientes`.
-3. **Control de Vencimientos**: Un Hook personalizado (`useClientesConNotificaciones`) monitorea en tiempo real los días restantes de cada cliente.
-4. **Seguridad**: Las `firestore.rules` garantizan que los usuarios solo vean sus propios clientes, mientras que los administradores mantienen visibilidad global.
+### Perfil de Usuario (Ajustes)
+- Cambio de nombre
+- Cambio de correo electrónico (con reautenticación + notificación)
+- Cambio de contraseña (con reautenticación + confirmación)
+- Recuperación de contraseña vía email
 
----
+### Multi-Moneda
+- 6 monedas compatibles con tasas de conversión por defecto
+- Los precios se muestran en la moneda del usuario automáticamente
+- Selector de moneda en el registro
+- Hook `useMoneda()` para formateo en toda la app
 
-## ⚙️ Configuración y Despliegue
+### Cloud Functions
+| Función | Trigger | Propósito |
+|---------|---------|-----------|
+| `onNuevoUsuario` | Firestore `.onCreate` usuarios | Email de bienvenida |
+| `onNotificacionEmail` | Firestore `.onCreate` notificacionesEmail | Email cambio password/correo |
+| `enviarCorreoRecuperacion` | HTTPS Callable | Enlace de reset password |
+| `telegramWebhook` | HTTPS Request | Webhook del bot de Telegram |
+| `generarNotificacionesVencimientos` | PubSub (cada 24h) | Notificaciones de vencimientos |
 
-### Requisitos Previos
-- Node.js (v18+)
-- Una cuenta en Firebase Console.
-
-### Pasos para Levantar el Proyecto
-
-1. **Instalar Dependencias**:
-   ```bash
-   npm install
-   ```
-
-2. **Configurar Variables de Entorno**:
-   Crea un archivo `.env` en la raíz (basado en `src/firebase.js`):
-   ```env
-   VITE_FIREBASE_API_KEY=tu_api_key
-   VITE_FIREBASE_AUTH_DOMAIN=tu_dominio
-   VITE_FIREBASE_PROJECT_ID=tu_project_id
-   # ... ver firebase.js para la lista completa
-   ```
-
-3. **Ejecutar en Desarrollo**:
-   ```bash
-   npm run dev
-   ```
+### Seguridad
+- **Firestore Rules**: acceso basado en roles (`admin` vs `usuario`)
+- **Cuentas vencidas**: cierre de sesión automático si `activoHasta` expiró
+- **Estados**: verificación de cuenta activa/inactiva en cada login
+- **Variables de entorno**: credenciales Firebase desde `.env` (nunca hardcodeadas)
 
 ---
 
-## 📑 Componentes Críticos
+## Configuración y Despliegue
 
-- **`AuthContext.jsx`**: Gestiona la sesión y protege las rutas según el rol.
-- **`useClientesConNotificaciones.js`**: El motor de alertas del sistema.
-- **`VentasForm.jsx`**: Lógica compleja de autocompletado y validación cruzada.
-- **`firestore.rules`**: La columna vertebral de la privacidad y el cumplimiento de datos.
+### Requisitos
+- Node.js 18+
+- Cuenta de Firebase (plan Blaze para Functions)
+- CLI de Firebase: `npm install -g firebase-tools`
 
+### Desarrollo Local
+
+```bash
+# 1. Clonar e instalar
+git clone https://github.com/Est3banj/stream-control.git
+cd streamcontrol
+npm install
+
+# 2. Configurar variables de entorno
+cp .env.example .env
+# Editar .env con las credenciales de Firebase
+
+# 3. Iniciar servidor de desarrollo
+npm run dev
+```
+
+### Despliegue a Producción
+
+```bash
+# 1. Configurar secrets de Functions (solo la primera vez)
+firebase functions:secrets:set SMTP_USER
+firebase functions:secrets:set SMTP_PASS
+
+# 2. Deployar todo
+firebase deploy
+
+# O deploy específico:
+firebase deploy --only hosting        # Solo frontend
+firebase deploy --only functions      # Solo Cloud Functions
+firebase deploy --only firestore:rules # Solo reglas
+```
+
+---
+
+## Testing
+
+```bash
+# Ejecutar todos los tests
+npx vitest run
+
+# Modo watch
+npx vitest
+
+# Con coverage
+npx vitest run --coverage
+```
+
+---
+
+## Enlaces
+
+- **App en producción**: https://streamcontrol-10837.web.app
+- **Firebase Console**: https://console.firebase.google.com/project/streamcontrol-10837
+- **Repositorio**: https://github.com/Est3banj/stream-control

@@ -112,7 +112,7 @@ export default function PWAInstallButton({ showInSidebar = false }: PWAInstallBu
       {deferredPrompt && !showBanner && (
         <button
           onClick={handleInstallClick}
-          className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 font-semibold hover:scale-110 transition-all duration-300 animate-scale-in"
+          className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 font-semibold hover:scale-110 transition-all duration-300 animate-scale-in"
           aria-label="Instalar aplicación"
         >
           <Download size={20} />
@@ -125,7 +125,7 @@ export default function PWAInstallButton({ showInSidebar = false }: PWAInstallBu
           <div className="glass-strong rounded-2xl p-6 shadow-2xl border border-white/40">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center">
                   <Download className="text-white" size={24} />
                 </div>
                 <div>

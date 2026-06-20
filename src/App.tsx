@@ -11,6 +11,9 @@ const Reportes = lazy(() => import('./pages/Reportes'));
 const Usuarios = lazy(() => import('./pages/Usuarios'));
 const GestionClientes = lazy(() => import('./pages/GestionClientes'));
 const TelegramConfig = lazy(() => import('./pages/TelegramConfig'));
+const AdminPlanes = lazy(() => import('./pages/AdminPlanes'));
+const AdminSuscripciones = lazy(() => import('./pages/AdminSuscripciones'));
+const Ajustes = lazy(() => import('./pages/Ajustes'));
 
 export default function App() {
   return (
@@ -36,7 +39,7 @@ export default function App() {
           <Route
             path="/ventas"
             element={
-              <PrivateRoute roles={['admin', 'usuario']}>
+              <PrivateRoute roles={['usuario']}>
                 <Layout>
                   <Ventas />
                 </Layout>
@@ -47,7 +50,7 @@ export default function App() {
           <Route
             path="/reportes"
             element={
-              <PrivateRoute roles={['admin', 'usuario']}>
+              <PrivateRoute roles={['usuario']}>
                 <Layout>
                   <Reportes />
                 </Layout>
@@ -69,7 +72,7 @@ export default function App() {
           <Route
             path="/GestionClientes"
             element={
-              <PrivateRoute roles={['admin', 'usuario']}>
+              <PrivateRoute roles={['usuario']}>
                 <Layout>
                   <GestionClientes />
                 </Layout>
@@ -83,6 +86,39 @@ export default function App() {
               <PrivateRoute roles={['admin', 'usuario']}>
                 <Layout>
                   <TelegramConfig />
+                </Layout>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/admin/planes"
+            element={
+              <PrivateRoute roles={['admin']}>
+                <Layout>
+                  <AdminPlanes />
+                </Layout>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/admin/suscripciones"
+            element={
+              <PrivateRoute roles={['admin']}>
+                <Layout>
+                  <AdminSuscripciones />
+                </Layout>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/ajustes"
+            element={
+              <PrivateRoute roles={['admin', 'usuario']}>
+                <Layout>
+                  <Ajustes />
                 </Layout>
               </PrivateRoute>
             }

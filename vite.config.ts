@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon_stream.webp', 'icon-192.png', 'icon-512.png'],
+      includeAssets: ['stream.webp'],
       manifest: {
         name: 'StreamControl Pro',
         short_name: 'StreamControl',
@@ -19,20 +19,20 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: 'icon-192.png',
+            src: 'stream.webp',
             sizes: '192x192',
-            type: 'image/png',
+            type: 'image/webp',
           },
           {
-            src: 'icon-512.png',
+            src: 'stream.webp',
             sizes: '512x512',
-            type: 'image/png',
+            type: 'image/webp',
           },
           {
-            src: 'icon_stream.webp',
+            src: 'stream.webp',
             sizes: '1200x1200',
             type: 'image/webp',
-            purpose: 'any',
+            purpose: 'any maskable',
           },
         ],
       },

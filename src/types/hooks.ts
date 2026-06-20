@@ -20,6 +20,18 @@ export interface UseClientesReturn {
   toggleEstado: (id: string, estadoActual: string) => Promise<void>;
 }
 
+export interface UsePlanesReturn {
+  planes: import('./plan').Plan[];
+  loading: boolean;
+  error: string | null;
+}
+
+export interface UseSuscripcionesReturn {
+  suscripciones: import('./suscripcion').Suscripcion[];
+  loading: boolean;
+  error: string | null;
+}
+
 export interface NotificacionDerivada {
   id: string;
   clienteId: string;

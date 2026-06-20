@@ -1,19 +1,28 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "../firebase";
 import {
+  EmailAuthProvider,
+  createUserWithEmailAndPassword,
   onAuthStateChanged,
+  reauthenticateWithCredential,
   signInWithEmailAndPassword,
   signOut,
+  updateEmail,
+  updatePassword,
 } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { collection, addDoc, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import type { UserCredential } from 'firebase/auth';
 import type { FirebaseUserWithData } from '../types/usuario';
 
 interface AuthContextValue {
   user: FirebaseUserWithData | null;
   login: (email: string, password: string) => Promise<UserCredential>;
+  register: (data: { nombre: string; correo: string; password: string; moneda: string; tasa: number }) => Promise<UserCredential>;
   logout: () => Promise<void>;
   loading: boolean;
+  updateProfileData: (data: { nombre?: string }) => Promise<void>;
+  updateUserEmail: (newEmail: string, currentPassword: string) => Promise<void>;
+  updateUserPassword: (newPassword: string, currentPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -124,8 +133,82 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   };
 
+  const register = async (data: { nombre: string; correo: string; password: string; moneda: string; tasa: number }) => {
+    try {
+      setLoading(true);
+      const userCredential = await createUserWithEmailAndPassword(auth, data.correo, data.password);
+      const uid = userCredential.user.uid;
+
+      const profile = {
+        nombre: data.nombre,
+        correo: data.correo,
+        rol: 'usuario',
+        estado: 'activo',
+        moneda: data.moneda,
+        tasa: data.tasa,
+        activoHasta: '',
+        createdAt: new Date().toISOString(),
+      };
+
+      await setDoc(doc(db, 'usuarios', uid), profile);
+      setUser({ ...userCredential.user, ...profile } as FirebaseUserWithData);
+      setLoading(false);
+      return userCredential;
+    } catch (error) {
+      setLoading(false);
+      throw error;
+    }
+  };
+
+  const reauthenticate = async (password: string): Promise<void> => {
+    if (!auth.currentUser?.email) throw new Error("No hay sesión activa");
+    const credential = EmailAuthProvider.credential(auth.currentUser.email, password);
+    await reauthenticateWithCredential(auth.currentUser, credential);
+  };
+
+  const updateProfileData = async (data: { nombre?: string }): Promise<void> => {
+    if (!user?.uid) throw new Error("No hay sesión activa");
+    await updateDoc(doc(db, "usuarios", user.uid), data);
+    setUser(prev => prev ? { ...prev, ...data } as FirebaseUserWithData : null);
+  };
+
+  const updateUserEmail = async (newEmail: string, currentPassword: string): Promise<void> => {
+    if (!auth.currentUser) throw new Error("No hay sesión activa");
+    await reauthenticate(currentPassword);
+    await updateEmail(auth.currentUser, newEmail);
+    await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { correo: newEmail });
+    setUser(prev => prev ? { ...prev, correo: newEmail } as FirebaseUserWithData : null);
+    try {
+      await addDoc(collection(db, 'notificacionesEmail'), {
+        tipo: 'email_changed',
+        nuevoCorreo: newEmail,
+        nombre: user?.nombre || 'Usuario',
+        uid: auth.currentUser.uid,
+        fecha: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.error('Error encolando notificación email:', e);
+    }
+  };
+
+  const updateUserPassword = async (newPassword: string, currentPassword: string): Promise<void> => {
+    if (!auth.currentUser) throw new Error("No hay sesión activa");
+    await reauthenticate(currentPassword);
+    await updatePassword(auth.currentUser, newPassword);
+    try {
+      await addDoc(collection(db, 'notificacionesEmail'), {
+        tipo: 'password_changed',
+        nombre: user?.nombre || 'Usuario',
+        uid: auth.currentUser.uid,
+        fecha: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.error('Error encolando notificación email:', e);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, loading, updateProfileData, updateUserEmail, updateUserPassword }}>
       {children}
     </AuthContext.Provider>
   );

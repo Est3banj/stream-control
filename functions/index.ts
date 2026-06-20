@@ -5,9 +5,11 @@
  * cuando los clientes están próximos a vencer (1, 2 o 3 días)
  */
 
-import * as functions from 'firebase-functions';
+import * as functions from 'firebase-functions/v1';
 import * as admin from 'firebase-admin';
 import * as telegram from './telegram';
+import { APP_URL } from './telegram';
+import { sendWelcomeEmail, sendPasswordChangedEmail, sendEmailChangedEmail, sendResetPasswordEmail } from './email';
 
 // Inicializar Firebase Admin si no está inicializado
 if (!admin.apps.length) {
@@ -26,7 +28,9 @@ const db = admin.firestore();
  * Para activar el webhook (pegar URL después del primer deploy):
  *   curl -F "url=DEPLOYED_URL/telegramWebhook" -F "secret_token=SECRET" https://api.telegram.org/botTOKEN/setWebhook
  */
-export const telegramWebhook = functions.https.onRequest(async (req: functions.https.Request, res: functions.Response) => {
+export const telegramWebhook = functions
+  .runWith({ secrets: ['TELEGRAM_TOKEN', 'TELEGRAM_WEBHOOK_SECRET'] })
+  .https.onRequest(async (req: functions.https.Request, res: functions.Response) => {
   if (req.method !== 'POST') {
     res.status(405).send('Method Not Allowed');
     return;
@@ -49,9 +53,39 @@ export const telegramWebhook = functions.https.onRequest(async (req: functions.h
 });
 
 /**
+ * Cuando se crea un nuevo documento en usuarios/{uid} (registro),
+ * envía un email de bienvenida vía SMTP (nodemailer + Gmail).
+ * 
+ * Configuración requerida:
+ *   firebase functions:secrets:set SMTP_USER
+ *   firebase functions:secrets:set SMTP_PASS
+ */
+export const onNuevoUsuario = functions
+  .runWith({ secrets: ['SMTP_USER', 'SMTP_PASS'] })
+  .firestore
+  .document('usuarios/{uid}')
+  .onCreate(async (snap, context) => {
+    const { correo, nombre } = snap.data() as { correo?: string; nombre?: string };
+
+    if (!correo) {
+      console.log('⏭️ No correo field on new user doc, skipping welcome email');
+      return;
+    }
+
+    try {
+      await sendWelcomeEmail(correo, nombre || 'Usuario');
+      console.log('✅ Welcome email process completed for', correo);
+    } catch (error) {
+      console.error('❌ Welcome email failed for', correo, error);
+    }
+  });
+
+/**
  * Extensión del cron: envía notificaciones por Telegram
  */
-export const generarNotificacionesVencimientos = functions.pubsub
+export const generarNotificacionesVencimientos = functions
+  .runWith({ secrets: ['TELEGRAM_TOKEN', 'TELEGRAM_WEBHOOK_SECRET'] })
+  .pubsub
   .schedule('every 24 hours')
   .timeZone('America/Bogota')
   .onRun(async (context: functions.EventContext) => {
@@ -129,7 +163,7 @@ export const generarNotificacionesVencimientos = functions.pubsub
                   ...notificacion,
                   telefono: cliente.telefono || '',
                 }, {
-                  appUrl: functions.config().app?.url || '',
+                  appUrl: APP_URL.value(),
                 });
                 if (enviado) telegramEnviados++;
               } catch (err) {
@@ -150,13 +184,91 @@ export const generarNotificacionesVencimientos = functions.pubsub
         const cliente = clienteDoc.data() as admin.firestore.DocumentData;
 
         if (cliente.saldoPendiente > 0) {
-          try {
-            const enviado = await telegram.enviarNotificacionMora(cliente, {
-              appUrl: functions.config().app?.url || '',
+          const hoyStr = hoy.toISOString().split('T')[0];
+          const notifId = `mora_${clienteDoc.id}_${hoyStr}`;
+          const notifRef = db.collection('notificaciones').doc(notifId);
+          const notifDoc = await notifRef.get();
+
+          if (!notifDoc.exists) {
+            batch.set(notifRef, {
+              clienteId: clienteDoc.id,
+              nombreCliente: cliente.nombre || '',
+              tipo: 'mora',
+              saldoPendiente: cliente.saldoPendiente,
+              propietarioId: cliente.propietarioId,
+              fechaGenerada: admin.firestore.FieldValue.serverTimestamp(),
             });
-            if (enviado) morasNotificadas++;
-          } catch (err) {
-            console.error(`Error enviando mora Telegram para ${cliente.nombre}:`, err);
+            batchCount++;
+
+            try {
+              const enviado = await telegram.enviarNotificacionMora(cliente, {
+                appUrl: APP_URL.value(),
+              });
+              if (enviado) morasNotificadas++;
+            } catch (err) {
+              console.error(`Error enviando mora Telegram para ${cliente.nombre}:`, err);
+            }
+
+            if (batchCount >= MAX_BATCH_SIZE) {
+              await batch.commit();
+              batchCount = 0;
+            }
+          }
+        }
+      }
+
+      // ── Procesar suscripciones próximas a vencer ──
+      const suscripcionesSnapshot = await db.collection('suscripciones')
+        .where('estado', '==', 'activa')
+        .get();
+
+      for (const susDoc of suscripcionesSnapshot.docs) {
+        const sus = susDoc.data() as admin.firestore.DocumentData;
+        const fechaFin = (sus.fechaFin as admin.firestore.Timestamp).toDate();
+        fechaFin.setHours(0, 0, 0, 0);
+
+        const diffTime = fechaFin.getTime() - hoy.getTime();
+        const diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diasRestantes >= 0 && diasRestantes <= 3) {
+          const hoyStr = hoy.toISOString().split('T')[0];
+          const notifId = `sub_${susDoc.id}_${hoyStr}`;
+
+          const notifRef = db.collection('notificaciones').doc(notifId);
+          const notifDoc = await notifRef.get();
+
+          if (!notifDoc.exists) {
+            batch.set(notifRef, {
+              suscripcionId: susDoc.id,
+              usuarioNombre: sus.usuarioNombre || '',
+              planNombre: sus.planNombre || '',
+              diasRestantes,
+              fechaFin: sus.fechaFin,
+              fechaGenerada: admin.firestore.FieldValue.serverTimestamp(),
+              leida: false,
+            });
+            batchCount++;
+            notificacionesCreadas++;
+
+            try {
+              const enviado = await telegram.enviarNotificacionSuscripcion({
+                usuarioNombre: sus.usuarioNombre || '',
+                planNombre: sus.planNombre || '',
+                fechaFin: sus.fechaFin as admin.firestore.Timestamp,
+                diasRestantes,
+                estado: sus.estado || 'activa',
+              }, {
+                appUrl: APP_URL.value(),
+              });
+              if (enviado) telegramEnviados++;
+            } catch (err) {
+              console.error(`Error enviando Telegram suscripción para ${sus.usuarioNombre}:`, err);
+            }
+
+            if (batchCount >= MAX_BATCH_SIZE) {
+              await batch.commit();
+              batchCount = 0;
+            }
           }
         }
       }
@@ -170,5 +282,73 @@ export const generarNotificacionesVencimientos = functions.pubsub
     } catch (error) {
       console.error('❌ Error generando notificaciones:', error);
       throw error;
+    }
+  });
+
+/**
+ * Cuando se crea una notificación de cambio en notificacionesEmail,
+ * envía un email de confirmación al usuario.
+ * 
+ * Tipos: 'password_changed', 'email_changed'
+ */
+export const onNotificacionEmail = functions
+  .runWith({ secrets: ['SMTP_USER', 'SMTP_PASS'] })
+  .firestore
+  .document('notificacionesEmail/{docId}')
+  .onCreate(async (snap, context) => {
+    const data = snap.data();
+    const { tipo, nombre, correo, nuevoCorreo } = data as Record<string, string>;
+
+    if (!tipo) {
+      console.log('⏭️ Notificación sin tipo, ignorando');
+      return;
+    }
+
+    try {
+      if (tipo === 'password_changed') {
+        const userDoc = await admin.firestore().collection('usuarios').doc(data.uid).get();
+        const userData = userDoc.data();
+        const userEmail = userData?.correo || data.correo;
+        if (userEmail) {
+          await sendPasswordChangedEmail(userEmail, nombre || 'Usuario');
+        }
+      } else if (tipo === 'email_changed') {
+        if (nuevoCorreo) {
+          await sendEmailChangedEmail(nuevoCorreo, nombre || 'Usuario', nuevoCorreo);
+        }
+      }
+      console.log(`✅ ${tipo} email sent for`, nombre);
+    } catch (error) {
+      console.error(`❌ Failed to send ${tipo} email:`, error);
+    }
+  });
+
+/**
+ * Envía un correo con un enlace para restablecer la contraseña.
+ * Usa Firebase Admin SDK para generar el link + nuestro nodemailer para enviarlo.
+ */
+export const enviarCorreoRecuperacion = functions
+  .runWith({ secrets: ['SMTP_USER', 'SMTP_PASS'] })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión');
+    }
+
+    const { email, nombre } = data;
+    if (!email) {
+      throw new functions.https.HttpsError('invalid-argument', 'Email es requerido');
+    }
+
+    try {
+      const resetLink = await admin.auth().generatePasswordResetLink(email, {
+        url: 'https://streamcontrol-10837.firebaseapp.com',
+      });
+
+      await sendResetPasswordEmail(email, nombre || 'Usuario', resetLink);
+
+      return { success: true };
+    } catch (error) {
+      console.error('❌ Error sending recovery email:', error);
+      throw new functions.https.HttpsError('internal', 'Error al enviar el correo de recuperación');
     }
   });

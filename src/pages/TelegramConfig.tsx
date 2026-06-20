@@ -4,9 +4,35 @@ import { doc, setDoc, deleteDoc, collection, Timestamp, query, where, getDocs, t
 import { useAuth } from '../contexts/AuthContext';
 import { MessageCircle, Link2, Unlink, Copy, Check, RefreshCw, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
+import usePermisos from '../hooks/usePermisos';
+import FeatureBlocked from '../components/FeatureBlocked';
 
 export default function TelegramConfig() {
   const { user } = useAuth();
+  const permisos = usePermisos(user);
+
+  if (!permisos.puedeUsarTelegram) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <div className="mb-6">
+          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+            Telegram
+          </h1>
+          <p className="text-gray-600">Recibí notificaciones de vencimientos en tu Telegram</p>
+        </div>
+        <FeatureBlocked
+          feature="Notificaciones Telegram"
+          description="Recibí alertas automáticas cuando un cliente esté por vencer, directamente en tu Telegram."
+          plan="Professional y Enterprise"
+        />
+      </div>
+    );
+  }
+
+  return <TelegramConfigContent user={user} />;
+}
+
+function TelegramConfigContent({ user }: { user: ReturnType<typeof useAuth>['user'] }) {
   const [vinculado, setVinculado] = useState(false);
   const [codigo, setCodigo] = useState('');
   const [generando, setGenerando] = useState(false);
@@ -128,7 +154,7 @@ export default function TelegramConfig() {
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600">
+        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
           Telegram
         </h1>
         <p className="text-gray-600">Conectá tu cuenta de Telegram para recibir notificaciones</p>
@@ -212,7 +238,7 @@ export default function TelegramConfig() {
             </button>
           ) : (
             <div className="space-y-4">
-              <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-6 border border-blue-200 text-center">
+              <div className="bg-gradient-to-r from-indigo-50 to-indigo-50 rounded-xl p-6 border border-indigo-200 text-center">
                 <p className="text-sm text-gray-500 mb-2">Tu código de vinculación</p>
                 <p className="text-3xl font-mono font-bold tracking-widest text-blue-700 select-all">
                   {codigo}
@@ -265,7 +291,7 @@ export default function TelegramConfig() {
       )}
 
       {/* Información adicional */}
-      <div className="card bg-gradient-to-r from-gray-50 to-blue-50">
+      <div className="card bg-gradient-to-r from-gray-50 to-indigo-50">
         <h3 className="text-lg font-bold text-gray-900 mb-3">¿Qué notificaciones vas a recibir?</h3>
         <ul className="space-y-2 text-sm text-gray-600">
           <li className="flex items-start gap-3">
