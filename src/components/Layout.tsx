@@ -6,15 +6,21 @@ import PWAInstallButton from './PWAInstallButton';
 import NotificationsPanel from './NotificationsPanel';
 import UpgradeModal from './UpgradeModal';
 import UpgradeModalContext from '../contexts/UpgradeModalContext';
+import usePermisos, { detectarFamilia } from '../hooks/usePermisos';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
+  const permisos = usePermisos(user);
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [mostrarUpgrade, setMostrarUpgrade] = useState(false);
 
+  // Mostrar el UpgradeModal solo a usuarios con plan Starter (sin suscripción paga activa)
   useEffect(() => {
+    if (permisos.loading) return;
+    const familia = detectarFamilia(permisos.planNombre || '');
+    if (familia !== 'Starter') return; // Ya tiene un plan pago
     try {
       if (!sessionStorage.getItem('upgrade_modal_shown')) {
         setMostrarUpgrade(true);
@@ -22,7 +28,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     } catch {
       setMostrarUpgrade(true);
     }
-  }, []);
+  }, [permisos.loading, permisos.planNombre]);
 
   useEffect(() => {
     const handleResize = () => {
