@@ -48,9 +48,10 @@ service cloud.firestore {
         isAdmin()
       );
       
-      // Creación: Solo admin puede crear usuarios
-      // El userId es el UID generado por Firebase Auth (autoincremental)
-      allow create: if isAdmin() && (
+      // Creación: Admin puede crear cualquier usuario válido
+      // O el propio usuario crea su perfil durante el auto-registro
+      // (solo con estado 'activo' y rol 'usuario', no puede auto-asignarse admin)
+      allow create: if (isAdmin() && (
         request.resource.data.keys().hasAll(['nombre', 'correo', 'rol', 'estado']) &&
         request.resource.data.rol is string &&
         request.resource.data.rol in ['admin', 'usuario'] &&
@@ -58,6 +59,11 @@ service cloud.firestore {
         request.resource.data.estado in ['activo', 'inactivo'] &&
         request.resource.data.nombre is string &&
         request.resource.data.correo is string
+      )) || (
+        // Auto-registro: solo puede crear su propio documento
+        userId == getUserId() &&
+        request.resource.data.rol == 'usuario' &&
+        request.resource.data.estado == 'activo'
       );
       
       // Actualización: Solo admin puede actualizar, y solo campos permitidos
