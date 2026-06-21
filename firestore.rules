@@ -66,14 +66,25 @@ service cloud.firestore {
         request.resource.data.estado == 'activo'
       );
       
-      // Actualización: Solo admin puede actualizar, y solo campos permitidos
-      // Basado en: Usuarios.jsx línea 97 - updateDoc solo actualiza 'estado'
-      allow update: if isAdmin() && 
+      // Actualización: Admin puede actualizar estado/plan
+      // El usuario puede actualizar su propio nombre y correo (auto-gestión en Ajustes)
+      allow update: if (
+        // Admin: solo puede cambiar estado y plan
+        isAdmin() && 
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado', 'plan']) &&
         (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['estado']) || 
           (request.resource.data.estado is string && request.resource.data.estado in ['activo', 'inactivo'])) &&
         (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan']) || 
-          request.resource.data.plan is string);
+          request.resource.data.plan is string)
+      ) || (
+        // Auto-actualización: el usuario modifica su propio perfil
+        userId == getUserId() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre', 'correo']) &&
+        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['nombre']) || 
+          request.resource.data.nombre is string) &&
+        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['correo']) || 
+          request.resource.data.correo is string)
+      );
       
       // Eliminación: No permitida (no hay deleteDoc en el código)
       allow delete: if false;
@@ -342,6 +353,16 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
     
+    // ============================================
+    // COLECCIÓN: notificacionesEmail
+    // ============================================
+    // Usuarios autenticados pueden encolar notificaciones de cambios
+    // (las lee la Cloud Function onNotificacionEmail con admin SDK)
+    match /notificacionesEmail/{docId} {
+      allow create: if isAuthenticated();
+      allow read, update, delete: if false;
+    }
+
     // ============================================
     // DENEGAR ACCESO A OTRAS COLECCIONES
     // ============================================
