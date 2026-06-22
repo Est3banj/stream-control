@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, DollarSign, Users, CheckCircle, XCircle, User } from 'lucide-react';
+import { Mail, DollarSign, Users, CheckCircle, XCircle, User, Calendar } from 'lucide-react';
 import type { Cuenta } from '../types/cuenta';
 
 interface CuentaDetailProps {
@@ -53,6 +53,33 @@ export default function CuentaDetail({ cuenta }: CuentaDetailProps) {
           <p className="text-sm font-semibold text-gray-900">{cuenta.correoCuenta}</p>
         </div>
       </div>
+
+      {/* Período del Servicio */}
+      {cuenta.fechaInicio && (
+        <div className="flex items-center gap-3 p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+          <Calendar size={20} className="text-indigo-400" />
+          <div className="flex-1 grid grid-cols-3 gap-4">
+            <div>
+              <p className="text-xs font-medium text-indigo-600 uppercase tracking-wide">Inicio</p>
+              <p className="text-sm font-semibold text-gray-900">{cuenta.fechaInicio}</p>
+            </div>
+            {cuenta.diasServicio && (
+              <div>
+                <p className="text-xs font-medium text-indigo-600 uppercase tracking-wide">Duración</p>
+                <p className="text-sm font-semibold text-gray-900">{cuenta.diasServicio} días</p>
+              </div>
+            )}
+            {cuenta.fechaVencimiento && (
+              <div>
+                <p className="text-xs font-medium text-indigo-600 uppercase tracking-wide">Vence</p>
+                <p className={`text-sm font-semibold ${new Date(cuenta.fechaVencimiento) < new Date() ? 'text-red-600' : 'text-gray-900'}`}>
+                  {cuenta.fechaVencimiento}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Perfiles */}
       <div>

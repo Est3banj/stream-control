@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import toast from 'react-hot-toast';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Calendar } from 'lucide-react';
 import type { Cuenta, PerfilCuenta, CreateCuentaInput } from '../types/cuenta';
 
 const PROVEEDORES = ['Netflix', 'Max', 'Disney+', 'Prime Video', 'ChatGPT', 'Win Sports+', 'Universal+', 'Paramount+', 'Otro'];
@@ -24,8 +24,17 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
     initialData?.perfiles?.map(p => ({ nombre: p.nombre, pin: p.pin })) || [{ nombre: '', pin: '' }]
   );
   const [otroProveedor, setOtroProveedor] = useState('');
+  const [fechaInicio, setFechaInicio] = useState(initialData?.fechaInicio || '');
+  const [diasServicio, setDiasServicio] = useState(initialData?.diasServicio?.toString() || '');
 
   const proveedorActual = proveedor === 'Otro' ? otroProveedor : proveedor;
+
+  const fechaVencimientoCal = useMemo(() => {
+    if (!fechaInicio || !diasServicio) return '';
+    const d = new Date(fechaInicio);
+    d.setDate(d.getDate() + Number(diasServicio));
+    return d.toISOString().split('T')[0];
+  }, [fechaInicio, diasServicio]);
 
   const agregarPerfil = () => {
     setPerfiles([...perfiles, { nombre: '', pin: '' }]);
@@ -74,11 +83,18 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
         }))
       : [];
 
+    const fechaVencimiento = fechaVencimientoCal || undefined;
+    const fechaInicioVal = fechaInicio || undefined;
+    const diasServicioVal = diasServicio ? Number(diasServicio) : undefined;
+
     if (isEdit) {
       await onSubmit({
         costo: Number(costo),
         estado,
         perfiles: perfilesData,
+        fechaInicio: fechaInicioVal,
+        diasServicio: diasServicioVal,
+        fechaVencimiento,
       });
     } else {
       await onSubmit({
@@ -90,7 +106,10 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
         tipoVenta,
         perfiles: perfilesData,
         estado: 'disponible' as const,
-      } as CreateCuentaInput & { contrasena: string });
+        fechaInicio: fechaInicioVal,
+        diasServicio: diasServicioVal,
+        fechaVencimiento,
+      } as CreateCuentaInput & { contrasena: string; fechaInicio?: string; diasServicio?: number; fechaVencimiento?: string });
     }
   };
 
@@ -177,6 +196,46 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
             required
           />
         </div>
+      </div>
+
+      {/* Período del Servicio */}
+      <div className="space-y-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+        <div className="flex items-center gap-2">
+          <Calendar size={18} className="text-gray-500" />
+          <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Período del Servicio</h3>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Fecha de inicio
+            </label>
+            <input
+              type="date"
+              value={fechaInicio}
+              onChange={(e) => setFechaInicio(e.target.value)}
+              className="w-full"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Duración (días)
+            </label>
+            <input
+              type="number"
+              value={diasServicio}
+              onChange={(e) => setDiasServicio(e.target.value)}
+              className="w-full"
+              min="1"
+              placeholder="Ej: 30"
+            />
+          </div>
+        </div>
+        {fechaVencimientoCal && (
+          <div className="flex items-center justify-between px-3 py-2 bg-indigo-50 rounded-lg border border-indigo-100">
+            <span className="text-sm font-medium text-indigo-600">Fecha de vencimiento</span>
+            <span className="text-sm font-bold text-indigo-700">{fechaVencimientoCal}</span>
+          </div>
+        )}
       </div>
 
       {/* Tipo de venta */}

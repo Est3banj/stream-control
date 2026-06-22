@@ -18,6 +18,9 @@ export interface Cuenta {
   tipoVenta: 'perfiles' | 'completa';
   perfiles: PerfilCuenta[];
   estado: 'disponible' | 'asignada' | 'expirada';
+  fechaInicio?: string;
+  diasServicio?: number;
+  fechaVencimiento?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
