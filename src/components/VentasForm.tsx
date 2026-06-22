@@ -4,6 +4,7 @@ import { collection, addDoc, setDoc, doc, serverTimestamp, getDoc, increment, up
 import { useAuth } from '../contexts/AuthContext';
 import usePermisos from '../hooks/usePermisos';
 import SelectorCuenta from '../components/SelectorCuenta';
+import { Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { VentaInput } from '../types/venta';
 
@@ -482,33 +483,60 @@ export default function VentasForm({ initialData }: VentasFormProps) {
             />
           </div>
 
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <InputLabel>Perfil</InputLabel>
-              <input
-                type="text"
-                name="perfil"
-                value={venta.perfil}
-                onChange={handleChange}
-                placeholder="Principal"
-                className="w-full"
+          {permisos.puedeGestionarCuentas && venta.plataforma ? (
+            <div className="md:col-span-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Cuenta a asignar
+              </label>
+              <SelectorCuenta
+                proveedor={venta.plataforma}
+                onCuentaSelected={handleCuentaSelected}
               />
-              <p className="text-xs text-gray-400 mt-1">Opcional</p>
+              {cuentaId && perfilAsignado && (
+                <div className="mt-3 flex items-center gap-3 p-3 bg-indigo-50 rounded-xl border border-indigo-100">
+                  <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                    <Check size={16} className="text-indigo-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-indigo-900">
+                      {venta.plataforma} — {perfilAsignado}
+                    </p>
+                    <p className="text-xs text-indigo-600">
+                      Costo: ${costoPorPerfil.toLocaleString()} por perfil
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="flex-1">
-              <InputLabel>PIN del perfil</InputLabel>
-              <input
-                type="text"
-                name="pinPerfil"
-                value={venta.pinPerfil}
-                onChange={handleChange}
-                placeholder="1234"
-                className="w-full"
-                maxLength={10}
-              />
-              <p className="text-xs text-gray-400 mt-1">Opcional</p>
-            </div>
-          </div>
+          ) : (
+            <>
+              <div className="flex-1">
+                <InputLabel>Perfil</InputLabel>
+                <input
+                  type="text"
+                  name="perfil"
+                  value={venta.perfil}
+                  onChange={handleChange}
+                  placeholder="Principal"
+                  className="w-full"
+                />
+                <p className="text-xs text-gray-400 mt-1">Opcional</p>
+              </div>
+              <div className="flex-1">
+                <InputLabel>PIN del perfil</InputLabel>
+                <input
+                  type="text"
+                  name="pinPerfil"
+                  value={venta.pinPerfil}
+                  onChange={handleChange}
+                  placeholder="1234"
+                  className="w-full"
+                  maxLength={10}
+                />
+                <p className="text-xs text-gray-400 mt-1">Opcional</p>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Fecha de venta */}
@@ -543,22 +571,6 @@ export default function VentasForm({ initialData }: VentasFormProps) {
           </div>
         )}
       </div>
-
-      {/* =========================
-          Cuenta Asignada
-      ========================== */}
-      {permisos.puedeGestionarCuentas && venta.plataforma && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-5">
-          <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
-            <SectionIcon number="C" />
-            <h2 className="text-lg font-semibold text-gray-900">Cuenta Asignada</h2>
-          </div>
-          <SelectorCuenta
-            proveedor={venta.plataforma}
-            onCuentaSelected={handleCuentaSelected}
-          />
-        </div>
-      )}
 
       {/* =========================
           3. Valores Financieros
