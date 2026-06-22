@@ -81,14 +81,10 @@ export async function crearCuenta(data: CreateCuentaInput): Promise<string> {
     updatedAt: serverTimestamp(),
   });
 
-  await addDoc(collection(db, 'cuentas_secretos'), {
-    cuentaId: cuentaRef.id,
-    correo: data.correoCuenta || '',
-    contrasena: '',
-    imapHost: 'imap.gmail.com',
-    imapPort: 993,
-    proveedorIMAP: 'gmail',
-  });
+  // Las credenciales de IMAP (correo completo + contraseña) se guardan
+  // exclusivamente via Cloud Function en `cuentas_secretos`.
+  // Por ahora se pueden configurar manualmente desde el panel de la cuenta
+  // o al deployar las CFs.
 
   return cuentaRef.id;
 }
