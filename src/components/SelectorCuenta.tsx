@@ -42,7 +42,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
     return cuentas.filter(
       c => c.proveedor.toLowerCase() === proveedor.toLowerCase()
         && c.estado === 'disponible'
-        && c.perfiles.some(p => p.estado === 'disponible')
+        && (c.tipoVenta === 'completa' || c.perfiles.some(p => p.estado === 'disponible'))
     );
   }, [cuentas, proveedor]);
 
@@ -70,11 +70,22 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
 
   const perfilesDisponibles = useMemo(() => {
     if (!cuentaSeleccionada) return [];
+    if (cuentaSeleccionada.tipoVenta === 'completa') return [];
     return cuentaSeleccionada.perfiles.filter(p => p.estado === 'disponible');
   }, [cuentaSeleccionada]);
 
   useEffect(() => {
-    if (!cuentaSeleccionada || !perfilSeleccionado) {
+    if (!cuentaSeleccionada) {
+      onCuentaSelected(null, null, null, 0);
+      return;
+    }
+    // Cuenta completa — se asigna entera, sin perfil específico
+    if (cuentaSeleccionada.tipoVenta === 'completa') {
+      const costo = calcularCostoPorPerfil(cuentaSeleccionada);
+      onCuentaSelected(cuentaSeleccionada.id, null, null, costo);
+      return;
+    }
+    if (!perfilSeleccionado) {
       onCuentaSelected(null, null, null, 0);
       return;
     }
@@ -201,7 +212,11 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
                   <option value="">Seleccioná una cuenta...</option>
                   {cuentasDisponibles.map(c => (
                     <option key={c.id} value={c.id}>
-                      {maskEmail(c.correoCuenta)} — ${c.costo.toLocaleString()} ({c.perfiles.filter(p => p.estado === 'disponible').length}/{c.perfiles.length} perfiles)
+                      {maskEmail(c.correoCuenta)} — ${c.costo.toLocaleString()} 
+                      {c.tipoVenta === 'completa' 
+                        ? ' (Completa)' 
+                        : ` (${c.perfiles.filter(p => p.estado === 'disponible').length}/${c.perfiles.length} perfiles)`
+                      }
                     </option>
                   ))}
                 </select>
@@ -225,10 +240,12 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
                 </div>
               )}
 
-              {cuentaSeleccionada && perfilSeleccionado && (
+              {(cuentaSeleccionada && (perfilSeleccionado || cuentaSeleccionada.tipoVenta === 'completa')) && (
                 <div className="bg-indigo-50 rounded-xl px-4 py-3 border border-indigo-100">
                   <p className="text-sm text-indigo-700">
-                    <span className="font-medium">Costo por perfil:</span>{' '}
+                    <span className="font-medium">
+                      {cuentaSeleccionada.tipoVenta === 'completa' ? 'Costo total:' : 'Costo por perfil:'}
+                    </span>{' '}
                     ${calcularCostoPorPerfil(cuentaSeleccionada).toLocaleString()}
                   </p>
                   <p className="text-xs text-indigo-500 mt-1">
