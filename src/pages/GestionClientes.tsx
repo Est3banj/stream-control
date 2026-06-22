@@ -4,10 +4,11 @@ import { db } from '../firebase';
 import { collection, query, where, onSnapshot, updateDoc, doc, increment, addDoc, serverTimestamp, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import useClientes from '../hooks/useClientes';
+import useTokens, { generarToken } from '../hooks/useTokens';
 import usePermisos from '../hooks/usePermisos';
 import Paginador from '../components/Paginador';
 import toast from 'react-hot-toast';
-import { Search, Download, MessageCircle, Calendar, Users, TrendingUp, X, AlertCircle, Edit, Mail, DollarSign, CheckCircle, UserCheck, AlertTriangle, RefreshCw, Sparkles } from 'lucide-react';
+import { Search, Download, MessageCircle, Calendar, Users, TrendingUp, X, AlertCircle, Edit, Mail, DollarSign, CheckCircle, UserCheck, AlertTriangle, RefreshCw, Sparkles, Link, Key, Copy, ExternalLink } from 'lucide-react';
 import type { Venta } from '../types/venta';
 import type { Cliente } from '../types/cliente';
 
@@ -16,6 +17,7 @@ export default function GestionClientes() {
   const { user } = useAuth();
   const { clientes: todosLosClientes, loading, error } = useClientes(user);
   const permisos = usePermisos(user);
+  const { tokens: todosLosTokens } = useTokens(user);
   const [clientes, setClientes] = useState<{ activos: Cliente[]; inactivos: Cliente[]; todos: Cliente[] }>({ activos: [], inactivos: [], todos: [] });
   const [filtro, setFiltro] = useState<'activos' | 'inactivos' | 'todos'>('activos');
   const [busqueda, setBusqueda] = useState('');
@@ -36,6 +38,9 @@ export default function GestionClientes() {
   const [paginaActual, setPaginaActual] = useState(1);
   const [itemsPorPagina, setItemsPorPagina] = useState(10);
   const historialUnsubscribeRef = useRef<(() => void) | null>(null);
+  const [mostrarTokenModal, setMostrarTokenModal] = useState(false);
+  const [tokenGeneradoURL, setTokenGeneradoURL] = useState('');
+  const [tokenGenerando, setTokenGenerando] = useState(false);
 
   // Clasificar clientes cuando cambian los datos (incluye array vacío)
   useEffect(() => {
@@ -252,6 +257,37 @@ export default function GestionClientes() {
     }
   };
 
+  const generarLinkCodigos = async (cliente: Cliente) => {
+    if (!user || !cliente.cuentaId) return;
+    setTokenGenerando(true);
+    try {
+      const linkData = {
+        token: '',
+        cuentaId: cliente.cuentaId,
+        perfilNombre: cliente.perfilAsignado || '',
+        clienteId: cliente.id,
+        clienteNombre: cliente.nombre,
+        vendedorId: user.uid!,
+        expiraEn: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        activo: true,
+      };
+      const docId = await generarToken(linkData);
+      const url = `${window.location.origin}/r/${docId}`;
+      setTokenGeneradoURL(url);
+      setMostrarTokenModal(true);
+    } catch (err) {
+      console.error('Error generando token:', err);
+      toast.error('Error al generar el link de códigos');
+    } finally {
+      setTokenGenerando(false);
+    }
+  };
+
+  const copiarTokenURL = () => {
+    navigator.clipboard.writeText(tokenGeneradoURL);
+    toast.success('Link copiado al portapapeles');
+  };
+
   const abrirHistorial = (cliente: Cliente) => {
     setClienteSeleccionado(cliente);
     setMostrarHistorial(true);
@@ -415,9 +451,11 @@ export default function GestionClientes() {
                 )}
                 <th className="px-4 py-4 text-left text-sm font-semibold">Contacto</th>
                 <th className="px-4 py-4 text-left text-sm font-semibold">Plataforma</th>
+                <th className="px-4 py-4 text-left text-sm font-semibold">Cuenta</th>
                 <th className="px-4 py-4 text-left text-sm font-semibold">Vencimiento</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Días Restantes</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Estado Pago</th>
+                <th className="px-4 py-4 text-center text-sm font-semibold">Token</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Acciones</th>
               </tr>
             </thead>
@@ -446,6 +484,16 @@ export default function GestionClientes() {
                       <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-sm font-medium">
                         {c.plataforma || '—'}
                       </span>
+                    </td>
+                    <td className="px-4 py-4">
+                      {c.cuentaId ? (
+                        <div className="text-sm text-gray-700">
+                          <div className="font-medium text-indigo-600">{c.perfilAsignado || '—'}</div>
+                          <div className="text-xs text-gray-400 mt-0.5">Cuenta asignada</div>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-400">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-2 text-gray-700">
@@ -478,6 +526,30 @@ export default function GestionClientes() {
                           Al día
                         </span>
                       )}
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      {(() => {
+                        const tokenCliente = todosLosTokens.find(
+                          t => t.clienteId === c.id && t.activo
+                        );
+                        if (!tokenCliente) {
+                          return <span className="text-sm text-gray-400">—</span>;
+                        }
+                        const expirado = new Date(tokenCliente.expiraEn) < new Date();
+                        if (expirado) {
+                          return (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-red-100 text-red-600 text-xs font-medium">
+                              Expirado
+                            </span>
+                          );
+                        }
+                        return (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 text-green-600 text-xs font-medium">
+                            <Key size={12} />
+                            Vigente
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex items-center justify-center gap-2">
@@ -515,6 +587,16 @@ export default function GestionClientes() {
                         >
                           <RefreshCw size={18} />
                         </button>
+                        {c.cuentaId && permisos.puedeGenerarTokens && (
+                          <button
+                            onClick={() => generarLinkCodigos(c)}
+                            disabled={tokenGenerando}
+                            className="p-2 rounded-lg bg-purple-100 text-purple-600 hover:bg-purple-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Generar link de códigos"
+                          >
+                            <Link size={18} />
+                          </button>
+                        )}
                         <button
                           onClick={() => enviarWhatsApp(c)}
                           className="p-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-colors"
@@ -528,7 +610,7 @@ export default function GestionClientes() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={user?.rol === 'admin' ? 8 : 7} className="text-center py-12 text-gray-500">
+                  <td colSpan={user?.rol === 'admin' ? 10 : 9} className="text-center py-12 text-gray-500">
                     <Users size={48} className="mx-auto mb-3 text-gray-300" />
                     <p className="font-medium">No se encontraron clientes {filtro}</p>
                   </td>
@@ -729,6 +811,72 @@ export default function GestionClientes() {
                 <p>No hay ventas registradas para este cliente</p>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal de link de códigos */}
+      {mostrarTokenModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="card max-w-lg w-full animate-scale-in">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Link de Códigos Generado</h2>
+                <p className="text-gray-600 mt-1">Compartí este link con tu cliente</p>
+              </div>
+              <button
+                onClick={() => {
+                  setMostrarTokenModal(false);
+                  setTokenGeneradoURL('');
+                }}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <X size={24} className="text-gray-600" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-100">
+                <p className="text-sm font-medium text-indigo-700 mb-2">URL de consulta</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 bg-white rounded-lg px-4 py-3 text-sm text-indigo-600 border border-indigo-200 break-all font-mono">
+                    {tokenGeneradoURL}
+                  </code>
+                  <button
+                    onClick={copiarTokenURL}
+                    className="p-3 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shrink-0"
+                    title="Copiar link"
+                  >
+                    <Copy size={18} />
+                  </button>
+                </div>
+              </div>
+
+              <p className="text-xs text-gray-500">
+                El link expira en 30 días. El cliente puede consultar códigos de verificación desde esta URL.
+              </p>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMostrarTokenModal(false);
+                    setTokenGeneradoURL('');
+                  }}
+                  className="btn-secondary flex-1"
+                >
+                  Cerrar
+                </button>
+                <button
+                  type="button"
+                  onClick={copiarTokenURL}
+                  className="btn-primary flex-1"
+                >
+                  <Copy size={16} className="inline mr-1" />
+                  Copiar link
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

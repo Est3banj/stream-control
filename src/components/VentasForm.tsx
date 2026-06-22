@@ -3,6 +3,7 @@ import { db } from '../firebase';
 import { collection, addDoc, setDoc, doc, serverTimestamp, getDoc, increment, updateDoc, query, where, getDocs } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import usePermisos from '../hooks/usePermisos';
+import SelectorCuenta from '../components/SelectorCuenta';
 import toast from 'react-hot-toast';
 import type { VentaInput } from '../types/venta';
 
@@ -61,14 +62,19 @@ export default function VentasForm({ initialData }: VentasFormProps) {
   const [utilidad, setUtilidad] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [mostrarFechaVenta, setMostrarFechaVenta] = useState(false);
+  const [cuentaId, setCuentaId] = useState<string | null>(null);
+  const [perfilAsignado, setPerfilAsignado] = useState<string | null>(null);
+  const [perfilPinSeleccionado, setPerfilPinSeleccionado] = useState<string | null>(null);
+  const [costoPorPerfil, setCostoPorPerfil] = useState<number>(0);
 
   // 🧮 Calcula utilidad
   useEffect(() => {
     const p = Number(venta.precioVenta) || 0;
     const c = Number(venta.costoServicio) || 0;
     const pant = Number(venta.pantallas) || 0;
-    setUtilidad((pant * p) - c);
-  }, [venta.precioVenta, venta.costoServicio, venta.pantallas]);
+    const cp = costoPorPerfil || 0;
+    setUtilidad((pant * p) - (cp || c));
+  }, [venta.precioVenta, venta.costoServicio, venta.pantallas, costoPorPerfil]);
 
   const handleToggleFechaVenta = (e: React.ChangeEvent<HTMLInputElement>) => {
     const checked = e.target.checked;
@@ -126,6 +132,16 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       }
     } catch (error: unknown) {
       console.error('Error buscando por teléfono:', error);
+    }
+  };
+
+  const handleCuentaSelected = (newCuentaId: string | null, newPerfilNombre: string | null, newPerfilPin: string | null, newCostoPorPerfil: number) => {
+    setCuentaId(newCuentaId);
+    setPerfilAsignado(newPerfilNombre);
+    setPerfilPinSeleccionado(newPerfilPin);
+    setCostoPorPerfil(newCostoPorPerfil);
+    if (newPerfilNombre) {
+      setVenta(prev => ({ ...prev, perfil: newPerfilNombre, pinPerfil: newPerfilPin || '' }));
     }
   };
 
@@ -231,6 +247,10 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         propietarioId: user.uid!,
         usuarioEmail: user.email!,
         fechaVencimiento,
+        cuentaId: cuentaId || undefined,
+        perfilNombre: perfilAsignado || undefined,
+        perfilPin: perfilPinSeleccionado || undefined,
+        costoPorPerfil: costoPorPerfil || undefined,
       };
 
       // 🟢 Guardar venta
@@ -317,6 +337,10 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       });
       setUtilidad(0);
       setMostrarFechaVenta(false);
+      setCuentaId(null);
+      setPerfilAsignado(null);
+      setPerfilPinSeleccionado(null);
+      setCostoPorPerfil(0);
 
     } catch (error: unknown) {
       console.error('❌ Error al registrar la venta:', error);
@@ -519,6 +543,22 @@ export default function VentasForm({ initialData }: VentasFormProps) {
           </div>
         )}
       </div>
+
+      {/* =========================
+          Cuenta Asignada
+      ========================== */}
+      {permisos.puedeGestionarCuentas && venta.plataforma && (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-5">
+          <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
+            <SectionIcon number="C" />
+            <h2 className="text-lg font-semibold text-gray-900">Cuenta Asignada</h2>
+          </div>
+          <SelectorCuenta
+            proveedor={venta.plataforma}
+            onCuentaSelected={handleCuentaSelected}
+          />
+        </div>
+      )}
 
       {/* =========================
           3. Valores Financieros
