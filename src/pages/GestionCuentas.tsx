@@ -7,7 +7,7 @@ import CuentaDetail from '../components/CuentaDetail';
 import FeatureBlocked from '../components/FeatureBlocked';
 import Paginador from '../components/Paginador';
 import toast from 'react-hot-toast';
-import { Search, Eye, Edit, EyeOff, Users, CheckCircle, AlertCircle, AlertTriangle, Film, X, Download } from 'lucide-react';
+import { Search, Eye, Edit, EyeOff, Users, CheckCircle, AlertCircle, AlertTriangle, Film, X, Download, AlertTriangle as AlertTriangleIcon } from 'lucide-react';
 import type { Cuenta, CreateCuentaInput } from '../types/cuenta';
 
 const PROVEEDORES = ['Todos', 'Netflix', 'Max', 'Disney+', 'Prime Video', 'ChatGPT', 'Win Sports+', 'Universal+', 'Paramount+', 'Otro'];
@@ -41,6 +41,7 @@ export default function GestionCuentas() {
   const [mostrarEditar, setMostrarEditar] = useState(false);
   const [cuentaSeleccionada, setCuentaSeleccionada] = useState<Cuenta | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const [confirmarAccion, setConfirmarAccion] = useState<{ cuenta: Cuenta; accion: 'desactivar' | 'reactivar' } | null>(null);
 
   useEffect(() => {
     setPaginaActual(1);
@@ -103,8 +104,16 @@ export default function GestionCuentas() {
   };
 
   const handleToggleEstado = async (cuenta: Cuenta) => {
+    const accion = cuenta.estado === 'expirada' ? 'reactivar' : 'desactivar';
+    setConfirmarAccion({ cuenta, accion });
+  };
+
+  const confirmarToggleEstado = async () => {
+    if (!confirmarAccion) return;
+    const { cuenta, accion } = confirmarAccion;
+    setConfirmarAccion(null);
     try {
-      const nuevoEstado = cuenta.estado === 'expirada' ? 'disponible' : 'expirada';
+      const nuevoEstado = accion === 'reactivar' ? 'disponible' : 'expirada';
       await actualizarCuenta(cuenta.id, { estado: nuevoEstado });
       toast.success(`Cuenta ${nuevoEstado === 'expirada' ? 'desactivada' : 'reactivada'} correctamente`);
     } catch (err: unknown) {
@@ -157,10 +166,37 @@ export default function GestionCuentas() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
-          <p className="text-gray-600 font-medium">Cargando cuentas...</p>
+      <div className="space-y-6 animate-fade-in">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <div className="h-10 w-64 bg-gray-200 rounded-lg animate-pulse mb-2" />
+            <div className="h-4 w-48 bg-gray-200 rounded animate-pulse" />
+          </div>
+          <div className="h-10 w-36 bg-gray-200 rounded-xl animate-pulse" />
+        </div>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-indigo-600">
+                  {['Proveedor', 'Correo', 'Perfiles', 'Costo', 'Estado', 'Acciones'].map(h => (
+                    <th key={h} className="px-4 py-4 text-left text-sm font-semibold text-white">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[1, 2, 3, 4, 5].map(i => (
+                  <tr key={i} className="border-b border-gray-100">
+                    {[1, 2, 3, 4, 5, 6].map(j => (
+                      <td key={j} className="px-4 py-4">
+                        <div className="h-4 bg-gray-200 rounded animate-pulse" style={{ width: j === 3 ? '3rem' : j === 4 ? '5rem' : '7rem' }} />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     );
@@ -504,6 +540,44 @@ export default function GestionCuentas() {
               }}
               loading={guardando}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Confirmar acción */}
+      {confirmarAccion && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="card max-w-md w-full animate-scale-in text-center">
+            <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+              <AlertTriangleIcon className="text-red-600" size={32} />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">
+              {confirmarAccion.accion === 'desactivar' ? 'Desactivar cuenta' : 'Reactivar cuenta'}
+            </h2>
+            <p className="text-gray-600 mb-6">
+              {confirmarAccion.accion === 'desactivar'
+                ? `¿Estás seguro de desactivar la cuenta de ${confirmarAccion.cuenta.proveedor}? Los perfiles asignados dejarán de funcionar.`
+                : `¿Estás seguro de reactivar la cuenta de ${confirmarAccion.cuenta.proveedor}?`
+              }
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmarAccion(null)}
+                className="btn-secondary flex-1"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmarToggleEstado}
+                className={`flex-1 py-2.5 rounded-xl font-semibold text-white transition-all ${
+                  confirmarAccion.accion === 'desactivar'
+                    ? 'bg-red-600 hover:bg-red-700'
+                    : 'bg-green-600 hover:bg-green-700'
+                }`}
+              >
+                {confirmarAccion.accion === 'desactivar' ? 'Sí, desactivar' : 'Sí, reactivar'}
+              </button>
+            </div>
           </div>
         </div>
       )}

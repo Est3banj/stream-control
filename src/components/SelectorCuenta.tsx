@@ -176,9 +176,16 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
       {modo === 'existente' && (
         <div className="space-y-4">
           {cuentasDisponibles.length === 0 ? (
-            <p className="text-sm text-gray-500 italic">
-              {loading ? 'Cargando cuentas...' : 'No hay cuentas disponibles para este proveedor'}
-            </p>
+            loading ? (
+              <div className="space-y-3">
+                <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+                <div className="h-10 bg-gray-200 rounded-xl animate-pulse" />
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 italic">
+                No hay cuentas disponibles para este proveedor
+              </p>
+            )
           ) : (
             <>
               <div>

@@ -42,7 +42,7 @@ export default function CodeResult({ code, email, fecha, tipo }: CodeResultProps
       <div className="text-center">
         <p className="text-sm text-gray-400 mb-2">Código de verificación</p>
         <div className="relative inline-block">
-          <div className="text-5xl sm:text-6xl font-bold tracking-[0.2em] text-[#ffc62a] select-all font-mono">
+          <div className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-[0.2em] text-[#ffc62a] select-all font-mono animate-scale-in">
             {code}
           </div>
           <div className="absolute -inset-4 bg-[#ffc62a]/5 blur-3xl rounded-full pointer-events-none" />

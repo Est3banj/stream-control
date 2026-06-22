@@ -1,11 +1,18 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { AlertCircle, Loader2, Search } from 'lucide-react';
+import { AlertCircle, Loader2, Search, RefreshCw, WifiOff, Timer } from 'lucide-react';
 import CasoSelector from '../components/CasoSelector';
 import CodeResult from '../components/CodeResult';
 
 type PageState = 'validating' | 'invalid' | 'ready' | 'consulting' | 'result' | 'error';
+
+const SESSION_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+
+function isNetworkError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message.toLowerCase() : '';
+  return msg.includes('unavailable') || msg.includes('network') || msg.includes('failed to fetch') || msg.includes('internal');
+}
 
 export default function ConsultaPublica() {
   const { token } = useParams<{ token: string }>();
@@ -16,6 +23,32 @@ export default function ConsultaPublica() {
   const [errorMsg, setErrorMsg] = useState('');
   const [codeResult, setCodeResult] = useState<{ codigo: string; email: string; fecha: string; tipo: string } | null>(null);
   const [notFoundMsg, setNotFoundMsg] = useState('');
+  const [sessionWarning, setSessionWarning] = useState(false);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const resetIdleTimer = useCallback(() => {
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    setSessionWarning(false);
+  }, []);
+
+  const startIdleTimer = useCallback(() => {
+    resetIdleTimer();
+    idleTimerRef.current = setTimeout(() => {
+      setSessionWarning(true);
+    }, SESSION_TIMEOUT_MS);
+  }, [resetIdleTimer]);
+
+  useEffect(() => {
+    if (state === 'ready') {
+      startIdleTimer();
+      const events = ['mousedown', 'keydown', 'touchstart', 'scroll'];
+      events.forEach(ev => window.addEventListener(ev, resetIdleTimer));
+      return () => {
+        events.forEach(ev => window.removeEventListener(ev, resetIdleTimer));
+        if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      };
+    }
+  }, [state, startIdleTimer, resetIdleTimer]);
 
   useEffect(() => {
     if (!token) {
@@ -39,16 +72,20 @@ export default function ConsultaPublica() {
           setProveedor((data.proveedor as string) || '');
           setCasos((data.casos as string[]) || []);
           setSelectedCaso('');
-          setState('ready' as PageState);
+          setState('ready');
         } else {
-          setState('invalid' as PageState);
+          setState('invalid');
           setErrorMsg((data.error as string) || 'Token inválido o expirado');
         }
       } catch (err: unknown) {
         if (cancelled) return;
-        setState('invalid' as PageState);
         const message = err instanceof Error ? err.message : 'Error al validar el token';
-        setErrorMsg(message);
+        if (isNetworkError(err)) {
+          setErrorMsg('No se pudo conectar con el servidor. Verificá tu conexión a internet.');
+        } else {
+          setErrorMsg(message);
+        }
+        setState('invalid');
       }
     };
 
@@ -63,6 +100,7 @@ export default function ConsultaPublica() {
     setState('consulting');
     setNotFoundMsg('');
     setCodeResult(null);
+    resetIdleTimer();
 
     try {
       const functions = getFunctions();
@@ -84,10 +122,14 @@ export default function ConsultaPublica() {
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Error al consultar el código';
-      setErrorMsg(message);
+      if (isNetworkError(err)) {
+        setErrorMsg('No se pudo conectar al servidor. Verificá tu conexión y volvé a intentar.');
+      } else {
+        setErrorMsg(message);
+      }
       setState('error');
     }
-  }, [selectedCaso, token]);
+  }, [selectedCaso, token, resetIdleTimer]);
 
   return (
     <div className="min-h-screen bg-[#0a0a1a] bg-gradient-to-br from-[#0a0a1a] via-[#1a0a2e] to-[#0a0a1a] flex items-center justify-center p-4">
@@ -119,12 +161,32 @@ export default function ConsultaPublica() {
           )}
 
           {state === 'invalid' && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 text-center">
-              <AlertCircle className="text-red-400 mx-auto mb-3" size={36} />
-              <p className="text-red-300 font-medium">{errorMsg}</p>
-              <p className="text-gray-500 text-sm mt-3">
-                Si creés que esto es un error, contactá a tu vendedor.
-              </p>
+            <div className="space-y-4">
+              <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 text-center">
+                {errorMsg.includes('conectar') ? (
+                  <WifiOff className="text-red-400 mx-auto mb-3" size={36} />
+                ) : (
+                  <AlertCircle className="text-red-400 mx-auto mb-3" size={36} />
+                )}
+                <p className="text-red-300 font-medium">{errorMsg}</p>
+                {errorMsg.includes('conectar') && (
+                  <button
+                    onClick={() => {
+                      setState('validating');
+                      window.location.reload();
+                    }}
+                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all bg-white/10 text-white hover:bg-white/20 border border-white/10 text-sm"
+                  >
+                    <RefreshCw size={16} />
+                    Reintentar
+                  </button>
+                )}
+              </div>
+              {!errorMsg.includes('conectar') && (
+                <p className="text-gray-500 text-sm text-center">
+                  Si creés que esto es un error, contactá a tu vendedor.
+                </p>
+              )}
             </div>
           )}
 
@@ -187,7 +249,11 @@ export default function ConsultaPublica() {
           {state === 'error' && (
             <div className="space-y-4">
               <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 text-center">
-                <AlertCircle className="text-red-400 mx-auto mb-3" size={36} />
+                {errorMsg.includes('conectar') ? (
+                  <WifiOff className="text-red-400 mx-auto mb-3" size={36} />
+                ) : (
+                  <AlertCircle className="text-red-400 mx-auto mb-3" size={36} />
+                )}
                 <p className="text-red-300 font-medium">{errorMsg}</p>
               </div>
               <button
@@ -196,10 +262,20 @@ export default function ConsultaPublica() {
                   setErrorMsg('');
                   setNotFoundMsg('');
                 }}
-                className="w-full py-3 rounded-xl font-medium transition-all bg-white/10 text-white hover:bg-white/20 border border-white/10"
+                className="w-full py-3 rounded-xl font-medium transition-all bg-white/10 text-white hover:bg-white/20 border border-white/10 flex items-center justify-center gap-2"
               >
+                <RefreshCw size={18} />
                 Intentar de nuevo
               </button>
+            </div>
+          )}
+
+          {sessionWarning && state === 'ready' && (
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex items-center gap-3">
+              <Timer size={20} className="text-amber-400 shrink-0" />
+              <p className="text-amber-300 text-sm">
+                Sesión inactiva. Por seguridad, la página se recargará si no realizás ninguna acción.
+              </p>
             </div>
           )}
         </div>

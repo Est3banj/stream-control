@@ -7,6 +7,8 @@ const db = admin.firestore();
 
 const TOKEN_MAX_USES = 10;
 const DEFAULT_TOKEN_EXPIRY_DAYS = 30;
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const MAX_REQUESTS = 5; // max 5 requests per token per minute
 
 export const generarToken = functions
   .runWith({ timeoutSeconds: 30, memory: '256MB' })
@@ -173,6 +175,15 @@ export const consultarCodigo = functions
       );
     }
 
+    const now = Date.now();
+    if (tokenData.rateLimit && tokenData.rateLimit.count >= MAX_REQUESTS
+        && (now - (tokenData.rateLimit.windowStart as number)) < RATE_LIMIT_WINDOW) {
+      throw new functions.https.HttpsError(
+        'resource-exhausted',
+        'Demasiadas consultas. Intenta de nuevo en unos minutos.'
+      );
+    }
+
     const currentUses = (tokenData.useCount as number) || 0;
     if (currentUses >= TOKEN_MAX_USES) {
       throw new functions.https.HttpsError(
@@ -183,6 +194,8 @@ export const consultarCodigo = functions
 
     await db.collection('tokens').doc(token).update({
       useCount: admin.firestore.FieldValue.increment(1),
+      'rateLimit.count': admin.firestore.FieldValue.increment(1),
+      'rateLimit.windowStart': (tokenData.rateLimit as Record<string, unknown>)?.windowStart || now,
     });
 
     const cuentaId = tokenData.cuentaId as string;

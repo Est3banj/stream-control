@@ -4,7 +4,7 @@ import { db } from '../firebase';
 import { collection, query, where, onSnapshot, updateDoc, doc, increment, addDoc, serverTimestamp, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import useClientes from '../hooks/useClientes';
-import useTokens, { generarToken } from '../hooks/useTokens';
+import useTokens, { generarToken, revocarToken } from '../hooks/useTokens';
 import usePermisos from '../hooks/usePermisos';
 import useCuentas from '../hooks/useCuentas';
 import Paginador from '../components/Paginador';
@@ -46,6 +46,8 @@ export default function GestionClientes() {
   const [tokenGenerando, setTokenGenerando] = useState(false);
   const [mostrarConsultaCodigo, setMostrarConsultaCodigo] = useState(false);
   const [consultaData, setConsultaData] = useState<{ clienteNombre: string; proveedor: string; correoCuenta: string; tokenId: string } | null>(null);
+  const [confirmarRevocar, setConfirmarRevocar] = useState<{ tokenId: string; clienteNombre: string } | null>(null);
+  const [revocando, setRevocando] = useState(false);
 
   // Clasificar clientes cuando cambian los datos (incluye array vacío)
   useEffect(() => {
@@ -291,6 +293,21 @@ export default function GestionClientes() {
   const copiarTokenURL = () => {
     navigator.clipboard.writeText(tokenGeneradoURL);
     toast.success('Link copiado al portapapeles');
+  };
+
+  const handleRevocarToken = async () => {
+    if (!confirmarRevocar) return;
+    setRevocando(true);
+    try {
+      await revocarToken(confirmarRevocar.tokenId);
+      toast.success('Token revocado correctamente');
+      setConfirmarRevocar(null);
+    } catch (err) {
+      console.error('Error revocando token:', err);
+      toast.error('Error al revocar el token');
+    } finally {
+      setRevocando(false);
+    }
   };
 
   const abrirConsultaCodigo = (cliente: Cliente) => {
@@ -571,10 +588,19 @@ export default function GestionClientes() {
                           );
                         }
                         return (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 text-green-600 text-xs font-medium">
-                            <Key size={12} />
-                            Vigente
-                          </span>
+                          <div className="flex items-center justify-center gap-1">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 text-green-600 text-xs font-medium">
+                              <Key size={12} />
+                              Vigente
+                            </span>
+                            <button
+                              onClick={() => setConfirmarRevocar({ tokenId: tokenCliente.id, clienteNombre: c.nombre })}
+                              className="p-1 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
+                              title="Revocar token"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
                         );
                       })()}
                     </td>
@@ -931,6 +957,38 @@ export default function GestionClientes() {
                 setConsultaData(null);
               }}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Confirmar revocación de token */}
+      {confirmarRevocar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="card max-w-md w-full animate-scale-in text-center">
+            <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="text-red-600" size={32} />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Revocar token</h2>
+            <p className="text-gray-600 mb-6">
+              ¿Estás seguro de revocar el token de <strong>{confirmarRevocar.clienteNombre}</strong>?
+              El link de códigos dejará de funcionar inmediatamente.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmarRevocar(null)}
+                className="btn-secondary flex-1"
+                disabled={revocando}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleRevocarToken}
+                disabled={revocando}
+                className="flex-1 py-2.5 rounded-xl font-semibold text-white transition-all bg-red-600 hover:bg-red-700 disabled:opacity-50"
+              >
+                {revocando ? 'Revocando...' : 'Sí, revocar'}
+              </button>
+            </div>
           </div>
         </div>
       )}
