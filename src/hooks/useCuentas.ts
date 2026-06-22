@@ -12,6 +12,7 @@ import {
   type QuerySnapshot,
   type DocumentData,
 } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import type { Cuenta, CreateCuentaInput, UpdateCuentaInput } from '../types/cuenta';
 
 let sharedUid: string | null = null;
@@ -74,17 +75,29 @@ function stopListener() {
   sharedLoading = true;
 }
 
-export async function crearCuenta(data: CreateCuentaInput): Promise<string> {
+export async function crearCuenta(data: CreateCuentaInput, contrasena?: string): Promise<string> {
   const cuentaRef = await addDoc(collection(db, 'cuentas'), {
     ...data,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
 
-  // Las credenciales de IMAP (correo completo + contraseña) se guardan
-  // exclusivamente via Cloud Function en `cuentas_secretos`.
-  // Por ahora se pueden configurar manualmente desde el panel de la cuenta
-  // o al deployar las CFs.
+  // Guardar credenciales via Cloud Function (solo Admin SDK escribe en cuentas_secretos)
+  if (contrasena) {
+    try {
+      const functions = getFunctions();
+      const guardar = httpsCallable(functions, 'guardarCredenciales');
+      await guardar({
+        cuentaId: cuentaRef.id,
+        correo: data.correoCuenta,
+        contrasena,
+      });
+    } catch (err) {
+      // Si la CF no está deployada aún, no fallamos la creación
+      // El usuario puede configurar las credenciales después desde el panel
+      console.warn('No se pudieron guardar las credenciales (CF no deployada?):', err);
+    }
+  }
 
   return cuentaRef.id;
 }

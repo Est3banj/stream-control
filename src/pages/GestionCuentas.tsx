@@ -4,10 +4,11 @@ import useCuentas, { crearCuenta, actualizarCuenta, toggleCuentaActiva } from '.
 import usePermisos from '../hooks/usePermisos';
 import CuentaForm from '../components/CuentaForm';
 import CuentaDetail from '../components/CuentaDetail';
+import ConfigurarIMAP from '../components/ConfigurarIMAP';
 import FeatureBlocked from '../components/FeatureBlocked';
 import Paginador from '../components/Paginador';
 import toast from 'react-hot-toast';
-import { Search, Eye, Edit, EyeOff, Users, CheckCircle, AlertCircle, AlertTriangle, Film, X, Download, AlertTriangle as AlertTriangleIcon } from 'lucide-react';
+import { Search, Eye, Edit, EyeOff, Users, CheckCircle, AlertCircle, AlertTriangle, Film, X, Download, Key, AlertTriangle as AlertTriangleIcon } from 'lucide-react';
 import type { Cuenta, CreateCuentaInput } from '../types/cuenta';
 
 const PROVEEDORES = ['Todos', 'Netflix', 'Max', 'Disney+', 'Prime Video', 'ChatGPT', 'Win Sports+', 'Universal+', 'Paramount+', 'Otro'];
@@ -42,6 +43,7 @@ export default function GestionCuentas() {
   const [cuentaSeleccionada, setCuentaSeleccionada] = useState<Cuenta | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [confirmarAccion, setConfirmarAccion] = useState<{ cuenta: Cuenta; accion: 'desactivar' | 'reactivar' } | null>(null);
+  const [mostrarIMAP, setMostrarIMAP] = useState(false);
 
   useEffect(() => {
     setPaginaActual(1);
@@ -74,9 +76,10 @@ export default function GestionCuentas() {
     if (!user) return;
     setGuardando(true);
     try {
-      const input = data as CreateCuentaInput;
-      input.propietarioId = user.uid || '';
-      await crearCuenta(input);
+      const input = data as CreateCuentaInput & { contrasena?: string };
+      const { contrasena, ...cuentaData } = input;
+      cuentaData.propietarioId = user.uid || '';
+      await crearCuenta(cuentaData as CreateCuentaInput, contrasena);
       toast.success('Cuenta registrada correctamente');
       setMostrarRegistrar(false);
     } catch (err: unknown) {
@@ -423,6 +426,16 @@ export default function GestionCuentas() {
                             <Edit size={18} />
                           </button>
                           <button
+                            onClick={() => {
+                              setCuentaSeleccionada(c);
+                              setMostrarIMAP(true);
+                            }}
+                            className="p-2 rounded-lg bg-amber-100 text-amber-600 hover:bg-amber-200 transition-colors"
+                            title="Configurar credenciales IMAP"
+                          >
+                            <Key size={18} />
+                          </button>
+                          <button
                             onClick={() => handleToggleEstado(c)}
                             className={`p-2 rounded-lg transition-colors ${
                               c.estado === 'expirada'
@@ -539,6 +552,37 @@ export default function GestionCuentas() {
                 setCuentaSeleccionada(null);
               }}
               loading={guardando}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Configurar IMAP */}
+      {mostrarIMAP && cuentaSeleccionada && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="card max-w-lg w-full max-h-[90vh] overflow-y-auto animate-scale-in">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Credenciales IMAP</h2>
+                <p className="text-gray-600 mt-1">{cuentaSeleccionada.proveedor}</p>
+              </div>
+              <button
+                onClick={() => {
+                  setMostrarIMAP(false);
+                  setCuentaSeleccionada(null);
+                }}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <X size={24} className="text-gray-600" />
+              </button>
+            </div>
+            <ConfigurarIMAP
+              cuenta={cuentaSeleccionada}
+              onClose={() => {
+                setMostrarIMAP(false);
+                setCuentaSeleccionada(null);
+              }}
+              onSuccess={() => toast.success('Credenciales configuradas')}
             />
           </div>
         </div>

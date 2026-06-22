@@ -1,7 +1,7 @@
 import * as functions from 'firebase-functions/v1';
 import * as admin from 'firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
-import { buscarCodigoVerificacion } from './imap';
+import { buscarCodigoVerificacion, IMAPConfig } from './imap';
 
 const db = admin.firestore();
 
@@ -289,3 +289,54 @@ function getDefaultIMAPHost(proveedorIMAP: string): string {
   };
   return hosts[proveedorIMAP] || 'imap.gmail.com';
 }
+
+export const guardarCredenciales = functions
+  .runWith({ timeoutSeconds: 15, memory: '128MB' })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        'unauthenticated',
+        'Debes iniciar sesión'
+      );
+    }
+
+    const uid = context.auth.uid;
+    const { cuentaId, correo, contrasena, imapHost, imapPort, proveedorIMAP } = data;
+
+    if (!cuentaId || !correo || !contrasena) {
+      throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Faltan campos requeridos: cuentaId, correo, contrasena'
+      );
+    }
+
+    // Verificar que la cuenta existe y pertenece al usuario
+    const cuentaDoc = await db.collection('cuentas').doc(cuentaId).get();
+    if (!cuentaDoc.exists) {
+      throw new functions.https.HttpsError(
+        'not-found',
+        'La cuenta especificada no existe'
+      );
+    }
+
+    const cuenta = cuentaDoc.data()!;
+    if (cuenta.propietarioId !== uid) {
+      throw new functions.https.HttpsError(
+        'permission-denied',
+        'No tienes permisos sobre esta cuenta'
+      );
+    }
+
+    // Guardar credenciales en cuentas_secretos (solo accesible por Admin SDK)
+    await db.collection('cuentas_secretos').doc(cuentaId).set({
+      cuentaId,
+      correo,
+      contrasena,
+      imapHost: imapHost || 'imap.gmail.com',
+      imapPort: imapPort || 993,
+      proveedorIMAP: proveedorIMAP || 'gmail',
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    return { success: true, cuentaId };
+  });

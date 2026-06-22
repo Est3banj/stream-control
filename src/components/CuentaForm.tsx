@@ -85,11 +85,12 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
         propietarioId: '',
         proveedor: proveedorActual.trim(),
         correoCuenta: correoCuenta.trim(),
+        contrasena: contrasena.trim(),
         costo: Number(costo),
         tipoVenta,
         perfiles: perfilesData,
         estado: 'disponible' as const,
-      });
+      } as CreateCuentaInput & { contrasena: string });
     }
   };
 
