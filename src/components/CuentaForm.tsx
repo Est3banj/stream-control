@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import toast from 'react-hot-toast';
-import { Plus, Trash2, Calendar } from 'lucide-react';
+import { Plus, Trash2, Calendar, Eye, EyeOff } from 'lucide-react';
 import type { Cuenta, PerfilCuenta, CreateCuentaInput } from '../types/cuenta';
 
 const PROVEEDORES = ['Netflix', 'Max', 'Disney+', 'Prime Video', 'ChatGPT', 'Win Sports+', 'Universal+', 'Paramount+', 'Otro'];
@@ -17,6 +17,7 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
   const [proveedor, setProveedor] = useState(initialData?.proveedor || '');
   const [correoCuenta, setCorreoCuenta] = useState(initialData?.correoCuenta || '');
   const [contrasena, setContrasena] = useState('');
+  const [mostrarContrasena, setMostrarContrasena] = useState(false);
   const [costo, setCosto] = useState(initialData?.costo?.toString() || '');
   const [tipoVenta, setTipoVenta] = useState<'perfiles' | 'completa'>(initialData?.tipoVenta || 'perfiles');
   const [estado, setEstado] = useState<'disponible' | 'asignada' | 'expirada'>(initialData?.estado || 'disponible');
@@ -166,14 +167,24 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Contraseña <span className="text-red-500">*</span>
             </label>
-            <input
-              type="password"
-              value={contrasena}
-              onChange={(e) => setContrasena(e.target.value)}
-              className="w-full"
-              placeholder="Contraseña de la cuenta"
-              required
-            />
+            <div className="relative">
+              <input
+                type={mostrarContrasena ? 'text' : 'password'}
+                value={contrasena}
+                onChange={(e) => setContrasena(e.target.value)}
+                className="w-full pr-12"
+                placeholder="Contraseña de la cuenta"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setMostrarContrasena(!mostrarContrasena)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                tabIndex={-1}
+              >
+                {mostrarContrasena ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
           </div>
         </div>
       )}
