@@ -6,9 +6,11 @@ import { useAuth } from '../contexts/AuthContext';
 import useClientes from '../hooks/useClientes';
 import useTokens, { generarToken } from '../hooks/useTokens';
 import usePermisos from '../hooks/usePermisos';
+import useCuentas from '../hooks/useCuentas';
 import Paginador from '../components/Paginador';
+import ConsultaInterna from '../components/ConsultaInterna';
 import toast from 'react-hot-toast';
-import { Search, Download, MessageCircle, Calendar, Users, TrendingUp, X, AlertCircle, Edit, Mail, DollarSign, CheckCircle, UserCheck, AlertTriangle, RefreshCw, Sparkles, Link, Key, Copy, ExternalLink } from 'lucide-react';
+import { Search, Download, MessageCircle, Calendar, Users, TrendingUp, X, AlertCircle, Edit, Mail, DollarSign, CheckCircle, UserCheck, AlertTriangle, RefreshCw, Sparkles, Link, Key, Copy, ExternalLink, Shield } from 'lucide-react';
 import type { Venta } from '../types/venta';
 import type { Cliente } from '../types/cliente';
 
@@ -18,6 +20,7 @@ export default function GestionClientes() {
   const { clientes: todosLosClientes, loading, error } = useClientes(user);
   const permisos = usePermisos(user);
   const { tokens: todosLosTokens } = useTokens(user);
+  const { cuentas } = useCuentas(user);
   const [clientes, setClientes] = useState<{ activos: Cliente[]; inactivos: Cliente[]; todos: Cliente[] }>({ activos: [], inactivos: [], todos: [] });
   const [filtro, setFiltro] = useState<'activos' | 'inactivos' | 'todos'>('activos');
   const [busqueda, setBusqueda] = useState('');
@@ -41,6 +44,8 @@ export default function GestionClientes() {
   const [mostrarTokenModal, setMostrarTokenModal] = useState(false);
   const [tokenGeneradoURL, setTokenGeneradoURL] = useState('');
   const [tokenGenerando, setTokenGenerando] = useState(false);
+  const [mostrarConsultaCodigo, setMostrarConsultaCodigo] = useState(false);
+  const [consultaData, setConsultaData] = useState<{ clienteNombre: string; proveedor: string; correoCuenta: string; tokenId: string } | null>(null);
 
   // Clasificar clientes cuando cambian los datos (incluye array vacío)
   useEffect(() => {
@@ -286,6 +291,28 @@ export default function GestionClientes() {
   const copiarTokenURL = () => {
     navigator.clipboard.writeText(tokenGeneradoURL);
     toast.success('Link copiado al portapapeles');
+  };
+
+  const abrirConsultaCodigo = (cliente: Cliente) => {
+    const tokenCliente = todosLosTokens.find(
+      t => t.clienteId === cliente.id && t.activo
+    );
+    if (!tokenCliente) {
+      toast.error('Este cliente no tiene un token activo. Generá un link primero.');
+      return;
+    }
+    const cuenta = cuentas.find(c => c.id === tokenCliente.cuentaId);
+    if (!cuenta) {
+      toast.error('No se encontró la cuenta asociada');
+      return;
+    }
+    setConsultaData({
+      clienteNombre: cliente.nombre,
+      proveedor: cuenta.proveedor,
+      correoCuenta: cuenta.correoCuenta,
+      tokenId: tokenCliente.id,
+    });
+    setMostrarConsultaCodigo(true);
   };
 
   const abrirHistorial = (cliente: Cliente) => {
@@ -587,6 +614,15 @@ export default function GestionClientes() {
                         >
                           <RefreshCw size={18} />
                         </button>
+                        {c.cuentaId && (
+                          <button
+                            onClick={() => abrirConsultaCodigo(c)}
+                            className="p-2 rounded-lg bg-teal-100 text-teal-600 hover:bg-teal-200 transition-colors"
+                            title="Consultar código"
+                          >
+                            <Shield size={18} />
+                          </button>
+                        )}
                         {c.cuentaId && permisos.puedeGenerarTokens && (
                           <button
                             onClick={() => generarLinkCodigos(c)}
@@ -877,6 +913,24 @@ export default function GestionClientes() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de consulta de código */}
+      {mostrarConsultaCodigo && consultaData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="card max-w-lg w-full max-h-[90vh] overflow-y-auto animate-scale-in">
+            <ConsultaInterna
+              clienteNombre={consultaData.clienteNombre}
+              proveedor={consultaData.proveedor}
+              correoCuenta={consultaData.correoCuenta}
+              tokenId={consultaData.tokenId}
+              onClose={() => {
+                setMostrarConsultaCodigo(false);
+                setConsultaData(null);
+              }}
+            />
           </div>
         </div>
       )}
