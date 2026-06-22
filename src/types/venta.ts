@@ -22,6 +22,11 @@ export interface Venta {
   fechaVencimiento: string;
   propietarioId: string;
   usuarioEmail: string;
+  cuentaId?: string;
+  perfilNombre?: string;
+  perfilPin?: string;
+  tokenGenerado?: string;
+  costoPorPerfil?: number;
 }
 
 export type VentaInput = Omit<Venta, 'id' | 'fechaRegistro' | 'fechaRegistroSistema' | 'utilidad'> & {

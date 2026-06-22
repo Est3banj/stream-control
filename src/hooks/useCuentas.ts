@@ -1,0 +1,149 @@
+import { useState, useEffect, useRef } from 'react';
+import { db } from '../firebase';
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  addDoc,
+  updateDoc,
+  doc,
+  serverTimestamp,
+  type QuerySnapshot,
+  type DocumentData,
+} from 'firebase/firestore';
+import type { Cuenta, CreateCuentaInput, UpdateCuentaInput } from '../types/cuenta';
+
+let sharedUid: string | null = null;
+let sharedIsAdmin = false;
+let sharedData: Cuenta[] = [];
+let sharedLoading = true;
+let sharedError: string | null = null;
+let sharedUnsubscribe: (() => void) | null = null;
+const subscribers = new Map<number, React.Dispatch<React.SetStateAction<{ cuentas: Cuenta[]; loading: boolean; error: string | null }>>>();
+let nextSubId = 0;
+
+function broadcast() {
+  subscribers.forEach((setState) => {
+    setState({ cuentas: sharedData, loading: sharedLoading, error: sharedError });
+  });
+}
+
+function startListener(uid: string, isAdmin: boolean) {
+  if (sharedUnsubscribe) {
+    sharedUnsubscribe();
+    sharedUnsubscribe = null;
+  }
+
+  sharedUid = uid;
+  sharedIsAdmin = isAdmin;
+  sharedLoading = true;
+  broadcast();
+
+  const q = isAdmin
+    ? collection(db, 'cuentas')
+    : query(collection(db, 'cuentas'), where('propietarioId', '==', uid));
+
+  sharedUnsubscribe = onSnapshot(
+    q,
+    (snapshot: QuerySnapshot<DocumentData>) => {
+      sharedError = null;
+      sharedData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Cuenta[];
+      sharedLoading = false;
+      broadcast();
+    },
+    (error: Error) => {
+      console.error('Error en listener de cuentas:', error);
+      sharedError = error.message || 'Error al cargar cuentas';
+      sharedLoading = false;
+      broadcast();
+    },
+  );
+}
+
+function stopListener() {
+  if (sharedUnsubscribe) {
+    sharedUnsubscribe();
+    sharedUnsubscribe = null;
+  }
+  sharedUid = null;
+  sharedData = [];
+  sharedLoading = true;
+}
+
+export async function crearCuenta(data: CreateCuentaInput): Promise<string> {
+  const cuentaRef = await addDoc(collection(db, 'cuentas'), {
+    ...data,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+
+  await addDoc(collection(db, 'cuentas_secretos'), {
+    cuentaId: cuentaRef.id,
+    correo: data.correoCuenta || '',
+    contrasena: '',
+    imapHost: 'imap.gmail.com',
+    imapPort: 993,
+    proveedorIMAP: 'gmail',
+  });
+
+  return cuentaRef.id;
+}
+
+export async function actualizarCuenta(id: string, data: UpdateCuentaInput): Promise<void> {
+  await updateDoc(doc(db, 'cuentas', id), {
+    ...data,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function toggleCuentaActiva(id: string, current: boolean): Promise<void> {
+  await updateDoc(doc(db, 'cuentas', id), {
+    estado: current ? 'disponible' : 'expirada',
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export default function useCuentas(user: { uid?: string; rol?: string } | null): { cuentas: Cuenta[]; loading: boolean; error: string | null } {
+  const [state, setState] = useState<{ cuentas: Cuenta[]; loading: boolean; error: string | null }>(() => ({
+    cuentas: sharedData,
+    loading: sharedLoading,
+    error: sharedError,
+  }));
+
+  const idRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!idRef.current) idRef.current = ++nextSubId;
+    const subId = idRef.current;
+    const uid = user?.uid;
+    const isAdmin = user?.rol === 'admin';
+
+    if (!uid) {
+      setState({ cuentas: [], loading: false, error: null });
+      return;
+    }
+
+    subscribers.set(subId, setState);
+
+    if (sharedUid === uid) {
+      setState({ cuentas: sharedData, loading: sharedLoading, error: sharedError });
+    }
+
+    if (!sharedUnsubscribe || sharedUid !== uid) {
+      startListener(uid, isAdmin);
+    }
+
+    return () => {
+      subscribers.delete(subId);
+      if (subscribers.size === 0) {
+        stopListener();
+      }
+    };
+  }, [user?.uid, user?.rol]);
+
+  return state;
+}

@@ -14,6 +14,8 @@ const TelegramConfig = lazy(() => import('./pages/TelegramConfig'));
 const AdminPlanes = lazy(() => import('./pages/AdminPlanes'));
 const AdminSuscripciones = lazy(() => import('./pages/AdminSuscripciones'));
 const Ajustes = lazy(() => import('./pages/Ajustes'));
+const GestionCuentas = lazy(() => import('./pages/GestionCuentas'));
+const ConsultaPublica = lazy(() => import('./pages/ConsultaPublica'));
 
 export default function App() {
   return (
@@ -123,6 +125,19 @@ export default function App() {
               </PrivateRoute>
             }
           />
+
+          <Route
+            path="/cuentas"
+            element={
+              <PrivateRoute roles={['admin', 'usuario']}>
+                <Layout>
+                  <GestionCuentas />
+                </Layout>
+              </PrivateRoute>
+            }
+          />
+
+          <Route path="/r/:token" element={<ConsultaPublica />} />
 
           {/* Catch-all: redirigir a dashboard */}
           <Route path="*" element={<Navigate to="/" replace />} />
