@@ -274,6 +274,63 @@ export const generarNotificacionesVencimientos = functions
         }
       }
 
+      // ── Procesar cuentas próximas a vencer ──
+      const cuentasSnapshot = await db.collection('cuentas').get();
+
+      for (const cuentaDoc of cuentasSnapshot.docs) {
+        const cuenta = cuentaDoc.data() as admin.firestore.DocumentData;
+        const fechaVencimiento = cuenta.fechaVencimiento as string | undefined;
+
+        if (!fechaVencimiento || cuenta.estado === 'expirada') continue;
+
+        const venc = new Date(fechaVencimiento + 'T00:00:00');
+        const diffTime = venc.getTime() - hoy.getTime();
+        const diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diasRestantes >= 0 && diasRestantes <= 3) {
+          const hoyStr = hoy.toISOString().split('T')[0];
+          const notifId = `cuenta_${cuentaDoc.id}_${hoyStr}`;
+
+          const notifRef = db.collection('notificaciones').doc(notifId);
+          const notifDoc = await notifRef.get();
+
+          if (!notifDoc.exists) {
+            batch.set(notifRef, {
+              cuentaId: cuentaDoc.id,
+              proveedor: cuenta.proveedor || '',
+              correoCuenta: cuenta.correoCuenta || '',
+              diasRestantes,
+              fechaVencimiento,
+              propietarioId: cuenta.propietarioId,
+              fechaGenerada: admin.firestore.FieldValue.serverTimestamp(),
+              leida: false,
+            });
+            batchCount++;
+            notificacionesCreadas++;
+
+            try {
+              const enviado = await telegram.enviarNotificacionCuentaVencimiento({
+                proveedor: cuenta.proveedor || '',
+                correoCuenta: cuenta.correoCuenta || '',
+                diasRestantes,
+                fechaVencimiento,
+                propietarioId: cuenta.propietarioId,
+              }, {
+                appUrl: APP_URL.value(),
+              });
+              if (enviado) telegramEnviados++;
+            } catch (err) {
+              console.error(`Error enviando Telegram cuenta para ${cuenta.proveedor}:`, err);
+            }
+
+            if (batchCount >= MAX_BATCH_SIZE) {
+              await batch.commit();
+              batchCount = 0;
+            }
+          }
+        }
+      }
+
       if (batchCount > 0) {
         await batch.commit();
       }

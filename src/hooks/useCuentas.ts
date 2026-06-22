@@ -49,10 +49,19 @@ function startListener(uid: string, isAdmin: boolean) {
     q,
     (snapshot: QuerySnapshot<DocumentData>) => {
       sharedError = null;
-      sharedData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Cuenta[];
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      sharedData = snapshot.docs.map((doc) => {
+        const c = { id: doc.id, ...doc.data() } as Cuenta;
+        if (c.fechaVencimiento) {
+          const venc = new Date(c.fechaVencimiento + 'T00:00:00');
+          const diff = venc.getTime() - hoy.getTime();
+          c.diasRestantes = Math.ceil(diff / (1000 * 60 * 60 * 24));
+        } else {
+          c.diasRestantes = null;
+        }
+        return c;
+      });
       sharedLoading = false;
       broadcast();
     },

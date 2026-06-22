@@ -21,6 +21,7 @@ export interface Cuenta {
   fechaInicio?: string;
   diasServicio?: number;
   fechaVencimiento?: string;
+  diasRestantes?: number | null;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

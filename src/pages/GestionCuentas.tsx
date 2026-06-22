@@ -284,7 +284,7 @@ export default function GestionCuentas() {
       </div>
 
       {/* Resumen */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="card cursor-default">
           <div className="flex items-center justify-between mb-3">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg">
@@ -333,6 +333,20 @@ export default function GestionCuentas() {
             <p className="text-2xl font-bold text-gray-900">{cuentasExpiradas.toLocaleString()}</p>
           </div>
         </div>
+        <div className="card cursor-default">
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-600 flex items-center justify-center shadow-lg">
+              <AlertTriangle className="text-white" size={24} />
+            </div>
+            <AlertTriangle className="text-yellow-400" size={20} />
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Próximas a vencer</p>
+            <p className="text-2xl font-bold text-gray-900">
+              {todasLasCuentas.filter(c => c.fechaVencimiento && c.diasRestantes !== null && c.diasRestantes! > 0 && c.diasRestantes! <= 3).length}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Por proveedor */}
@@ -362,6 +376,7 @@ export default function GestionCuentas() {
                 <th className="px-4 py-4 text-center text-sm font-semibold">Perfiles</th>
                 <th className="px-4 py-4 text-right text-sm font-semibold">Costo</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Estado</th>
+                <th className="px-4 py-4 text-center text-sm font-semibold">Días Restantes</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Acciones</th>
               </tr>
             </thead>
@@ -402,6 +417,25 @@ export default function GestionCuentas() {
                         <span className={`px-3 py-1 rounded-full text-sm font-semibold ${badge.class}`}>
                           {badge.label}
                         </span>
+                      </td>
+                      <td className="px-4 py-4 text-center">
+                        {c.fechaVencimiento ? (
+                          <span
+                            className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                              c.diasRestantes !== null && c.diasRestantes! > 7
+                                ? 'bg-green-100 text-green-700'
+                                : c.diasRestantes !== null && c.diasRestantes! > 0
+                                  ? 'bg-yellow-100 text-yellow-700'
+                                  : 'bg-red-100 text-red-700'
+                            }`}
+                          >
+                            {c.diasRestantes !== null && c.diasRestantes! > 0
+                              ? `${c.diasRestantes} días`
+                              : 'Vencido'}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-sm">—</span>
+                        )}
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center justify-center gap-2">
@@ -453,7 +487,7 @@ export default function GestionCuentas() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={6} className="text-center py-12 text-gray-500">
+                  <td colSpan={7} className="text-center py-12 text-gray-500">
                     <Film size={48} className="mx-auto mb-3 text-gray-300" />
                     <p className="font-medium">No se encontraron cuentas</p>
                   </td>
