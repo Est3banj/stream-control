@@ -352,7 +352,7 @@ service cloud.firestore {
         request.resource.data.tipoVenta is string &&
         request.resource.data.tipoVenta in ['perfiles', 'completa'] &&
         request.resource.data.perfiles is list &&
-        request.resource.data.perfiles.size() > 0 &&
+        (request.resource.data.tipoVenta == 'completa' || request.resource.data.perfiles.size() > 0) &&
         request.resource.data.estado is string &&
         request.resource.data.estado in ['disponible', 'asignada', 'expirada'];
 
