@@ -6,6 +6,8 @@ export const FEATURE_LABELS: Record<string, string> = {
   puedeVerDashboardEjecutivo: 'Dashboard Ejecutivo',
   tieneSoportePrioritario: 'Soporte Prioritario',
   tieneSoporte247: 'Soporte 24/7',
+  puedeGestionarCuentas: 'Gestión de Cuentas Streaming',
+  puedeGenerarTokens: 'Sistema de Códigos de Verificación',
 };
 
 export const PLAN_LABELS: Record<string, string> = {
