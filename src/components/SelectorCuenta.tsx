@@ -28,8 +28,9 @@ function maskEmail(email: string): string {
 
 function calcularCostoPorPerfil(cuenta: Cuenta): number {
   if (cuenta.tipoVenta === 'completa') return cuenta.costo;
-  const perfilesDisponibles = cuenta.perfiles.filter(p => p.estado === 'disponible').length;
-  return perfilesDisponibles > 0 ? cuenta.costo / cuenta.perfiles.length : cuenta.costo;
+  const perfiles = Array.isArray(cuenta.perfiles) ? cuenta.perfiles : [];
+  const perfilesDisponibles = perfiles.filter(p => p.estado === 'disponible').length;
+  return perfilesDisponibles > 0 ? cuenta.costo / perfiles.length : cuenta.costo;
 }
 
 export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCuentaId, initialPerfil }: SelectorCuentaProps) {
@@ -42,7 +43,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
     return cuentas.filter(
       c => c.proveedor.toLowerCase() === proveedor.toLowerCase()
         && c.estado === 'disponible'
-        && (c.tipoVenta === 'completa' || c.perfiles.some(p => p.estado === 'disponible'))
+        && (c.tipoVenta === 'completa' || (Array.isArray(c.perfiles) ? c.perfiles : []).some(p => p.estado === 'disponible'))
     );
   }, [cuentas, proveedor]);
 
@@ -71,7 +72,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
   const perfilesDisponibles = useMemo(() => {
     if (!cuentaSeleccionada) return [];
     if (cuentaSeleccionada.tipoVenta === 'completa') return [];
-    return cuentaSeleccionada.perfiles.filter(p => p.estado === 'disponible');
+    return (Array.isArray(cuentaSeleccionada.perfiles) ? cuentaSeleccionada.perfiles : []).filter(p => p.estado === 'disponible');
   }, [cuentaSeleccionada]);
 
   useEffect(() => {
@@ -89,7 +90,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
       onCuentaSelected(null, null, null, 0);
       return;
     }
-    const perfil = cuentaSeleccionada.perfiles.find(p => p.nombre === perfilSeleccionado);
+    const perfil = (Array.isArray(cuentaSeleccionada.perfiles) ? cuentaSeleccionada.perfiles : []).find(p => p.nombre === perfilSeleccionado);
     const costo = calcularCostoPorPerfil(cuentaSeleccionada);
     onCuentaSelected(cuentaSeleccionada.id, perfilSeleccionado, perfil?.pin || null, costo);
   }, [cuentaSeleccionadaId, perfilSeleccionado, cuentaSeleccionada]);
@@ -215,7 +216,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
                       {maskEmail(c.correoCuenta)} — ${c.costo.toLocaleString()} 
                       {c.tipoVenta === 'completa' 
                         ? ' (Completa)' 
-                        : ` (${c.perfiles.filter(p => p.estado === 'disponible').length}/${c.perfiles.length} perfiles)`
+                        : ` (${(Array.isArray(c.perfiles) ? c.perfiles : []).filter(p => p.estado === 'disponible').length}/${(Array.isArray(c.perfiles) ? c.perfiles : []).length} perfiles)`
                       }
                     </option>
                   ))}
@@ -251,7 +252,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
                   <p className="text-xs text-indigo-500 mt-1">
                     {cuentaSeleccionada.tipoVenta === 'completa'
                       ? 'Cuenta completa — costo total'
-                      : `${cuentaSeleccionada.perfiles.length} perfiles — costo prorrateado`
+                      : `${(Array.isArray(cuentaSeleccionada.perfiles) ? cuentaSeleccionada.perfiles : []).length} perfiles — costo prorrateado`
                     }
                   </p>
                 </div>

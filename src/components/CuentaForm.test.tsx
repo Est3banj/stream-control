@@ -22,8 +22,7 @@ describe('CuentaForm', () => {
     expect(screen.getByText('Correo de la cuenta')).toBeTruthy();
     expect(screen.getByText('Contraseña')).toBeTruthy();
     expect(screen.getByText('Costo de la cuenta')).toBeTruthy();
-    expect(screen.getByText('Tipo de venta')).toBeTruthy();
-    expect(screen.getAllByText('Perfiles').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Perfiles')).toBeTruthy();
   });
 
   it('validates required fields before submit', () => {

@@ -10,7 +10,7 @@ import * as admin from 'firebase-admin';
 import * as telegram from './telegram';
 import { APP_URL } from './telegram';
 import { sendWelcomeEmail, sendPasswordChangedEmail, sendEmailChangedEmail, sendResetPasswordEmail } from './email';
-export { generarToken, validarToken, consultarCodigo, guardarCredenciales } from './src/codigos';
+export { generarToken, validarToken, consultarCodigo, guardarCredenciales, toggleToken } from './src/codigos';
 
 // Inicializar Firebase Admin si no está inicializado
 if (!admin.apps.length) {

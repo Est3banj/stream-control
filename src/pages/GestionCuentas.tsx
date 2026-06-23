@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import useCuentas, { crearCuenta, actualizarCuenta, toggleCuentaActiva } from '../hooks/useCuentas';
+import useCuentas, { crearCuenta, actualizarCuenta, toggleCuentaActiva, asignarPerfil } from '../hooks/useCuentas';
 import usePermisos from '../hooks/usePermisos';
+import useClientes from '../hooks/useClientes';
 import CuentaForm from '../components/CuentaForm';
 import CuentaDetail from '../components/CuentaDetail';
 import ConfigurarIMAP from '../components/ConfigurarIMAP';
 import FeatureBlocked from '../components/FeatureBlocked';
 import Paginador from '../components/Paginador';
+import DropdownMenu from '../components/DropdownMenu';
 import toast from 'react-hot-toast';
-import { Search, Eye, Edit, EyeOff, Users, CheckCircle, AlertCircle, AlertTriangle, Film, X, Download, Key, AlertTriangle as AlertTriangleIcon } from 'lucide-react';
+import { Search, Eye, Edit, EyeOff, Users, CheckCircle, AlertCircle, AlertTriangle, Film, X, Download, Key, Link, Check, AlertTriangle as AlertTriangleIcon } from 'lucide-react';
 import type { Cuenta, CreateCuentaInput } from '../types/cuenta';
 
 const PROVEEDORES = ['Todos', 'Netflix', 'Max', 'Disney+', 'Prime Video', 'ChatGPT', 'Win Sports+', 'Universal+', 'Paramount+', 'Otro'];
@@ -30,6 +32,7 @@ export default function GestionCuentas() {
   const { user } = useAuth();
   const { cuentas: todasLasCuentas, loading, error } = useCuentas(user);
   const permisos = usePermisos(user);
+  const { clientes: todosLosClientes, loading: loadingClientes } = useClientes(user);
 
   const [busqueda, setBusqueda] = useState('');
   const [filtroProveedor, setFiltroProveedor] = useState('Todos');
@@ -44,6 +47,10 @@ export default function GestionCuentas() {
   const [guardando, setGuardando] = useState(false);
   const [confirmarAccion, setConfirmarAccion] = useState<{ cuenta: Cuenta; accion: 'desactivar' | 'reactivar' } | null>(null);
   const [mostrarIMAP, setMostrarIMAP] = useState(false);
+  const [mostrarAsignar, setMostrarAsignar] = useState(false);
+  const [cuentaAsignando, setCuentaAsignando] = useState<Cuenta | null>(null);
+  const [perfilIdxAsignando, setPerfilIdxAsignando] = useState<number>(0);
+  const [busquedaCliente, setBusquedaCliente] = useState('');
 
   useEffect(() => {
     setPaginaActual(1);
@@ -125,6 +132,22 @@ export default function GestionCuentas() {
     }
   };
 
+  const handleAsignarPerfil = async (clienteNombre: string) => {
+    if (!cuentaAsignando || !user) return;
+    setGuardando(true);
+    try {
+      await asignarPerfil(cuentaAsignando.id, perfilIdxAsignando, clienteNombre, user.uid!);
+      toast.success(`Perfil asignado a ${clienteNombre}`);
+      setMostrarAsignar(false);
+      setCuentaAsignando(null);
+    } catch (err) {
+      console.error('Error asignando perfil:', err);
+      toast.error('Error al asignar el perfil');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
   const exportarCSV = () => {
     if (!cuentasFiltradas.length) {
       toast.error('No hay cuentas para exportar');
@@ -136,8 +159,8 @@ export default function GestionCuentas() {
       c.correoCuenta,
       c.costo,
       c.tipoVenta,
-      c.perfiles.length,
-      c.perfiles.filter(p => p.estado === 'disponible').length,
+      c.perfiles?.length || 0,
+      (Array.isArray(c.perfiles) ? c.perfiles.filter(p => p.estado === 'disponible').length : 0),
       c.estado,
     ]);
     const csvContent = [encabezados, ...filas].map(e => e.join(',')).join('\n');
@@ -384,7 +407,8 @@ export default function GestionCuentas() {
               {cuentasFiltradas.length > 0 ? (
                 cuentasPaginadas.map((c: Cuenta) => {
                   const badge = ESTADO_BADGES[c.estado] || { label: c.estado, class: 'bg-gray-100 text-gray-700' };
-                  const perfilesDisp = c.perfiles.filter(p => p.estado === 'disponible').length;
+                  const perfiles = Array.isArray(c.perfiles) ? c.perfiles : [];
+                  const perfilesDisp = perfiles.filter(p => p.estado === 'disponible').length;
                   return (
                     <tr
                       key={c.id}
@@ -404,7 +428,7 @@ export default function GestionCuentas() {
                           {c.tipoVenta === 'completa' ? (
                             '—'
                           ) : (
-                            <>{perfilesDisp} / {c.perfiles.length}</>
+                            <>{perfilesDisp} / {perfiles.length}</>
                           )}
                         </span>
                       </td>
@@ -438,49 +462,52 @@ export default function GestionCuentas() {
                         )}
                       </td>
                       <td className="px-4 py-4">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => {
-                              setCuentaSeleccionada(c);
-                              setMostrarVer(true);
-                            }}
-                            className="p-2 rounded-lg bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-colors"
-                            title="Ver cuenta"
-                          >
-                            <Eye size={18} />
-                          </button>
-                          <button
-                            onClick={() => {
-                              setCuentaSeleccionada(c);
-                              setMostrarEditar(true);
-                            }}
-                            className="p-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors"
-                            title="Editar cuenta"
-                          >
-                            <Edit size={18} />
-                          </button>
-                          <button
-                            onClick={() => {
-                              setCuentaSeleccionada(c);
-                              setMostrarIMAP(true);
-                            }}
-                            className="p-2 rounded-lg bg-amber-100 text-amber-600 hover:bg-amber-200 transition-colors"
-                            title="Configurar credenciales IMAP"
-                          >
-                            <Key size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleToggleEstado(c)}
-                            className={`p-2 rounded-lg transition-colors ${
-                              c.estado === 'expirada'
-                                ? 'bg-green-100 text-green-600 hover:bg-green-200'
-                                : 'bg-red-100 text-red-600 hover:bg-red-200'
-                            }`}
-                            title={c.estado === 'expirada' ? 'Reactivar cuenta' : 'Desactivar cuenta'}
-                          >
-                            {c.estado === 'expirada' ? <Eye size={18} /> : <EyeOff size={18} />}
-                          </button>
-                        </div>
+                        <DropdownMenu
+                          actions={[
+                            {
+                              label: 'Ver cuenta',
+                              icon: <Eye size={16} />,
+                              onClick: () => {
+                                setCuentaSeleccionada(c);
+                                setMostrarVer(true);
+                              },
+                            },
+                            {
+                              label: 'Editar cuenta',
+                              icon: <Edit size={16} />,
+                              onClick: () => {
+                                setCuentaSeleccionada(c);
+                                setMostrarEditar(true);
+                              },
+                            },
+                            ...(perfilesDisp > 0 ? [{
+                              label: 'Asignar perfil',
+                              icon: <Link size={16} />,
+                              onClick: () => {
+                                const perfilesArr = Array.isArray(c.perfiles) ? c.perfiles : [];
+                                const idxPrimerDisp = perfilesArr.findIndex(p => p.estado === 'disponible');
+                                setCuentaAsignando(c);
+                                setPerfilIdxAsignando(Math.max(0, idxPrimerDisp));
+                                setBusquedaCliente('');
+                                setMostrarAsignar(true);
+                              },
+                            }] : []),
+                            {
+                              label: 'Configurar IMAP',
+                              icon: <Key size={16} />,
+                              onClick: () => {
+                                setCuentaSeleccionada(c);
+                                setMostrarIMAP(true);
+                              },
+                            },
+                            {
+                              label: c.estado === 'expirada' ? 'Reactivar cuenta' : 'Desactivar cuenta',
+                              icon: c.estado === 'expirada' ? <Eye size={16} /> : <EyeOff size={16} />,
+                              onClick: () => handleToggleEstado(c),
+                              variant: c.estado === 'expirada' ? 'default' : 'danger',
+                            },
+                          ]}
+                        />
                       </td>
                     </tr>
                   );
@@ -618,6 +645,128 @@ export default function GestionCuentas() {
               }}
               onSuccess={() => toast.success('Credenciales configuradas')}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Asignar Perfil a Cliente */}
+      {mostrarAsignar && cuentaAsignando && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="card max-w-lg w-full max-h-[90vh] overflow-y-auto animate-scale-in">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Asignar Perfil</h2>
+                <p className="text-gray-600 mt-1">{cuentaAsignando.proveedor} — {maskEmail(cuentaAsignando.correoCuenta)}</p>
+              </div>
+              <button
+                onClick={() => {
+                  setMostrarAsignar(false);
+                  setCuentaAsignando(null);
+                }}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <X size={24} className="text-gray-600" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Selector de perfil */}
+              {(() => {
+                const perfilesAsignando = Array.isArray(cuentaAsignando.perfiles) ? cuentaAsignando.perfiles : [];
+                const disponibles = perfilesAsignando.filter(p => p.estado === 'disponible');
+                return (
+                  <>
+                    {disponibles.length > 1 && (
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Seleccionar perfil</label>
+                        <select
+                          value={perfilIdxAsignando}
+                          onChange={(e) => setPerfilIdxAsignando(Number(e.target.value))}
+                          className="w-full"
+                        >
+                          {perfilesAsignando.map((p, idx) =>
+                            p.estado === 'disponible' ? (
+                              <option key={idx} value={idx}>
+                                {p.nombre}{p.pin ? ` (PIN: ${p.pin})` : ''}
+                              </option>
+                            ) : null
+                          )}
+                        </select>
+                      </div>
+                    )}
+
+                    {disponibles.length === 1 && (
+                      <div className="p-3 bg-indigo-50 rounded-xl border border-indigo-100">
+                        <p className="text-sm font-semibold text-indigo-900">
+                          Perfil: {disponibles[0].nombre}
+                        </p>
+                      </div>
+                    )}
+                    {disponibles.length === 0 && (
+                      <p className="text-sm text-gray-500 italic">No hay perfiles disponibles</p>
+                    )}
+                  </>
+                );
+              })()}
+
+              {/* Buscador de clientes */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Buscar cliente</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <input
+                    type="text"
+                    value={busquedaCliente}
+                    onChange={(e) => setBusquedaCliente(e.target.value)}
+                    placeholder="Escribí el nombre del cliente..."
+                    className="w-full pl-10"
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              {/* Lista de clientes */}
+              <div className="max-h-60 overflow-y-auto space-y-1">
+                {loadingClientes ? (
+                  <div className="space-y-3 py-4">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="h-12 bg-gray-100 rounded-xl animate-pulse" />
+                    ))}
+                  </div>
+                ) : todosLosClientes.length === 0 ? (
+                  <p className="text-sm text-gray-500 italic text-center py-8">
+                    No hay clientes registrados
+                  </p>
+                ) : (
+                  todosLosClientes
+                    .filter(c => !busquedaCliente || c.nombre.toLowerCase().includes(busquedaCliente.toLowerCase()))
+                    .slice(0, 50)
+                    .map((cliente) => (
+                      <button
+                        key={cliente.id}
+                        onClick={() => handleAsignarPerfil(cliente.nombre)}
+                        disabled={guardando}
+                        className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-indigo-50 border border-gray-100 hover:border-indigo-200 transition-all text-left disabled:opacity-50"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                          <Users size={16} className="text-indigo-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{cliente.nombre}</p>
+                          {cliente.telefono && (
+                            <p className="text-xs text-gray-500">{cliente.telefono}</p>
+                          )}
+                        </div>
+                        {guardando ? (
+                          <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <Check size={18} className="text-indigo-600 flex-shrink-0" />
+                        )}
+                      </button>
+                    ))
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -21,25 +21,53 @@ export const generarToken = functions
     }
 
     const uid = context.auth.uid;
+    const userEmail = context.auth.token.email || '';
 
-    const suscripcionSnapshot = await db
-      .collection('suscripciones')
-      .where('usuarioId', '==', uid)
-      .where('estado', '==', 'activa')
-      .limit(1)
-      .get();
+    // DEBUG: Log del UID y email
+    console.error(`[generarToken] uid="${uid}" email="${userEmail}"`);
 
-    if (suscripcionSnapshot.empty) {
+    // Validar que el usuario existe en la colección usuarios
+    const userDoc = await db.collection('usuarios').doc(uid).get();
+    if (!userDoc.exists) {
+      console.error(`[generarToken] Usuario ${uid} no encontrado en colección usuarios`);
+      throw new functions.https.HttpsError(
+        'permission-denied',
+        'Usuario no encontrado'
+      );
+    }
+
+    const userData = userDoc.data()!;
+    console.error(`[generarToken] Usuario: rol=${userData.rol}, estado=${userData.estado}`);
+
+    // Verificar suscripción
+    const suscripcionSnapshot = await db.collection('suscripciones').get();
+    console.error(`[generarToken] Total suscripciones en DB: ${suscripcionSnapshot.size}`);
+
+    if (suscripcionSnapshot.size > 0) {
+      suscripcionSnapshot.forEach(d => {
+        const data = d.data();
+        console.error(`[generarToken] Sub: usuarioId="${data.usuarioId}" estado="${data.estado}" plan="${data.planNombre}"`);
+      });
+    }
+
+    const suscripcionActiva = suscripcionSnapshot.docs
+      .map(d => d.data() as any)
+      .find(s => s.usuarioId === uid && s.estado === 'activa');
+
+    if (!suscripcionActiva) {
+      console.error(`[generarToken] NO hay suscripcion activa para uid="${uid}"`);
+      console.error(`[generarToken] ¿Admin? rol=${userData.rol}`);
       throw new functions.https.HttpsError(
         'permission-denied',
         'Se requiere plan Enterprise para generar tokens'
       );
     }
 
-    const suscripcion = suscripcionSnapshot.docs[0].data();
-    const plan = (suscripcion.planNombre as string)?.toLowerCase() || '';
+    const plan = (suscripcionActiva.planNombre as string)?.toLowerCase() || '';
+    console.error(`[generarToken] Plan activo: "${plan}"`);
 
-    if (plan !== 'enterprise') {
+    if (!plan.includes('enterprise')) {
+      console.error(`[generarToken] Plan "${plan}" no incluye "enterprise"`);
       throw new functions.https.HttpsError(
         'permission-denied',
         'Se requiere plan Enterprise para generar tokens'
@@ -126,7 +154,7 @@ export const validarToken = functions
     const cuentaDoc = await db.collection('cuentas').doc(tokenData.cuentaId as string).get();
     const proveedor = cuentaDoc.exists ? (cuentaDoc.data()!.proveedor as string) : '';
 
-    const casosDisponibles = getCasosPorProveedor(proveedor);
+    const casosDisponibles = getCasosPorProveedor(proveedor).filter(c => c !== 'resetnet');
 
     return {
       valido: true,
@@ -192,12 +220,6 @@ export const consultarCodigo = functions
       );
     }
 
-    await db.collection('tokens').doc(token).update({
-      useCount: admin.firestore.FieldValue.increment(1),
-      'rateLimit.count': admin.firestore.FieldValue.increment(1),
-      'rateLimit.windowStart': (tokenData.rateLimit as Record<string, unknown>)?.windowStart || now,
-    });
-
     const cuentaId = tokenData.cuentaId as string;
     const proveedor = tokenData.proveedor as string;
 
@@ -238,6 +260,13 @@ export const consultarCodigo = functions
           mensaje: 'Código no encontrado — verifica que el código haya sido enviado al correo',
         };
       }
+
+      // Incrementar contador solo en consultas exitosas
+      await db.collection('tokens').doc(token).update({
+        useCount: admin.firestore.FieldValue.increment(1),
+        'rateLimit.count': admin.firestore.FieldValue.increment(1),
+        'rateLimit.windowStart': tokenData.rateLimit?.windowStart || now,
+      });
 
       return {
         encontrado: true,
@@ -339,4 +368,40 @@ export const guardarCredenciales = functions
     }, { merge: true });
 
     return { success: true, cuentaId };
+  });
+
+export const toggleToken = functions
+  .runWith({ timeoutSeconds: 15, memory: '128MB' })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión');
+    }
+
+    const uid = context.auth.uid;
+    const { tokenId, activo } = data;
+
+    if (!tokenId) {
+      throw new functions.https.HttpsError('invalid-argument', 'tokenId es requerido');
+    }
+
+    if (typeof activo !== 'boolean') {
+      throw new functions.https.HttpsError('invalid-argument', 'activo debe ser booleano');
+    }
+
+    const tokenDoc = await db.collection('tokens').doc(tokenId).get();
+    if (!tokenDoc.exists) {
+      throw new functions.https.HttpsError('not-found', 'Token no encontrado');
+    }
+
+    const tokenData = tokenDoc.data()!;
+    if (tokenData.vendedorId !== uid) {
+      throw new functions.https.HttpsError('permission-denied', 'No tienes permisos sobre este token');
+    }
+
+    await db.collection('tokens').doc(tokenId).update({
+      activo,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return { success: true, activo };
   });

@@ -5,13 +5,12 @@ import {
   query,
   where,
   onSnapshot,
-  addDoc,
   updateDoc,
   doc,
-  serverTimestamp,
   type QuerySnapshot,
   type DocumentData,
 } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import type { TokenCliente, CreateTokenInput } from '../types/token';
 
 let sharedVendedorId: string | null = null;
@@ -71,18 +70,33 @@ function stopListener() {
 }
 
 export async function generarToken(data: CreateTokenInput): Promise<string> {
-  const docRef = await addDoc(collection(db, 'tokens'), {
-    ...data,
-    createdAt: serverTimestamp(),
+  const functions = getFunctions();
+  const fn = httpsCallable<
+    { cuentaId: string; perfilNombre: string; clienteId: string; clienteNombre: string; expiraEn?: string },
+    { token: string; url: string }
+  >(functions, 'generarToken');
+
+  const result = await fn({
+    cuentaId: data.cuentaId,
+    perfilNombre: data.perfilNombre,
+    clienteId: data.clienteId,
+    clienteNombre: data.clienteNombre,
+    expiraEn: data.expiraEn,
   });
 
-  return docRef.id;
+  return result.data.token;
 }
 
 export async function revocarToken(id: string): Promise<void> {
-  await updateDoc(doc(db, 'tokens', id), {
-    activo: false,
-  });
+  const functions = getFunctions();
+  const fn = httpsCallable<{ tokenId: string; activo: boolean }, { success: boolean }>(functions, 'toggleToken');
+  await fn({ tokenId: id, activo: false });
+}
+
+export async function reactivarToken(id: string): Promise<void> {
+  const functions = getFunctions();
+  const fn = httpsCallable<{ tokenId: string; activo: boolean }, { success: boolean }>(functions, 'toggleToken');
+  await fn({ tokenId: id, activo: true });
 }
 
 export default function useTokens(user: { uid?: string; rol?: string } | null): { tokens: TokenCliente[]; loading: boolean; error: string | null } {

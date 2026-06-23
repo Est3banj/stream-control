@@ -141,9 +141,12 @@ export default function VentasForm({ initialData }: VentasFormProps) {
     setPerfilAsignado(newPerfilNombre);
     setPerfilPinSeleccionado(newPerfilPin);
     setCostoPorPerfil(newCostoPorPerfil);
-    if (newPerfilNombre) {
-      setVenta(prev => ({ ...prev, perfil: newPerfilNombre, pinPerfil: newPerfilPin || '' }));
-    }
+    setVenta(prev => ({
+      ...prev,
+      perfil: newPerfilNombre || prev.perfil,
+      pinPerfil: newPerfilPin || prev.pinPerfil,
+      costoServicio: newCostoPorPerfil || prev.costoServicio,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -248,10 +251,10 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         propietarioId: user.uid!,
         usuarioEmail: user.email!,
         fechaVencimiento,
-        cuentaId: cuentaId || undefined,
-        perfilNombre: perfilAsignado || undefined,
-        perfilPin: perfilPinSeleccionado || undefined,
-        costoPorPerfil: costoPorPerfil || undefined,
+        ...(cuentaId ? { cuentaId } : {}),
+        ...(perfilAsignado ? { perfilNombre: perfilAsignado } : {}),
+        ...(perfilPinSeleccionado ? { perfilPin: perfilPinSeleccionado } : {}),
+        ...(costoPorPerfil ? { costoPorPerfil } : {}),
       };
 
       // 🟢 Guardar venta
@@ -277,6 +280,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         propietarioId: user.uid,
         usuarioEmail: user.email,
         fechaVencimiento,
+        ...(cuentaId ? { cuentaId, perfilAsignado: perfilAsignado || '' } : {}),
       };
       try {
         await setDoc(clienteRef, clienteData, { merge: true });
@@ -483,10 +487,11 @@ export default function VentasForm({ initialData }: VentasFormProps) {
             />
           </div>
 
-          {permisos.puedeGestionarCuentas && venta.plataforma ? (
+          {/* Selector de cuentas propias — solo si hay plataforma y permisos */}
+          {permisos.puedeGestionarCuentas && venta.plataforma && (
             <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Cuenta a asignar
+                Tus cuentas disponibles
               </label>
               <SelectorCuenta
                 proveedor={venta.plataforma}
@@ -508,35 +513,35 @@ export default function VentasForm({ initialData }: VentasFormProps) {
                 </div>
               )}
             </div>
-          ) : (
-            <>
-              <div className="flex-1">
-                <InputLabel>Perfil</InputLabel>
-                <input
-                  type="text"
-                  name="perfil"
-                  value={venta.perfil}
-                  onChange={handleChange}
-                  placeholder="Principal"
-                  className="w-full"
-                />
-                <p className="text-xs text-gray-400 mt-1">Opcional</p>
-              </div>
-              <div className="flex-1">
-                <InputLabel>PIN del perfil</InputLabel>
-                <input
-                  type="text"
-                  name="pinPerfil"
-                  value={venta.pinPerfil}
-                  onChange={handleChange}
-                  placeholder="1234"
-                  className="w-full"
-                  maxLength={10}
-                />
-                <p className="text-xs text-gray-400 mt-1">Opcional</p>
-              </div>
-            </>
           )}
+          {/* Perfil y PIN — siempre visibles para datos manuales */}
+          <div className="flex gap-4 md:col-span-2">
+            <div className="flex-1">
+              <InputLabel>Perfil</InputLabel>
+              <input
+                type="text"
+                name="perfil"
+                value={venta.perfil}
+                onChange={handleChange}
+                placeholder="Principal"
+                className="w-full"
+              />
+              <p className="text-xs text-gray-400 mt-1">Opcional — se autocompleta si elegís una cuenta tuya</p>
+            </div>
+            <div className="flex-1">
+              <InputLabel>PIN del perfil</InputLabel>
+              <input
+                type="text"
+                name="pinPerfil"
+                value={venta.pinPerfil}
+                onChange={handleChange}
+                placeholder="1234"
+                className="w-full"
+                maxLength={10}
+              />
+              <p className="text-xs text-gray-400 mt-1">Opcional</p>
+            </div>
+          </div>
         </div>
 
         {/* Fecha de venta */}

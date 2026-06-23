@@ -8,6 +8,7 @@ import {
   addDoc,
   updateDoc,
   doc,
+  getDoc,
   serverTimestamp,
   type QuerySnapshot,
   type DocumentData,
@@ -116,6 +117,56 @@ export async function actualizarCuenta(id: string, data: UpdateCuentaInput): Pro
     ...data,
     updatedAt: serverTimestamp(),
   });
+}
+
+export async function asignarPerfil(
+  cuentaId: string,
+  idx: number,
+  clienteNombre: string,
+  propietarioId: string,
+): Promise<void> {
+  const hoy = new Date().toISOString().split('T')[0];
+  const cuentaRef = doc(db, 'cuentas', cuentaId);
+
+  // Leer documento actual para modificar el array en JS
+  const snap = await getDoc(cuentaRef);
+  if (!snap.exists()) throw new Error('La cuenta no existe');
+
+  const perfiles = snap.data().perfiles;
+  if (!Array.isArray(perfiles)) throw new Error('perfiles no es un array');
+  if (idx < 0 || idx >= perfiles.length) throw new Error(`Índice ${idx} fuera de rango (array de ${perfiles.length})`);
+
+  // Clonar y modificar el perfil específico
+  perfiles[idx] = {
+    ...perfiles[idx],
+    estado: 'asignado',
+    clienteNombre: clienteNombre,
+    fechaAsignacion: hoy,
+  };
+
+  // Si ya no quedan perfiles disponibles, la cuenta pasa a 'asignada'
+  const quedanDisponibles = perfiles.some(p => p.estado === 'disponible');
+
+  await updateDoc(cuentaRef, {
+    perfiles,
+    ...(quedanDisponibles ? {} : { estado: 'asignada' as const }),
+    updatedAt: serverTimestamp(),
+  });
+
+  // También actualizar el Cliente con cuentaId y perfil asignado
+  try {
+    const clienteRef = doc(db, 'clientes', `${propietarioId}_${clienteNombre}`);
+    const clienteSnap = await getDoc(clienteRef);
+    if (clienteSnap.exists()) {
+      await updateDoc(clienteRef, {
+        cuentaId,
+        perfilAsignado: perfiles[idx].nombre,
+      });
+    }
+  } catch (err) {
+    // Si falla (cliente no encontrado, reglas, etc.), no bloquear la asignación
+    console.warn('No se pudo actualizar el cliente con cuentaId:', err);
+  }
 }
 
 export async function toggleCuentaActiva(id: string, current: boolean): Promise<void> {

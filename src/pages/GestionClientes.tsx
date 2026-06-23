@@ -9,6 +9,7 @@ import usePermisos from '../hooks/usePermisos';
 import useCuentas from '../hooks/useCuentas';
 import Paginador from '../components/Paginador';
 import ConsultaInterna from '../components/ConsultaInterna';
+import DropdownMenu from '../components/DropdownMenu';
 import toast from 'react-hot-toast';
 import { Search, Download, MessageCircle, Calendar, Users, TrendingUp, X, AlertCircle, Edit, Mail, DollarSign, CheckCircle, UserCheck, AlertTriangle, RefreshCw, Sparkles, Link, Key, Copy, ExternalLink, Shield } from 'lucide-react';
 import type { Venta } from '../types/venta';
@@ -605,67 +606,51 @@ export default function GestionClientes() {
                       })()}
                     </td>
                     <td className="px-4 py-4">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => abrirEditar(c)}
-                          className="p-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors"
-                          title="Editar cliente"
-                        >
-                          <Edit size={18} />
-                        </button>
-                        <button
-                          onClick={() => abrirHistorial(c)}
-                          className="p-2 rounded-lg bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-colors"
-                          title="Ver historial"
-                        >
-                          <TrendingUp size={18} />
-                        </button>
-                        {c.saldoPendiente > 0 && (
-                          <button
-                            onClick={() => {
-                              setClienteCobrar(c);
-                              setMontoPago(String(c.saldoPendiente));
-                              setMostrarCobrar(true);
-                            }}
-                            className="p-2 rounded-lg bg-orange-100 text-orange-600 hover:bg-orange-200 transition-colors"
-                            title="Registrar pago"
-                          >
-                            <DollarSign size={18} />
-                          </button>
-                          )}
-                        <button
-                          onClick={() => navigate('/ventas', { state: { cliente: c } })}
-                          className="p-2 rounded-lg bg-amber-100 text-amber-600 hover:bg-amber-200 transition-colors"
-                          title="Renovar cliente"
-                        >
-                          <RefreshCw size={18} />
-                        </button>
-                        {c.cuentaId && (
-                          <button
-                            onClick={() => abrirConsultaCodigo(c)}
-                            className="p-2 rounded-lg bg-teal-100 text-teal-600 hover:bg-teal-200 transition-colors"
-                            title="Consultar código"
-                          >
-                            <Shield size={18} />
-                          </button>
-                        )}
-                        {c.cuentaId && permisos.puedeGenerarTokens && (
-                          <button
-                            onClick={() => generarLinkCodigos(c)}
-                            disabled={tokenGenerando}
-                            className="p-2 rounded-lg bg-purple-100 text-purple-600 hover:bg-purple-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="Generar link de códigos"
-                          >
-                            <Link size={18} />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => enviarWhatsApp(c)}
-                          className="p-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-colors"
-                          title="Contactar por WhatsApp"
-                        >
-                          <MessageCircle size={18} />
-                        </button>
+                      <div className="relative">
+                        <DropdownMenu
+                          actions={[
+                            {
+                              label: 'Editar cliente',
+                              icon: <Edit size={16} />,
+                              onClick: () => abrirEditar(c),
+                            },
+                            {
+                              label: 'Ver historial',
+                              icon: <TrendingUp size={16} />,
+                              onClick: () => abrirHistorial(c),
+                            },
+                            ...(c.saldoPendiente > 0 ? [{
+                              label: 'Registrar pago',
+                              icon: <DollarSign size={16} />,
+                              onClick: () => {
+                                setClienteCobrar(c);
+                                setMontoPago(String(c.saldoPendiente));
+                                setMostrarCobrar(true);
+                              },
+                            }] : []),
+                            {
+                              label: 'Renovar',
+                              icon: <RefreshCw size={16} />,
+                              onClick: () => navigate('/ventas', { state: { cliente: c } }),
+                            },
+                            ...(c.cuentaId ? [{
+                              label: 'Consultar código',
+                              icon: <Shield size={16} />,
+                              onClick: () => abrirConsultaCodigo(c),
+                            }] : []),
+                            ...(c.cuentaId && permisos.puedeGenerarTokens ? [{
+                              label: 'Generar link',
+                              icon: <Link size={16} />,
+                              onClick: () => generarLinkCodigos(c),
+                              disabled: tokenGenerando,
+                            }] : []),
+                            {
+                              label: 'WhatsApp',
+                              icon: <MessageCircle size={16} />,
+                              onClick: () => enviarWhatsApp(c),
+                            },
+                          ]}
+                        />
                       </div>
                     </td>
                   </tr>

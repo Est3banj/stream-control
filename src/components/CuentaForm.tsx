@@ -19,10 +19,12 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
   const [contrasena, setContrasena] = useState('');
   const [mostrarContrasena, setMostrarContrasena] = useState(false);
   const [costo, setCosto] = useState(initialData?.costo?.toString() || '');
-  const [tipoVenta, setTipoVenta] = useState<'perfiles' | 'completa'>(initialData?.tipoVenta || 'perfiles');
+
   const [estado, setEstado] = useState<'disponible' | 'asignada' | 'expirada'>(initialData?.estado || 'disponible');
   const [perfiles, setPerfiles] = useState<{ nombre: string; pin: string }[]>(
-    initialData?.perfiles?.map(p => ({ nombre: p.nombre, pin: p.pin })) || [{ nombre: '', pin: '' }]
+    Array.isArray(initialData?.perfiles)
+      ? initialData.perfiles.map(p => ({ nombre: p.nombre, pin: p.pin }))
+      : [{ nombre: '', pin: '' }]
   );
   const [otroProveedor, setOtroProveedor] = useState('');
   const [fechaInicio, setFechaInicio] = useState(initialData?.fechaInicio || '');
@@ -68,21 +70,17 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
       toast.error('El costo debe ser mayor a 0');
       return;
     }
-    if (tipoVenta === 'perfiles') {
-      const validos = perfiles.filter(p => p.nombre.trim());
-      if (validos.length === 0) {
-        toast.error('Agregá al menos un perfil con nombre');
-        return;
-      }
+    const validos = perfiles.filter(p => p.nombre.trim());
+    if (validos.length === 0) {
+      toast.error('Agregá al menos un perfil con nombre');
+      return;
     }
 
-    const perfilesData: PerfilCuenta[] = tipoVenta === 'perfiles'
-      ? perfiles.filter(p => p.nombre.trim()).map(p => ({
-          nombre: p.nombre.trim(),
-          pin: p.pin.trim(),
-          estado: 'disponible' as const,
-        }))
-      : [];
+    const perfilesData: PerfilCuenta[] = validos.map(p => ({
+      nombre: p.nombre.trim(),
+      pin: p.pin.trim(),
+      estado: 'disponible' as const,
+    }));
 
     const fechaVencimiento = fechaVencimientoCal || undefined;
     const fechaInicioVal = fechaInicio || undefined;
@@ -92,6 +90,7 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
       await onSubmit({
         costo: Number(costo),
         estado,
+        tipoVenta: 'perfiles',
         perfiles: perfilesData,
         fechaInicio: fechaInicioVal,
         diasServicio: diasServicioVal,
@@ -104,7 +103,7 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
         correoCuenta: correoCuenta.trim(),
         contrasena: contrasena.trim(),
         costo: Number(costo),
-        tipoVenta,
+        tipoVenta: 'perfiles',
         perfiles: perfilesData,
         estado: 'disponible' as const,
         fechaInicio: fechaInicioVal,
@@ -249,82 +248,51 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
         )}
       </div>
 
-      {/* Tipo de venta */}
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-3">Tipo de venta</label>
-        <div className="flex gap-4">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="radio"
-              name="tipoVenta"
-              value="perfiles"
-              checked={tipoVenta === 'perfiles'}
-              onChange={() => setTipoVenta('perfiles')}
-              className="w-4 h-4 text-indigo-600"
-            />
-            <span className="text-sm font-medium text-gray-700">Perfiles</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="radio"
-              name="tipoVenta"
-              value="completa"
-              checked={tipoVenta === 'completa'}
-              onChange={() => setTipoVenta('completa')}
-              className="w-4 h-4 text-indigo-600"
-            />
-            <span className="text-sm font-medium text-gray-700">Completa</span>
-          </label>
+      {/* Perfiles */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <label className="block text-sm font-semibold text-gray-700">Perfiles</label>
+          <button
+            type="button"
+            onClick={agregarPerfil}
+            className="text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"
+          >
+            <Plus size={16} />
+            Agregar perfil
+          </button>
         </div>
-      </div>
-
-      {/* Perfiles — solo si tipoVenta === 'perfiles' */}
-      {tipoVenta === 'perfiles' && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <label className="block text-sm font-semibold text-gray-700">Perfiles</label>
-            <button
-              type="button"
-              onClick={agregarPerfil}
-              className="text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"
-            >
-              <Plus size={16} />
-              Agregar perfil
-            </button>
-          </div>
-          {perfiles.map((perfil, idx) => (
-            <div key={idx} className="flex gap-2 items-start p-3 bg-gray-50 rounded-xl border border-gray-100">
-              <div className="flex-1">
-                <input
-                  type="text"
-                  value={perfil.nombre}
-                  onChange={(e) => actualizarPerfil(idx, 'nombre', e.target.value)}
-                  placeholder="Nombre del perfil"
-                  className="w-full"
-                />
-              </div>
-              <div className="w-24">
-                <input
-                  type="text"
-                  value={perfil.pin}
-                  onChange={(e) => actualizarPerfil(idx, 'pin', e.target.value)}
-                  placeholder="PIN"
-                  className="w-full"
-                />
-              </div>
-              {perfiles.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => quitarPerfil(idx)}
-                  className="p-2 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
-                >
-                  <Trash2 size={18} />
-                </button>
-              )}
+        {perfiles.map((perfil, idx) => (
+          <div key={idx} className="flex gap-2 items-start p-3 bg-gray-50 rounded-xl border border-gray-100">
+            <div className="flex-1">
+              <input
+                type="text"
+                value={perfil.nombre}
+                onChange={(e) => actualizarPerfil(idx, 'nombre', e.target.value)}
+                placeholder="Nombre del perfil"
+                className="w-full"
+              />
             </div>
-          ))}
-        </div>
-      )}
+            <div className="w-24">
+              <input
+                type="text"
+                value={perfil.pin}
+                onChange={(e) => actualizarPerfil(idx, 'pin', e.target.value)}
+                placeholder="PIN"
+                className="w-full"
+              />
+            </div>
+            {perfiles.length > 1 && (
+              <button
+                type="button"
+                onClick={() => quitarPerfil(idx)}
+                className="p-2 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+              >
+                <Trash2 size={18} />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
 
       {/* Estado — solo en edición */}
       {isEdit && (

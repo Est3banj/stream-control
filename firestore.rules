@@ -133,9 +133,10 @@ service cloud.firestore {
     
     match /clientes/{clienteId} {
       // Lectura: Usuario puede leer sus propios clientes, admin puede leer todos
+      // Si el documento no existe, resource es null y la regla debe permitirlo
       allow read: if isAuthenticated() && (
         isAdmin() || 
-        resource.data.propietarioId == getUserId()
+        (resource != null && resource.data.propietarioId == getUserId())
       );
       
       // Creación: setDoc desde VentasForm.jsx - requiere todos los campos
@@ -377,8 +378,12 @@ service cloud.firestore {
     // COLECCIÓN: tokens
     // ============================================
     match /tokens/{tokenId} {
+      // Lectura pública: cualquiera puede leer un token (para validarlo)
       allow read: if true;
-      allow create: if request.auth != null;
+      // Creación: SOLO la Cloud Function (Admin SDK) puede crear tokens
+      allow create: if false;
+      // Actualización: SOLO la Cloud Function revoca tokens (Admin SDK) o el frontend
+      // para revocar usos (updateDoc activo=false)
       allow update: if request.auth != null;
       allow delete: if false;
     }
