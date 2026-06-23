@@ -61,7 +61,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { to: '/ventas', icon: DollarSign, label: 'Ventas' },
         { to: '/reportes', icon: BarChart3, label: 'Reportes' },
         { to: '/GestionClientes', icon: Users, label: 'Clientes' },
-        ...(permisos.puedeGestionarCuentas ? [{ to: '/cuentas', icon: CreditCard, label: 'Cuentas' }] : []),
+        { to: '/cuentas', icon: CreditCard, label: 'Cuentas' },
         { to: '/ajustes', icon: Settings, label: 'Ajustes' },
       ];
 
