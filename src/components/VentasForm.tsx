@@ -322,6 +322,37 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         throw err;
       }
 
+      // 🟢 Marcar el perfil como asignado en la cuenta
+      if (cuentaId && perfilAsignado) {
+        try {
+          const cuentaRef = doc(db, 'cuentas', cuentaId);
+          const cuentaSnap = await getDoc(cuentaRef);
+          if (cuentaSnap.exists()) {
+            const perfiles = cuentaSnap.data().perfiles;
+            if (Array.isArray(perfiles)) {
+              const idx = perfiles.findIndex((p: { nombre: string }) => p.nombre === perfilAsignado);
+              if (idx !== -1) {
+                const hoy = new Date().toISOString().split('T')[0];
+                perfiles[idx] = {
+                  ...perfiles[idx],
+                  estado: 'asignado',
+                  clienteNombre: venta.nombre.trim(),
+                  fechaAsignacion: hoy,
+                };
+                const quedanDisponibles = perfiles.some((p: { estado: string }) => p.estado === 'disponible');
+                await updateDoc(cuentaRef, {
+                  perfiles,
+                  ...(quedanDisponibles ? {} : { estado: 'asignada' as const }),
+                  updatedAt: serverTimestamp(),
+                });
+              }
+            }
+          }
+        } catch (err) {
+          console.warn('⚠️ No se pudo marcar el perfil como asignado en la cuenta:', err);
+        }
+      }
+
       toast.success('Venta registrada correctamente');
 
       setVenta({
