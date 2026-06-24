@@ -385,17 +385,27 @@ export const onNotificacionEmail = functions
  * Envía un correo con un enlace para restablecer la contraseña.
  * Usa Firebase Admin SDK para generar el link + nuestro nodemailer para enviarlo.
  */
+// Rate limiting simple para recovery emails (en memoria, por email)
+const recoveryRateLimit = new Map<string, number>();
+
 export const enviarCorreoRecuperacion = functions
   .runWith({ secrets: ['SMTP_USER', 'SMTP_PASS'] })
   .https.onCall(async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión');
-    }
-
     const { email, nombre } = data;
     if (!email) {
       throw new functions.https.HttpsError('invalid-argument', 'Email es requerido');
     }
+
+    // Rate limiting: max 1 recovery email por email cada 60 segundos
+    const ahora = Date.now();
+    const ultimoEnvio = recoveryRateLimit.get(email);
+    if (ultimoEnvio && ahora - ultimoEnvio < 60_000) {
+      throw new functions.https.HttpsError(
+        'resource-exhausted',
+        'Esperá un minuto antes de solicitar otro correo de recuperación'
+      );
+    }
+    recoveryRateLimit.set(email, ahora);
 
     try {
       const resetLink = await admin.auth().generatePasswordResetLink(email, {
@@ -403,7 +413,6 @@ export const enviarCorreoRecuperacion = functions
       });
 
       await sendResetPasswordEmail(email, nombre || 'Usuario', resetLink);
-
       return { success: true };
     } catch (error) {
       console.error('❌ Error sending recovery email:', error);

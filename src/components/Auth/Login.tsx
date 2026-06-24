@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import { MONEDAS, MONEDA_POR_DEFECTO, TASA_POR_DEFECTO } from '../../types/usuario';
 
@@ -16,6 +17,7 @@ export default function Login(){
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [recuperando, setRecuperando] = useState(false);
 
   // Register fields
   const [regNombre, setRegNombre] = useState('');
@@ -91,6 +93,29 @@ export default function Login(){
     }
   };
 
+  const handleRecuperar = async () => {
+    if (!email.trim()) {
+      toast.error('Ingresá tu correo electrónico');
+      return;
+    }
+    setRecuperando(true);
+    try {
+      const functions = getFunctions();
+      const fn = httpsCallable(functions, 'enviarCorreoRecuperacion');
+      await fn({ email: email.trim() });
+      toast.success('Te enviamos un enlace para restablecer tu contraseña');
+    } catch (err: unknown) {
+      const error = err as { code?: string; message?: string };
+      if (error.code === 'functions/resource-exhausted') {
+        toast.error('Esperá un minuto antes de solicitar otro correo');
+      } else {
+        toast.error(error.message || 'Error al enviar el correo de recuperación');
+      }
+    } finally {
+      setRecuperando(false);
+    }
+  };
+
   const toggleModo = () => {
     setModo(modo === 'login' ? 'register' : 'login');
     setLoading(false);
@@ -148,6 +173,16 @@ export default function Login(){
                 tabIndex={-1}
               >
                 {showPassword ? 'Ocultar' : 'Mostrar'}
+              </button>
+            </div>
+            <div className="text-right -mt-4">
+              <button
+                type="button"
+                onClick={handleRecuperar}
+                disabled={recuperando}
+                className="text-white/60 hover:text-white text-xs transition-colors"
+              >
+                {recuperando ? 'Enviando...' : '¿Olvidaste tu contraseña?'}
               </button>
             </div>
             <button 
