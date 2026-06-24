@@ -487,7 +487,7 @@ export const generarTokenSubdistribuidor = functions
     }
 
     const uid = context.auth.uid;
-    const { cuentaId, perfilNombre, expiraEn } = data;
+    const { cuentaId, perfilNombre, expiraEn, clienteNombre } = data;
 
     if (!cuentaId || !expiraEn) {
       throw new functions.https.HttpsError('invalid-argument', 'cuentaId y expiraEn son requeridos');
@@ -516,7 +516,7 @@ export const generarTokenSubdistribuidor = functions
       cuentaId,
       perfilNombre: perfilNombre || null,
       clienteId: '',
-      clienteNombre: '',
+      clienteNombre: clienteNombre || '',
       vendedorId: uid,
       expiraEn: expiraDate.toISOString(),
       activo: true,

@@ -43,6 +43,7 @@ export default function ConsultaCodigos() {
   const [linkExpira, setLinkExpira] = useState('');
   const [totalRecibido, setTotalRecibido] = useState(0);
   const [cantidad, setCantidad] = useState(1);
+  const [nombreSub, setNombreSub] = useState('');
 
   const cuentasConIMAP = useMemo(() =>
     cuentas.filter(c => c.estado !== 'expirada'),
@@ -104,7 +105,7 @@ export default function ConsultaCodigos() {
       const expiraEn = new Date(Date.now() + diasAcceso * 24 * 60 * 60 * 1000).toISOString();
       const functions = getFunctions();
       const fn = httpsCallable(functions, 'generarTokenSubdistribuidor');
-      const result = await fn({ cuentaId, expiraEn });
+      const result = await fn({ cuentaId, expiraEn, clienteNombre: nombreSub.trim() || 'Sub-distribuidor' });
       const data = result.data as Record<string, unknown>;
 
       const url = `${window.location.origin}${data.url}`;
@@ -334,7 +335,19 @@ export default function ConsultaCodigos() {
           </div>
 
           {/* Valores financieros */}
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Nombre del sub-distribuidor
+              </label>
+              <input
+                type="text"
+                value={nombreSub}
+                onChange={e => setNombreSub(e.target.value)}
+                className="w-full"
+                placeholder="Ej: Juan Pérez"
+              />
+            </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Cantidad de perfiles
@@ -348,6 +361,8 @@ export default function ConsultaCodigos() {
                 placeholder="1"
               />
             </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Total recibido $
@@ -463,7 +478,7 @@ export default function ConsultaCodigos() {
           <div className="px-6 py-4 border-b border-gray-100">
             <h2 className="text-lg font-semibold text-gray-900">Links para sub-distribuidores</h2>
           </div>
-          {tokens.filter(t => !t.clienteId && !t.clienteNombre).length === 0 ? (
+          {tokens.filter(t => !t.clienteId).length === 0 ? (
             <div className="p-6 text-center">
               <p className="text-sm text-gray-400 italic">No hay links generados</p>
             </div>
@@ -472,15 +487,17 @@ export default function ConsultaCodigos() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-100">
+                    <th className="px-6 py-3 text-left font-semibold text-gray-600">Nombre</th>
                     <th className="px-6 py-3 text-left font-semibold text-gray-600">Proveedor</th>
                     <th className="px-6 py-3 text-center font-semibold text-gray-600">Estado</th>
                     <th className="px-6 py-3 text-right font-semibold text-gray-600">Expira</th>
+                    <th className="px-6 py-3 text-center font-semibold text-gray-600">ID</th>
                     <th className="px-6 py-3 text-center font-semibold text-gray-600">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {tokens
-                    .filter(t => !t.clienteId && !t.clienteNombre)
+                    .filter(t => !t.clienteId)
                     .sort((a, b) => new Date(b.createdAt as unknown as string).getTime() - new Date(a.createdAt as unknown as string).getTime())
                     .slice(0, 20)
                     .map(token => {
@@ -491,7 +508,10 @@ export default function ConsultaCodigos() {
                       return (
                         <tr key={token.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                           <td className="px-6 py-4">
-                            <span className="font-semibold text-gray-900">{proveedor}</span>
+                            <span className="font-semibold text-gray-900">{token.clienteNombre || '—'}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="text-gray-700">{proveedor}</span>
                           </td>
                           <td className="px-6 py-4 text-center">
                             <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${
@@ -506,6 +526,9 @@ export default function ConsultaCodigos() {
                           </td>
                           <td className="px-6 py-4 text-right text-gray-500">
                             {new Date(token.expiraEn).toLocaleDateString('es-CO')}
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <code className="text-xs text-gray-400 font-mono">{token.id.slice(0, 8)}</code>
                           </td>
                           <td className="px-6 py-4">
                             <DropdownMenu
