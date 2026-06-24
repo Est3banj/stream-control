@@ -40,7 +40,7 @@ export default function ConsultaCodigos() {
   const [diasAcceso, setDiasAcceso] = useState(30);
   const [linkGenerado, setLinkGenerado] = useState('');
   const [linkExpira, setLinkExpira] = useState('');
-  const [precioVenta, setPrecioVenta] = useState(0);
+  const [totalRecibido, setTotalRecibido] = useState(0);
   const [cantidad, setCantidad] = useState(1);
 
   const cuentasConIMAP = useMemo(() =>
@@ -62,9 +62,9 @@ export default function ConsultaCodigos() {
       : cuentaSeleccionada.costo;
   }, [cuentaSeleccionada]);
 
-  const totalVenta = precioVenta * cantidad;
   const totalCosto = costoServicio * cantidad;
-  const utilidad = totalVenta - totalCosto;
+  const precioPorPerfil = cantidad > 0 ? Math.round(totalRecibido / cantidad) : 0;
+  const utilidad = totalRecibido - totalCosto;
 
   const consultarCodigo = async () => {
     if (!cuentaId || !selectedCaso) return;
@@ -111,7 +111,7 @@ export default function ConsultaCodigos() {
       setLinkExpira(new Date(expiraEn).toLocaleDateString('es-CO'));
 
       // 🟢 Registrar venta de cuenta/subdistribuidor
-      if (precioVenta > 0 && user) {
+      if (totalRecibido > 0 && user) {
         try {
           await addDoc(collection(db, 'ventas'), {
             nombre: 'Sub-distribuidor',
@@ -119,7 +119,7 @@ export default function ConsultaCodigos() {
             correo: '',
             plataforma: cuentaSeleccionada?.proveedor || '',
             pantallas: cantidad,
-            precioVenta,
+            precioVenta: precioPorPerfil,
             costoServicio: totalCosto,
             utilidad,
             fechaInicio: new Date().toISOString().split('T')[0],
@@ -142,7 +142,7 @@ export default function ConsultaCodigos() {
           // 🟢 Registrar movimiento financiero
           await addDoc(collection(db, 'movimientos'), {
             tipo: 'Ingreso',
-            monto: totalVenta,
+            monto: totalRecibido,
             descripcion: `Venta ${cantidad} perfil(es) ${cuentaSeleccionada?.proveedor || ''} (Sub-distribuidor)`,
             fecha: serverTimestamp(),
             propietarioId: user.uid,
@@ -326,23 +326,8 @@ export default function ConsultaCodigos() {
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Precio x perfil <span className="text-red-500">*</span>
+                Cantidad de perfiles
               </label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
-                <input
-                  type="number"
-                  value={precioVenta}
-                  onChange={e => setPrecioVenta(Number(e.target.value))}
-                  className="w-full pl-7"
-                  min="0"
-                  step="100"
-                  placeholder="0"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Cantidad</label>
               <input
                 type="number"
                 value={cantidad}
@@ -353,13 +338,30 @@ export default function ConsultaCodigos() {
               />
             </div>
             <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Total recibido $
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
+                <input
+                  type="number"
+                  value={totalRecibido}
+                  onChange={e => setTotalRecibido(Number(e.target.value))}
+                  className="w-full pl-7"
+                  min="0"
+                  step="100"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+            <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Costo total</label>
               <div className="flex items-center h-[42px] px-4 bg-gray-50 rounded-xl border border-gray-200 text-sm font-semibold text-gray-500">
                 ${totalCosto.toLocaleString()}
               </div>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Utilidad total</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Utilidad</label>
               <div className={`flex items-center h-[42px] px-4 rounded-xl border text-sm font-bold ${
                 utilidad >= 0
                   ? 'bg-green-50 border-green-200 text-green-700'
@@ -369,9 +371,11 @@ export default function ConsultaCodigos() {
               </div>
             </div>
           </div>
-          <p className="text-xs text-gray-400 mb-6 text-right">
-            {cantidad} perfil(es) × ${precioVenta.toLocaleString()} = ${totalVenta.toLocaleString()}
-          </p>
+          {totalRecibido > 0 && cantidad > 0 && (
+            <p className="text-xs text-gray-400 mb-6 text-right">
+              ${totalRecibido.toLocaleString()} ÷ {cantidad} = ${precioPorPerfil.toLocaleString()} x perfil
+            </p>
+          )}
 
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Duración del acceso</h2>
 
