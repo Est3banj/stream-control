@@ -26,9 +26,9 @@ export default function Reportes() {
     let data = todasLasVentas as Venta[];
 
     if (tipoVenta === 'clientes') {
-      data = data.filter(v => v.nombre !== 'Sub-distribuidor');
+      data = data.filter(v => !v.esSubdistribuidor);
     } else if (tipoVenta === 'subdistribuidor') {
-      data = data.filter(v => v.nombre === 'Sub-distribuidor');
+      data = data.filter(v => v.esSubdistribuidor);
     }
 
     if (fechaInicio && fechaFin) {

@@ -117,7 +117,7 @@ export default function ConsultaCodigos() {
       if (totalRecibido > 0 && user) {
         try {
           await addDoc(collection(db, 'ventas'), {
-            nombre: 'Sub-distribuidor',
+            nombre: nombreSub.trim() || 'Sub-distribuidor',
             telefono: '0000000000',
             correo: '',
             plataforma: cuentaSeleccionada?.proveedor || '',
@@ -140,6 +140,7 @@ export default function ConsultaCodigos() {
             cuentaId,
             tokenGenerado: data.token as string,
             costoPorPerfil: costoServicio,
+            esSubdistribuidor: true,
           });
 
           // 🟢 Registrar movimiento financiero

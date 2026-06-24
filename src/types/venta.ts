@@ -27,6 +27,7 @@ export interface Venta {
   perfilPin?: string;
   tokenGenerado?: string;
   costoPorPerfil?: number;
+  esSubdistribuidor?: boolean;
 }
 
 export type VentaInput = Omit<Venta, 'id' | 'fechaRegistro' | 'fechaRegistroSistema' | 'utilidad'> & {
