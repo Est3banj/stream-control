@@ -223,6 +223,8 @@ export const generarNotificacionesVencimientos = functions
         .where('estado', '==', 'activa')
         .get();
 
+      let autoExpiradas = 0;
+
       for (const susDoc of suscripcionesSnapshot.docs) {
         const sus = susDoc.data() as admin.firestore.DocumentData;
         const fechaFin = (sus.fechaFin as admin.firestore.Timestamp).toDate();
@@ -230,6 +232,13 @@ export const generarNotificacionesVencimientos = functions
 
         const diffTime = fechaFin.getTime() - hoy.getTime();
         const diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        // ⏰ Si ya venció → marcar como expirada automáticamente
+        if (diasRestantes < 0) {
+          await susDoc.ref.update({ estado: 'expirada' });
+          autoExpiradas++;
+          continue; // saltamos notificación, ya está expirada
+        }
 
         if (diasRestantes >= 0 && diasRestantes <= 3) {
           const hoyStr = hoy.toISOString().split('T')[0];
@@ -335,7 +344,7 @@ export const generarNotificacionesVencimientos = functions
         await batch.commit();
       }
 
-      console.log(`✅ ${notificacionesCreadas} notifs Firestore, ${telegramEnviados} Telegram vencimientos, ${morasNotificadas} Telegram moras`);
+      console.log(`✅ ${notificacionesCreadas} notifs Firestore, ${telegramEnviados} Telegram vencimientos, ${morasNotificadas} Telegram moras, ${autoExpiradas} suscripciones auto-expiradas`);
       return null;
     } catch (error) {
       console.error('❌ Error generando notificaciones:', error);
