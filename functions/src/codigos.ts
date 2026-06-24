@@ -519,6 +519,32 @@ export const generarTokenSubdistribuidor = functions
       throw new functions.https.HttpsError('invalid-argument', 'cuentaId y expiraEn son requeridos');
     }
 
+    // Verificar suscripción Enterprise (misma lógica que generarToken)
+    const userDoc = await db.collection('usuarios').doc(uid).get();
+    if (!userDoc.exists) {
+      throw new functions.https.HttpsError('permission-denied', 'Usuario no encontrado');
+    }
+
+    const suscripcionSnapshot = await db.collection('suscripciones').get();
+    const suscripcionActiva = suscripcionSnapshot.docs
+      .map(d => d.data())
+      .find((s: any) => s.usuarioId === uid && s.estado === 'activa');
+
+    if (!suscripcionActiva) {
+      throw new functions.https.HttpsError(
+        'permission-denied',
+        'Se requiere plan Enterprise para generar links para sub-distribuidores'
+      );
+    }
+
+    const plan = ((suscripcionActiva as any).planNombre as string)?.toLowerCase() || '';
+    if (!plan.includes('enterprise')) {
+      throw new functions.https.HttpsError(
+        'permission-denied',
+        'Se requiere plan Enterprise para generar links para sub-distribuidores'
+      );
+    }
+
     // Verificar que la cuenta existe y pertenece al usuario
     const cuentaDoc = await db.collection('cuentas').doc(cuentaId).get();
     if (!cuentaDoc.exists) {
