@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { AlertCircle, Loader2, Search, RefreshCw, WifiOff, Timer } from 'lucide-react';
+import { AlertCircle, Loader2, Search, RefreshCw, WifiOff, Timer, MessageCircle } from 'lucide-react';
 import CasoSelector from '../components/CasoSelector';
 import CodeResult from '../components/CodeResult';
+import { useAdminConfig, sanitizarWhatsApp } from '../hooks/useAdminConfig';
 
 type PageState = 'validating' | 'invalid' | 'ready' | 'consulting' | 'result' | 'error';
 
@@ -16,6 +17,8 @@ function isNetworkError(err: unknown): boolean {
 
 export default function ConsultaPublica() {
   const { token } = useParams<{ token: string }>();
+  const { config } = useAdminConfig();
+  const whatsappNumber = config.whatsapp ? sanitizarWhatsApp(config.whatsapp) : '';
   const [state, setState] = useState<PageState>('validating');
   const [proveedor, setProveedor] = useState('');
   const [casos, setCasos] = useState<string[]>([]);
@@ -284,6 +287,19 @@ export default function ConsultaPublica() {
           Stream Control — Consulta de códigos de verificación
         </p>
       </div>
+
+      {/* 🔷 Botón flotante de soporte por WhatsApp */}
+      {whatsappNumber && (
+        <a
+          href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Hola, necesito ayuda con el servicio de streaming.')}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-5 py-3 rounded-full shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 bg-[#25D366] text-white hover:bg-[#20bd5a]"
+        >
+          <MessageCircle size={20} />
+          <span className="text-sm font-semibold whitespace-nowrap">Chateá con soporte</span>
+        </a>
+      )}
     </div>
   );
 }
