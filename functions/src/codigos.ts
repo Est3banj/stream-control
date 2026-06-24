@@ -406,6 +406,26 @@ export const toggleToken = functions
     return { success: true, activo };
   });
 
+// Rate limiting para consultarCodigoDirecto (por usuario y por cuenta)
+const consultaDirectaLimits = {
+  user: new Map<string, number[]>(),
+  cuenta: new Map<string, number[]>(),
+};
+
+function checkRateLimit(map: Map<string, number[]>, key: string, maxRequests: number, windowMs: number): void {
+  const ahora = Date.now();
+  const timestamps = map.get(key) || [];
+  const ventana = timestamps.filter(t => ahora - t < windowMs);
+  if (ventana.length >= maxRequests) {
+    throw new functions.https.HttpsError(
+      'resource-exhausted',
+      'Demasiadas consultas. Esperá un momento antes de intentar de nuevo.'
+    );
+  }
+  ventana.push(ahora);
+  map.set(key, ventana);
+}
+
 export const consultarCodigoDirecto = functions
   .runWith({ timeoutSeconds: 60, memory: '256MB' })
   .https.onCall(async (data, context) => {
@@ -420,6 +440,9 @@ export const consultarCodigoDirecto = functions
       throw new functions.https.HttpsError('invalid-argument', 'cuentaId y caso son requeridos');
     }
 
+    // Rate limiting: max 10 consultas por usuario por minuto
+    checkRateLimit(consultaDirectaLimits.user, uid, 10, 60_000);
+
     // Verificar que la cuenta existe y pertenece al usuario
     const cuentaDoc = await db.collection('cuentas').doc(cuentaId).get();
     if (!cuentaDoc.exists) {
@@ -430,6 +453,9 @@ export const consultarCodigoDirecto = functions
     if (cuentaData.propietarioId !== uid) {
       throw new functions.https.HttpsError('permission-denied', 'No tienes permisos sobre esta cuenta');
     }
+
+    // Rate limiting: max 5 consultas por cuenta por minuto (protección IMAP)
+    checkRateLimit(consultaDirectaLimits.cuenta, cuentaId, 5, 60_000);
 
     const servicio = cuentaData.proveedor as string;
 
