@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import useCuentas from '../hooks/useCuentas';
+import useTokens, { revocarToken, reactivarToken } from '../hooks/useTokens';
 import usePermisos from '../hooks/usePermisos';
 import FeatureBlocked from '../components/FeatureBlocked';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { Copy, Loader2, AlertCircle, Monitor, Calendar } from 'lucide-react';
+import { Copy, Loader2, AlertCircle, Monitor, Calendar, Link as LinkIcon, X, RefreshCw, ExternalLink } from 'lucide-react';
 import { CASE_OPTIONS, CASE_LABELS } from '../components/CasoSelector';
 import toast from 'react-hot-toast';
 
@@ -21,6 +22,7 @@ type Estado = 'idle' | 'consulting' | 'result' | 'error' | 'generating';
 export default function ConsultaCodigos() {
   const { user } = useAuth();
   const { cuentas } = useCuentas(user);
+  const { tokens } = useTokens(user);
   const permisos = usePermisos(user);
 
   const [cuentaId, setCuentaId] = useState('');
@@ -319,6 +321,88 @@ export default function ConsultaCodigos() {
           )}
         </div>
       )}
+
+      {/* Links activos */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Links activos</h2>
+        {tokens.length === 0 ? (
+          <p className="text-sm text-gray-500 italic text-center py-4">No hay tokens generados</p>
+        ) : (
+          <div className="space-y-3">
+            {tokens
+              .filter(t => !t.clienteId && !t.clienteNombre)
+              .sort((a, b) => new Date(b.createdAt as unknown as string).getTime() - new Date(a.createdAt as unknown as string).getTime())
+              .slice(0, 20)
+              .map(token => {
+                const expirado = new Date(token.expiraEn) < new Date();
+                return (
+                  <div key={token.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 gap-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">
+                        {token.cuentaId ? cuentas.find(c => c.id === token.cuentaId)?.proveedor || 'Cuenta' : '—'}
+                      </p>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                          expirado
+                            ? 'bg-red-100 text-red-600'
+                            : token.activo
+                              ? 'bg-green-100 text-green-600'
+                              : 'bg-gray-100 text-gray-500'
+                        }`}>
+                          {expirado ? 'Vencido' : token.activo ? 'Activo' : 'Revocado'}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          Expira: {new Date(token.expiraEn).toLocaleDateString('es-CO')}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <button
+                        onClick={() => {
+                          const url = `${window.location.origin}/r/${token.id}`;
+                          navigator.clipboard.writeText(url);
+                          toast.success('Link copiado');
+                        }}
+                        className="p-2 rounded-lg bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-colors"
+                        title="Copiar link"
+                      >
+                        <Copy size={16} />
+                      </button>
+                      {token.activo && !expirado && (
+                        <button
+                          onClick={async () => {
+                            try {
+                              await revocarToken(token.id);
+                              toast.success('Token revocado');
+                            } catch { toast.error('Error al revocar'); }
+                          }}
+                          className="p-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
+                          title="Revocar"
+                        >
+                          <X size={16} />
+                        </button>
+                      )}
+                      {(!token.activo || expirado) && (
+                        <button
+                          onClick={async () => {
+                            try {
+                              await reactivarToken(token.id);
+                              toast.success('Token reactivado');
+                            } catch { toast.error('Error al reactivar'); }
+                          }}
+                          className="p-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-colors"
+                          title="Reactivar"
+                        >
+                          <RefreshCw size={16} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
