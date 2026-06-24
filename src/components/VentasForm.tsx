@@ -3,6 +3,8 @@ import { db } from '../firebase';
 import { collection, addDoc, setDoc, doc, serverTimestamp, getDoc, increment, updateDoc, query, where, getDocs } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import usePermisos from '../hooks/usePermisos';
+import SelectorCuenta from '../components/SelectorCuenta';
+import { Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { VentaInput } from '../types/venta';
 
@@ -61,14 +63,19 @@ export default function VentasForm({ initialData }: VentasFormProps) {
   const [utilidad, setUtilidad] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [mostrarFechaVenta, setMostrarFechaVenta] = useState(false);
+  const [cuentaId, setCuentaId] = useState<string | null>(null);
+  const [perfilAsignado, setPerfilAsignado] = useState<string | null>(null);
+  const [perfilPinSeleccionado, setPerfilPinSeleccionado] = useState<string | null>(null);
+  const [costoPorPerfil, setCostoPorPerfil] = useState<number>(0);
 
   // 🧮 Calcula utilidad
   useEffect(() => {
     const p = Number(venta.precioVenta) || 0;
     const c = Number(venta.costoServicio) || 0;
     const pant = Number(venta.pantallas) || 0;
-    setUtilidad((pant * p) - c);
-  }, [venta.precioVenta, venta.costoServicio, venta.pantallas]);
+    const cp = costoPorPerfil || 0;
+    setUtilidad((pant * p) - (cp || c));
+  }, [venta.precioVenta, venta.costoServicio, venta.pantallas, costoPorPerfil]);
 
   const handleToggleFechaVenta = (e: React.ChangeEvent<HTMLInputElement>) => {
     const checked = e.target.checked;
@@ -127,6 +134,19 @@ export default function VentasForm({ initialData }: VentasFormProps) {
     } catch (error: unknown) {
       console.error('Error buscando por teléfono:', error);
     }
+  };
+
+  const handleCuentaSelected = (newCuentaId: string | null, newPerfilNombre: string | null, newPerfilPin: string | null, newCostoPorPerfil: number) => {
+    setCuentaId(newCuentaId);
+    setPerfilAsignado(newPerfilNombre);
+    setPerfilPinSeleccionado(newPerfilPin);
+    setCostoPorPerfil(newCostoPorPerfil);
+    setVenta(prev => ({
+      ...prev,
+      perfil: newPerfilNombre || prev.perfil,
+      pinPerfil: newPerfilPin || prev.pinPerfil,
+      costoServicio: newCostoPorPerfil || prev.costoServicio,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -231,6 +251,10 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         propietarioId: user.uid!,
         usuarioEmail: user.email!,
         fechaVencimiento,
+        ...(cuentaId ? { cuentaId } : {}),
+        ...(perfilAsignado ? { perfilNombre: perfilAsignado } : {}),
+        ...(perfilPinSeleccionado ? { perfilPin: perfilPinSeleccionado } : {}),
+        ...(costoPorPerfil ? { costoPorPerfil } : {}),
       };
 
       // 🟢 Guardar venta
@@ -256,6 +280,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         propietarioId: user.uid,
         usuarioEmail: user.email,
         fechaVencimiento,
+        ...(cuentaId ? { cuentaId, perfilAsignado: perfilAsignado || '' } : {}),
       };
       try {
         await setDoc(clienteRef, clienteData, { merge: true });
@@ -297,6 +322,37 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         throw err;
       }
 
+      // 🟢 Marcar el perfil como asignado en la cuenta
+      if (cuentaId && perfilAsignado) {
+        try {
+          const cuentaRef = doc(db, 'cuentas', cuentaId);
+          const cuentaSnap = await getDoc(cuentaRef);
+          if (cuentaSnap.exists()) {
+            const perfiles = cuentaSnap.data().perfiles;
+            if (Array.isArray(perfiles)) {
+              const idx = perfiles.findIndex((p: { nombre: string }) => p.nombre === perfilAsignado);
+              if (idx !== -1) {
+                const hoy = new Date().toISOString().split('T')[0];
+                perfiles[idx] = {
+                  ...perfiles[idx],
+                  estado: 'asignado',
+                  clienteNombre: venta.nombre.trim(),
+                  fechaAsignacion: hoy,
+                };
+                const quedanDisponibles = perfiles.some((p: { estado: string }) => p.estado === 'disponible');
+                await updateDoc(cuentaRef, {
+                  perfiles,
+                  ...(quedanDisponibles ? {} : { estado: 'asignada' as const }),
+                  updatedAt: serverTimestamp(),
+                });
+              }
+            }
+          }
+        } catch (err) {
+          console.warn('⚠️ No se pudo marcar el perfil como asignado en la cuenta:', err);
+        }
+      }
+
       toast.success('Venta registrada correctamente');
 
       setVenta({
@@ -317,6 +373,10 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       });
       setUtilidad(0);
       setMostrarFechaVenta(false);
+      setCuentaId(null);
+      setPerfilAsignado(null);
+      setPerfilPinSeleccionado(null);
+      setCostoPorPerfil(0);
 
     } catch (error: unknown) {
       console.error('❌ Error al registrar la venta:', error);
@@ -458,7 +518,35 @@ export default function VentasForm({ initialData }: VentasFormProps) {
             />
           </div>
 
-          <div className="flex gap-4">
+          {/* Selector de cuentas propias — solo si hay plataforma y permisos */}
+          {permisos.puedeGestionarCuentas && venta.plataforma && (
+            <div className="md:col-span-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Tus cuentas disponibles
+              </label>
+              <SelectorCuenta
+                proveedor={venta.plataforma}
+                onCuentaSelected={handleCuentaSelected}
+              />
+              {cuentaId && perfilAsignado && (
+                <div className="mt-3 flex items-center gap-3 p-3 bg-indigo-50 rounded-xl border border-indigo-100">
+                  <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                    <Check size={16} className="text-indigo-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-indigo-900">
+                      {venta.plataforma} — {perfilAsignado}
+                    </p>
+                    <p className="text-xs text-indigo-600">
+                      Costo: ${costoPorPerfil.toLocaleString()} por perfil
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          {/* Perfil y PIN — siempre visibles para datos manuales */}
+          <div className="flex gap-4 md:col-span-2">
             <div className="flex-1">
               <InputLabel>Perfil</InputLabel>
               <input
@@ -469,7 +557,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
                 placeholder="Principal"
                 className="w-full"
               />
-              <p className="text-xs text-gray-400 mt-1">Opcional</p>
+              <p className="text-xs text-gray-400 mt-1">Opcional — se autocompleta si elegís una cuenta tuya</p>
             </div>
             <div className="flex-1">
               <InputLabel>PIN del perfil</InputLabel>

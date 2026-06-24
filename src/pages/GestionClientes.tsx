@@ -4,10 +4,14 @@ import { db } from '../firebase';
 import { collection, query, where, onSnapshot, updateDoc, doc, increment, addDoc, serverTimestamp, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import useClientes from '../hooks/useClientes';
+import useTokens, { generarToken, revocarToken } from '../hooks/useTokens';
 import usePermisos from '../hooks/usePermisos';
+import useCuentas from '../hooks/useCuentas';
 import Paginador from '../components/Paginador';
+import ConsultaInterna from '../components/ConsultaInterna';
+import DropdownMenu from '../components/DropdownMenu';
 import toast from 'react-hot-toast';
-import { Search, Download, MessageCircle, Calendar, Users, TrendingUp, X, AlertCircle, Edit, Mail, DollarSign, CheckCircle, UserCheck, AlertTriangle, RefreshCw, Sparkles } from 'lucide-react';
+import { Search, Download, MessageCircle, Calendar, Users, TrendingUp, X, AlertCircle, Edit, Mail, DollarSign, CheckCircle, UserCheck, AlertTriangle, RefreshCw, Sparkles, Link, Key, Copy, ExternalLink, Shield } from 'lucide-react';
 import type { Venta } from '../types/venta';
 import type { Cliente } from '../types/cliente';
 
@@ -16,6 +20,8 @@ export default function GestionClientes() {
   const { user } = useAuth();
   const { clientes: todosLosClientes, loading, error } = useClientes(user);
   const permisos = usePermisos(user);
+  const { tokens: todosLosTokens } = useTokens(user);
+  const { cuentas } = useCuentas(user);
   const [clientes, setClientes] = useState<{ activos: Cliente[]; inactivos: Cliente[]; todos: Cliente[] }>({ activos: [], inactivos: [], todos: [] });
   const [filtro, setFiltro] = useState<'activos' | 'inactivos' | 'todos'>('activos');
   const [busqueda, setBusqueda] = useState('');
@@ -36,6 +42,13 @@ export default function GestionClientes() {
   const [paginaActual, setPaginaActual] = useState(1);
   const [itemsPorPagina, setItemsPorPagina] = useState(10);
   const historialUnsubscribeRef = useRef<(() => void) | null>(null);
+  const [mostrarTokenModal, setMostrarTokenModal] = useState(false);
+  const [tokenGeneradoURL, setTokenGeneradoURL] = useState('');
+  const [tokenGenerando, setTokenGenerando] = useState(false);
+  const [mostrarConsultaCodigo, setMostrarConsultaCodigo] = useState(false);
+  const [consultaData, setConsultaData] = useState<{ clienteNombre: string; proveedor: string; correoCuenta: string; tokenId: string } | null>(null);
+  const [confirmarRevocar, setConfirmarRevocar] = useState<{ tokenId: string; clienteNombre: string } | null>(null);
+  const [revocando, setRevocando] = useState(false);
 
   // Clasificar clientes cuando cambian los datos (incluye array vacío)
   useEffect(() => {
@@ -252,6 +265,74 @@ export default function GestionClientes() {
     }
   };
 
+  const generarLinkCodigos = async (cliente: Cliente) => {
+    if (!user || !cliente.cuentaId) return;
+    setTokenGenerando(true);
+    try {
+      const linkData = {
+        token: '',
+        cuentaId: cliente.cuentaId,
+        perfilNombre: cliente.perfilAsignado || '',
+        clienteId: cliente.id,
+        clienteNombre: cliente.nombre,
+        vendedorId: user.uid!,
+        expiraEn: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        activo: true,
+      };
+      const docId = await generarToken(linkData);
+      const url = `${window.location.origin}/r/${docId}`;
+      setTokenGeneradoURL(url);
+      setMostrarTokenModal(true);
+    } catch (err) {
+      console.error('Error generando token:', err);
+      toast.error('Error al generar el link de códigos');
+    } finally {
+      setTokenGenerando(false);
+    }
+  };
+
+  const copiarTokenURL = () => {
+    navigator.clipboard.writeText(tokenGeneradoURL);
+    toast.success('Link copiado al portapapeles');
+  };
+
+  const handleRevocarToken = async () => {
+    if (!confirmarRevocar) return;
+    setRevocando(true);
+    try {
+      await revocarToken(confirmarRevocar.tokenId);
+      toast.success('Token revocado correctamente');
+      setConfirmarRevocar(null);
+    } catch (err) {
+      console.error('Error revocando token:', err);
+      toast.error('Error al revocar el token');
+    } finally {
+      setRevocando(false);
+    }
+  };
+
+  const abrirConsultaCodigo = (cliente: Cliente) => {
+    const tokenCliente = todosLosTokens.find(
+      t => t.clienteId === cliente.id && t.activo
+    );
+    if (!tokenCliente) {
+      toast.error('Este cliente no tiene un token activo. Generá un link primero.');
+      return;
+    }
+    const cuenta = cuentas.find(c => c.id === tokenCliente.cuentaId);
+    if (!cuenta) {
+      toast.error('No se encontró la cuenta asociada');
+      return;
+    }
+    setConsultaData({
+      clienteNombre: cliente.nombre,
+      proveedor: cuenta.proveedor,
+      correoCuenta: cuenta.correoCuenta,
+      tokenId: tokenCliente.id,
+    });
+    setMostrarConsultaCodigo(true);
+  };
+
   const abrirHistorial = (cliente: Cliente) => {
     setClienteSeleccionado(cliente);
     setMostrarHistorial(true);
@@ -415,9 +496,11 @@ export default function GestionClientes() {
                 )}
                 <th className="px-4 py-4 text-left text-sm font-semibold">Contacto</th>
                 <th className="px-4 py-4 text-left text-sm font-semibold">Plataforma</th>
+                <th className="px-4 py-4 text-left text-sm font-semibold">Cuenta</th>
                 <th className="px-4 py-4 text-left text-sm font-semibold">Vencimiento</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Días Restantes</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Estado Pago</th>
+                <th className="px-4 py-4 text-center text-sm font-semibold">Token</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Acciones</th>
               </tr>
             </thead>
@@ -446,6 +529,16 @@ export default function GestionClientes() {
                       <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-sm font-medium">
                         {c.plataforma || '—'}
                       </span>
+                    </td>
+                    <td className="px-4 py-4">
+                      {c.cuentaId ? (
+                        <div className="text-sm text-gray-700">
+                          <div className="font-medium text-indigo-600">{c.perfilAsignado || '—'}</div>
+                          <div className="text-xs text-gray-400 mt-0.5">Cuenta asignada</div>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-400">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-2 text-gray-700">
@@ -479,56 +572,92 @@ export default function GestionClientes() {
                         </span>
                       )}
                     </td>
+                    <td className="px-4 py-4 text-center">
+                      {(() => {
+                        const tokenCliente = todosLosTokens.find(
+                          t => t.clienteId === c.id && t.activo
+                        );
+                        if (!tokenCliente) {
+                          return <span className="text-sm text-gray-400">—</span>;
+                        }
+                        const expirado = new Date(tokenCliente.expiraEn) < new Date();
+                        if (expirado) {
+                          return (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-red-100 text-red-600 text-xs font-medium">
+                              Expirado
+                            </span>
+                          );
+                        }
+                        return (
+                          <div className="flex items-center justify-center gap-1">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 text-green-600 text-xs font-medium">
+                              <Key size={12} />
+                              Vigente
+                            </span>
+                            <button
+                              onClick={() => setConfirmarRevocar({ tokenId: tokenCliente.id, clienteNombre: c.nombre })}
+                              className="p-1 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
+                              title="Revocar token"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        );
+                      })()}
+                    </td>
                     <td className="px-4 py-4">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => abrirEditar(c)}
-                          className="p-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors"
-                          title="Editar cliente"
-                        >
-                          <Edit size={18} />
-                        </button>
-                        <button
-                          onClick={() => abrirHistorial(c)}
-                          className="p-2 rounded-lg bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-colors"
-                          title="Ver historial"
-                        >
-                          <TrendingUp size={18} />
-                        </button>
-                        {c.saldoPendiente > 0 && (
-                          <button
-                            onClick={() => {
-                              setClienteCobrar(c);
-                              setMontoPago(String(c.saldoPendiente));
-                              setMostrarCobrar(true);
-                            }}
-                            className="p-2 rounded-lg bg-orange-100 text-orange-600 hover:bg-orange-200 transition-colors"
-                            title="Registrar pago"
-                          >
-                            <DollarSign size={18} />
-                          </button>
-                          )}
-                        <button
-                          onClick={() => navigate('/ventas', { state: { cliente: c } })}
-                          className="p-2 rounded-lg bg-amber-100 text-amber-600 hover:bg-amber-200 transition-colors"
-                          title="Renovar cliente"
-                        >
-                          <RefreshCw size={18} />
-                        </button>
-                        <button
-                          onClick={() => enviarWhatsApp(c)}
-                          className="p-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-colors"
-                          title="Contactar por WhatsApp"
-                        >
-                          <MessageCircle size={18} />
-                        </button>
+                      <div className="relative">
+                        <DropdownMenu
+                          actions={[
+                            {
+                              label: 'Editar cliente',
+                              icon: <Edit size={16} />,
+                              onClick: () => abrirEditar(c),
+                            },
+                            {
+                              label: 'Ver historial',
+                              icon: <TrendingUp size={16} />,
+                              onClick: () => abrirHistorial(c),
+                            },
+                            ...(c.saldoPendiente > 0 ? [{
+                              label: 'Registrar pago',
+                              icon: <DollarSign size={16} />,
+                              onClick: () => {
+                                setClienteCobrar(c);
+                                setMontoPago(String(c.saldoPendiente));
+                                setMostrarCobrar(true);
+                              },
+                            }] : []),
+                            {
+                              label: 'Renovar',
+                              icon: <RefreshCw size={16} />,
+                              onClick: () => navigate('/ventas', { state: { cliente: c } }),
+                            },
+                            ...(c.cuentaId ? [{
+                              label: 'Consultar código',
+                              icon: <Shield size={16} />,
+                              onClick: () => abrirConsultaCodigo(c),
+                            }] : []),
+                            ...(c.cuentaId && permisos.puedeGenerarTokens ? [{
+                              label: 'Generar link',
+                              icon: <Link size={16} />,
+                              onClick: () => generarLinkCodigos(c),
+                              disabled: tokenGenerando,
+                            }] : []),
+                            {
+                              label: 'WhatsApp',
+                              icon: <MessageCircle size={16} />,
+                              onClick: () => enviarWhatsApp(c),
+                            },
+                          ]}
+                        />
                       </div>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={user?.rol === 'admin' ? 8 : 7} className="text-center py-12 text-gray-500">
+                  <td colSpan={user?.rol === 'admin' ? 10 : 9} className="text-center py-12 text-gray-500">
                     <Users size={48} className="mx-auto mb-3 text-gray-300" />
                     <p className="font-medium">No se encontraron clientes {filtro}</p>
                   </td>
@@ -729,6 +858,122 @@ export default function GestionClientes() {
                 <p>No hay ventas registradas para este cliente</p>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal de link de códigos */}
+      {mostrarTokenModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="card max-w-lg w-full animate-scale-in">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Link de Códigos Generado</h2>
+                <p className="text-gray-600 mt-1">Compartí este link con tu cliente</p>
+              </div>
+              <button
+                onClick={() => {
+                  setMostrarTokenModal(false);
+                  setTokenGeneradoURL('');
+                }}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <X size={24} className="text-gray-600" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-100">
+                <p className="text-sm font-medium text-indigo-700 mb-2">URL de consulta</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 bg-white rounded-lg px-4 py-3 text-sm text-indigo-600 border border-indigo-200 break-all font-mono">
+                    {tokenGeneradoURL}
+                  </code>
+                  <button
+                    onClick={copiarTokenURL}
+                    className="p-3 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shrink-0"
+                    title="Copiar link"
+                  >
+                    <Copy size={18} />
+                  </button>
+                </div>
+              </div>
+
+              <p className="text-xs text-gray-500">
+                El link expira en 30 días. El cliente puede consultar códigos de verificación desde esta URL.
+              </p>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMostrarTokenModal(false);
+                    setTokenGeneradoURL('');
+                  }}
+                  className="btn-secondary flex-1"
+                >
+                  Cerrar
+                </button>
+                <button
+                  type="button"
+                  onClick={copiarTokenURL}
+                  className="btn-primary flex-1"
+                >
+                  <Copy size={16} className="inline mr-1" />
+                  Copiar link
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de consulta de código */}
+      {mostrarConsultaCodigo && consultaData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="card max-w-lg w-full max-h-[90vh] overflow-y-auto animate-scale-in">
+            <ConsultaInterna
+              clienteNombre={consultaData.clienteNombre}
+              proveedor={consultaData.proveedor}
+              correoCuenta={consultaData.correoCuenta}
+              tokenId={consultaData.tokenId}
+              onClose={() => {
+                setMostrarConsultaCodigo(false);
+                setConsultaData(null);
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Confirmar revocación de token */}
+      {confirmarRevocar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="card max-w-md w-full animate-scale-in text-center">
+            <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="text-red-600" size={32} />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Revocar token</h2>
+            <p className="text-gray-600 mb-6">
+              ¿Estás seguro de revocar el token de <strong>{confirmarRevocar.clienteNombre}</strong>?
+              El link de códigos dejará de funcionar inmediatamente.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmarRevocar(null)}
+                className="btn-secondary flex-1"
+                disabled={revocando}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleRevocarToken}
+                disabled={revocando}
+                className="flex-1 py-2.5 rounded-xl font-semibold text-white transition-all bg-red-600 hover:bg-red-700 disabled:opacity-50"
+              >
+                {revocando ? 'Revocando...' : 'Sí, revocar'}
+              </button>
+            </div>
           </div>
         </div>
       )}

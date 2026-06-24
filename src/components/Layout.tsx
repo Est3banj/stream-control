@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Menu, LayoutDashboard, DollarSign, BarChart3, Users, UserCog, LogOut, User, Download, MessageCircle, Package, ClipboardList, Send, Settings } from 'lucide-react';
+import { Menu, LayoutDashboard, DollarSign, BarChart3, Users, UserCog, LogOut, User, Download, MessageCircle, Package, ClipboardList, Send, Settings, CreditCard, Key } from 'lucide-react';
 import PWAInstallButton from './PWAInstallButton';
 import NotificationsPanel from './NotificationsPanel';
 import UpgradeModal from './UpgradeModal';
 import UpgradeModalContext from '../contexts/UpgradeModalContext';
+import usePermisos from '../hooks/usePermisos';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
+  const permisos = usePermisos(user);
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -47,10 +49,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navItems: { to: string; icon: React.ComponentType<{ size?: number; className?: string }>; label: string }[] = user?.rol === 'admin'
     ? [
         { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+        { to: '/cuentas', icon: CreditCard, label: 'Cuentas' },
         { to: '/admin/planes', icon: Package, label: 'Planes' },
         { to: '/admin/suscripciones', icon: ClipboardList, label: 'Suscripciones' },
         { to: '/usuarios', icon: UserCog, label: 'Usuarios' },
         { to: '/telegram', icon: Send, label: 'Telegram' },
+        { to: '/consulta-codigos', icon: Key, label: 'Códigos' },
         { to: '/ajustes', icon: Settings, label: 'Ajustes' },
       ]
     : [
@@ -58,6 +62,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { to: '/ventas', icon: DollarSign, label: 'Ventas' },
         { to: '/reportes', icon: BarChart3, label: 'Reportes' },
         { to: '/GestionClientes', icon: Users, label: 'Clientes' },
+        { to: '/cuentas', icon: CreditCard, label: 'Cuentas' },
+        { to: '/consulta-codigos', icon: Key, label: 'Códigos' },
         { to: '/ajustes', icon: Settings, label: 'Ajustes' },
       ];
 

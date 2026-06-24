@@ -10,6 +10,7 @@ import * as admin from 'firebase-admin';
 import * as telegram from './telegram';
 import { APP_URL } from './telegram';
 import { sendWelcomeEmail, sendPasswordChangedEmail, sendEmailChangedEmail, sendResetPasswordEmail } from './email';
+export { generarToken, validarToken, consultarCodigo, guardarCredenciales, toggleToken, consultarCodigoDirecto, generarTokenSubdistribuidor } from './src/codigos';
 
 // Inicializar Firebase Admin si no está inicializado
 if (!admin.apps.length) {
@@ -222,6 +223,8 @@ export const generarNotificacionesVencimientos = functions
         .where('estado', '==', 'activa')
         .get();
 
+      let autoExpiradas = 0;
+
       for (const susDoc of suscripcionesSnapshot.docs) {
         const sus = susDoc.data() as admin.firestore.DocumentData;
         const fechaFin = (sus.fechaFin as admin.firestore.Timestamp).toDate();
@@ -229,6 +232,13 @@ export const generarNotificacionesVencimientos = functions
 
         const diffTime = fechaFin.getTime() - hoy.getTime();
         const diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        // ⏰ Si ya venció → marcar como expirada automáticamente
+        if (diasRestantes < 0) {
+          await susDoc.ref.update({ estado: 'expirada' });
+          autoExpiradas++;
+          continue; // saltamos notificación, ya está expirada
+        }
 
         if (diasRestantes >= 0 && diasRestantes <= 3) {
           const hoyStr = hoy.toISOString().split('T')[0];
@@ -273,11 +283,68 @@ export const generarNotificacionesVencimientos = functions
         }
       }
 
+      // ── Procesar cuentas próximas a vencer ──
+      const cuentasSnapshot = await db.collection('cuentas').get();
+
+      for (const cuentaDoc of cuentasSnapshot.docs) {
+        const cuenta = cuentaDoc.data() as admin.firestore.DocumentData;
+        const fechaVencimiento = cuenta.fechaVencimiento as string | undefined;
+
+        if (!fechaVencimiento || cuenta.estado === 'expirada') continue;
+
+        const venc = new Date(fechaVencimiento + 'T00:00:00');
+        const diffTime = venc.getTime() - hoy.getTime();
+        const diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diasRestantes >= 0 && diasRestantes <= 3) {
+          const hoyStr = hoy.toISOString().split('T')[0];
+          const notifId = `cuenta_${cuentaDoc.id}_${hoyStr}`;
+
+          const notifRef = db.collection('notificaciones').doc(notifId);
+          const notifDoc = await notifRef.get();
+
+          if (!notifDoc.exists) {
+            batch.set(notifRef, {
+              cuentaId: cuentaDoc.id,
+              proveedor: cuenta.proveedor || '',
+              correoCuenta: cuenta.correoCuenta || '',
+              diasRestantes,
+              fechaVencimiento,
+              propietarioId: cuenta.propietarioId,
+              fechaGenerada: admin.firestore.FieldValue.serverTimestamp(),
+              leida: false,
+            });
+            batchCount++;
+            notificacionesCreadas++;
+
+            try {
+              const enviado = await telegram.enviarNotificacionCuentaVencimiento({
+                proveedor: cuenta.proveedor || '',
+                correoCuenta: cuenta.correoCuenta || '',
+                diasRestantes,
+                fechaVencimiento,
+                propietarioId: cuenta.propietarioId,
+              }, {
+                appUrl: APP_URL.value(),
+              });
+              if (enviado) telegramEnviados++;
+            } catch (err) {
+              console.error(`Error enviando Telegram cuenta para ${cuenta.proveedor}:`, err);
+            }
+
+            if (batchCount >= MAX_BATCH_SIZE) {
+              await batch.commit();
+              batchCount = 0;
+            }
+          }
+        }
+      }
+
       if (batchCount > 0) {
         await batch.commit();
       }
 
-      console.log(`✅ ${notificacionesCreadas} notifs Firestore, ${telegramEnviados} Telegram vencimientos, ${morasNotificadas} Telegram moras`);
+      console.log(`✅ ${notificacionesCreadas} notifs Firestore, ${telegramEnviados} Telegram vencimientos, ${morasNotificadas} Telegram moras, ${autoExpiradas} suscripciones auto-expiradas`);
       return null;
     } catch (error) {
       console.error('❌ Error generando notificaciones:', error);
@@ -327,17 +394,27 @@ export const onNotificacionEmail = functions
  * Envía un correo con un enlace para restablecer la contraseña.
  * Usa Firebase Admin SDK para generar el link + nuestro nodemailer para enviarlo.
  */
+// Rate limiting simple para recovery emails (en memoria, por email)
+const recoveryRateLimit = new Map<string, number>();
+
 export const enviarCorreoRecuperacion = functions
   .runWith({ secrets: ['SMTP_USER', 'SMTP_PASS'] })
   .https.onCall(async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión');
-    }
-
     const { email, nombre } = data;
     if (!email) {
       throw new functions.https.HttpsError('invalid-argument', 'Email es requerido');
     }
+
+    // Rate limiting: max 1 recovery email por email cada 60 segundos
+    const ahora = Date.now();
+    const ultimoEnvio = recoveryRateLimit.get(email);
+    if (ultimoEnvio && ahora - ultimoEnvio < 60_000) {
+      throw new functions.https.HttpsError(
+        'resource-exhausted',
+        'Esperá un minuto antes de solicitar otro correo de recuperación'
+      );
+    }
+    recoveryRateLimit.set(email, ahora);
 
     try {
       const resetLink = await admin.auth().generatePasswordResetLink(email, {
@@ -345,7 +422,6 @@ export const enviarCorreoRecuperacion = functions
       });
 
       await sendResetPasswordEmail(email, nombre || 'Usuario', resetLink);
-
       return { success: true };
     } catch (error) {
       console.error('❌ Error sending recovery email:', error);

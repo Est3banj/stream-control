@@ -394,6 +394,44 @@ export async function enviarNotificacionSuscripcion(
   }
 }
 
+interface CuentaNotificacionPayload {
+  proveedor: string;
+  correoCuenta: string;
+  diasRestantes: number;
+  fechaVencimiento: string;
+  propietarioId: string;
+}
+
+export async function enviarNotificacionCuentaVencimiento(cuenta: CuentaNotificacionPayload, options: NotificacionOptions = {}): Promise<boolean> {
+  try {
+    const chatId = await getChatIdPorUid(cuenta.propietarioId);
+    if (!chatId) return false;
+
+    const estado = cuenta.diasRestantes <= 0 ? '⚠️ VENCIDA' : '📅 Por vencer';
+    const mensaje =
+      `<b>📺 Recordatorio de cuenta</b>\n\n` +
+      `🎬 <b>Proveedor:</b> ${cuenta.proveedor}\n` +
+      `📧 <b>Correo:</b> ${cuenta.correoCuenta}\n` +
+      `📅 <b>Vence:</b> ${cuenta.fechaVencimiento}\n` +
+      `<b>⏱️ ${cuenta.diasRestantes > 0 ? `Expira en ${cuenta.diasRestantes} día(s)` : `VENCIDA hace ${Math.abs(cuenta.diasRestantes)} día(s)`}</b>\n\n` +
+      `<i>Revisá si es necesario renovar la cuenta o reemplazarla para evitar que los clientes se queden sin servicio.</i>`;
+
+    const reply_markup = {
+      inline_keyboard: [
+        [
+          { text: '📋 Ver cuentas', url: `${options.appUrl || ''}/cuentas` },
+        ],
+      ],
+    };
+
+    await sendMessage(chatId, mensaje, { reply_markup });
+    return true;
+  } catch (error) {
+    console.error(`❌ Error enviando notif cuenta Telegram:`, error);
+    return false;
+  }
+}
+
 export async function enviarNotificacionMora(cliente: Record<string, unknown>, options: NotificacionOptions = {}): Promise<boolean> {
   try {
     const chatId = await getChatIdPorUid(cliente.propietarioId as string);

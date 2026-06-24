@@ -48,27 +48,46 @@ service cloud.firestore {
         isAdmin()
       );
       
-      // Creación: Solo admin puede crear usuarios
-      // El userId es el UID generado por Firebase Auth (autoincremental)
-      allow create: if isAdmin() && (
-        request.resource.data.keys().hasAll(['nombre', 'correo', 'rol', 'estado']) &&
-        request.resource.data.rol is string &&
-        request.resource.data.rol in ['admin', 'usuario'] &&
-        request.resource.data.estado is string &&
-        request.resource.data.estado in ['activo', 'inactivo'] &&
-        request.resource.data.nombre is string &&
-        request.resource.data.correo is string
+      // Creación: Admin puede crear cualquier usuario, o el usuario se auto-registra
+      // El userId es el UID generado por Firebase Auth
+      allow create: if isAuthenticated() && (
+        // Admin puede crear usuarios con cualquier rol
+        (isAdmin() &&
+          request.resource.data.keys().hasAll(['nombre', 'correo', 'rol', 'estado']) &&
+          request.resource.data.rol is string &&
+          request.resource.data.rol in ['admin', 'usuario'] &&
+          request.resource.data.estado is string &&
+          request.resource.data.estado in ['activo', 'inactivo'] &&
+          request.resource.data.nombre is string &&
+          request.resource.data.correo is string
+        ) ||
+        // Auto-registro: el usuario crea su propio perfil (solo como 'usuario')
+        (userId == getUserId() &&
+          request.resource.data.rol == 'usuario' &&
+          request.resource.data.estado == 'activo' &&
+          request.resource.data.nombre is string &&
+          request.resource.data.correo is string
+        )
       );
       
-      // Actualización: Solo admin puede actualizar, y solo campos permitidos
-      // Basado en: Usuarios.jsx línea 97 - updateDoc solo actualiza 'estado'
-      allow update: if isAdmin() && 
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado', 'plan']) &&
-        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['estado']) || 
-          (request.resource.data.estado is string && request.resource.data.estado in ['activo', 'inactivo'])) &&
-        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan']) || 
-          request.resource.data.plan is string);
-      
+      // Actualización: Admin actualiza estado/plan, usuario actualiza su propio nombre/correo
+      allow update: if isAuthenticated() && (
+        // Admin puede actualizar estado y plan de cualquier usuario
+        (isAdmin() &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado', 'plan']) &&
+          (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['estado']) || 
+            (request.resource.data.estado is string && request.resource.data.estado in ['activo', 'inactivo'])) &&
+          (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan']) || 
+            request.resource.data.plan is string)
+        ) ||
+        // El usuario puede actualizar su propio nombre y correo
+        (userId == getUserId() &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre', 'correo']) &&
+          request.resource.data.nombre is string &&
+          (request.resource.data.correo == null || request.resource.data.correo is string)
+        )
+      );
+
       // Eliminación: No permitida (no hay deleteDoc en el código)
       allow delete: if false;
     }
@@ -133,9 +152,10 @@ service cloud.firestore {
     
     match /clientes/{clienteId} {
       // Lectura: Usuario puede leer sus propios clientes, admin puede leer todos
+      // Si el documento no existe, resource es null y la regla debe permitirlo
       allow read: if isAuthenticated() && (
         isAdmin() || 
-        resource.data.propietarioId == getUserId()
+        (resource != null && resource.data.propietarioId == getUserId())
       );
       
       // Creación: setDoc desde VentasForm.jsx - requiere todos los campos
@@ -150,36 +170,41 @@ service cloud.firestore {
         request.resource.data.fechaVencimiento is string &&
         (request.resource.data.correo == null || request.resource.data.correo is string);
       
-      // Actualización: permite setDoc completo o updateDoc parcial
-      allow update: if isAuthenticated() &&
-        clienteId.matches('^' + getUserId() + '_.+') &&
-        resource.data.propietarioId == getUserId() &&
-        (
-          // Caso 1: setDoc completo o con merge desde VentasForm
+      // Actualización: Admin puede actualizar cualquier cliente, propietario sus propios clientes
+      allow update: if isAuthenticated() && (
+        // Admin puede actualizar cualquier cliente (confiado: el admin sabe lo que hace)
+        isAdmin() ||
+        // Propietario puede actualizar su propio cliente con validación de campos
+        (clienteId.matches('^' + getUserId() + '_.+') &&
+          resource.data.propietarioId == getUserId() &&
           (
-            request.resource.data.propietarioId == getUserId() &&
-            request.resource.data.usuarioEmail == getUserEmail() &&
-            request.resource.data.nombre is string &&
-            request.resource.data.telefono is string &&
-            request.resource.data.plataforma is string &&
-            request.resource.data.estado == 'activo' &&
-            request.resource.data.fechaVencimiento is string &&
-            (request.resource.data.correo == null || request.resource.data.correo is string)
-          ) ||
-          // Caso 2: updateDoc parcial desde GestionClientes (solo campos editables)
-          (
-            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre', 'telefono', 'correo', 'plataforma']) &&
-            (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['nombre']) || request.resource.data.nombre is string) &&
-            (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['telefono']) || request.resource.data.telefono is string) &&
-            (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['plataforma']) || request.resource.data.plataforma is string) &&
-            (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['correo']) || (request.resource.data.correo == null || request.resource.data.correo is string))
-          ) ||
-          // Caso 3: updateDoc de saldoPendiente (increment desde VentasForm / cobro en GestionClientes)
-          (
-            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['saldoPendiente']) &&
-            request.resource.data.saldoPendiente is number
+            // Caso 1: setDoc completo o con merge desde VentasForm
+            (
+              request.resource.data.propietarioId == getUserId() &&
+              request.resource.data.usuarioEmail == getUserEmail() &&
+              request.resource.data.nombre is string &&
+              request.resource.data.telefono is string &&
+              request.resource.data.plataforma is string &&
+              request.resource.data.estado == 'activo' &&
+              request.resource.data.fechaVencimiento is string &&
+              (request.resource.data.correo == null || request.resource.data.correo is string)
+            ) ||
+            // Caso 2: updateDoc parcial desde GestionClientes (solo campos editables)
+            (
+              request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre', 'telefono', 'correo', 'plataforma']) &&
+              (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['nombre']) || request.resource.data.nombre is string) &&
+              (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['telefono']) || request.resource.data.telefono is string) &&
+              (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['plataforma']) || request.resource.data.plataforma is string) &&
+              (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['correo']) || (request.resource.data.correo == null || request.resource.data.correo is string))
+            ) ||
+            // Caso 3: updateDoc de saldoPendiente (increment desde VentasForm / cobro en GestionClientes)
+            (
+              request.resource.data.diff(resource.data).affectedKeys().hasOnly(['saldoPendiente']) &&
+              request.resource.data.saldoPendiente is number
+            )
           )
-        );
+        )
+      );
       
       // Eliminación: No permitida
       allow delete: if false;
@@ -336,6 +361,69 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
     
+    // ============================================
+    // COLECCIÓN: notificacionesEmail
+    // ============================================
+    // Propósito: Auditoría de cambios de email/contraseña desde AuthContext
+    // - Creación: Cualquier usuario autenticado puede registrar cambios
+    // - Lectura: Solo admin puede leer el historial
+    
+    match /notificacionesEmail/{docId} {
+      allow create: if isAuthenticated();
+      allow read: if isAdmin();
+      allow update, delete: if false;
+    }
+    
+    // ============================================
+    // COLECCIÓN: cuentas
+    // ============================================
+    match /cuentas/{cuentaId} {
+      allow read: if isAuthenticated() && (
+        isAdmin() ||
+        resource.data.propietarioId == getUserId()
+      );
+
+      allow create: if isAuthenticated() &&
+        request.resource.data.propietarioId == getUserId() &&
+        request.resource.data.proveedor is string &&
+        request.resource.data.costo is number &&
+        request.resource.data.tipoVenta is string &&
+        request.resource.data.tipoVenta in ['perfiles', 'completa'] &&
+        request.resource.data.perfiles is list &&
+        (request.resource.data.tipoVenta == 'completa' || request.resource.data.perfiles.size() > 0) &&
+        request.resource.data.estado is string &&
+        request.resource.data.estado in ['disponible', 'asignada', 'expirada'];
+
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        resource.data.propietarioId == getUserId()
+      );
+
+      allow delete: if false;
+    }
+
+    // ============================================
+    // COLECCIÓN: cuentas_secretos
+    // ============================================
+    // ACCESO TOTALMENTE DENEGADO desde cliente.
+    // Solo Cloud Functions vía Admin SDK pueden leer/escribir.
+    match /cuentas_secretos/{docId} {
+      allow read, write: if false;
+    }
+
+    // ============================================
+    // COLECCIÓN: tokens
+    // ============================================
+    match /tokens/{tokenId} {
+      // Lectura pública: cualquiera puede leer un token (para validarlo)
+      allow read: if true;
+      // Creación: SOLO la Cloud Function (Admin SDK) puede crear tokens
+      allow create: if false;
+      // Actualización: DENEGADA — todas las mutaciones van por Cloud Functions (Admin SDK)
+      allow update: if false;
+      allow delete: if false;
+    }
+
     // ============================================
     // DENEGAR ACCESO A OTRAS COLECCIONES
     // ============================================

@@ -10,4 +10,6 @@ export interface Cliente {
   fechaVencimiento: string;
   saldoPendiente: number;
   diasRestantes?: number | null;
+  cuentaId?: string;
+  perfilAsignado?: string;
 }

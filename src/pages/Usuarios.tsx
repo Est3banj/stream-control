@@ -50,9 +50,12 @@ export default function Usuarios() {
     setForm({ ...form, [e.target.name]: e.target.value } as UsuarioFormState);
   };
 
-  // Genera contraseña temporal si el admin no escribe una
+  // Genera contraseña temporal segura si el admin no escribe una
   const generarPasswordTemporal = () => {
-    return `Tmp-${Math.random().toString(36).slice(2, 10)}A!`;
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const array = new Uint8Array(8);
+    crypto.getRandomValues(array);
+    return `Tmp-${Array.from(array, byte => chars[byte % chars.length]).join('')}A!`;
   };
 
   const handleCrearUsuario = async (e: React.FormEvent<HTMLFormElement>) => {

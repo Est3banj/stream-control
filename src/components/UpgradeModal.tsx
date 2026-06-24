@@ -20,6 +20,8 @@ const ALL_FEATURE_KEYS: (keyof Omit<Permisos, 'planNombre' | 'loading'>)[] = [
   'puedeVerDashboardEjecutivo',
   'tieneSoportePrioritario',
   'tieneSoporte247',
+  'puedeGestionarCuentas',
+  'puedeGenerarTokens',
 ];
 
 const ALL_FAMILIAS = ['Starter', 'Professional', 'Enterprise'] as const;

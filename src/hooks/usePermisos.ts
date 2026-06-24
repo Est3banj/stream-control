@@ -21,6 +21,10 @@ export interface Permisos {
   tieneSoportePrioritario: boolean;
   /** Tiene soporte 24/7 */
   tieneSoporte247: boolean;
+  /** Puede gestionar cuentas de streaming */
+  puedeGestionarCuentas: boolean;
+  /** Puede generar tokens de consulta de códigos */
+  puedeGenerarTokens: boolean;
 }
 
 export const PLAN_FEATURES: Record<string, Partial<Permisos>> = {
@@ -32,6 +36,8 @@ export const PLAN_FEATURES: Record<string, Partial<Permisos>> = {
     puedeVerDashboardEjecutivo: false,
     tieneSoportePrioritario: false,
     tieneSoporte247: false,
+    puedeGestionarCuentas: false,
+    puedeGenerarTokens: false,
   },
   Professional: {
     clienteLimit: Infinity,
@@ -41,6 +47,8 @@ export const PLAN_FEATURES: Record<string, Partial<Permisos>> = {
     puedeVerDashboardEjecutivo: false,
     tieneSoportePrioritario: true,
     tieneSoporte247: false,
+    puedeGestionarCuentas: true,
+    puedeGenerarTokens: false,
   },
   Enterprise: {
     clienteLimit: Infinity,
@@ -50,6 +58,8 @@ export const PLAN_FEATURES: Record<string, Partial<Permisos>> = {
     puedeVerDashboardEjecutivo: true,
     tieneSoportePrioritario: true,
     tieneSoporte247: true,
+    puedeGestionarCuentas: true,
+    puedeGenerarTokens: true,
   },
 };
 
@@ -63,6 +73,8 @@ const DEFAULT_PERMISOS: Permisos = {
   puedeVerDashboardEjecutivo: false,
   tieneSoportePrioritario: false,
   tieneSoporte247: false,
+  puedeGestionarCuentas: false,
+  puedeGenerarTokens: false,
 };
 
 export function detectarFamilia(nombre: string): string {
@@ -104,6 +116,8 @@ export default function usePermisos(
         puedeVerDashboardEjecutivo: true,
         tieneSoportePrioritario: true,
         tieneSoporte247: true,
+        puedeGestionarCuentas: true,
+        puedeGenerarTokens: true,
       };
     }
 
@@ -139,6 +153,8 @@ export default function usePermisos(
       puedeVerDashboardEjecutivo: features.puedeVerDashboardEjecutivo ?? false,
       tieneSoportePrioritario: features.tieneSoportePrioritario ?? false,
       tieneSoporte247: features.tieneSoporte247 ?? false,
+      puedeGestionarCuentas: features.puedeGestionarCuentas ?? false,
+      puedeGenerarTokens: features.puedeGenerarTokens ?? false,
     };
   }, [user, suscripciones, loading, isAdmin]);
 }
