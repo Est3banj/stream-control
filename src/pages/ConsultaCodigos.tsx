@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../firebase';
-import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
 import useCuentas from '../hooks/useCuentas';
 import useTokens, { revocarToken, reactivarToken } from '../hooks/useTokens';
 import usePermisos from '../hooks/usePermisos';
@@ -44,6 +44,7 @@ export default function ConsultaCodigos() {
   const [totalRecibido, setTotalRecibido] = useState(0);
   const [cantidad, setCantidad] = useState(1);
   const [nombreSub, setNombreSub] = useState('');
+  const [perfilesSeleccionados, setPerfilesSeleccionados] = useState<number[]>([]);
 
   const cuentasConIMAP = useMemo(() =>
     cuentas.filter(c => c.estado !== 'expirada'),
@@ -67,6 +68,14 @@ export default function ConsultaCodigos() {
   const totalCosto = costoServicio * cantidad;
   const precioPorPerfil = cantidad > 0 ? Math.round(totalRecibido / cantidad) : 0;
   const utilidad = totalRecibido - totalCosto;
+
+  // Sincronizar cantidad con perfiles seleccionados
+  const handleCantidadChange = (val: number) => {
+    setCantidad(Math.max(1, val));
+    if (val > 0 && perfilesSeleccionados.length > 0) {
+      setPerfilesSeleccionados(prev => prev.slice(0, val));
+    }
+  };
 
   const consultarCodigo = async () => {
     if (!cuentaId || !selectedCaso) return;
@@ -154,6 +163,38 @@ export default function ConsultaCodigos() {
             console.warn('⚠️ No se pudo registrar la venta:', err);
             toast.error('El link se generó pero la venta no quedó registrada en reportes');
           }
+      }
+
+      // 🟢 Marcar perfiles como asignados en la cuenta
+      if (perfilesSeleccionados.length > 0) {
+        try {
+          const cuentaRef = doc(db, 'cuentas', cuentaId);
+          const cuentaSnap = await getDoc(cuentaRef);
+          if (cuentaSnap.exists()) {
+            const perfiles = cuentaSnap.data().perfiles;
+            if (Array.isArray(perfiles)) {
+              const hoy = new Date().toISOString().split('T')[0];
+              perfilesSeleccionados.forEach(idx => {
+                if (idx >= 0 && idx < perfiles.length) {
+                  perfiles[idx] = {
+                    ...perfiles[idx],
+                    estado: 'asignado',
+                    clienteNombre: nombreSub.trim() || 'Sub-distribuidor',
+                    fechaAsignacion: hoy,
+                  };
+                }
+              });
+              const quedanDisponibles = perfiles.some((p: { estado: string }) => p.estado === 'disponible');
+              await updateDoc(cuentaRef, {
+                perfiles,
+                ...(quedanDisponibles ? {} : { estado: 'asignada' as const }),
+                updatedAt: serverTimestamp(),
+              });
+            }
+          }
+        } catch (err) {
+          console.warn('⚠️ No se pudieron marcar los perfiles como asignados:', err);
+        }
       }
 
       setEstado('idle');
@@ -338,6 +379,70 @@ export default function ConsultaCodigos() {
             <span className="text-sm font-bold text-indigo-700">${cuentaSeleccionada?.costo.toLocaleString()}</span>
           </div>
 
+          {/* Selector de perfiles */}
+          {(() => {
+            const perfiles = Array.isArray(cuentaSeleccionada?.perfiles) ? cuentaSeleccionada.perfiles : [];
+            const disponibles = perfiles.filter(p => p.estado === 'disponible');
+            if (disponibles.length === 0) return (
+              <div className="p-4 mb-4 bg-amber-50 rounded-xl border border-amber-200">
+                <p className="text-sm text-amber-700 font-medium">No hay perfiles disponibles en esta cuenta</p>
+              </div>
+            );
+            return (
+              <div className="mb-4">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Perfiles a vender ({disponibles.length} disponibles)
+                </label>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {disponibles.map(p => {
+                    const idx = perfiles.indexOf(p);
+                    const selected = perfilesSeleccionados.includes(idx);
+                    return (
+                      <label
+                        key={idx}
+                        className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                          selected
+                            ? 'border-indigo-400 bg-indigo-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          onChange={() => {
+                            setPerfilesSeleccionados(prev =>
+                              selected
+                                ? prev.filter(i => i !== idx)
+                                : [...prev, idx]
+                            );
+                          }}
+                          className="w-4 h-4 text-indigo-600 rounded"
+                        />
+                        <span className="text-sm font-medium text-gray-700">{p.nombre}</span>
+                        {p.pin && <span className="text-xs text-gray-400">PIN: {p.pin}</span>}
+                      </label>
+                    );
+                  })}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (perfilesSeleccionados.length === disponibles.length) {
+                      setPerfilesSeleccionados([]);
+                    } else {
+                      setPerfilesSeleccionados(disponibles.map(p => perfiles.indexOf(p)));
+                    }
+                  }}
+                  className="mt-2 text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                >
+                  {perfilesSeleccionados.length === disponibles.length
+                    ? 'Deseleccionar todos'
+                    : 'Seleccionar todos'}
+                </button>
+              </div>
+            );
+          })()}
+
           {/* Valores financieros */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
@@ -359,7 +464,7 @@ export default function ConsultaCodigos() {
               <input
                 type="number"
                 value={cantidad}
-                onChange={e => setCantidad(Math.max(1, Number(e.target.value)))}
+                onChange={e => handleCantidadChange(Number(e.target.value))}
                 className="w-full"
                 min="1"
                 placeholder="1"
