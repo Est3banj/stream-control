@@ -21,42 +21,23 @@ export const generarToken = functions
     }
 
     const uid = context.auth.uid;
-    const userEmail = context.auth.token.email || '';
-
-    // DEBUG: Log del UID y email
-    console.error(`[generarToken] uid="${uid}" email="${userEmail}"`);
 
     // Validar que el usuario existe en la colección usuarios
     const userDoc = await db.collection('usuarios').doc(uid).get();
     if (!userDoc.exists) {
-      console.error(`[generarToken] Usuario ${uid} no encontrado en colección usuarios`);
       throw new functions.https.HttpsError(
         'permission-denied',
         'Usuario no encontrado'
       );
     }
 
-    const userData = userDoc.data()!;
-    console.error(`[generarToken] Usuario: rol=${userData.rol}, estado=${userData.estado}`);
-
-    // Verificar suscripción
+    // Verificar suscripción Enterprise
     const suscripcionSnapshot = await db.collection('suscripciones').get();
-    console.error(`[generarToken] Total suscripciones en DB: ${suscripcionSnapshot.size}`);
-
-    if (suscripcionSnapshot.size > 0) {
-      suscripcionSnapshot.forEach(d => {
-        const data = d.data();
-        console.error(`[generarToken] Sub: usuarioId="${data.usuarioId}" estado="${data.estado}" plan="${data.planNombre}"`);
-      });
-    }
-
     const suscripcionActiva = suscripcionSnapshot.docs
       .map(d => d.data() as any)
       .find(s => s.usuarioId === uid && s.estado === 'activa');
 
     if (!suscripcionActiva) {
-      console.error(`[generarToken] NO hay suscripcion activa para uid="${uid}"`);
-      console.error(`[generarToken] ¿Admin? rol=${userData.rol}`);
       throw new functions.https.HttpsError(
         'permission-denied',
         'Se requiere plan Enterprise para generar tokens'
@@ -64,10 +45,7 @@ export const generarToken = functions
     }
 
     const plan = (suscripcionActiva.planNombre as string)?.toLowerCase() || '';
-    console.error(`[generarToken] Plan activo: "${plan}"`);
-
     if (!plan.includes('enterprise')) {
-      console.error(`[generarToken] Plan "${plan}" no incluye "enterprise"`);
       throw new functions.https.HttpsError(
         'permission-denied',
         'Se requiere plan Enterprise para generar tokens'
