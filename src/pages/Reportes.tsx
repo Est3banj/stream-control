@@ -47,7 +47,7 @@ export default function Reportes() {
     }
 
     return data;
-  }, [todasLasVentas, fechaInicio, fechaFin]);
+  }, [todasLasVentas, fechaInicio, fechaFin, tipoVenta]);
 
   // Resetear página al cambiar filtros (hook ANTES del early return)
   useEffect(() => {
