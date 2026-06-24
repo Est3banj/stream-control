@@ -69,14 +69,6 @@ export default function ConsultaCodigos() {
   const precioPorPerfil = cantidad > 0 ? Math.round(totalRecibido / cantidad) : 0;
   const utilidad = totalRecibido - totalCosto;
 
-  // Sincronizar cantidad con perfiles seleccionados
-  const handleCantidadChange = (val: number) => {
-    setCantidad(Math.max(1, val));
-    if (val > 0 && perfilesSeleccionados.length > 0) {
-      setPerfilesSeleccionados(prev => prev.slice(0, val));
-    }
-  };
-
   const consultarCodigo = async () => {
     if (!cuentaId || !selectedCaso) return;
     setEstado('consulting');
@@ -410,11 +402,13 @@ export default function ConsultaCodigos() {
                           type="checkbox"
                           checked={selected}
                           onChange={() => {
-                            setPerfilesSeleccionados(prev =>
-                              selected
+                            setPerfilesSeleccionados(prev => {
+                              const next = selected
                                 ? prev.filter(i => i !== idx)
-                                : [...prev, idx]
-                            );
+                                : [...prev, idx];
+                              setCantidad(next.length);
+                              return next;
+                            });
                           }}
                           className="w-4 h-4 text-indigo-600 rounded"
                         />
@@ -429,8 +423,11 @@ export default function ConsultaCodigos() {
                   onClick={() => {
                     if (perfilesSeleccionados.length === disponibles.length) {
                       setPerfilesSeleccionados([]);
+                      setCantidad(0);
                     } else {
-                      setPerfilesSeleccionados(disponibles.map(p => perfiles.indexOf(p)));
+                      const todos = disponibles.map(p => perfiles.indexOf(p));
+                      setPerfilesSeleccionados(todos);
+                      setCantidad(todos.length);
                     }
                   }}
                   className="mt-2 text-xs text-indigo-600 hover:text-indigo-800 font-medium"
@@ -464,11 +461,12 @@ export default function ConsultaCodigos() {
               <input
                 type="number"
                 value={cantidad}
-                onChange={e => handleCantidadChange(Number(e.target.value))}
-                className="w-full"
+                className="w-full bg-gray-50"
+                readOnly
                 min="1"
-                placeholder="1"
+                placeholder="0"
               />
+              <p className="text-xs text-gray-400 mt-1">Se auto-completa al seleccionar perfiles</p>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
