@@ -7,7 +7,7 @@ import useTokens, { revocarToken, reactivarToken } from '../hooks/useTokens';
 import usePermisos from '../hooks/usePermisos';
 import FeatureBlocked from '../components/FeatureBlocked';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { Copy, Loader2, AlertCircle, Monitor, Calendar, X, RefreshCw, Link as LinkIcon } from 'lucide-react';
+import { Copy, Loader2, AlertCircle, Monitor, Calendar, X, RefreshCw, Search, Link, List } from 'lucide-react';
 import { CASE_OPTIONS, CASE_LABELS } from '../components/CasoSelector';
 import DropdownMenu from '../components/DropdownMenu';
 import toast from 'react-hot-toast';
@@ -202,33 +202,36 @@ export default function ConsultaCodigos() {
         <div className="flex gap-4 mb-6">
           <button
             onClick={() => setModo('directo')}
-            className={`px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
+            className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
               modo === 'directo'
                 ? 'bg-indigo-600 text-white shadow-lg'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
-            🔍 Consulta directa
+            <Search size={18} />
+            Consulta directa
           </button>
           <button
             onClick={() => setModo('link')}
-            className={`px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
+            className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
               modo === 'link'
                 ? 'bg-indigo-600 text-white shadow-lg'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
-            🔗 Generar link
+            <Link size={18} />
+            Generar link
           </button>
           <button
             onClick={() => setModo('links')}
-            className={`px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
+            className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
               modo === 'links'
                 ? 'bg-indigo-600 text-white shadow-lg'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
-            📋 Links activos
+            <List size={18} />
+            Links activos
           </button>
         </div>
 
