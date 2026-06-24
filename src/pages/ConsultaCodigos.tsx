@@ -151,8 +151,9 @@ export default function ConsultaCodigos() {
             usuarioEmail: user.email,
           });
         } catch (err) {
-          console.warn('⚠️ No se pudo registrar la venta:', err);
-        }
+            console.warn('⚠️ No se pudo registrar la venta:', err);
+            toast.error('El link se generó pero la venta no quedó registrada en reportes');
+          }
       }
 
       setEstado('idle');

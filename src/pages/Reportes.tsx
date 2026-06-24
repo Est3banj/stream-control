@@ -6,7 +6,7 @@ import FeatureBlocked from '../components/FeatureBlocked';
 import Paginador from '../components/Paginador';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
-import { Search, Download, DollarSign, TrendingUp, TrendingDown, Calendar, Filter, X, AlertCircle, Users } from 'lucide-react';
+import { Search, Download, DollarSign, TrendingUp, TrendingDown, Calendar, Filter, X, AlertCircle, Users, UserPlus, Layers } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { Venta } from '../types/venta';
 
@@ -171,24 +171,28 @@ export default function Reportes() {
       </div>
 
       {/* Tabs: Clientes / Sub-distribuidor */}
-      <div className="flex gap-4">
+      <div className="flex gap-4 flex-wrap">
         {([
-          { key: 'todas', label: '📊 Todas las ventas' },
-          { key: 'clientes', label: '👤 Ventas Cliente' },
-          { key: 'subdistribuidor', label: '🤝 Venta Sub-distribuidor' },
-        ] as const).map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setTipoVenta(tab.key)}
-            className={`px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
-              tipoVenta === tab.key
-                ? 'bg-indigo-600 text-white shadow-lg'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+          { key: 'todas', label: 'Todas las ventas', icon: Layers },
+          { key: 'clientes', label: 'Ventas Cliente', icon: Users },
+          { key: 'subdistribuidor', label: 'Venta Sub-distribuidor', icon: UserPlus },
+        ] as const).map(tab => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setTipoVenta(tab.key)}
+              className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
+                tipoVenta === tab.key
+                  ? 'bg-indigo-600 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              <Icon size={18} />
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Filtros */}
