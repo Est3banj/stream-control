@@ -447,84 +447,103 @@ export default function ConsultaCodigos() {
         </div>
       )}
 
-      {/* Links activos */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Links activos</h2>
-        {tokens.length === 0 ? (
-          <p className="text-sm text-gray-500 italic text-center py-4">No hay tokens generados</p>
+      {/* Links activos — fuera del modo link, siempre visible */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-900">Links para sub-distribuidores</h2>
+        </div>
+        {tokens.filter(t => !t.clienteId && !t.clienteNombre).length === 0 ? (
+          <div className="p-6 text-center">
+            <p className="text-sm text-gray-400 italic">No hay links generados</p>
+          </div>
         ) : (
-          <div className="space-y-3">
-            {tokens
-              .filter(t => !t.clienteId && !t.clienteNombre)
-              .sort((a, b) => new Date(b.createdAt as unknown as string).getTime() - new Date(a.createdAt as unknown as string).getTime())
-              .slice(0, 20)
-              .map(token => {
-                const expirado = new Date(token.expiraEn) < new Date();
-                return (
-                  <div key={token.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 gap-4">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate">
-                        {token.cuentaId ? cuentas.find(c => c.id === token.cuentaId)?.proveedor || 'Cuenta' : '—'}
-                      </p>
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                          expirado
-                            ? 'bg-red-100 text-red-600'
-                            : token.activo
-                              ? 'bg-green-100 text-green-600'
-                              : 'bg-gray-100 text-gray-500'
-                        }`}>
-                          {expirado ? 'Vencido' : token.activo ? 'Activo' : 'Revocado'}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          Expira: {new Date(token.expiraEn).toLocaleDateString('es-CO')}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <button
-                        onClick={() => {
-                          const url = `${window.location.origin}/r/${token.id}`;
-                          navigator.clipboard.writeText(url);
-                          toast.success('Link copiado');
-                        }}
-                        className="p-2 rounded-lg bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-colors"
-                        title="Copiar link"
-                      >
-                        <Copy size={16} />
-                      </button>
-                      {token.activo && !expirado && (
-                        <button
-                          onClick={async () => {
-                            try {
-                              await revocarToken(token.id);
-                              toast.success('Token revocado');
-                            } catch { toast.error('Error al revocar'); }
-                          }}
-                          className="p-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
-                          title="Revocar"
-                        >
-                          <X size={16} />
-                        </button>
-                      )}
-                      {(!token.activo || expirado) && (
-                        <button
-                          onClick={async () => {
-                            try {
-                              await reactivarToken(token.id);
-                              toast.success('Token reactivado');
-                            } catch { toast.error('Error al reactivar'); }
-                          }}
-                          className="p-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-colors"
-                          title="Reactivar"
-                        >
-                          <RefreshCw size={16} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100">
+                  <th className="px-6 py-3 text-left font-semibold text-gray-600">Proveedor</th>
+                  <th className="px-6 py-3 text-center font-semibold text-gray-600">Estado</th>
+                  <th className="px-6 py-3 text-right font-semibold text-gray-600">Expira</th>
+                  <th className="px-6 py-3 text-center font-semibold text-gray-600">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tokens
+                  .filter(t => !t.clienteId && !t.clienteNombre)
+                  .sort((a, b) => new Date(b.createdAt as unknown as string).getTime() - new Date(a.createdAt as unknown as string).getTime())
+                  .slice(0, 20)
+                  .map(token => {
+                    const expirado = new Date(token.expiraEn) < new Date();
+                    const proveedor = token.cuentaId
+                      ? cuentas.find(c => c.id === token.cuentaId)?.proveedor || '—'
+                      : '—';
+                    return (
+                      <tr key={token.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <span className="font-semibold text-gray-900">{proveedor}</span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${
+                            expirado
+                              ? 'bg-red-100 text-red-600'
+                              : token.activo
+                                ? 'bg-green-100 text-green-600'
+                                : 'bg-gray-100 text-gray-500'
+                          }`}>
+                            {expirado ? 'Vencido' : token.activo ? 'Activo' : 'Revocado'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right text-gray-500">
+                          {new Date(token.expiraEn).toLocaleDateString('es-CO')}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => {
+                                const url = `${window.location.origin}/r/${token.id}`;
+                                navigator.clipboard.writeText(url);
+                                toast.success('Link copiado');
+                              }}
+                              className="p-2 rounded-lg bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-colors"
+                              title="Copiar link"
+                            >
+                              <Copy size={16} />
+                            </button>
+                            {token.activo && !expirado && (
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await revocarToken(token.id);
+                                    toast.success('Token revocado');
+                                  } catch { toast.error('Error al revocar'); }
+                                }}
+                                className="p-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
+                                title="Revocar"
+                              >
+                                <X size={16} />
+                              </button>
+                            )}
+                            {(!token.activo || expirado) && (
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await reactivarToken(token.id);
+                                    toast.success('Token reactivado');
+                                  } catch { toast.error('Error al reactivar'); }
+                                }}
+                                className="p-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-colors"
+                                title="Reactivar"
+                              >
+                                <RefreshCw size={16} />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
