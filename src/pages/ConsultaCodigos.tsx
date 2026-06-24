@@ -1,11 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { db } from '../firebase';
+import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import useCuentas from '../hooks/useCuentas';
 import useTokens, { revocarToken, reactivarToken } from '../hooks/useTokens';
 import usePermisos from '../hooks/usePermisos';
 import FeatureBlocked from '../components/FeatureBlocked';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { Copy, Loader2, AlertCircle, Monitor, Calendar, Link as LinkIcon, X, RefreshCw, ExternalLink } from 'lucide-react';
+import { Copy, Loader2, AlertCircle, Monitor, Calendar, DollarSign, TrendingUp, X, RefreshCw } from 'lucide-react';
 import { CASE_OPTIONS, CASE_LABELS } from '../components/CasoSelector';
 import toast from 'react-hot-toast';
 
@@ -38,6 +40,7 @@ export default function ConsultaCodigos() {
   const [diasAcceso, setDiasAcceso] = useState(30);
   const [linkGenerado, setLinkGenerado] = useState('');
   const [linkExpira, setLinkExpira] = useState('');
+  const [precioVenta, setPrecioVenta] = useState(0);
 
   const cuentasConIMAP = useMemo(() =>
     cuentas.filter(c => c.estado !== 'expirada'),
@@ -49,6 +52,16 @@ export default function ConsultaCodigos() {
   const casosDisponibles = (PROVEEDOR_CASOS[proveedor] || [])
     .filter(c => c !== 'resetnet')
     .map(value => ({ value, label: CASE_LABELS[value] || value }));
+
+  const costoServicio = useMemo(() => {
+    if (!cuentaSeleccionada) return 0;
+    const perfiles = Array.isArray(cuentaSeleccionada.perfiles) ? cuentaSeleccionada.perfiles : [];
+    return perfiles.length > 0
+      ? Math.round(cuentaSeleccionada.costo / perfiles.length)
+      : cuentaSeleccionada.costo;
+  }, [cuentaSeleccionada]);
+
+  const utilidad = useMemo(() => precioVenta - costoServicio, [precioVenta, costoServicio]);
 
   const consultarCodigo = async () => {
     if (!cuentaId || !selectedCaso) return;
@@ -93,6 +106,50 @@ export default function ConsultaCodigos() {
       const url = `${window.location.origin}${data.url}`;
       setLinkGenerado(url);
       setLinkExpira(new Date(expiraEn).toLocaleDateString('es-CO'));
+
+      // 🟢 Registrar venta de cuenta/subdistribuidor
+      if (precioVenta > 0 && user) {
+        try {
+          await addDoc(collection(db, 'ventas'), {
+            nombre: 'Sub-distribuidor',
+            telefono: '0000000000',
+            correo: '',
+            plataforma: cuentaSeleccionada?.proveedor || '',
+            pantallas: 1,
+            precioVenta,
+            costoServicio,
+            utilidad,
+            fechaInicio: new Date().toISOString().split('T')[0],
+            fechaVenta: new Date().toISOString().split('T')[0],
+            diasServicio: diasAcceso,
+            perfil: '',
+            pinPerfil: '',
+            pagado: true,
+            saldoPendiente: 0,
+            fechaRegistro: serverTimestamp(),
+            fechaRegistroSistema: null,
+            fechaVencimiento: new Date(expiraEn).toISOString().split('T')[0],
+            propietarioId: user.uid!,
+            usuarioEmail: user.email!,
+            cuentaId: cuentaId,
+            tokenGenerado: data.token as string,
+            costoPorPerfil: costoServicio,
+          });
+
+          // 🟢 Registrar movimiento financiero
+          await addDoc(collection(db, 'movimientos'), {
+            tipo: 'Ingreso',
+            monto: precioVenta,
+            descripcion: `Venta cuenta ${cuentaSeleccionada?.proveedor || ''} (Sub-distribuidor)`,
+            fecha: serverTimestamp(),
+            propietarioId: user.uid,
+            usuarioEmail: user.email,
+          });
+        } catch (err) {
+          console.warn('⚠️ No se pudo registrar la venta:', err);
+        }
+      }
+
       setEstado('idle');
       toast.success('Link generado correctamente');
     } catch (err: unknown) {
@@ -252,6 +309,53 @@ export default function ConsultaCodigos() {
 
       {modo === 'link' && cuentaId && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          {/* Info de la cuenta + valores financieros */}
+          <div className="flex items-center gap-3 p-3 bg-indigo-50 rounded-xl border border-indigo-100 mb-6">
+            <Monitor size={18} className="text-indigo-500" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-indigo-900">{cuentaSeleccionada?.proveedor}</p>
+              <p className="text-xs text-indigo-600">{cuentaSeleccionada?.correoCuenta}</p>
+            </div>
+            <span className="text-sm font-bold text-indigo-700">${cuentaSeleccionada?.costo.toLocaleString()}</span>
+          </div>
+
+          {/* Valores financieros */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Precio de venta <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
+                <input
+                  type="number"
+                  value={precioVenta}
+                  onChange={e => setPrecioVenta(Number(e.target.value))}
+                  className="w-full pl-7"
+                  min="0"
+                  step="100"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Costo por perfil</label>
+              <div className="flex items-center h-[42px] px-4 bg-gray-50 rounded-xl border border-gray-200 text-sm font-semibold text-gray-500">
+                ${costoServicio.toLocaleString()}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Utilidad</label>
+              <div className={`flex items-center h-[42px] px-4 rounded-xl border text-sm font-bold ${
+                utilidad >= 0
+                  ? 'bg-green-50 border-green-200 text-green-700'
+                  : 'bg-red-50 border-red-200 text-red-700'
+              }`}>
+                ${utilidad.toLocaleString()}
+              </div>
+            </div>
+          </div>
+
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Duración del acceso</h2>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
