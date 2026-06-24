@@ -19,10 +19,17 @@ export default function Reportes() {
   const [searchTerm, setSearchTerm] = useState('');
   const [paginaActual, setPaginaActual] = useState(1);
   const [itemsPorPagina, setItemsPorPagina] = useState(10);
+  const [tipoVenta, setTipoVenta] = useState<'todas' | 'clientes' | 'subdistribuidor'>('todas');
 
   // Filtro por rango de fechas (solo client-side, sin reiniciar el listener)
   const ventas = useMemo(() => {
     let data = todasLasVentas as Venta[];
+
+    if (tipoVenta === 'clientes') {
+      data = data.filter(v => v.nombre !== 'Sub-distribuidor');
+    } else if (tipoVenta === 'subdistribuidor') {
+      data = data.filter(v => v.nombre === 'Sub-distribuidor');
+    }
 
     if (fechaInicio && fechaFin) {
       data = data.filter((v: Venta) => {
@@ -161,6 +168,27 @@ export default function Reportes() {
           {esAdmin ? 'Reportes de la Plataforma' : 'Reportes de Ventas'}
         </h1>
         <p className="text-gray-600">Analiza y exporta tus datos de ventas</p>
+      </div>
+
+      {/* Tabs: Clientes / Sub-distribuidor */}
+      <div className="flex gap-4">
+        {([
+          { key: 'todas', label: '📊 Todas las ventas' },
+          { key: 'clientes', label: '👤 Ventas Cliente' },
+          { key: 'subdistribuidor', label: '🤝 Venta Sub-distribuidor' },
+        ] as const).map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setTipoVenta(tab.key)}
+            className={`px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
+              tipoVenta === tab.key
+                ? 'bg-indigo-600 text-white shadow-lg'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {/* Filtros */}
