@@ -405,3 +405,128 @@ export const toggleToken = functions
 
     return { success: true, activo };
   });
+
+export const consultarCodigoDirecto = functions
+  .runWith({ timeoutSeconds: 60, memory: '256MB' })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión');
+    }
+
+    const uid = context.auth.uid;
+    const { cuentaId, caso } = data;
+
+    if (!cuentaId || !caso) {
+      throw new functions.https.HttpsError('invalid-argument', 'cuentaId y caso son requeridos');
+    }
+
+    // Verificar que la cuenta existe y pertenece al usuario
+    const cuentaDoc = await db.collection('cuentas').doc(cuentaId).get();
+    if (!cuentaDoc.exists) {
+      throw new functions.https.HttpsError('not-found', 'Cuenta no encontrada');
+    }
+
+    const cuentaData = cuentaDoc.data()!;
+    if (cuentaData.propietarioId !== uid) {
+      throw new functions.https.HttpsError('permission-denied', 'No tienes permisos sobre esta cuenta');
+    }
+
+    const servicio = cuentaData.proveedor as string;
+
+    // Buscar credenciales IMAP
+    const secretosDoc = await db.collection('cuentas_secretos').doc(cuentaId).get();
+    if (!secretosDoc.exists) {
+      throw new functions.https.HttpsError('not-found', 'Credenciales IMAP no configuradas');
+    }
+
+    const secretos = secretosDoc.data()!;
+    const imapConfig = {
+      correo: secretos.correo as string,
+      contrasena: secretos.contrasena as string,
+      host: (secretos.imapHost as string) || getDefaultIMAPHost(secretos.proveedorIMAP as string),
+      port: (secretos.imapPort as number) || 993,
+    };
+
+    try {
+      const result = await buscarCodigoVerificacion(imapConfig, servicio, caso);
+
+      if (!result) {
+        return {
+          encontrado: false,
+          mensaje: 'Código no encontrado — verifica que el código haya sido enviado al correo',
+        };
+      }
+
+      return {
+        encontrado: true,
+        codigo: result.codigo,
+        email: imapConfig.correo,
+        fecha: result.fecha,
+        tipo: caso,
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error desconocido';
+      console.error('Error en consultarCodigoDirecto (IMAP):', message);
+
+      if (message.includes('Connection timeout') || message.includes('connect')) {
+        throw new functions.https.HttpsError('unavailable', 'No se pudo conectar al correo de la cuenta');
+      }
+      if (message.includes('authentication') || message.includes('auth')) {
+        throw new functions.https.HttpsError('permission-denied', 'Error de autenticación IMAP');
+      }
+
+      throw new functions.https.HttpsError('internal', 'Error al consultar el código');
+    }
+  });
+
+export const generarTokenSubdistribuidor = functions
+  .runWith({ timeoutSeconds: 30, memory: '256MB' })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión');
+    }
+
+    const uid = context.auth.uid;
+    const { cuentaId, perfilNombre, expiraEn } = data;
+
+    if (!cuentaId || !expiraEn) {
+      throw new functions.https.HttpsError('invalid-argument', 'cuentaId y expiraEn son requeridos');
+    }
+
+    // Verificar que la cuenta existe y pertenece al usuario
+    const cuentaDoc = await db.collection('cuentas').doc(cuentaId).get();
+    if (!cuentaDoc.exists) {
+      throw new functions.https.HttpsError('not-found', 'Cuenta no encontrada');
+    }
+
+    const cuentaData = cuentaDoc.data()!;
+    if (cuentaData.propietarioId !== uid) {
+      throw new functions.https.HttpsError('permission-denied', 'No tienes permisos sobre esta cuenta');
+    }
+
+    // Validar que expiraEn sea una fecha futura
+    const expiraDate = new Date(expiraEn);
+    if (isNaN(expiraDate.getTime()) || expiraDate <= new Date()) {
+      throw new functions.https.HttpsError('invalid-argument', 'expiraEn debe ser una fecha futura');
+    }
+
+    const token = uuidv4();
+    await db.collection('tokens').doc(token).set({
+      token,
+      cuentaId,
+      perfilNombre: perfilNombre || null,
+      clienteId: '',
+      clienteNombre: '',
+      vendedorId: uid,
+      expiraEn: expiraDate.toISOString(),
+      activo: true,
+      useCount: 0,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return {
+      token,
+      url: `/r/${token}`,
+      expiraEn: expiraDate.toISOString(),
+    };
+  });

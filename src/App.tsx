@@ -16,6 +16,7 @@ const AdminSuscripciones = lazy(() => import('./pages/AdminSuscripciones'));
 const Ajustes = lazy(() => import('./pages/Ajustes'));
 const GestionCuentas = lazy(() => import('./pages/GestionCuentas'));
 const ConsultaPublica = lazy(() => import('./pages/ConsultaPublica'));
+const ConsultaCodigos = lazy(() => import('./pages/ConsultaCodigos'));
 
 export default function App() {
   return (
@@ -138,6 +139,17 @@ export default function App() {
           />
 
           <Route path="/r/:token" element={<ConsultaPublica />} />
+
+          <Route
+            path="/consulta-codigos"
+            element={
+              <PrivateRoute roles={['admin', 'usuario']}>
+                <Layout>
+                  <ConsultaCodigos />
+                </Layout>
+              </PrivateRoute>
+            }
+          />
 
           {/* Catch-all: redirigir a dashboard */}
           <Route path="*" element={<Navigate to="/" replace />} />
