@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && cp landing/index.html dist/ && cp public/stream.webp dist/ && rm -f dist/favicon.ico; true",
+    "build": "vite build && cp landing/index.html dist/ && cp landing/solicitar.html dist/ && cp public/stream.webp dist/ && rm -f dist/favicon.ico; true",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest"
