@@ -180,6 +180,31 @@ streamcontrol/
 
 ---
 
+## Routing y Hosting (Firebase)
+
+El sistema usa **Firebase Hosting** con una configuración específica de rewrites y redirects para servir tanto la landing page como la SPA:
+
+```
+firebase.json
+├── redirects (se evalúan PRIMERO)
+│   └── /login  → 302 → /app/login
+└── rewrites (se evalúan DESPUÉS)
+    ├── /r/**      → /app/index.html   (consulta pública de códigos)
+    ├── /app/**    → /app/index.html   (SPA principal)
+    └── **         → /index.html       (landing page + catch-all)
+```
+
+| URL | Qué sirve | Descripción |
+|-----|-----------|-------------|
+| `/` | `index.html` (landing) | Página de aterrizaje |
+| `/app/*` | `app/index.html` (SPA) | App React con `basename=/app` |
+| `/r/TOKEN` | `app/index.html` (SPA) | Consulta pública de códigos vía rewrite |
+| `/login` | **302** → `/app/login` | Redirect a login de la SPA |
+| `/solicitar.html` | `solicitar.html` | Página estática de solicitud de plan |
+| `/random` | `index.html` (landing) | Catch-all: cualquier otra ruta |
+
+> ⚠️ **Importante**: Firebase Hosting **no interpola correctamente** los capture groups (`:splat`, `:1`) en las reglas de redirect. La ruta `/r/TOKEN` se resuelve mediante un rewrite en lugar de redirect, y la aplicación React detecta el pathname manualmente para renderizar el componente de consulta pública.
+
 ## Configuración y Despliegue
 
 ### Requisitos
@@ -214,7 +239,12 @@ firebase functions:secrets:set SMTP_PASS
 # 2. Recompilar TypeScript de Functions (importante!)
 cd functions && npx tsc && cd ..
 
-# 3. Deployar todo
+# 3. Commitear y pushear a GitHub
+git add .
+git commit -m "descripción del cambio"
+git push
+
+# 4. Deployar todo
 firebase deploy
 
 # O deploy específico:
@@ -223,7 +253,9 @@ firebase deploy --only functions        # Solo Cloud Functions
 firebase deploy --only firestore:rules  # Solo reglas
 ```
 
-> **Nota**: Firebase Functions usa el código compilado en `functions/lib/`. Siempre ejecutar `npx tsc` en `functions/` antes de deployar para asegurar que los cambios en TypeScript se incluyan.
+> **Nota 1**: Firebase Functions usa el código compilado en `functions/lib/`. Siempre ejecutar `npx tsc` en `functions/` antes de deployar para asegurar que los cambios en TypeScript se incluyan.
+>
+> **Nota 2**: El build de la SPA compila a `dist/app/` gracias al `base: '/app/'` en Vite. El script de build también copia `landing/index.html` y `landing/solicitar.html` a `dist/`.
 
 ---
 
