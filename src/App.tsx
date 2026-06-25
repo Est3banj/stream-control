@@ -4,6 +4,7 @@ import PrivateRoute from './components/Auth/PrivateRoute';
 import Layout from './components/Layout';
 import Login from './components/Auth/Login';
 import ErrorBoundary from './components/ErrorBoundary';
+import AnalyticsTracker from './components/AnalyticsTracker';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Ventas = lazy(() => import('./pages/Ventas'));
@@ -21,6 +22,7 @@ const ConsultaCodigos = lazy(() => import('./pages/ConsultaCodigos'));
 export default function App() {
   return (
     <BrowserRouter basename="/app">
+      <AnalyticsTracker />
       <ErrorBoundary>
         <Suspense fallback={<div className="container">Cargando...</div>}>
           <Routes>
