@@ -84,19 +84,6 @@
           />
         </div>
 
-        <!-- Teléfono -->
-        <div>
-          <label for="field-telefono" class="block text-sm font-semibold text-gray-700 mb-1.5">WhatsApp</label>
-          <input
-            type="tel"
-            id="field-telefono"
-            required
-            class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-            placeholder="Ej: 5491123456789"
-          />
-          <p class="text-xs text-gray-400 mt-1.5">Incluí código de país y área. Ej: 5491112345678</p>
-        </div>
-
         <!-- Negocio (opcional) -->
         <div>
           <label for="field-negocio" class="block text-sm font-semibold text-gray-700 mb-1.5">Nombre de tu negocio <span class="text-gray-400 font-normal">(opcional)</span></label>
@@ -142,12 +129,10 @@
 
 <script>
   // ═══════════════════════════════════════════
-  // CONFIGURACIÓN — Cambiá acá tu número de WhatsApp
+  // CONFIGURACIÓN — Número de WhatsApp del administrador
   // ═══════════════════════════════════════════
-  // El número se toma de la configuración en AdminPlanes (Firestore).
-  // Si no está configurado, usá el formato: código_país + código_área + número
-  // Ejemplo: 5491123456789 (Argentina, Buenos Aires)
-  var WHATSAPP_NUMBER = '';
+  // Solo dígitos, con código de país. Ej: 573247349128
+  var WHATSAPP_NUMBER = '573247349128';
 
   // Planes disponibles
   var PLANES = {
@@ -176,43 +161,6 @@
   })();
 
   // ===========================================
-  // Firebase — Obtener WhatsApp desde Firestore
-  // ===========================================
-  (function() {
-    // Si ya hay un número hardcodeado, no hace falta Firebase
-    if (WHATSAPP_NUMBER) return;
-
-    var script = document.createElement('script');
-    script.src = 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js';
-    script.onload = function() {
-      var fsScript = document.createElement('script');
-      fsScript.src = 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js';
-      fsScript.onload = function() {
-        firebase.initializeApp({
-          apiKey: 'AIzaSyC9gPD-_TY0peahoTrmRZcGCG8Cl4l_edQ',
-          authDomain: 'streamcontrol-10837.firebaseapp.com',
-          projectId: 'streamcontrol-10837',
-          storageBucket: 'streamcontrol-10837.appspot.com',
-          messagingSenderId: '149009813939',
-          appId: '1:149009813939:web:6b8fb77e9415bbae0abbc6',
-        });
-        var db = firebase.firestore();
-        db.doc('config/general').get()
-          .then(function(doc) {
-            if (doc.exists && doc.data().whatsapp) {
-              WHATSAPP_NUMBER = doc.data().whatsapp.replace(/[^0-9]/g, '');
-            }
-          })
-          .catch(function(err) {
-            console.warn('No se pudo obtener el WhatsApp de Firestore:', err);
-          });
-      };
-      document.head.appendChild(fsScript);
-    };
-    document.head.appendChild(script);
-  })();
-
-  // ===========================================
   // Submit — Redirigir a WhatsApp
   // ===========================================
   document.getElementById('solicitud-form').addEventListener('submit', function(e) {
@@ -227,17 +175,10 @@
 
     var nombre = document.getElementById('field-nombre').value.trim();
     var email = document.getElementById('field-email').value.trim();
-    var telefono = document.getElementById('field-telefono').value.trim();
     var negocio = document.getElementById('field-negocio').value.trim();
 
-    if (!nombre || !email || !telefono) {
+    if (!nombre || !email) {
       alert('Completá todos los campos obligatorios.');
-      return;
-    }
-
-    var numero = WHATSAPP_NUMBER;
-    if (!numero) {
-      alert('El número de WhatsApp no está configurado. Contactá al administrador.');
       return;
     }
 
@@ -245,7 +186,6 @@
       'Mis datos:%0A' +
       '• Nombre: ' + nombre + '%0A' +
       '• Email: ' + email + '%0A' +
-      '• WhatsApp: ' + telefono + '%0A' +
       (negocio ? '• Negocio: ' + negocio + '%0A' : '') +
       '%0A' + plan.label + '%0A' +
       'Quedo atento a la activación. Gracias!';
