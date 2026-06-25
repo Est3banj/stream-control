@@ -11,10 +11,12 @@
       "**/node_modules/**"
     ],
     "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
+      { "source": "/app/**", "destination": "/app/index.html" },
+      { "source": "**", "destination": "/index.html" }
+    ],
+    "redirects": [
+      { "source": "/login", "destination": "/app/login", "type": 302 },
+      { "source": "/r/*", "destination": "/app/r/:splat", "type": 302 }
     ]
   },
   "functions": {

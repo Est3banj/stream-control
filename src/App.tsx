@@ -20,7 +20,7 @@ const ConsultaCodigos = lazy(() => import('./pages/ConsultaCodigos'));
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/app">
       <ErrorBoundary>
         <Suspense fallback={<div className="container">Cargando...</div>}>
           <Routes>
