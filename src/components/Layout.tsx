@@ -231,10 +231,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Hola, necesito ayuda con StreamControl.')}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-5 py-3 rounded-full shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 bg-[#25D366] text-white hover:bg-[#20bd5a]"
+          className="fixed bottom-5 right-5 z-50 group"
         >
-          <MessageCircle size={20} />
-          <span className="text-sm font-semibold whitespace-nowrap">Chateá con soporte</span>
+          <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-gray-900/90 text-white text-sm font-medium px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-lg backdrop-blur-sm">
+            Chateá con soporte
+          </span>
+          <div className="flex items-center justify-center w-12 h-12 rounded-full shadow-lg transition-all duration-300 hover:scale-110 active:scale-95 bg-[#25D366] text-white hover:bg-[#20bd5a]">
+            <MessageCircle size={22} />
+          </div>
         </a>
       )}
 
