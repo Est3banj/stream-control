@@ -6,7 +6,7 @@
   <title>StreamControl Pro — Gestión inteligente para revendedores de streaming</title>
   <meta name="description" content="Administrá clientes, cuentas, perfiles y códigos de verificación desde un solo lugar. La herramienta que usan los revendedores que venden en serio." />
   <meta property="og:title" content="StreamControl Pro — Gestioná tu negocio de streaming" />
-  <meta property="og:description" content="La plataforma que usan los revendedores que venden en serio. Clientas, cuentas, perfiles y códigos en un solo lugar." />
+  <meta property="og:description" content="La plataforma que usan los revendedores que venden en serio. Clientes, cuentas, perfiles y códigos en un solo lugar." />
   <meta property="og:image" content="https://streamcontrol-10837.web.app/stream.webp" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -34,7 +34,6 @@
     .fade-in-d4 { animation: fi 0.7s ease 0.3s forwards; opacity: 0; }
     @keyframes fi { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     .gradient-text { background: linear-gradient(135deg, #4F46E5, #7C3AED, #A855F7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    .glass { background: rgba(255,255,255,0.04); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); }
   </style>
 </head>
 <body class="bg-white text-gray-900 font-sans antialiased">
@@ -42,10 +41,10 @@
   <!-- ═══ NAV ═══ -->
   <nav class="fixed top-0 inset-x-0 z-50 bg-white/70 backdrop-blur-xl border-b border-gray-100/80">
     <div class="max-w-6xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-2.5">
-        <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xs font-black">SC</div>
+      <a href="/" class="flex items-center gap-2.5">
+        <img src="/stream.webp" alt="StreamControl Pro" class="w-7 h-7" />
         <span class="text-lg font-extrabold text-gray-900">StreamControl</span>
-      </div>
+      </a>
       <div class="flex items-center gap-2 sm:gap-4">
         <a href="/app/login" class="hidden sm:inline text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors px-3 py-2">Iniciar sesión</a>
         <a href="/app/login" class="inline-flex items-center px-5 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 transition-all active:scale-95 shadow-lg shadow-black/10">
@@ -56,20 +55,20 @@
   </nav>
 
   <!-- ═══ HERO ═══ -->
-  <section class="relative min-h-[90vh] flex items-center overflow-hidden pt-20">
+  <section class="relative min-h-screen flex items-center overflow-hidden pt-20">
     <div class="absolute inset-0 bg-gradient-to-b from-white via-indigo-50/30 to-white pointer-events-none" />
     <div class="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-indigo-300/10 via-violet-300/10 to-transparent rounded-full blur-3xl" />
     <div class="max-w-6xl mx-auto px-5 sm:px-8 relative z-10 w-full">
       <div class="max-w-3xl mx-auto text-center">
         <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-sm font-medium mb-8 fade-in">
-          💜 Más de 100 revendedores activos
+          Más de 100 revendedores activos
         </div>
         <h1 class="text-[2.4rem] sm:text-5xl lg:text-6xl font-extrabold leading-[1.1] tracking-tight mb-6 fade-in-d2">
           Gestioná tus cuentas streaming<br />
           <span class="gradient-text">como un profesional</span>
         </h1>
         <p class="text-lg sm:text-xl text-gray-500 leading-relaxed max-w-xl mx-auto mb-10 fade-in-d2">
-          La herramienta que usan los revendedores que venden en serio. 
+          La herramienta que usan los revendedores que venden en serio.
           Clientes, cuentas, perfiles y códigos de verificación en un solo lugar.
         </p>
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4 fade-in-d4">
@@ -85,7 +84,6 @@
 
       <!-- Mockup -->
       <div class="mt-16 relative fade-in-d4">
-        <div class="absolute -inset-4 bg-gradient-to-b from-indigo-500/5 via-violet-500/5 to-transparent rounded-3xl blur-2xl" />
         <div class="relative rounded-2xl border border-gray-200 bg-white shadow-2xl shadow-black/5 overflow-hidden">
           <div class="flex items-center gap-1.5 px-4 py-3 border-b border-gray-100 bg-gray-50/50">
             <div class="w-3 h-3 rounded-full bg-red-400" />
@@ -126,10 +124,10 @@
     </div>
   </section>
 
-  <!-- ═══ SOCIAL PROOF ═══ -->
+  <!-- ═══ COMPATIBILIDAD ═══ -->
   <section class="py-14 border-y border-gray-100">
     <div class="max-w-6xl mx-auto px-5 sm:px-8">
-      <p class="text-center text-xs font-semibold text-gray-400 uppercase tracking-[0.2em] mb-8">Compatibilidad total</p>
+      <p class="text-center text-xs font-semibold text-gray-400 uppercase tracking-[0.2em] mb-8">Funciona con</p>
       <div class="flex flex-wrap items-center justify-center gap-x-12 gap-y-4">
         <span class="text-xl sm:text-2xl font-black text-gray-300 hover:text-indigo-500 transition-colors">NETFLIX</span>
         <span class="text-xl sm:text-2xl font-black text-gray-300 hover:text-indigo-500 transition-colors">max</span>
@@ -197,7 +195,7 @@
     </div>
   </section>
 
-  <!-- ═══ DARK SECTION ═══ -->
+  <!-- ═══ CÓMO FUNCIONA ═══ -->
   <section class="py-20 lg:py-28 bg-gray-950 text-white overflow-hidden">
     <div class="max-w-6xl mx-auto px-5 sm:px-8">
       <div class="max-w-2xl mb-16">
@@ -205,19 +203,19 @@
         <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight mb-4 text-white">Empezá en minutos</h2>
         <p class="text-lg text-gray-400">Sin curvas de aprendizaje. Sin configuración complicada.</p>
       </div>
-      <div class="grid md:grid-cols-3 gap-8 relative">
-        <div class="relative z-10">
-          <div class="text-5xl font-black text-indigo-500/20 mb-4">01</div>
+      <div class="grid md:grid-cols-3 gap-8">
+        <div>
+          <p class="text-5xl font-black text-indigo-500/20 mb-4">01</p>
           <h3 class="text-lg font-bold text-white mb-2">Creás tu cuenta</h3>
           <p class="text-gray-400 text-sm leading-relaxed">Registrate y accedés al dashboard. Sin tarjeta de crédito, sin compromiso.</p>
         </div>
-        <div class="relative z-10">
-          <div class="text-5xl font-black text-indigo-500/20 mb-4">02</div>
+        <div>
+          <p class="text-5xl font-black text-indigo-500/20 mb-4">02</p>
           <h3 class="text-lg font-bold text-white mb-2">Configurás tus servicios</h3>
           <p class="text-gray-400 text-sm leading-relaxed">Agregás tus cuentas de streaming, vinculás el correo y cargás tus clientes.</p>
         </div>
-        <div class="relative z-10">
-          <div class="text-5xl font-black text-indigo-500/20 mb-4">03</div>
+        <div>
+          <p class="text-5xl font-black text-indigo-500/20 mb-4">03</p>
           <h3 class="text-lg font-bold text-white mb-2">Vendés sin preocuparte</h3>
           <p class="text-gray-400 text-sm leading-relaxed">Registrás ventas, asignás perfiles y los códigos se consultan solos. Todo automático.</p>
         </div>
@@ -225,7 +223,7 @@
     </div>
   </section>
 
-  <!-- ═══ PRICING ═══ -->
+  <!-- ═══ PRECIOS ═══ -->
   <section id="pricing" class="py-20 lg:py-28">
     <div class="max-w-6xl mx-auto px-5 sm:px-8">
       <div class="max-w-2xl mb-16">
@@ -255,7 +253,7 @@
           <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gray-900 text-white text-xs font-bold">RECOMENDADO</div>
           <h3 class="text-lg font-bold">Professional</h3>
           <p class="text-sm text-gray-400 mt-1">Para revendedores</p>
-          <p class="text-3xl font-extrabold mt-6">$19 <span class="text-base font-normal text-gray-400">/mes</span></p>
+          <p class="text-3xl font-extrabold mt-6">$8 <span class="text-base font-normal text-gray-400">/mes</span></p>
           <ul class="mt-6 space-y-3">
             <li class="flex items-start gap-3 text-sm"><svg class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>Clientes ilimitados</li>
             <li class="flex items-start gap-3 text-sm"><svg class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>Gestión de cuentas streaming</li>
@@ -271,7 +269,7 @@
         <div class="flex-1 bg-white rounded-2xl border border-gray-200 p-6 sm:p-8">
           <h3 class="text-lg font-bold">Enterprise</h3>
           <p class="text-sm text-gray-400 mt-1">Para distribuidores</p>
-          <p class="text-3xl font-extrabold mt-6">$39 <span class="text-base font-normal text-gray-400">/mes</span></p>
+          <p class="text-3xl font-extrabold mt-6">$9 <span class="text-base font-normal text-gray-400">/mes</span></p>
           <ul class="mt-6 space-y-3">
             <li class="flex items-start gap-3 text-sm"><svg class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>Todo lo de Professional</li>
             <li class="flex items-start gap-3 text-sm"><svg class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>Códigos de verificación IMAP</li>
@@ -285,7 +283,7 @@
     </div>
   </section>
 
-  <!-- ═══ TESTIMONIAL ═══ -->
+  <!-- ═══ TESTIMONIOS ═══ -->
   <section class="py-20 lg:py-28 bg-gray-50">
     <div class="max-w-6xl mx-auto px-5 sm:px-8">
       <div class="max-w-2xl mb-16">
@@ -295,21 +293,33 @@
       <div class="grid md:grid-cols-3 gap-6">
         <div class="bg-white rounded-2xl p-6 border border-gray-100">
           <div class="flex gap-0.5 mb-4">
-            {[...Array(5)].map((_, i) => <svg key={i} class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>)}
+            <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
           </div>
           <p class="text-sm text-gray-600 leading-relaxed mb-4">"Manejaba todo en Excel y era un quilombo. StreamControl me ordenó los clientes, las cuentas y los códigos. Ahora no puedo laburar sin esto."</p>
           <div class="flex items-center gap-3"><div class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs">CL</div><div><p class="text-sm font-bold">Carlos L.</p><p class="text-xs text-gray-400">Colombia</p></div></div>
         </div>
         <div class="bg-white rounded-2xl p-6 border border-gray-100">
           <div class="flex gap-0.5 mb-4">
-            {[...Array(5)].map((_, i) => <svg key={i} class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>)}
+            <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
           </div>
           <p class="text-sm text-gray-600 leading-relaxed mb-4">"La consulta de códigos por IMAP me salvó. Mis clientes ya no me escriben cada 5 minutos pidiendo el código, lo ven ellos solos."</p>
           <div class="flex items-center gap-3"><div class="w-9 h-9 rounded-full bg-violet-100 flex items-center justify-center text-violet-600 font-bold text-xs">MG</div><div><p class="text-sm font-bold">María G.</p><p class="text-xs text-gray-400">México</p></div></div>
         </div>
         <div class="bg-white rounded-2xl p-6 border border-gray-100">
           <div class="flex gap-0.5 mb-4">
-            {[...Array(5)].map((_, i) => <svg key={i} class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>)}
+            <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
           </div>
           <p class="text-sm text-gray-600 leading-relaxed mb-4">"Arranqué con el plan gratis y a las dos semanas ya estaba pagando. Los reportes y las alertas de Telegram me ayudan a no perder clientes."</p>
           <div class="flex items-center gap-3"><div class="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-xs">AR</div><div><p class="text-sm font-bold">Andrés R.</p><p class="text-xs text-gray-400">Argentina</p></div></div>
@@ -336,7 +346,7 @@
         </details>
         <details class="group bg-gray-50 rounded-xl p-5 cursor-pointer open:bg-white open:border open:border-gray-200 transition-all">
           <summary class="flex items-center justify-between text-sm font-bold text-gray-900 list-none gap-4">¿Puedo agregar a mis vendedores?<svg class="w-4 h-4 text-gray-400 shrink-0 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></summary>
-          <p class="mt-3 text-sm text-gray-500 leading-relaxed">Sí. Creás usuarios para tus vendedores y ves todas sus ventas desde tu dashboard. Control total de tu equipo.</p>
+          <p class="mt-3 text-sm text-gray-500 leading-relaxed">Cada usuario registrado maneja sus propios clientes y ventas. Como administrador, podés ver las ventas de todos los usuarios del sistema para llevar el control general. No hay un rol específico de "vendedor", cada usuario opera de forma independiente.</p>
         </details>
         <details class="group bg-gray-50 rounded-xl p-5 cursor-pointer open:bg-white open:border open:border-gray-200 transition-all">
           <summary class="flex items-center justify-between text-sm font-bold text-gray-900 list-none gap-4">¿Puedo cancelar cuando quiera?<svg class="w-4 h-4 text-gray-400 shrink-0 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></summary>
@@ -365,7 +375,7 @@
     <div class="max-w-6xl mx-auto px-5 sm:px-8">
       <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-2 text-sm text-gray-400">
-          <div class="w-6 h-6 rounded bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-[10px] font-black">SC</div>
+          <img src="/stream.webp" alt="" class="w-5 h-5" />
           StreamControl Pro
         </div>
         <div class="flex items-center gap-6 text-sm text-gray-500">
