@@ -276,6 +276,4 @@ npx vitest run --coverage
 
 ## Enlaces
 
-- **App en producción**: https://streamcontrol-10837.web.app
-- **Firebase Console**: https://console.firebase.google.com/project/streamcontrol-10837
 - **Repositorio**: https://github.com/Est3banj/stream-control

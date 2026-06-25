@@ -4,8 +4,8 @@
 
 StreamControl Pro es una plataforma SaaS para gestión de negocios de reventa de servicios de streaming. Permite administrar clientes, ventas, cuentas de streaming con múltiples perfiles, y códigos de verificación con extracción automática vía IMAP.
 
-**URL de producción**: https://streamcontrol-10837.web.app
-**Firebase Console**: https://console.firebase.google.com/project/streamcontrol-10837
+**URL de producción**: (la del proyecto Firebase)
+**Firebase Console**: https://console.firebase.google.com
 
 ---
 
@@ -123,7 +123,7 @@ StreamControl Pro es una plataforma SaaS para gestión de negocios de reventa de
 
 Este es el flujo más complejo y donde hay una solución específica:
 
-1. Usuario abre `https://streamcontrol-10837.web.app/r/uuid-v4`
+1. Usuario abre `https://[DOMINIO]/r/uuid-v4`
 2. Firebase Hosting hace **rewrite** → sirve `dist/app/index.html` (SPA)
 3. React bootea, `App.tsx` detecta `window.location.pathname.startsWith('/r/')`
 4. Renderiza `PublicConsulta` con el token extraído del pathname
@@ -434,7 +434,7 @@ streamcontrol/
 │   │   ├── Auth/
 │   │   │   ├── Login.tsx          # Login + Registro dual (toggle)
 │   │   │   └── PrivateRoute.tsx   # Guardia de autenticación + roles
-│   │   ├── AnalyticsTracker.tsx   # Google Analytics (G-87R3DYVTQS)
+│   │   ├── AnalyticsTracker.tsx   # Google Analytics
 │   │   ├── CasoSelector.tsx       # Selector de tipo de código
 │   │   ├── CodeResult.tsx         # Resultado con copia al portapapeles
 │   │   ├── ConfigurarIMAP.tsx     # Configuración IMAP de cuentas
@@ -557,7 +557,7 @@ npx vitest run --coverage  # Con cobertura
 ```
 VITE_API_KEY=...
 VITE_AUTH_DOMAIN=...
-VITE_PROJECT_ID=streamcontrol-10837
+VITE_PROJECT_ID=[FIREBASE_PROJECT_ID]
 VITE_STORAGE_BUCKET=...
 VITE_MESSAGING_SENDER_ID=...
 VITE_APP_ID=...
@@ -636,7 +636,7 @@ No hay tests para el routing (ni el handler de `/r/` ni la configuración de Fir
 
 ## 14. Monitoreo y Observabilidad
 
-- **Google Analytics**: G-87R3DYVTQS — configurado via `AnalyticsTracker.tsx` (trackea page views en SPA) + Google Tag en landing pages
+- **Google Analytics**: configurado via `AnalyticsTracker.tsx` (trackea page views en SPA) + Google Tag en landing pages
 - **Firebase Functions logs**: `firebase functions:log`
 - **Firebase Console**: dashboard de uso, errores, y rendimiento
 
