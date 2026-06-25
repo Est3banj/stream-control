@@ -66,11 +66,27 @@
         <a href="#testimonials" class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors">Testimonios</a>
         <a href="#faq" class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors">FAQ</a>
       </div>
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2">
         <a href="/app/login" class="hidden sm:inline text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">Iniciar sesión</a>
         <a href="/app/login" class="inline-flex items-center px-5 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 transition-all active:scale-95 shadow-lg shadow-black/10 shrink-0">
           Probar gratis
         </a>
+        <!-- Hamburger -->
+        <button id="menu-btn" class="md:hidden p-2.5 rounded-xl hover:bg-gray-100 transition-colors" aria-label="Abrir menú" aria-expanded="false">
+          <svg id="menu-icon" class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path id="menu-open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            <path id="menu-close" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <!-- Mobile menu -->
+    <div id="mobile-menu" class="md:hidden hidden border-t border-gray-100 bg-white shadow-lg">
+      <div class="max-w-6xl mx-auto px-5 sm:px-8 py-4 space-y-1">
+        <a href="#features" class="block px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-colors">Funciones</a>
+        <a href="#pricing" class="block px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-colors">Planes</a>
+        <a href="#testimonials" class="block px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-colors">Testimonios</a>
+        <a href="#faq" class="block px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-colors">FAQ</a>
       </div>
     </div>
   </nav>
@@ -78,18 +94,17 @@
   <main>
 
     <!-- ═══ HERO ═══ -->
-    <section class="relative pt-32 pb-16 sm:pt-36 sm:pb-20 lg:pt-40 lg:pb-24 overflow-hidden">
-      <div class="absolute inset-0 bg-gradient-to-b from-indigo-50/40 to-white pointer-events-none" />
-      <div class="max-w-6xl mx-auto px-5 sm:px-8 relative z-10">
+    <section class="relative pt-32 pb-16 sm:pt-36 sm:pb-20 lg:pt-40 lg:pb-24">
+      <div class="max-w-6xl mx-auto px-5 sm:px-8">
         <div class="max-w-3xl mx-auto text-center">
           <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-sm font-medium mb-8 fade-in">
             Más de 100 revendedores activos
           </div>
-          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.1] tracking-tight mb-6 fade-in-d2">
+          <h1 class="text-[clamp(1.75rem,7vw,4rem)] sm:text-5xl lg:text-6xl font-extrabold leading-[1.1] tracking-tight mb-5 fade-in-d2 text-gray-900">
             Gestioná tus cuentas streaming<br />
-            <span class="gradient-text">como un profesional</span>
+            <span class="text-indigo-600">como un profesional</span>
           </h1>
-          <p class="text-base sm:text-lg lg:text-xl text-gray-500 leading-relaxed max-w-xl mx-auto mb-8 fade-in-d2">
+          <p class="text-base sm:text-lg lg:text-xl text-gray-500 leading-relaxed max-w-2xl mx-auto mb-10 fade-in-d2">
             La herramienta que usan los revendedores que venden en serio. Clientes, cuentas, perfiles y códigos de verificación en un solo lugar.
           </p>
           <div class="flex flex-col sm:flex-row items-center justify-center gap-3 fade-in-d4 mb-12">
@@ -456,5 +471,30 @@
     </div>
   </footer>
 
+<script>
+  (function() {
+    var btn = document.getElementById('menu-btn');
+    var menu = document.getElementById('mobile-menu');
+    var iconOpen = document.getElementById('menu-open');
+    var iconClose = document.getElementById('menu-close');
+    if (!btn || !menu) return;
+    function toggleMenu() {
+      var expanded = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', !expanded);
+      menu.classList.toggle('hidden');
+      iconOpen.classList.toggle('hidden');
+      iconClose.classList.toggle('hidden');
+    }
+    btn.addEventListener('click', toggleMenu);
+    menu.querySelectorAll('a').forEach(function(link) {
+      link.addEventListener('click', function() {
+        menu.classList.add('hidden');
+        btn.setAttribute('aria-expanded', 'false');
+        iconOpen.classList.remove('hidden');
+        iconClose.classList.add('hidden');
+      });
+    });
+  })();
+</script>
 </body>
 </html>
