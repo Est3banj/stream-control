@@ -7,10 +7,13 @@ import NotificationsPanel from './NotificationsPanel';
 import UpgradeModal from './UpgradeModal';
 import UpgradeModalContext from '../contexts/UpgradeModalContext';
 import usePermisos from '../hooks/usePermisos';
+import { useAdminConfig, sanitizarWhatsApp } from '../hooks/useAdminConfig';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const permisos = usePermisos(user);
+  const { config } = useAdminConfig();
+  const whatsappNumber = config.whatsapp ? sanitizarWhatsApp(config.whatsapp) : '';
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -221,6 +224,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Botón de instalación PWA */}
       <PWAInstallButton />
+
+      {/* Botón flotante de soporte por WhatsApp */}
+      {whatsappNumber && (
+        <a
+          href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Hola, necesito ayuda con StreamControl.')}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-5 py-3 rounded-full shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 bg-[#25D366] text-white hover:bg-[#20bd5a]"
+        >
+          <MessageCircle size={20} />
+          <span className="text-sm font-semibold whitespace-nowrap">Chateá con soporte</span>
+        </a>
+      )}
 
       {/* Upgrade modal */}
       {mostrarUpgrade && (
