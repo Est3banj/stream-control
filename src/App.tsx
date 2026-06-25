@@ -19,7 +19,27 @@ const GestionCuentas = lazy(() => import('./pages/GestionCuentas'));
 const ConsultaPublica = lazy(() => import('./pages/ConsultaPublica'));
 const ConsultaCodigos = lazy(() => import('./pages/ConsultaCodigos'));
 
+/** Handle public consultation route served via Firebase rewrite /r/** → /app/index.html */
+function PublicConsulta() {
+  const token = window.location.pathname.replace('/r/', '');
+  return <ConsultaPublica token={token} />;
+}
+
 export default function App() {
+  const pathname = window.location.pathname;
+
+  // Public consultation links are served via Firebase rewrite to /app/index.html
+  // but without /app prefix in the URL — render ConsultaPublica outside BrowserRouter
+  if (pathname.startsWith('/r/')) {
+    return (
+      <ErrorBoundary>
+        <Suspense fallback={<div className="container">Cargando...</div>}>
+          <PublicConsulta />
+        </Suspense>
+      </ErrorBoundary>
+    );
+  }
+
   return (
     <BrowserRouter basename="/app">
       <AnalyticsTracker />
@@ -140,6 +160,7 @@ export default function App() {
             }
           />
 
+          {/* Keep this for backward compat: /app/r/:token also works */}
           <Route path="/r/:token" element={<ConsultaPublica />} />
 
           <Route

@@ -15,8 +15,13 @@ function isNetworkError(err: unknown): boolean {
   return msg.includes('unavailable') || msg.includes('network') || msg.includes('failed to fetch') || msg.includes('internal');
 }
 
-export default function ConsultaPublica() {
-  const { token } = useParams<{ token: string }>();
+interface ConsultaPublicaProps {
+  token?: string;
+}
+
+export default function ConsultaPublica({ token: propToken }: ConsultaPublicaProps) {
+  const { token: paramToken } = useParams<{ token: string }>();
+  const token = propToken || paramToken;
   const { config } = useAdminConfig();
   const whatsappNumber = config.whatsapp ? sanitizarWhatsApp(config.whatsapp) : '';
   const [state, setState] = useState<PageState>('validating');
