@@ -16,7 +16,7 @@
     ],
     "redirects": [
       { "source": "/login", "destination": "/app/login", "type": 302 },
-      { "source": "/r/*", "destination": "/app/r/:splat", "type": 302 }
+      { "source": "/r/**", "destination": "/app/r/:splat", "type": 302 }
     ]
   },
   "functions": {
