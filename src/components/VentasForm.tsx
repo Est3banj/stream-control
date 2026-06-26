@@ -7,7 +7,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import usePermisos from '../hooks/usePermisos';
 import SelectorCuenta from '../components/SelectorCuenta';
-import { Check, Plus, X, Layers, Sparkles } from 'lucide-react';
+import { Check, Plus, X, Layers } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { VentaInput } from '../types/venta';
 
@@ -86,43 +86,42 @@ const SERVICIOS_PREDETERMINADOS = [
   'Canva Premium', 'ChatGPT', 'Spotify Premium',
 ];
 
-const OTRO = 'Otro';
-
-const PillsSelector = ({
-  selected,
-  onSelect,
+/** Input con datalist: tipeás y te filtra los servicios disponibles */
+function ComboboxServicio({
+  value,
+  onChange,
+  name,
+  placeholder,
+  required,
 }: {
-  selected: string;
-  onSelect: (value: string) => void;
-}) => (
-  <div className="flex flex-wrap gap-1.5 mb-2">
-    {SERVICIOS_PREDETERMINADOS.map(s => (
-      <button
-        key={s}
-        type="button"
-        onClick={() => onSelect(s)}
-        className={`text-xs px-2.5 py-1 rounded-full font-semibold transition-all ${
-          selected === s
-            ? 'bg-indigo-600 text-white shadow-sm ring-1 ring-indigo-400'
-            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800'
-        }`}
-      >
-        {s}
-      </button>
-    ))}
-    <button
-      type="button"
-      onClick={() => onSelect('')}
-      className={`text-xs px-2.5 py-1 rounded-full font-semibold transition-all ${
-        selected !== '' && !SERVICIOS_PREDETERMINADOS.includes(selected)
-          ? 'bg-indigo-600 text-white shadow-sm ring-1 ring-indigo-400'
-          : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800'
-      }`}
-    >
-      {OTRO}
-    </button>
-  </div>
-);
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  name?: string;
+  placeholder?: string;
+  required?: boolean;
+}) {
+  const listId = `servicios-datalist-${name || 'default'}`;
+  return (
+    <>
+      <input
+        type="text"
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder || 'Buscá o escribí un servicio...'}
+        list={listId}
+        className="w-full"
+        required={required}
+        autoComplete="off"
+      />
+      <datalist id={listId}>
+        {SERVICIOS_PREDETERMINADOS.map(s => (
+          <option key={s} value={s} />
+        ))}
+      </datalist>
+    </>
+  );
+}
 
 // ─── Component ───────────────────────────────────────────────────────────
 
@@ -634,16 +633,11 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <div className="col-span-2 sm:col-span-4">
           <InputLabel required>Plataforma</InputLabel>
-          <PillsSelector
-            selected={s.plataforma}
-            onSelect={v => handleServicioChange(s.id, 'plataforma', v)}
-          />
-          <input
-            type="text"
+          <ComboboxServicio
             value={s.plataforma}
             onChange={e => handleServicioChange(s.id, 'plataforma', e.target.value)}
             placeholder="Ej: Netflix, Disney+..."
-            className="w-full text-sm"
+            required
           />
         </div>
 
@@ -819,17 +813,11 @@ export default function VentasForm({ initialData }: VentasFormProps) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="sm:col-span-2">
                 <InputLabel required>Plataforma o servicio</InputLabel>
-                <PillsSelector
-                  selected={venta.plataforma}
-                  onSelect={v => setVenta(prev => ({ ...prev, plataforma: v }))}
-                />
-                <input
-                  type="text"
+                <ComboboxServicio
                   name="plataforma"
                   value={venta.plataforma}
                   onChange={handleChange}
                   placeholder="Ej: Netflix, Disney+, Spotify..."
-                  className="w-full"
                   required
                 />
               </div>
