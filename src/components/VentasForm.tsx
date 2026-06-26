@@ -683,7 +683,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
 
   // ─── Render helpers ───
   const InputLabel = ({ children, required = false }: { children: React.ReactNode; required?: boolean }) => (
-    <label className="block text-[11px] font-medium text-gray-500 mb-0.5">
+    <label className="block text-xs font-medium text-gray-500 mb-0.5">
       {children}
       {required && <span className="text-red-400 ml-0.5">*</span>}
     </label>
@@ -699,10 +699,10 @@ export default function VentasForm({ initialData }: VentasFormProps) {
   const renderServicioCard = (s: ServicioItem, index: number) => (
     <div
       key={s.id}
-      className="border-t border-gray-100 pt-2 space-y-1.5"
+      className="border-l-2 border-indigo-200 pl-2.5 space-y-1.5"
     >
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-semibold text-indigo-600">
+        <span className="text-xs font-semibold text-indigo-600">
           Servicio #{index + 1}
         </span>
         {servicios.length > 1 && (
@@ -717,7 +717,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         )}
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <div className="col-span-2 sm:col-span-4">
           <InputLabel required>Plataforma</InputLabel>
           <ComboboxServicio
@@ -740,7 +740,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
             {s.cuentaId && s.perfiles.some(p => p.nombre) && (
               <div className="mt-1 flex items-center gap-1.5 px-2 py-1 bg-indigo-50 rounded border border-indigo-100">
                 <Check size={11} className="text-indigo-600 shrink-0" />
-                <span className="text-[11px] text-indigo-700">
+                <span className="text-xs text-indigo-700">
                   {s.plataforma} — ${s.costoPorPerfil.toLocaleString()}/perfil
                 </span>
               </div>
@@ -795,7 +795,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         <div>
           <InputLabel required>Precio venta</InputLabel>
           <div className="relative">
-            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[11px]">$</span>
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
             <input
               type="number"
               value={s.precioVenta}
@@ -810,7 +810,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         <div>
           <InputLabel required>Costo servicio</InputLabel>
           <div className="relative">
-            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[11px]">$</span>
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
             <input
               type="number"
               value={s.costoServicio}
@@ -826,7 +826,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       {/* Perfiles dinámicos por pantalla */}
       <div className="pt-0.5 space-y-1">
         {Array.from({ length: s.pantallas }, (_, i) => (
-          <div key={i} className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+          <div key={i} className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div>
               <InputLabel>Perfil {s.pantallas > 1 ? `#${i + 1}` : ''}</InputLabel>
               <input
@@ -909,7 +909,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
               {modoCombinado ? 'Servicios' : 'Servicio'}
             </h2>
             {modoCombinado && cantServicios > 0 && (
-              <span className="text-[11px] bg-indigo-100 text-indigo-700 font-semibold px-1.5 py-0.5 rounded-full">
+              <span className="text-xs bg-indigo-100 text-indigo-700 font-semibold px-1.5 py-0.5 rounded-full">
                 {cantServicios}
               </span>
             )}
@@ -918,7 +918,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
           <button
             type="button"
             onClick={toggleModoCombinado}
-            className={`text-[11px] font-semibold px-2.5 py-1 rounded-full transition-all ${
+            className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-all ${
               modoCombinado
                 ? 'bg-indigo-600 text-white shadow-sm'
                 : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
@@ -963,12 +963,11 @@ export default function VentasForm({ initialData }: VentasFormProps) {
                     onCuentaSelected={handleCuentaSelected}
                   />
                   {cuentaId && venta.perfiles.some(p => p.nombre) && (
-                    <div className="mt-2 flex items-center gap-2 p-2.5 bg-indigo-50 rounded-lg border border-indigo-100">
-                      <Check size={14} className="text-indigo-600 shrink-0" />
-                      <div className="text-xs">
-                        <span className="font-semibold text-indigo-900">{venta.plataforma}</span>
-                        <span className="text-indigo-600 ml-2">Costo: ${costoPorPerfil.toLocaleString()}/perfil</span>
-                      </div>
+                    <div className="mt-1 flex items-center gap-1.5 px-2 py-1 bg-indigo-50 rounded border border-indigo-100">
+                      <Check size={11} className="text-indigo-600 shrink-0" />
+                      <span className="text-xs text-indigo-700">
+                        {venta.plataforma} — ${costoPorPerfil.toLocaleString()}/perfil
+                      </span>
                     </div>
                   )}
                 </div>
@@ -1016,7 +1015,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
               <div>
                 <InputLabel required>Precio venta (por pantalla)</InputLabel>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
                   <input
                   type="number"
                   name="precioVenta"
@@ -1033,7 +1032,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
               <div>
                 <InputLabel required>Costo del servicio</InputLabel>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
                   <input
                   type="number"
                   name="costoServicio"
@@ -1049,16 +1048,16 @@ export default function VentasForm({ initialData }: VentasFormProps) {
             </div>
 
             {/* Utilidad */}
-            <div className="flex items-center justify-between bg-indigo-50/80 rounded-lg px-4 py-2.5 border border-indigo-100">
-              <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wider">Utilidad estimada</span>
-              <span className="text-lg font-bold text-indigo-700">
+            <div className="flex items-center justify-between bg-indigo-50/80 rounded-lg px-3 py-2 border border-indigo-100">
+              <span className="text-xs font-semibold text-indigo-600">Utilidad estimada</span>
+              <span className="text-base font-bold text-indigo-700">
                 ${utilidad.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
               </span>
             </div>
 
             {/* Perfiles dinámicos por pantalla */}
             <div className="space-y-2">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <p className="text-xs font-semibold text-gray-500">
                 Perfiles por pantalla {venta.pantallas > 1 && `(${venta.pantallas})`}
               </p>
               {Array.from({ length: venta.pantallas }, (_, i) => (
@@ -1128,10 +1127,10 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       </div>
 
       {/* ═══════ Pago ═══════ */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
         <SectionHeader icon={Layers} title="Estado de Pago" />
 
-        <div className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2.5">
+        <div className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
           <div>
             <p className="text-sm font-medium text-gray-700">Pagó completo</p>
             <p className="text-xs text-gray-400">El cliente ya pagó el total del servicio</p>
@@ -1153,7 +1152,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
           <div className="mt-3">
             <InputLabel required>Saldo pendiente</InputLabel>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
               <input
                 type="number"
                 name="saldoPendiente"

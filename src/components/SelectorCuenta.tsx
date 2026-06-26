@@ -161,47 +161,18 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex gap-4">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="radio"
-            name="modoCuenta"
-            checked={modo === 'existente'}
-            onChange={() => cambiarModo('existente')}
-            className="text-indigo-600 focus:ring-indigo-500"
-          />
-          <span className="text-sm font-medium text-gray-700">Usar cuenta existente</span>
-        </label>
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="radio"
-            name="modoCuenta"
-            checked={modo === 'nueva'}
-            onChange={() => cambiarModo('nueva')}
-            className="text-indigo-600 focus:ring-indigo-500"
-          />
-          <span className="text-sm font-medium text-gray-700">Registrar cuenta nueva</span>
-        </label>
-      </div>
-
+    <div className="space-y-2">
       {modo === 'existente' && (
-        <div className="space-y-4">
-          {cuentasDisponibles.length === 0 ? (
-            loading ? (
-              <div className="space-y-3">
-                <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
-                <div className="h-10 bg-gray-200 rounded-xl animate-pulse" />
-              </div>
-            ) : (
-              <p className="text-sm text-gray-500 italic">
-                No hay cuentas disponibles para este proveedor
-              </p>
-            )
-          ) : (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1.5">Seleccionar cuenta</label>
+        <>
+          <div className="flex items-center gap-2">
+            <div className="flex-1">
+              {loading ? (
+                <div className="h-9 bg-gray-200 rounded-lg animate-pulse" />
+              ) : cuentasDisponibles.length === 0 ? (
+                <p className="text-xs text-gray-500 italic">
+                  No hay cuentas disponibles para este proveedor
+                </p>
+              ) : (
                 <select
                   value={cuentaSeleccionadaId}
                   onChange={e => {
@@ -221,54 +192,74 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
                     </option>
                   ))}
                 </select>
-              </div>
-
-              {cuentaSeleccionada && perfilesDisponibles.length > 0 && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1.5">Seleccionar perfil</label>
-                  <select
-                    value={perfilSeleccionado}
-                    onChange={e => setPerfilSeleccionado(e.target.value)}
-                    className="w-full"
-                  >
-                    <option value="">Seleccioná un perfil...</option>
-                    {perfilesDisponibles.map(p => (
-                      <option key={p.nombre} value={p.nombre}>
-                        {p.nombre}{p.pin ? ` — PIN: ${p.pin}` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
               )}
+            </div>
+            <button
+              type="button"
+              onClick={() => cambiarModo('nueva')}
+              className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors flex-shrink-0"
+              title="Registrar nueva cuenta"
+            >
+              <Plus size={16} />
+            </button>
+            {cuentaSeleccionadaId && (
+              <Check size={15} className="text-green-500 flex-shrink-0" />
+            )}
+          </div>
 
-              {(cuentaSeleccionada && (perfilSeleccionado || cuentaSeleccionada.tipoVenta === 'completa')) && (
-                <div className="bg-indigo-50 rounded-xl px-4 py-3 border border-indigo-100">
-                  <p className="text-sm text-indigo-700">
-                    <span className="font-medium">
-                      {cuentaSeleccionada.tipoVenta === 'completa' ? 'Costo total:' : 'Costo por perfil:'}
-                    </span>{' '}
-                    ${calcularCostoPorPerfil(cuentaSeleccionada).toLocaleString()}
-                  </p>
-                  <p className="text-xs text-indigo-500 mt-1">
-                    {cuentaSeleccionada.tipoVenta === 'completa'
-                      ? 'Cuenta completa — costo total'
-                      : `${(Array.isArray(cuentaSeleccionada.perfiles) ? cuentaSeleccionada.perfiles : []).length} perfiles — costo prorrateado`
-                    }
-                  </p>
-                </div>
-              )}
-            </>
+          {cuentaSeleccionada && perfilesDisponibles.length > 0 && (
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Seleccionar perfil</label>
+              <select
+                value={perfilSeleccionado}
+                onChange={e => setPerfilSeleccionado(e.target.value)}
+                className="w-full"
+              >
+                <option value="">Seleccioná un perfil...</option>
+                {perfilesDisponibles.map(p => (
+                  <option key={p.nombre} value={p.nombre}>
+                    {p.nombre}{p.pin ? ` — PIN: ${p.pin}` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
           )}
-        </div>
+
+          {(cuentaSeleccionada && (perfilSeleccionado || cuentaSeleccionada.tipoVenta === 'completa')) && (
+            <div className="bg-indigo-50 rounded-lg px-3 py-2 border border-indigo-100">
+              <p className="text-xs text-indigo-700">
+                <span className="font-medium">
+                  {cuentaSeleccionada.tipoVenta === 'completa' ? 'Costo total:' : 'Costo por perfil:'}
+                </span>{' '}
+                ${calcularCostoPorPerfil(cuentaSeleccionada).toLocaleString()}
+              </p>
+              <p className="text-xs text-indigo-500 mt-0.5">
+                {cuentaSeleccionada.tipoVenta === 'completa'
+                  ? 'Cuenta completa — costo total'
+                  : `${(Array.isArray(cuentaSeleccionada.perfiles) ? cuentaSeleccionada.perfiles : []).length} perfiles — costo prorrateado`
+                }
+              </p>
+            </div>
+          )}
+        </>
       )}
 
       {modo === 'nueva' && (
-        <div className="space-y-4 bg-gray-50 rounded-xl p-4 border border-gray-200">
-          <p className="text-sm font-medium text-gray-700">Registrar nueva cuenta de {proveedor}</p>
+        <div className="space-y-3 bg-gray-50 rounded-lg p-3 border border-gray-200">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium text-gray-700">Registrar nueva cuenta de {proveedor}</p>
+            <button
+              type="button"
+              onClick={() => cambiarModo('existente')}
+              className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+            >
+              Cancelar
+            </button>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1.5">Correo de la cuenta *</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Correo de la cuenta *</label>
               <input
                 type="email"
                 value={nuevaCorreo}
@@ -278,7 +269,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1.5">Contraseña</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Contraseña</label>
               <input
                 type="password"
                 value={nuevaContrasena}
@@ -288,9 +279,9 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1.5">Costo total *</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Costo total *</label>
               <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
                 <input
                   type="number"
                   value={nuevaCosto}
@@ -304,8 +295,8 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-gray-600">Perfiles</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-medium text-gray-500">Perfiles</label>
               <button
                 type="button"
                 onClick={agregarPerfilForm}
@@ -315,9 +306,9 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
                 Agregar perfil
               </button>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {nuevaPerfiles.map((p, idx) => (
-                <div key={idx} className="flex gap-2 items-start">
+                <div key={idx} className="flex gap-1.5 items-start">
                   <div className="flex-1">
                     <input
                       type="text"
@@ -341,9 +332,9 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
                     <button
                       type="button"
                       onClick={() => eliminarPerfilForm(idx)}
-                      className="p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      className="p-1.5 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                     >
-                      <X size={16} />
+                      <X size={14} />
                     </button>
                   )}
                 </div>
@@ -355,16 +346,16 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
             type="button"
             onClick={guardarCuentaNueva}
             disabled={submitting}
-            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold text-sm hover:from-indigo-700 hover:to-indigo-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold text-xs hover:from-indigo-700 hover:to-indigo-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
           >
             {submitting ? (
               <>
-                <RefreshCw size={16} className="animate-spin" />
+                <RefreshCw size={14} className="animate-spin" />
                 Guardando...
               </>
             ) : (
               <>
-                <Save size={16} />
+                <Save size={14} />
                 Guardar cuenta y seleccionar
               </>
             )}
