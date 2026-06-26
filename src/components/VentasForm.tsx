@@ -537,8 +537,12 @@ export default function VentasForm({ initialData }: VentasFormProps) {
   // ─── Main submit ───
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (modoCombinado && servicios.some(s => s.plataforma.trim())) {
-      await handleSubmitMulti();
+    if (modoCombinado) {
+      if (servicios.some(s => s.plataforma.trim())) {
+        await handleSubmitMulti();
+      } else {
+        toast.error('Completá al menos un servicio o desactivá el modo combinado.');
+      }
     } else {
       await handleSubmitSimple();
     }
