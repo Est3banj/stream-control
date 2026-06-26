@@ -80,10 +80,13 @@ function crearServicioVacio(): ServicioItem {
 // ─── Servicios predeterminados ───────────────────────────────────────────
 
 const SERVICIOS_PREDETERMINADOS = [
-  'Netflix', 'Disney+', 'HBO Max', 'Paramount+',
-  'Spotify', 'Apple TV+', 'Amazon Prime', 'Crunchyroll',
-  'YouTube Premium', 'Twitch',
+  'Netflix', 'Disney premium', 'Prime video', 'HBO Max',
+  'Crunchyroll', 'MagisTV', 'Plex', 'PornHub',
+  'IPTV', 'Vix plus', 'Universal', 'Paramount+',
+  'Canva Premium', 'ChatGPT', 'Spotify Premium',
 ];
+
+const OTRO = 'Otro';
 
 const PillsSelector = ({
   selected,
@@ -107,6 +110,17 @@ const PillsSelector = ({
         {s}
       </button>
     ))}
+    <button
+      type="button"
+      onClick={() => onSelect('')}
+      className={`text-xs px-2.5 py-1 rounded-full font-semibold transition-all ${
+        selected !== '' && !SERVICIOS_PREDETERMINADOS.includes(selected)
+          ? 'bg-indigo-600 text-white shadow-sm ring-1 ring-indigo-400'
+          : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800'
+      }`}
+    >
+      {OTRO}
+    </button>
   </div>
 );
 
