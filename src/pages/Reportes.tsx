@@ -372,9 +372,16 @@ export default function Reportes() {
                       >
                         <td className="px-4 py-4 font-medium text-gray-900">{v.nombre}</td>
                         <td className="px-4 py-4">
-                          <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-sm font-medium">
-                            {v.plataforma}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-sm font-medium">
+                              {v.plataforma}
+                            </span>
+                            {v.grupoId && (
+                              <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold whitespace-nowrap" title={`ID de grupo: ${v.grupoId.slice(0, 8)}…`}>
+                                Combo
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-4 text-center text-gray-700">{v.pantallas}</td>
                         <td className="px-4 py-4 text-right font-semibold text-green-600">
