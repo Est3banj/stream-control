@@ -169,6 +169,8 @@ export default function VentasForm({ initialData }: VentasFormProps) {
   // ─── Multi-service state ───
   const [modoCombinado, setModoCombinado] = useState(false);
   const [servicios, setServicios] = useState<ServicioItem[]>([crearServicioVacio()]);
+  const [precioTotalCombo, setPrecioTotalCombo] = useState(0);
+  const [costoTotalCombo, setCostoTotalCombo] = useState(0);
 
   // ─── Shared state ───
   const [utilidad, setUtilidad] = useState(0);
@@ -187,16 +189,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
     setUtilidad((pant * p) - (cp || c));
   }, [venta.precioVenta, venta.costoServicio, venta.pantallas, costoPorPerfil]);
 
-  const utilidadMulti = servicios.reduce((sum, s) => {
-    const pant = Number(s.pantallas) || 0;
-    const pv = Number(s.precioVenta) || 0;
-    const cs = Number(s.costoServicio) || 0;
-    return sum + (pant * pv) - cs;
-  }, 0);
-
-  const totalMulti = servicios.reduce((sum, s) => {
-    return sum + (Number(s.pantallas) || 0) * (Number(s.precioVenta) || 0);
-  }, 0);
+  const utilidadCombo = Number(precioTotalCombo) - Number(costoTotalCombo);
 
   const serviciosCompletos = servicios.filter(s => s.plataforma.trim());
   const cantServicios = serviciosCompletos.length;
@@ -396,9 +389,10 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       if (!s.diasServicio || isNaN(Number(s.diasServicio)) || Number(s.diasServicio) <= 0)
         return 'Cada servicio debe tener una duración válida.';
       if (Number(s.pantallas) < 1) return 'Cada servicio debe tener al menos 1 pantalla.';
-      if (Number(s.precioVenta) <= 0) return 'Cada servicio debe tener un precio de venta.';
-      if (Number(s.costoServicio) < 0) return 'El costo del servicio no puede ser negativo.';
     }
+
+    if (Number(precioTotalCombo) <= 0) return 'Indicá el precio total del combo.';
+    if (Number(costoTotalCombo) < 0) return 'El costo total del combo no puede ser negativo.';
 
     if (!venta.pagado && (venta.saldoPendiente === '' || isNaN(Number(venta.saldoPendiente)) || Number(venta.saldoPendiente) <= 0))
       return 'Indicá el saldo pendiente cuando el pago está incompleto.';
@@ -566,7 +560,13 @@ export default function VentasForm({ initialData }: VentasFormProps) {
     const err = validarMulti();
     if (err) { toast.error(err); return; }
 
-    const serviciosValidos = servicios.filter(s => s.plataforma.trim() && Number(s.precioVenta) > 0);
+    const serviciosValidos = servicios.filter(s => s.plataforma.trim() && s.fechaInicio.trim());
+    const cantServicios = serviciosValidos.length;
+    if (cantServicios === 0) { toast.error('Completá al menos un servicio con plataforma y fecha.'); return; }
+
+    // Distribuir precio/costo total entre los servicios
+    const precioPorServicio = Number(precioTotalCombo) / cantServicios;
+    const costoPorServicio = Number(costoTotalCombo) / cantServicios;
 
     setSubmitting(true);
     const grupoId = uid();
@@ -592,9 +592,9 @@ export default function VentasForm({ initialData }: VentasFormProps) {
           correo: s.correo || '',
           plataforma: s.plataforma,
           pantallas: Number(s.pantallas),
-          precioVenta: Number(s.precioVenta),
-          costoServicio: Number(s.costoServicio),
-          utilidad: (Number(s.pantallas) * Number(s.precioVenta)) - Number(s.costoServicio),
+          precioVenta: precioPorServicio,
+          costoServicio: costoPorServicio,
+          utilidad: (Number(s.pantallas) * precioPorServicio) - costoPorServicio,
           fechaInicio: s.fechaInicio,
           diasServicio: Number(s.diasServicio),
           fechaVenta: venta.fechaVenta,
@@ -642,14 +642,14 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       // Movimiento (total combinado)
       await addDoc(collection(db, 'movimientos'), {
         tipo: 'Ingreso',
-        monto: totalMulti,
+        monto: Number(precioTotalCombo),
         descripcion: `Venta combinada: ${serviciosValidos.map(s => s.plataforma).join(' + ')}`,
         fecha: serverTimestamp(),
         propietarioId: user.uid,
         usuarioEmail: user.email,
       });
 
-      toast.success(`Venta combinada registrada (${serviciosValidos.length} servicios)`);
+      toast.success(`Venta combinada registrada (${cantServicios} servicios)`);
 
       // Reset
       setVenta({
@@ -658,6 +658,8 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         fechaVenta: getToday(), perfiles: [{ nombre: '', pin: '' }], pagado: true, saldoPendiente: '',
       });
       setServicios([crearServicioVacio()]);
+      setPrecioTotalCombo(0);
+      setCostoTotalCombo(0);
 
     } catch (error) {
       console.error('❌ Error al registrar venta combinada:', error);
@@ -790,36 +792,6 @@ export default function VentasForm({ initialData }: VentasFormProps) {
             min="1"
             placeholder="30"
           />
-        </div>
-
-        <div>
-          <InputLabel required>Precio venta</InputLabel>
-          <div className="relative">
-            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
-            <input
-              type="number"
-              value={s.precioVenta}
-              onChange={e => handleServicioChange(s.id, 'precioVenta', Number(e.target.value))}
-              className="w-full pl-4 text-sm"
-              min="0"
-              step="0.01"
-            />
-          </div>
-        </div>
-
-        <div>
-          <InputLabel required>Costo servicio</InputLabel>
-          <div className="relative">
-            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
-            <input
-              type="number"
-              value={s.costoServicio}
-              onChange={e => handleServicioChange(s.id, 'costoServicio', Number(e.target.value))}
-              className="w-full pl-4 text-sm"
-              min="0"
-              step="0.01"
-            />
-          </div>
         </div>
       </div>
 
@@ -1110,15 +1082,52 @@ export default function VentasForm({ initialData }: VentasFormProps) {
               Agregar otro servicio
             </button>
 
-            {servicios.some(s => Number(s.precioVenta) > 0) && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <InputLabel required>Precio total del combo</InputLabel>
+                <div className="relative">
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
+                  <input
+                    type="number"
+                    value={precioTotalCombo}
+                    onChange={e => setPrecioTotalCombo(Number(e.target.value))}
+                    className="w-full pl-4 text-sm"
+                    min="0"
+                    step="0.01"
+                    placeholder="Ej: 18"
+                  />
+                </div>
+              </div>
+              <div>
+                <InputLabel required>Costo total del combo</InputLabel>
+                <div className="relative">
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
+                  <input
+                    type="number"
+                    value={costoTotalCombo}
+                    onChange={e => setCostoTotalCombo(Number(e.target.value))}
+                    className="w-full pl-4 text-sm"
+                    min="0"
+                    step="0.01"
+                    placeholder="Ej: 8"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {Number(precioTotalCombo) > 0 && (
               <div className="bg-indigo-50/80 rounded-lg px-3 py-2 border border-indigo-100 space-y-0.5">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-600">Ingreso total</span>
-                  <span className="font-bold text-gray-900">${totalMulti.toLocaleString()}</span>
+                  <span className="text-gray-600">Precio del combo</span>
+                  <span className="font-bold text-gray-900">${Number(precioTotalCombo).toLocaleString()}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-600">Utilidad estimada</span>
-                  <span className="font-bold text-indigo-700">${utilidadMulti.toLocaleString()}</span>
+                  <span className="text-gray-600">Costo del combo</span>
+                  <span className="font-bold text-gray-500">${Number(costoTotalCombo).toLocaleString()}</span>
+                </div>
+                <div className="border-t border-indigo-200/50 pt-0.5 flex items-center justify-between text-xs">
+                  <span className="font-semibold text-indigo-600">Utilidad estimada</span>
+                  <span className="font-bold text-indigo-700">${utilidadCombo.toLocaleString()}</span>
                 </div>
               </div>
             )}
