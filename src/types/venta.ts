@@ -28,6 +28,7 @@ export interface Venta {
   tokenGenerado?: string;
   costoPorPerfil?: number;
   esSubdistribuidor?: boolean;
+  grupoId?: string; // Agrupa ventas multi-servicio
 }
 
 export type VentaInput = Omit<Venta, 'id' | 'fechaRegistro' | 'fechaRegistroSistema' | 'utilidad'> & {
