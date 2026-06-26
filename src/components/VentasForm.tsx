@@ -864,7 +864,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
 
   // ─── JSX ───────────────────────────────────────────────────────────────
   return (
-    <form onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-3">
+    <form onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-4">
 
       {/* ═══════ Cliente ═══════ */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
