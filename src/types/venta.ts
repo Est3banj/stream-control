@@ -29,6 +29,7 @@ export interface Venta {
   costoPorPerfil?: number;
   esSubdistribuidor?: boolean;
   grupoId?: string; // Agrupa ventas multi-servicio
+  perfiles?: Array<{ nombre: string; pin: string }>;
 }
 
 export type VentaInput = Omit<Venta, 'id' | 'fechaRegistro' | 'fechaRegistroSistema' | 'utilidad'> & {

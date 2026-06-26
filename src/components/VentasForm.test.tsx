@@ -32,6 +32,8 @@ vi.mock('firebase/firestore', () => ({
   where: (...args: any[]) => ({ _where: true, args }),
   serverTimestamp: () => ({ _methodName: 'serverTimestamp' }),
   increment: (n: number) => ({ _methodName: 'increment', _value: n }),
+  onSnapshot: () => () => {}, // noop unsubscribe
+  writeBatch: () => ({ set: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) }),
 }));
 
 const mockUser = { uid: 'test-uid-123', email: 'test@streamcontrol.com' };
@@ -114,7 +116,7 @@ describe('VentasForm — Renderizado', () => {
     // Inputs con placeholder
     expect(screen.getByPlaceholderText('Ej: Juan Pérez')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Ej: 3104567890')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('correo@ejemplo.com')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('email de la cuenta (Netflix...)')).toBeInTheDocument();
     expect(
       screen.getByPlaceholderText('Ej: Netflix, Disney+, Spotify...'),
     ).toBeInTheDocument();
@@ -346,7 +348,7 @@ describe('VentasForm — Autocompletado', () => {
       );
     });
     expect(
-      screen.getByPlaceholderText('correo@ejemplo.com'),
+      screen.getByPlaceholderText('email de la cuenta (Netflix...)'),
     ).toHaveValue('existente@test.com');
     expect(
       screen.getByPlaceholderText('Ej: Netflix, Disney+, Spotify...'),

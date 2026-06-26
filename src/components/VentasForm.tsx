@@ -6,6 +6,7 @@ import {
 } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import usePermisos from '../hooks/usePermisos';
+import useCuentas from '../hooks/useCuentas';
 import SelectorCuenta from '../components/SelectorCuenta';
 import { Check, Plus, X, Layers } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -24,8 +25,7 @@ interface VentaFormState {
   fechaInicio: string;
   diasServicio: string;
   fechaVenta: string;
-  perfil: string;
-  pinPerfil: string;
+  perfiles: Array<{ nombre: string; pin: string }>;
   pagado: boolean;
   saldoPendiente: string;
 }
@@ -33,13 +33,13 @@ interface VentaFormState {
 interface ServicioItem {
   id: string;
   plataforma: string;
+  correo: string;
   pantallas: number;
   precioVenta: number;
   costoServicio: number;
   fechaInicio: string;
   diasServicio: string;
-  perfil: string;
-  pinPerfil: string;
+  perfiles: Array<{ nombre: string; pin: string }>;
   cuentaId: string | null;
   perfilNombre: string | null;
   perfilPin: string | null;
@@ -63,13 +63,13 @@ function crearServicioVacio(): ServicioItem {
   return {
     id: uid(),
     plataforma: '',
+    correo: '',
     pantallas: 1,
     precioVenta: 0,
     costoServicio: 0,
     fechaInicio: '',
     diasServicio: '',
-    perfil: '',
-    pinPerfil: '',
+    perfiles: [{ nombre: '', pin: '' }],
     cuentaId: null,
     perfilNombre: null,
     perfilPin: null,
@@ -128,6 +128,7 @@ function ComboboxServicio({
 export default function VentasForm({ initialData }: VentasFormProps) {
   const { user } = useAuth();
   const permisos = usePermisos(user);
+  const { cuentas } = useCuentas(user);
 
   // ─── Single-service state (backward compatible) ───
   const [venta, setVenta] = useState<VentaFormState>({
@@ -141,8 +142,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
     fechaInicio: initialData?.fechaInicio ?? '',
     diasServicio: initialData?.diasServicio ?? '',
     fechaVenta: initialData?.fechaVenta ?? getToday(),
-    perfil: initialData?.perfil ?? '',
-    pinPerfil: initialData?.pinPerfil ?? '',
+    perfiles: initialData?.perfiles ?? [{ nombre: '', pin: '' }],
     pagado: initialData?.pagado ?? true,
     saldoPendiente: initialData?.saldoPendiente ?? '',
   });
@@ -150,6 +150,21 @@ export default function VentasForm({ initialData }: VentasFormProps) {
   useEffect(() => {
     if (initialData) setVenta(prev => ({ ...prev, ...initialData }));
   }, [initialData]);
+
+  // Sync perfiles[] con cantidad de pantallas
+  const prevPantallas = React.useRef(venta.pantallas);
+  useEffect(() => {
+    const count = Number(venta.pantallas) || 1;
+    if (count === prevPantallas.current) return;
+    prevPantallas.current = count;
+    setVenta(prev => {
+      const p = prev.perfiles;
+      if (p.length === count) return prev;
+      if (p.length < count)
+        return { ...prev, perfiles: [...p, ...Array(count - p.length).fill({ nombre: '', pin: '' })] };
+      return { ...prev, perfiles: p.slice(0, count) };
+    });
+  }, [venta.pantallas]);
 
   // ─── Multi-service state ───
   const [modoCombinado, setModoCombinado] = useState(false);
@@ -249,20 +264,53 @@ export default function VentasForm({ initialData }: VentasFormProps) {
     newPerfilPin: string | null, newCostoPorPerfil: number,
   ) => {
     setCuentaId(newCuentaId);
-    setPerfilAsignado(newPerfilNombre);
-    setPerfilPinSeleccionado(newPerfilPin);
     setCostoPorPerfil(newCostoPorPerfil);
+
+    if (!newCuentaId) {
+      setPerfilAsignado(null);
+      setPerfilPinSeleccionado(null);
+      return;
+    }
+
+    const cuenta = cuentas.find(c => c.id === newCuentaId);
+    if (!cuenta) {
+      console.warn('⚠️ [handleCuentaSelected] Cuenta no encontrada en useCuentas:', { newCuentaId, cuentasCount: cuentas.length, cuentas });
+      return;
+    }
+
     setVenta(prev => ({
       ...prev,
-      perfil: newPerfilNombre || prev.perfil,
-      pinPerfil: newPerfilPin || prev.pinPerfil,
-      costoServicio: newCostoPorPerfil || prev.costoServicio,
+      correo: cuenta.correoCuenta || prev.correo,
+      perfiles: cuenta.tipoVenta !== 'completa'
+        ? prev.perfiles.map((_, i) => {
+            const disp = (cuenta.perfiles || []).filter(p => p.estado === 'disponible');
+            return disp[i] ? { nombre: disp[i].nombre, pin: disp[i].pin } : { nombre: '', pin: '' };
+          })
+        : prev.perfiles,
     }));
+
+    setPerfilAsignado(newPerfilNombre);
+    setPerfilPinSeleccionado(newPerfilPin);
   };
 
   // ─── Handlers (multi) ───
-  const handleServicioChange = (id: string, field: keyof ServicioItem, value: string | number) => {
-    setServicios(prev => prev.map(s => s.id === id ? { ...s, [field]: value } : s));
+  const handleServicioChange = (id: string, field: keyof ServicioItem, value: string | number | Array<{ nombre: string; pin: string }>) => {
+    setServicios(prev => prev.map(s => {
+      if (s.id !== id) return s;
+      const updated = { ...s, [field]: value };
+
+      // Sync perfiles length when pantallas changes
+      if (field === 'pantallas') {
+        const count = Number(value) || 1;
+        const p = s.perfiles;
+        updated.perfiles = p.length === count ? p
+          : p.length < count
+            ? [...p, ...Array(count - p.length).fill({ nombre: '', pin: '' })]
+            : p.slice(0, count);
+      }
+
+      return updated;
+    }));
   };
 
   const agregarServicio = () => {
@@ -279,6 +327,42 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       // Reset multi state when turning ON
       setServicios([crearServicioVacio()]);
     }
+  };
+
+  const handleServicioCuentaSelected = (
+    servicioId: string,
+    newCuentaId: string | null,
+    _newPerfilNombre: string | null,
+    _newPerfilPin: string | null,
+    newCostoPorPerfil: number,
+  ) => {
+    setServicios(prev => prev.map(s => {
+      if (s.id !== servicioId) return s;
+
+      if (!newCuentaId) return {
+        ...s, cuentaId: null, perfilNombre: null, perfilPin: null, costoPorPerfil: 0,
+      };
+
+      const cuenta = cuentas.find(c => c.id === newCuentaId);
+      if (!cuenta) {
+        console.warn('⚠️ [handleServicioCuentaSelected] Cuenta no encontrada:', { newCuentaId, cuentasCount: cuentas.length, servicioId: s.id });
+        return { ...s, cuentaId: newCuentaId, costoPorPerfil: newCostoPorPerfil };
+      }
+
+      const disp = (cuenta.perfiles || []).filter(p => p.estado === 'disponible');
+
+      return {
+        ...s,
+        cuentaId: newCuentaId,
+        correo: cuenta.correoCuenta || s.correo,
+        costoPorPerfil: newCostoPorPerfil,
+        perfiles: cuenta.tipoVenta !== 'completa'
+          ? s.perfiles.map((_, i) =>
+              disp[i] ? { nombre: disp[i].nombre, pin: disp[i].pin } : { nombre: '', pin: '' }
+            )
+          : s.perfiles,
+      };
+    }));
   };
 
   // ─── Validation helpers ───
@@ -369,8 +453,12 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       fechaVencimientoDate.setDate(fechaVencimientoDate.getDate() + dias);
       const fechaVencimiento = fechaVencimientoDate.toISOString().split('T')[0];
 
+      const perfilesValidos = venta.perfiles.filter(p => p.nombre || p.pin);
       const nuevaVenta: VentaInput = {
         ...venta,
+        perfil: perfilesValidos[0]?.nombre || '',
+        pinPerfil: perfilesValidos[0]?.pin || '',
+        perfiles: perfilesValidos,
         diasServicio: Number(venta.diasServicio),
         pantallas: Number(venta.pantallas),
         precioVenta: Number(venta.precioVenta),
@@ -460,7 +548,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       setVenta({
         nombre: '', telefono: '', correo: '', plataforma: '', pantallas: 1,
         precioVenta: 0, costoServicio: 0, fechaInicio: '', diasServicio: '',
-        fechaVenta: getToday(), perfil: '', pinPerfil: '', pagado: true, saldoPendiente: '',
+        fechaVenta: getToday(), perfiles: [{ nombre: '', pin: '' }], pagado: true, saldoPendiente: '',
       });
       setUtilidad(0);
       setMostrarFechaVenta(false);
@@ -502,11 +590,12 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         const fechaVenc = fechaVencDate.toISOString().split('T')[0];
         fechaVencimientos.push(fechaVenc);
 
+        const perfilesValidos = s.perfiles.filter(p => p.nombre || p.pin);
         const ventaRef = doc(collection(db, 'ventas'));
         batch.set(ventaRef, {
           nombre: venta.nombre,
           telefono: venta.telefono,
-          correo: venta.correo || '',
+          correo: s.correo || '',
           plataforma: s.plataforma,
           pantallas: Number(s.pantallas),
           precioVenta: Number(s.precioVenta),
@@ -515,8 +604,13 @@ export default function VentasForm({ initialData }: VentasFormProps) {
           fechaInicio: s.fechaInicio,
           diasServicio: Number(s.diasServicio),
           fechaVenta: venta.fechaVenta,
-          perfil: s.perfil || '',
-          pinPerfil: s.pinPerfil || '',
+          perfil: perfilesValidos[0]?.nombre || '',
+          pinPerfil: perfilesValidos[0]?.pin || '',
+          perfiles: perfilesValidos,
+          ...(s.cuentaId ? { cuentaId: s.cuentaId } : {}),
+          ...(s.perfilNombre ? { perfilNombre: s.perfilNombre } : {}),
+          ...(s.perfilPin ? { perfilPin: s.perfilPin } : {}),
+          ...(s.costoPorPerfil ? { costoPorPerfil: s.costoPorPerfil } : {}),
           pagado: venta.pagado,
           saldoPendiente: venta.pagado ? 0 : Number(venta.saldoPendiente || 0),
           fechaRegistro: serverTimestamp(),
@@ -567,7 +661,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       setVenta({
         nombre: '', telefono: '', correo: '', plataforma: '', pantallas: 1,
         precioVenta: 0, costoServicio: 0, fechaInicio: '', diasServicio: '',
-        fechaVenta: getToday(), perfil: '', pinPerfil: '', pagado: true, saldoPendiente: '',
+        fechaVenta: getToday(), perfiles: [{ nombre: '', pin: '' }], pagado: true, saldoPendiente: '',
       });
       setServicios([crearServicioVacio()]);
       setMostrarFechaVenta(false);
@@ -641,6 +735,38 @@ export default function VentasForm({ initialData }: VentasFormProps) {
           />
         </div>
 
+        {/* Selector de cuentas — aparece justo después de elegir plataforma */}
+        {permisos.puedeGestionarCuentas && s.plataforma && (
+          <div className="col-span-2 sm:col-span-4">
+            <SelectorCuenta
+              proveedor={s.plataforma}
+              onCuentaSelected={(cuentaId, perfilNombre, perfilPin, costo) =>
+                handleServicioCuentaSelected(s.id, cuentaId, perfilNombre, perfilPin, costo)
+              }
+            />
+            {s.cuentaId && s.perfiles.some(p => p.nombre) && (
+              <div className="mt-2 flex items-center gap-2 p-2.5 bg-indigo-50 rounded-lg border border-indigo-100">
+                <Check size={14} className="text-indigo-600 shrink-0" />
+                <div className="text-xs">
+                  <span className="font-semibold text-indigo-900">{s.plataforma}</span>
+                  <span className="text-indigo-600 ml-2">Costo: ${s.costoPorPerfil.toLocaleString()}/perfil</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="col-span-2 sm:col-span-4">
+          <InputLabel>Correo del servicio</InputLabel>
+          <input
+            type="email"
+            value={s.correo}
+            onChange={e => handleServicioChange(s.id, 'correo', e.target.value)}
+            placeholder="email de la cuenta (Netflix...)"
+            className="w-full text-sm"
+          />
+        </div>
+
         <div>
           <InputLabel required>Pantallas</InputLabel>
           <input
@@ -675,17 +801,6 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         </div>
 
         <div>
-          <InputLabel>Perfil</InputLabel>
-          <input
-            type="text"
-            value={s.perfil}
-            onChange={e => handleServicioChange(s.id, 'perfil', e.target.value)}
-            className="w-full text-sm"
-            placeholder="Principal"
-          />
-        </div>
-
-        <div>
           <InputLabel required>Precio venta</InputLabel>
           <div className="relative">
             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
@@ -714,18 +829,46 @@ export default function VentasForm({ initialData }: VentasFormProps) {
             />
           </div>
         </div>
+      </div>
 
-        <div>
-          <InputLabel>PIN perfil</InputLabel>
-          <input
-            type="text"
-            value={s.pinPerfil}
-            onChange={e => handleServicioChange(s.id, 'pinPerfil', e.target.value)}
-            className="w-full text-sm"
-            maxLength={10}
-            placeholder="1234"
-          />
-        </div>
+      {/* Perfiles dinámicos por pantalla */}
+      <div className="space-y-2">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+          Perfiles por pantalla {s.pantallas > 1 && `(${s.pantallas})`}
+        </p>
+        {Array.from({ length: s.pantallas }, (_, i) => (
+          <div key={i} className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div>
+              <InputLabel>Perfil {s.pantallas > 1 ? `#${i + 1}` : ''}</InputLabel>
+              <input
+                type="text"
+                value={s.perfiles[i]?.nombre || ''}
+                onChange={e => {
+                  const p = [...s.perfiles];
+                  p[i] = { ...p[i], nombre: e.target.value };
+                  handleServicioChange(s.id, 'perfiles', p);
+                }}
+                placeholder="Principal"
+                className="w-full text-sm"
+              />
+            </div>
+            <div>
+              <InputLabel>PIN {s.pantallas > 1 ? `#${i + 1}` : ''}</InputLabel>
+              <input
+                type="text"
+                value={s.perfiles[i]?.pin || ''}
+                onChange={e => {
+                  const p = [...s.perfiles];
+                  p[i] = { ...p[i], pin: e.target.value };
+                  handleServicioChange(s.id, 'perfiles', p);
+                }}
+                placeholder="1234"
+                className="w-full text-sm"
+                maxLength={10}
+              />
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -738,13 +881,13 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
         <SectionHeader icon={Layers} title="Cliente" />
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <InputLabel required>Nombre</InputLabel>
             <input
               type="text"
               name="nombre"
-              value={modoCombinado ? venta.nombre : venta.nombre}
+              value={venta.nombre}
               onChange={handleChange}
               onBlur={handleBlurNombre}
               placeholder="Ej: Juan Pérez"
@@ -763,17 +906,6 @@ export default function VentasForm({ initialData }: VentasFormProps) {
               placeholder="Ej: 3104567890"
               className="w-full"
               required
-            />
-          </div>
-          <div>
-            <InputLabel>Correo</InputLabel>
-            <input
-              type="email"
-              name="correo"
-              value={venta.correo}
-              onChange={handleChange}
-              placeholder="correo@ejemplo.com"
-              className="w-full"
             />
           </div>
         </div>
@@ -821,6 +953,37 @@ export default function VentasForm({ initialData }: VentasFormProps) {
                   required
                 />
               </div>
+
+              <div>
+                <InputLabel>Correo del servicio</InputLabel>
+                <input
+                  type="email"
+                  name="correo"
+                  value={venta.correo}
+                  onChange={handleChange}
+                  placeholder="email de la cuenta (Netflix...)"
+                  className="w-full"
+                />
+              </div>
+
+              {/* Selector de cuentas — justo después de elegir plataforma */}
+              {permisos.puedeGestionarCuentas && venta.plataforma && (
+                <div className="sm:col-span-2">
+                  <SelectorCuenta
+                    proveedor={venta.plataforma}
+                    onCuentaSelected={handleCuentaSelected}
+                  />
+                  {cuentaId && venta.perfiles.some(p => p.nombre) && (
+                    <div className="mt-2 flex items-center gap-2 p-2.5 bg-indigo-50 rounded-lg border border-indigo-100">
+                      <Check size={14} className="text-indigo-600 shrink-0" />
+                      <div className="text-xs">
+                        <span className="font-semibold text-indigo-900">{venta.plataforma}</span>
+                        <span className="text-indigo-600 ml-2">Costo: ${costoPorPerfil.toLocaleString()}/perfil</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div>
                 <InputLabel required>Pantallas</InputLabel>
@@ -904,51 +1067,45 @@ export default function VentasForm({ initialData }: VentasFormProps) {
               </span>
             </div>
 
-            {/* Perfil + PIN */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <InputLabel>Perfil</InputLabel>
-                <input
-                  type="text"
-                  name="perfil"
-                  value={venta.perfil}
-                  onChange={handleChange}
-                  placeholder="Principal"
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <InputLabel>PIN del perfil</InputLabel>
-                <input
-                  type="text"
-                  name="pinPerfil"
-                  value={venta.pinPerfil}
-                  onChange={handleChange}
-                  placeholder="1234"
-                  className="w-full"
-                  maxLength={10}
-                />
-              </div>
-            </div>
-
-            {/* Selector de cuentas */}
-            {permisos.puedeGestionarCuentas && venta.plataforma && (
-              <div>
-                <SelectorCuenta
-                  proveedor={venta.plataforma}
-                  onCuentaSelected={handleCuentaSelected}
-                />
-                {cuentaId && perfilAsignado && (
-                  <div className="mt-2 flex items-center gap-2 p-2.5 bg-indigo-50 rounded-lg border border-indigo-100">
-                    <Check size={14} className="text-indigo-600 shrink-0" />
-                    <div className="text-xs">
-                      <span className="font-semibold text-indigo-900">{venta.plataforma} — {perfilAsignado}</span>
-                      <span className="text-indigo-600 ml-2">Costo: ${costoPorPerfil.toLocaleString()}/perfil</span>
-                    </div>
+            {/* Perfiles dinámicos por pantalla */}
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Perfiles por pantalla {venta.pantallas > 1 && `(${venta.pantallas})`}
+              </p>
+              {Array.from({ length: venta.pantallas }, (_, i) => (
+                <div key={i} className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <InputLabel>Perfil {venta.pantallas > 1 ? `#${i + 1}` : ''}</InputLabel>
+                    <input
+                      type="text"
+                      value={venta.perfiles[i]?.nombre || ''}
+                      onChange={e => {
+                        const p = [...venta.perfiles];
+                        p[i] = { ...p[i], nombre: e.target.value };
+                        setVenta({ ...venta, perfiles: p });
+                      }}
+                      placeholder="Principal"
+                      className="w-full"
+                    />
                   </div>
-                )}
-              </div>
-            )}
+                  <div>
+                    <InputLabel>PIN {venta.pantallas > 1 ? `#${i + 1}` : ''}</InputLabel>
+                    <input
+                      type="text"
+                      value={venta.perfiles[i]?.pin || ''}
+                      onChange={e => {
+                        const p = [...venta.perfiles];
+                        p[i] = { ...p[i], pin: e.target.value };
+                        setVenta({ ...venta, perfiles: p });
+                      }}
+                      placeholder="1234"
+                      className="w-full"
+                      maxLength={10}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
 
             {/* Fecha de venta toggle */}
             <div className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2.5">
