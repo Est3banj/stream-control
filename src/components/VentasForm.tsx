@@ -173,7 +173,6 @@ export default function VentasForm({ initialData }: VentasFormProps) {
   // ─── Shared state ───
   const [utilidad, setUtilidad] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [mostrarFechaVenta, setMostrarFechaVenta] = useState(false);
   const [cuentaId, setCuentaId] = useState<string | null>(null);
   const [perfilAsignado, setPerfilAsignado] = useState<string | null>(null);
   const [perfilPinSeleccionado, setPerfilPinSeleccionado] = useState<string | null>(null);
@@ -208,12 +207,6 @@ export default function VentasForm({ initialData }: VentasFormProps) {
   );
 
   // ─── Handlers (single) ───
-  const handleToggleFechaVenta = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const checked = e.target.checked;
-    setMostrarFechaVenta(checked);
-    if (!checked) setVenta(prev => ({ ...prev, fechaVenta: getToday() }));
-  };
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, type, value, checked } = e.target;
     setVenta({ ...venta, [name]: type === 'checkbox' ? checked : value } as VentaFormState);
@@ -281,6 +274,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
     setVenta(prev => ({
       ...prev,
       correo: cuenta.correoCuenta || prev.correo,
+      costoServicio: newCostoPorPerfil || prev.costoServicio,
       perfiles: cuenta.tipoVenta !== 'completa'
         ? prev.perfiles.map((_, i) => {
             const disp = (cuenta.perfiles || []).filter(p => p.estado === 'disponible');
@@ -355,6 +349,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         ...s,
         cuentaId: newCuentaId,
         correo: cuenta.correoCuenta || s.correo,
+        costoServicio: newCostoPorPerfil || s.costoServicio,
         costoPorPerfil: newCostoPorPerfil,
         perfiles: cuenta.tipoVenta !== 'completa'
           ? s.perfiles.map((_, i) =>
@@ -551,7 +546,6 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         fechaVenta: getToday(), perfiles: [{ nombre: '', pin: '' }], pagado: true, saldoPendiente: '',
       });
       setUtilidad(0);
-      setMostrarFechaVenta(false);
       setCuentaId(null);
       setPerfilAsignado(null);
       setPerfilPinSeleccionado(null);
@@ -664,7 +658,6 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         fechaVenta: getToday(), perfiles: [{ nombre: '', pin: '' }], pagado: true, saldoPendiente: '',
       });
       setServicios([crearServicioVacio()]);
-      setMostrarFechaVenta(false);
 
     } catch (error) {
       console.error('❌ Error al registrar venta combinada:', error);
@@ -690,41 +683,41 @@ export default function VentasForm({ initialData }: VentasFormProps) {
 
   // ─── Render helpers ───
   const InputLabel = ({ children, required = false }: { children: React.ReactNode; required?: boolean }) => (
-    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+    <label className="block text-[11px] font-medium text-gray-500 mb-0.5">
       {children}
       {required && <span className="text-red-400 ml-0.5">*</span>}
     </label>
   );
 
   const SectionHeader = ({ icon: Icon, title }: { icon: React.ElementType; title: string }) => (
-    <div className="flex items-center gap-2 pb-2 mb-3 border-b border-gray-100">
-      <Icon size={16} className="text-indigo-500" />
-      <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wide">{title}</h2>
+    <div className="flex items-center gap-1.5 pb-1.5 mb-2 border-b border-gray-100">
+      <Icon size={14} className="text-indigo-500" />
+      <h2 className="text-xs font-bold text-gray-800">{title}</h2>
     </div>
   );
 
   const renderServicioCard = (s: ServicioItem, index: number) => (
     <div
       key={s.id}
-      className="bg-gray-50 rounded-xl border border-gray-200 p-4 space-y-3 relative"
+      className="border-t border-gray-100 pt-2 space-y-1.5"
     >
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] font-semibold text-indigo-600">
           Servicio #{index + 1}
         </span>
         {servicios.length > 1 && (
           <button
             type="button"
             onClick={() => eliminarServicio(s.id)}
-            className="p-1 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+            className="p-0.5 rounded text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
             title="Eliminar servicio"
           >
-            <X size={14} />
+            <X size={13} />
           </button>
         )}
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
         <div className="col-span-2 sm:col-span-4">
           <InputLabel required>Plataforma</InputLabel>
           <ComboboxServicio
@@ -735,9 +728,9 @@ export default function VentasForm({ initialData }: VentasFormProps) {
           />
         </div>
 
-        {/* Selector de cuentas — aparece justo después de elegir plataforma */}
+        {/* Selector de cuentas */}
         {permisos.puedeGestionarCuentas && s.plataforma && (
-          <div className="col-span-2 sm:col-span-4">
+          <div className="col-span-2 sm:col-span-4 -mt-1 mb-0.5">
             <SelectorCuenta
               proveedor={s.plataforma}
               onCuentaSelected={(cuentaId, perfilNombre, perfilPin, costo) =>
@@ -745,12 +738,11 @@ export default function VentasForm({ initialData }: VentasFormProps) {
               }
             />
             {s.cuentaId && s.perfiles.some(p => p.nombre) && (
-              <div className="mt-2 flex items-center gap-2 p-2.5 bg-indigo-50 rounded-lg border border-indigo-100">
-                <Check size={14} className="text-indigo-600 shrink-0" />
-                <div className="text-xs">
-                  <span className="font-semibold text-indigo-900">{s.plataforma}</span>
-                  <span className="text-indigo-600 ml-2">Costo: ${s.costoPorPerfil.toLocaleString()}/perfil</span>
-                </div>
+              <div className="mt-1 flex items-center gap-1.5 px-2 py-1 bg-indigo-50 rounded border border-indigo-100">
+                <Check size={11} className="text-indigo-600 shrink-0" />
+                <span className="text-[11px] text-indigo-700">
+                  {s.plataforma} — ${s.costoPorPerfil.toLocaleString()}/perfil
+                </span>
               </div>
             )}
           </div>
@@ -803,12 +795,12 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         <div>
           <InputLabel required>Precio venta</InputLabel>
           <div className="relative">
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[11px]">$</span>
             <input
               type="number"
               value={s.precioVenta}
               onChange={e => handleServicioChange(s.id, 'precioVenta', Number(e.target.value))}
-              className="w-full pl-5 text-sm"
+              className="w-full pl-4 text-sm"
               min="0"
               step="0.01"
             />
@@ -818,12 +810,12 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         <div>
           <InputLabel required>Costo servicio</InputLabel>
           <div className="relative">
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[11px]">$</span>
             <input
               type="number"
               value={s.costoServicio}
               onChange={e => handleServicioChange(s.id, 'costoServicio', Number(e.target.value))}
-              className="w-full pl-5 text-sm"
+              className="w-full pl-4 text-sm"
               min="0"
               step="0.01"
             />
@@ -832,12 +824,9 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       </div>
 
       {/* Perfiles dinámicos por pantalla */}
-      <div className="space-y-2">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-          Perfiles por pantalla {s.pantallas > 1 && `(${s.pantallas})`}
-        </p>
+      <div className="pt-0.5 space-y-1">
         {Array.from({ length: s.pantallas }, (_, i) => (
-          <div key={i} className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div key={i} className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
             <div>
               <InputLabel>Perfil {s.pantallas > 1 ? `#${i + 1}` : ''}</InputLabel>
               <input
@@ -875,13 +864,13 @@ export default function VentasForm({ initialData }: VentasFormProps) {
 
   // ─── JSX ───────────────────────────────────────────────────────────────
   return (
-    <form onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-4">
+    <form onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-3">
 
       {/* ═══════ Cliente ═══════ */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
         <SectionHeader icon={Layers} title="Cliente" />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div>
             <InputLabel required>Nombre</InputLabel>
             <input
@@ -912,15 +901,15 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       </div>
 
       {/* ═══════ Servicio(s) ═══════ */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
-          <div className="flex items-center gap-2">
-            <Layers size={16} className="text-indigo-500" />
-            <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wide">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
+        <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-gray-100">
+          <div className="flex items-center gap-1.5">
+            <Layers size={14} className="text-indigo-500" />
+            <h2 className="text-xs font-bold text-gray-800">
               {modoCombinado ? 'Servicios' : 'Servicio'}
             </h2>
             {modoCombinado && cantServicios > 0 && (
-              <span className="text-xs bg-indigo-100 text-indigo-700 font-semibold px-2 py-0.5 rounded-full">
+              <span className="text-[11px] bg-indigo-100 text-indigo-700 font-semibold px-1.5 py-0.5 rounded-full">
                 {cantServicios}
               </span>
             )}
@@ -929,7 +918,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
           <button
             type="button"
             onClick={toggleModoCombinado}
-            className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-all ${
+            className={`text-[11px] font-semibold px-2.5 py-1 rounded-full transition-all ${
               modoCombinado
                 ? 'bg-indigo-600 text-white shadow-sm'
                 : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
@@ -941,8 +930,8 @@ export default function VentasForm({ initialData }: VentasFormProps) {
 
         {!modoCombinado ? (
           /* ─── SINGLE SERVICE ─── */
-          <div className="space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div className="sm:col-span-2">
                 <InputLabel required>Plataforma o servicio</InputLabel>
                 <ComboboxServicio
@@ -1107,58 +1096,28 @@ export default function VentasForm({ initialData }: VentasFormProps) {
               ))}
             </div>
 
-            {/* Fecha de venta toggle */}
-            <div className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2.5">
-              <div>
-                <p className="text-sm font-medium text-gray-700">Venta fue otro día</p>
-                <p className="text-xs text-gray-400">Para ventas anteriores a hoy</p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={mostrarFechaVenta}
-                  onChange={handleToggleFechaVenta}
-                  className="sr-only peer"
-                  aria-label="La venta fue otro día"
-                />
-                <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-indigo-500 peer-checked:to-indigo-600" />
-              </label>
-            </div>
-
-            {mostrarFechaVenta && (
-              <div>
-                <InputLabel>Fecha de la venta</InputLabel>
-                <input
-                  type="date"
-                  name="fechaVenta"
-                  value={venta.fechaVenta}
-                  onChange={handleChange}
-                  className="w-full"
-                />
-              </div>
-            )}
           </div>
         ) : (
           /* ─── MULTI SERVICE ─── */
-          <div className="space-y-3">
+          <div className="space-y-2">
             {servicios.map((s, i) => renderServicioCard(s, i))}
 
             <button
               type="button"
               onClick={agregarServicio}
-              className="w-full py-2.5 rounded-xl border-2 border-dashed border-gray-300 text-gray-500 hover:border-indigo-400 hover:text-indigo-600 font-semibold text-sm transition-all flex items-center justify-center gap-2"
+              className="w-full py-2 rounded-lg border-2 border-dashed border-gray-300 text-gray-500 hover:border-indigo-400 hover:text-indigo-600 font-semibold text-xs transition-all flex items-center justify-center gap-1.5"
             >
-              <Plus size={16} />
+              <Plus size={14} />
               Agregar otro servicio
             </button>
 
             {servicios.some(s => Number(s.precioVenta) > 0) && (
-              <div className="bg-indigo-50/80 rounded-lg px-4 py-3 border border-indigo-100 space-y-1">
-                <div className="flex items-center justify-between text-sm">
+              <div className="bg-indigo-50/80 rounded-lg px-3 py-2 border border-indigo-100 space-y-0.5">
+                <div className="flex items-center justify-between text-xs">
                   <span className="text-gray-600">Ingreso total</span>
                   <span className="font-bold text-gray-900">${totalMulti.toLocaleString()}</span>
                 </div>
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-xs">
                   <span className="text-gray-600">Utilidad estimada</span>
                   <span className="font-bold text-indigo-700">${utilidadMulti.toLocaleString()}</span>
                 </div>

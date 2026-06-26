@@ -130,8 +130,8 @@ describe('VentasForm — Renderizado', () => {
     expect(getInput(container, 'precioVenta')).toBeInTheDocument();
     expect(getInput(container, 'costoServicio')).toBeInTheDocument();
 
-    // Checkboxes (fechaVenta toggle + pagado) + botón submit
-    expect(screen.getAllByRole('checkbox')).toHaveLength(2);
+    // Checkbox de pagado + botón submit
+    expect(screen.getAllByRole('checkbox')).toHaveLength(1);
     expect(
       screen.getByRole('button', { name: /registrar venta/i }),
     ).toBeInTheDocument();
