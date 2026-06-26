@@ -564,72 +564,82 @@ export default function VentasForm({ initialData }: VentasFormProps) {
     const cantServicios = serviciosValidos.length;
     if (cantServicios === 0) { toast.error('Completá al menos un servicio con plataforma y fecha.'); return; }
 
-    // Distribuir precio/costo total entre los servicios
-    const precioPorServicio = Number(precioTotalCombo) / cantServicios;
-    const costoPorServicio = Number(costoTotalCombo) / cantServicios;
-
     setSubmitting(true);
-    const grupoId = uid();
 
     try {
-      const batch = writeBatch(db);
-
-      const fechaVencimientos: string[] = [];
-
-      for (const s of serviciosValidos) {
+      // Preparar datos de cada servicio con sus fechas de vencimiento
+      const fechasVenc: string[] = [];
+      const serviciosData = serviciosValidos.map(s => {
+        const dias = Number(s.diasServicio) || 1;
         const fechaInicioDate = new Date(s.fechaInicio);
-        const dias = Number(s.diasServicio);
         const fechaVencDate = new Date(fechaInicioDate);
         fechaVencDate.setDate(fechaVencDate.getDate() + dias);
         const fechaVenc = fechaVencDate.toISOString().split('T')[0];
-        fechaVencimientos.push(fechaVenc);
+        fechasVenc.push(fechaVenc);
 
-        const perfilesValidos = s.perfiles.filter(p => p.nombre || p.pin);
-        const ventaRef = doc(collection(db, 'ventas'));
-        batch.set(ventaRef, {
-          nombre: venta.nombre,
-          telefono: venta.telefono,
-          correo: s.correo || '',
+        return {
           plataforma: s.plataforma,
+          correo: s.correo || '',
           pantallas: Number(s.pantallas),
-          precioVenta: precioPorServicio,
-          costoServicio: costoPorServicio,
-          utilidad: (Number(s.pantallas) * precioPorServicio) - costoPorServicio,
+          perfiles: s.perfiles.filter(p => p.nombre || p.pin),
           fechaInicio: s.fechaInicio,
-          diasServicio: Number(s.diasServicio),
-          fechaVenta: venta.fechaVenta,
-          perfil: perfilesValidos[0]?.nombre || '',
-          pinPerfil: perfilesValidos[0]?.pin || '',
-          perfiles: perfilesValidos,
+          diasServicio: dias,
+          fechaVencimiento: fechaVenc,
           ...(s.cuentaId ? { cuentaId: s.cuentaId } : {}),
           ...(s.perfilNombre ? { perfilNombre: s.perfilNombre } : {}),
           ...(s.perfilPin ? { perfilPin: s.perfilPin } : {}),
           ...(s.costoPorPerfil ? { costoPorPerfil: s.costoPorPerfil } : {}),
-          pagado: venta.pagado,
-          saldoPendiente: venta.pagado ? 0 : Number(venta.saldoPendiente || 0),
-          fechaRegistro: serverTimestamp(),
-          fechaRegistroSistema: null,
-          propietarioId: user.uid!,
-          usuarioEmail: user.email!,
-          fechaVencimiento: fechaVenc,
-          grupoId,
-        });
-      }
+        };
+      });
 
-      await batch.commit();
+      const totalPantallas = serviciosValidos.reduce((sum, s) => sum + (Number(s.pantallas) || 0), 0);
+      const maxDias = Math.max(...serviciosValidos.map(s => Number(s.diasServicio) || 1));
+      const fechaVencimiento = fechasVenc.sort().pop() || '';
+      const primeraFechaInicio = serviciosValidos.map(s => s.fechaInicio).sort()[0] || getToday();
+      const plataformaStr = serviciosValidos.map(s => s.plataforma).join(' + ');
 
-      // Cliente (usar última fechaVencimiento como referencia)
-      const ultimaFechaVenc = fechaVencimientos.sort().pop() || '';
+      // precioVenta y costoServicio: se guardan por-pantalla para que Reportes
+      // (que calcula precioVenta * pantallas) muestre los totales correctos
+      const precioPorPantalla = totalPantallas > 0 ? Number(precioTotalCombo) / totalPantallas : 0;
+      const costoPorPantalla = totalPantallas > 0 ? Number(costoTotalCombo) / totalPantallas : 0;
+
+      // UN solo doc — el combo es una sola venta
+      await addDoc(collection(db, 'ventas'), {
+        nombre: venta.nombre,
+        telefono: venta.telefono,
+        correo: '',
+        plataforma: plataformaStr,
+        pantallas: totalPantallas,
+        precioVenta: precioPorPantalla,
+        costoServicio: Number(costoTotalCombo),
+        utilidad: (totalPantallas * precioPorPantalla) - Number(costoTotalCombo),
+        fechaInicio: primeraFechaInicio,
+        diasServicio: maxDias,
+        fechaVenta: venta.fechaVenta,
+        perfil: '',
+        pinPerfil: '',
+        perfiles: [],
+        servicios: serviciosData,
+        pagado: venta.pagado,
+        saldoPendiente: venta.pagado ? 0 : Number(venta.saldoPendiente || 0),
+        fechaRegistro: serverTimestamp(),
+        fechaRegistroSistema: null,
+        propietarioId: user.uid!,
+        usuarioEmail: user.email!,
+        fechaVencimiento,
+      });
+
+      // Cliente
       const clienteRef = doc(db, 'clientes', `${user.uid}_${venta.nombre}`);
       await setDoc(clienteRef, {
         nombre: venta.nombre,
         telefono: venta.telefono,
         correo: venta.correo,
         estado: 'activo',
-        plataforma: serviciosValidos.map(s => s.plataforma).join(', '),
+        plataforma: plataformaStr,
         propietarioId: user.uid,
         usuarioEmail: user.email,
-        fechaVencimiento: ultimaFechaVenc,
+        fechaVencimiento,
       }, { merge: true });
 
       // Saldo pendiente
@@ -639,11 +649,11 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         });
       }
 
-      // Movimiento (total combinado)
+      // Movimiento
       await addDoc(collection(db, 'movimientos'), {
         tipo: 'Ingreso',
         monto: Number(precioTotalCombo),
-        descripcion: `Venta combinada: ${serviciosValidos.map(s => s.plataforma).join(' + ')}`,
+        descripcion: `Venta combinada: ${plataformaStr}`,
         fecha: serverTimestamp(),
         propietarioId: user.uid,
         usuarioEmail: user.email,
