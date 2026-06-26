@@ -7,7 +7,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import usePermisos from '../hooks/usePermisos';
 import SelectorCuenta from '../components/SelectorCuenta';
-import { Check, Plus, X, Layers } from 'lucide-react';
+import { Check, Plus, X, Layers, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { VentaInput } from '../types/venta';
 
@@ -76,6 +76,39 @@ function crearServicioVacio(): ServicioItem {
     costoPorPerfil: 0,
   };
 }
+
+// ─── Servicios predeterminados ───────────────────────────────────────────
+
+const SERVICIOS_PREDETERMINADOS = [
+  'Netflix', 'Disney+', 'HBO Max', 'Paramount+',
+  'Spotify', 'Apple TV+', 'Amazon Prime', 'Crunchyroll',
+  'YouTube Premium', 'Twitch',
+];
+
+const PillsSelector = ({
+  selected,
+  onSelect,
+}: {
+  selected: string;
+  onSelect: (value: string) => void;
+}) => (
+  <div className="flex flex-wrap gap-1.5 mb-2">
+    {SERVICIOS_PREDETERMINADOS.map(s => (
+      <button
+        key={s}
+        type="button"
+        onClick={() => onSelect(s)}
+        className={`text-xs px-2.5 py-1 rounded-full font-semibold transition-all ${
+          selected === s
+            ? 'bg-indigo-600 text-white shadow-sm ring-1 ring-indigo-400'
+            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800'
+        }`}
+      >
+        {s}
+      </button>
+    ))}
+  </div>
+);
 
 // ─── Component ───────────────────────────────────────────────────────────
 
@@ -587,6 +620,10 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <div className="col-span-2 sm:col-span-4">
           <InputLabel required>Plataforma</InputLabel>
+          <PillsSelector
+            selected={s.plataforma}
+            onSelect={v => handleServicioChange(s.id, 'plataforma', v)}
+          />
           <input
             type="text"
             value={s.plataforma}
@@ -768,6 +805,10 @@ export default function VentasForm({ initialData }: VentasFormProps) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="sm:col-span-2">
                 <InputLabel required>Plataforma o servicio</InputLabel>
+                <PillsSelector
+                  selected={venta.plataforma}
+                  onSelect={v => setVenta(prev => ({ ...prev, plataforma: v }))}
+                />
                 <input
                   type="text"
                   name="plataforma"
