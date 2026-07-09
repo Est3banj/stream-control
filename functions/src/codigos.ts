@@ -479,13 +479,24 @@ export const generarTokenSubdistribuidor = functions
     }
 
     const uid = context.auth.uid;
-    const { cuentaId, perfilNombre, expiraEn, clienteNombre } = data;
+    const userEmail = context.auth.token?.email || '';
+    const {
+      cuentaId, perfilNombre, expiraEn, clienteNombre,
+      cantidad, totalRecibido, precioPorPerfil, totalCosto, utilidad,
+      diasAcceso, perfilesSeleccionados, proveedor, costoServicio,
+    } = data;
 
     if (!cuentaId || !expiraEn) {
       throw new functions.https.HttpsError('invalid-argument', 'cuentaId y expiraEn son requeridos');
     }
 
-    // Verificar suscripción Enterprise (misma lógica que generarToken)
+    // Validar que expiraEn sea una fecha futura
+    const expiraDate = new Date(expiraEn);
+    if (isNaN(expiraDate.getTime()) || expiraDate <= new Date()) {
+      throw new functions.https.HttpsError('invalid-argument', 'expiraEn debe ser una fecha futura');
+    }
+
+    // Verificar suscripción Enterprise
     const userDoc = await db.collection('usuarios').doc(uid).get();
     if (!userDoc.exists) {
       throw new functions.https.HttpsError('permission-denied', 'Usuario no encontrado');
@@ -511,35 +522,100 @@ export const generarTokenSubdistribuidor = functions
       );
     }
 
-    // Verificar que la cuenta existe y pertenece al usuario
-    const cuentaDoc = await db.collection('cuentas').doc(cuentaId).get();
-    if (!cuentaDoc.exists) {
-      throw new functions.https.HttpsError('not-found', 'Cuenta no encontrada');
-    }
-
-    const cuentaData = cuentaDoc.data()!;
-    if (cuentaData.propietarioId !== uid) {
-      throw new functions.https.HttpsError('permission-denied', 'No tienes permisos sobre esta cuenta');
-    }
-
-    // Validar que expiraEn sea una fecha futura
-    const expiraDate = new Date(expiraEn);
-    if (isNaN(expiraDate.getTime()) || expiraDate <= new Date()) {
-      throw new functions.https.HttpsError('invalid-argument', 'expiraEn debe ser una fecha futura');
-    }
-
     const token = uuidv4();
-    await db.collection('tokens').doc(token).set({
-      token,
-      cuentaId,
-      perfilNombre: perfilNombre || null,
-      clienteId: '',
-      clienteNombre: clienteNombre || '',
-      vendedorId: uid,
-      expiraEn: expiraDate.toISOString(),
-      activo: true,
-      useCount: 0,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+
+    // Transacción atómica: o se escriben todos los documentos o ninguno
+    await db.runTransaction(async (transaction) => {
+      const cuentaRef = db.collection('cuentas').doc(cuentaId);
+      const cuentaSnap = await transaction.get(cuentaRef);
+
+      if (!cuentaSnap.exists) {
+        throw new functions.https.HttpsError('not-found', 'Cuenta no encontrada');
+      }
+
+      const cuentaData = cuentaSnap.data()!;
+      if (cuentaData.propietarioId !== uid) {
+        throw new functions.https.HttpsError('permission-denied', 'No tienes permisos sobre esta cuenta');
+      }
+
+      // Crear token
+      const tokenRef = db.collection('tokens').doc(token);
+      transaction.set(tokenRef, {
+        token,
+        cuentaId,
+        perfilNombre: perfilNombre || null,
+        clienteId: '',
+        clienteNombre: clienteNombre || '',
+        vendedorId: uid,
+        expiraEn: expiraDate.toISOString(),
+        activo: true,
+        useCount: 0,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      // Registrar venta y movimiento (si hay precio)
+      if (totalRecibido > 0) {
+        const ventaRef = db.collection('ventas').doc();
+        transaction.set(ventaRef, {
+          nombre: clienteNombre || 'Sub-distribuidor',
+          telefono: '0000000000',
+          correo: '',
+          plataforma: proveedor || '',
+          pantallas: cantidad || 1,
+          precioVenta: precioPorPerfil || 0,
+          costoServicio: totalCosto || 0,
+          utilidad: utilidad || 0,
+          fechaInicio: new Date().toISOString().split('T')[0],
+          fechaVenta: new Date().toISOString().split('T')[0],
+          diasServicio: diasAcceso || 30,
+          perfil: '',
+          pinPerfil: '',
+          pagado: true,
+          saldoPendiente: 0,
+          fechaRegistro: admin.firestore.FieldValue.serverTimestamp(),
+          fechaRegistroSistema: null,
+          fechaVencimiento: expiraDate.toISOString().split('T')[0],
+          propietarioId: uid,
+          usuarioEmail: userEmail,
+          cuentaId,
+          tokenGenerado: token,
+          costoPorPerfil: costoServicio || 0,
+          esSubdistribuidor: true,
+        });
+
+        const movRef = db.collection('movimientos').doc();
+        transaction.set(movRef, {
+          tipo: 'Ingreso',
+          monto: totalRecibido,
+          descripcion: `Venta ${cantidad || 1} perfil(es) ${proveedor || ''} (Sub-distribuidor)`,
+          fecha: admin.firestore.FieldValue.serverTimestamp(),
+          propietarioId: uid,
+          usuarioEmail: userEmail,
+        });
+      }
+
+      // Actualizar perfiles seleccionados
+      if (perfilesSeleccionados && perfilesSeleccionados.length > 0) {
+        const perfiles = [...(Array.isArray(cuentaData.perfiles) ? cuentaData.perfiles : [])];
+        const hoy = new Date().toISOString().split('T')[0];
+
+        perfilesSeleccionados.forEach((idx: number) => {
+          if (idx >= 0 && idx < perfiles.length) {
+            perfiles[idx] = {
+              ...perfiles[idx],
+              estado: 'asignado' as const,
+              clienteNombre: clienteNombre || 'Sub-distribuidor',
+              fechaAsignacion: hoy,
+            };
+          }
+        });
+
+        const quedanDisponibles = perfiles.some((p: any) => p.estado === 'disponible');
+        transaction.update(cuentaRef, {
+          perfiles,
+          ...(quedanDisponibles ? {} : { estado: 'asignada' as const }),
+        });
+      }
     });
 
     return {
