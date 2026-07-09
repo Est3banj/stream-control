@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import useCuentas, { crearCuenta, actualizarCuenta, asignarPerfil } from '../hooks/useCuentas';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase';
 import usePermisos from '../hooks/usePermisos';
 import useClientes from '../hooks/useClientes';
 import { useMoneda } from '../hooks/useMoneda';
@@ -725,7 +727,17 @@ export default function GestionCuentas() {
                 setMostrarIMAP(false);
                 setCuentaSeleccionada(null);
               }}
-              onSuccess={() => toast.success('Credenciales configuradas')}
+              onSuccess={async () => {
+                try {
+                  await updateDoc(doc(db, 'cuentas', cuentaSeleccionada.id), {
+                    imapConfigurado: true,
+                    updatedAt: serverTimestamp(),
+                  });
+                } catch (err) {
+                  console.warn('No se pudo marcar imapConfigurado:', err);
+                }
+                toast.success('Credenciales IMAP guardadas ✓');
+              }}
             />
           </div>
         </div>
