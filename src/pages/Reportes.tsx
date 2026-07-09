@@ -15,7 +15,7 @@ export default function Reportes() {
   const { user } = useAuth();
   const permisos = usePermisos(user);
   const { ventas: todasLasVentas, loading, error } = useVentas(user);
-  const { formatear, formatearDesdeVenta } = useMoneda();
+  const { formatear, formatearDesdeVenta, convertirVenta } = useMoneda();
   const [fechaInicio, setFechaInicio] = useState('');
   const [fechaFin, setFechaFin] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -147,8 +147,8 @@ export default function Reportes() {
   const indexPrimero = indexUltimo - itemsPorPagina;
   const ventasPaginadas = filteredVentas.slice(indexPrimero, indexUltimo);
 
-  const totalIngresos = ventas.reduce((acc, v) => acc + (v.precioVenta * v.pantallas), 0);
-  const totalCostos = ventas.reduce((acc, v) => acc + Number(v.costoServicio || 0), 0);
+  const totalIngresos = ventas.reduce((acc, v) => acc + convertirVenta((v.precioVenta * v.pantallas) || 0, v.monedaVenta, v.tasaVenta), 0);
+  const totalCostos = ventas.reduce((acc, v) => acc + convertirVenta(Number(v.costoServicio || 0), v.monedaVenta, v.tasaVenta), 0);
   const totalUtilidad = totalIngresos - totalCostos;
   const esAdmin = user?.rol === 'admin';
   const colCount = esAdmin ? 9 : 8;
