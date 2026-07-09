@@ -359,6 +359,21 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         return { ...s, cuentaId: newCuentaId, costoPorPerfil: newCostoPorPerfil };
       }
 
+      // Cargar contraseña desde cuentas_secretos via Cloud Function
+      (async () => {
+        try {
+          const functions = getFunctions();
+          const fn = httpsCallable(functions, 'obtenerCredencialesCuenta');
+          const result = await fn({ cuentaId: newCuentaId });
+          const data = result.data as { contrasena: string };
+          if (data.contrasena) {
+            setServicios(prev => prev.map(sv => sv.id === servicioId ? { ...sv, contrasena: data.contrasena } : sv));
+          }
+        } catch {
+          // Si falla, la contraseña se deja vacía
+        }
+      })();
+
       const disp = (cuenta.perfiles || []).filter(p => p.estado === 'disponible');
 
       return {
