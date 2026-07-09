@@ -17,6 +17,9 @@ export default function Login(){
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [mostrarRecuperacion, setMostrarRecuperacion] = useState(false);
+  const [emailRecuperacion, setEmailRecuperacion] = useState('');
+  const [enviado, setEnviado] = useState(false);
   const [recuperando, setRecuperando] = useState(false);
 
   // Register fields
@@ -93,8 +96,9 @@ export default function Login(){
     }
   };
 
-  const handleRecuperar = async () => {
-    if (!email.trim()) {
+  const handleRecuperar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emailRecuperacion.trim()) {
       toast.error('Ingresá tu correo electrónico');
       return;
     }
@@ -102,18 +106,29 @@ export default function Login(){
     try {
       const functions = getFunctions();
       const fn = httpsCallable(functions, 'enviarCorreoRecuperacion');
-      await fn({ email: email.trim() });
-      toast.success('Te enviamos un enlace para restablecer tu contraseña');
+      await fn({ email: emailRecuperacion.trim() });
+      setEnviado(true);
     } catch (err: unknown) {
       const error = err as { code?: string; message?: string };
       if (error.code === 'functions/resource-exhausted') {
         toast.error('Esperá un minuto antes de solicitar otro correo');
       } else {
-        toast.error(error.message || 'Error al enviar el correo de recuperación');
+        toast.error(error.message || 'Error al enviar el correo');
       }
     } finally {
       setRecuperando(false);
     }
+  };
+
+  const abrirRecuperacion = () => {
+    setEmailRecuperacion(email);
+    setEnviado(false);
+    setMostrarRecuperacion(true);
+  };
+
+  const cerrarRecuperacion = () => {
+    setMostrarRecuperacion(false);
+    setEnviado(false);
   };
 
   const handleGoogleSignIn = async () => {
@@ -160,7 +175,7 @@ export default function Login(){
         </div>
         <h2 className="text-3xl font-extrabold mb-8 text-white drop-shadow-lg text-center tracking-wide">StreamControl Pro</h2>
 
-        {modo === 'login' ? (
+        {modo === 'login' && !mostrarRecuperacion ? (
           /* ═══ FORMULARIO DE INICIO DE SESIÓN ═══ */
           <form onSubmit={handleLogin} className="flex flex-col gap-3">
             <input 
@@ -192,11 +207,10 @@ export default function Login(){
             <div className="text-right -mt-4">
               <button
                 type="button"
-                onClick={handleRecuperar}
-                disabled={recuperando}
+                onClick={abrirRecuperacion}
                 className="text-white/60 hover:text-white text-xs transition-colors"
               >
-                {recuperando ? 'Enviando...' : '¿Olvidaste tu contraseña?'}
+                ¿Olvidaste tu contraseña?
               </button>
             </div>
             <button 
@@ -236,6 +250,71 @@ export default function Login(){
               </button>
             </div>
           </form>
+        ) : modo === 'login' && mostrarRecuperacion ? (
+          /* ═══ RECUPERAR CONTRASEÑA ═══ */
+          <div className="flex flex-col gap-3 animate-fadeInUp">
+            {!enviado ? (
+              <form onSubmit={handleRecuperar} className="flex flex-col gap-3">
+                <div className="text-center mb-2">
+                  <div className="w-16 h-16 rounded-full bg-indigo-500/30 flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-1">¿Olvidaste tu contraseña?</h3>
+                  <p className="text-sm text-white/60">Ingresá tu correo y te enviaremos un enlace para restablecerla.</p>
+                </div>
+                <input
+                  type="email"
+                  value={emailRecuperacion}
+                  onChange={e => setEmailRecuperacion(e.target.value)}
+                  placeholder="Tu correo electrónico"
+                  className="rounded-2xl px-5 py-4 focus:outline-none focus:ring-4 focus:ring-indigo-500 transition-shadow duration-500 bg-white bg-opacity-70 text-gray-900 shadow-md placeholder-gray-500 text-lg font-medium"
+                  autoComplete="email"
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  disabled={recuperando}
+                  className="btn rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-violet-600 hover:to-indigo-600 transition-colors duration-500 text-white font-semibold py-3 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-lg tracking-wide mt-2"
+                >
+                  {recuperando ? 'Enviando...' : 'Enviar enlace'}
+                </button>
+                <div className="text-center mt-2">
+                  <button type="button" onClick={cerrarRecuperacion} className="text-white/60 hover:text-white text-sm transition-colors">
+                    Volver al inicio de sesión
+                  </button>
+                </div>
+              </form>
+            ) : (
+              /* ═══ CONFIRMACIÓN DE ENVÍO ═══ */
+              <div className="flex flex-col gap-4 text-center">
+                <div className="w-16 h-16 rounded-full bg-green-500/30 flex items-center justify-center mx-auto">
+                  <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-white">Correo enviado</h3>
+                <p className="text-sm text-white/70 leading-relaxed">
+                  Te enviamos un enlace a <strong className="text-white">{emailRecuperacion}</strong>.
+                  Revisá tu bandeja de entrada y segui las instrucciones para restablecer tu contraseña.
+                </p>
+                <div className="bg-white/10 rounded-xl px-4 py-3 text-left">
+                  <p className="text-xs text-white/50">
+                    <strong className="text-white/70">¿No lo recibiste?</strong> Revisá la carpeta de
+                    spam o correo no deseado. Si pasaron varios minutos y no llega, intentá de nuevo.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={cerrarRecuperacion}
+                  className="btn rounded-2xl bg-white/10 border border-white/20 text-white hover:bg-white/20 font-semibold py-3 transition-colors text-base mt-2"
+                >
+                  Volver al inicio de sesión
+                </button>
+              </div>
+            )}
+          </div>
         ) : (
           /* ═══ FORMULARIO DE REGISTRO ═══ */
           <form onSubmit={handleRegister} className="flex flex-col gap-3">
