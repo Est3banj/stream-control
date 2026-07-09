@@ -469,6 +469,7 @@ export default function GestionCuentas() {
                 <th className="px-4 py-4 text-center text-sm font-semibold">Perfiles</th>
                 <th className="px-4 py-4 text-right text-sm font-semibold">Costo</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Estado</th>
+                <th className="px-4 py-4 text-center text-sm font-semibold">IMAP</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Días Restantes</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Acciones</th>
               </tr>
@@ -508,18 +509,18 @@ export default function GestionCuentas() {
                         </span>
                       </td>
                       <td className="px-4 py-4 text-center">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <span className={`px-3 py-1 rounded-full text-sm font-semibold ${badge.class}`}>
-                            {badge.label}
-                          </span>
-                          <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                            c.imapConfigurado
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-gray-100 text-gray-500'
-                          }`}>
-                            IMAP{c.imapConfigurado ? ' ✓' : ''}
-                          </span>
-                        </div>
+                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${badge.class}`}>
+                          {badge.label}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-center">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                          c.imapConfigurado
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-gray-100 text-gray-500'
+                        }`}>
+                          IMAP{c.imapConfigurado ? ' ✓' : ''}
+                        </span>
                       </td>
                       <td className="px-4 py-4 text-center">
                         {c.fechaVencimiento ? (
@@ -598,7 +599,7 @@ export default function GestionCuentas() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-gray-500">
+                  <td colSpan={8} className="text-center py-12 text-gray-500">
                     <Film size={48} className="mx-auto mb-3 text-gray-300" />
                     <p className="font-medium">No se encontraron cuentas</p>
                   </td>
