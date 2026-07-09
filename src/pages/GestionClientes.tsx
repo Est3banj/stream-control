@@ -25,7 +25,7 @@ export default function GestionClientes() {
   const permisos = usePermisos(user);
   const { tokens: todosLosTokens } = useTokens(user);
   const { cuentas } = useCuentas(user);
-  const { formatear } = useMoneda();
+  const { formatear, formatearDesdeVenta } = useMoneda();
   const [clientes, setClientes] = useState<{ activos: Cliente[]; inactivos: Cliente[]; todos: Cliente[] }>({ activos: [], inactivos: [], todos: [] });
   const [filtro, setFiltro] = useState<'activos' | 'inactivos' | 'todos'>('activos');
   const [busqueda, setBusqueda] = useState('');
@@ -873,7 +873,7 @@ export default function GestionClientes() {
                           </div>
                         )}
                         <div className="text-sm text-gray-600 mt-1">
-                          {venta.pantallas} pantalla(s) • {formatear(venta.precioVenta * venta.pantallas)}
+                          {venta.pantallas} pantalla(s) • {formatearDesdeVenta(venta.precioVenta * venta.pantallas, venta.monedaVenta, venta.tasaVenta)}
                         </div>
                         {venta.perfil && (
                           <div className="text-xs text-gray-500 mt-1">
@@ -905,7 +905,7 @@ export default function GestionClientes() {
                       </div>
                       <div className="text-right">
                         <div className="text-lg font-bold text-green-600">
-                          Utilidad: {formatear(venta.utilidad || 0)}
+                          Utilidad: {formatearDesdeVenta(venta.utilidad || 0, venta.monedaVenta, venta.tasaVenta)}
                         </div>
                       </div>
                     </div>

@@ -133,7 +133,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
   const { user } = useAuth();
   const permisos = usePermisos(user);
   const { cuentas } = useCuentas(user);
-  const { formatear } = useMoneda();
+  const { formatear, moneda, tasa } = useMoneda();
 
   // ─── Single-service state (backward compatible) ───
   const [venta, setVenta] = useState<VentaFormState>({
@@ -478,6 +478,8 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         ...(perfilAsignado ? { perfilNombre: perfilAsignado } : {}),
         ...(perfilPinSeleccionado ? { perfilPin: perfilPinSeleccionado } : {}),
         ...(costoPorPerfil ? { costoPorPerfil } : {}),
+        monedaVenta: moneda,
+        tasaVenta: tasa,
       };
 
       // ── 1. Marcar perfil PRIMERO (antes de escribir cualquier cosa) ──

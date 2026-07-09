@@ -16,8 +16,10 @@ export interface Venta {
   diasServicio: number;
   /** @deprecated Usar perfilNombre en nuevos registros */
   perfil?: string;
-  /** @deprecated Usar perfilPin en nuevos registros */
+  /** @deprecated Usar perfilNombre en nuevos registros */
   pinPerfil?: string;
+  monedaVenta?: string;
+  tasaVenta?: number;
   pagado: boolean;
   saldoPendiente: number;
   fechaRegistro: Timestamp;
