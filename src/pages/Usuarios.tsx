@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { collection, doc, setDoc, updateDoc, onSnapshot, Timestamp, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, sendPasswordResetEmail, signOut as signOutAuth } from 'firebase/auth';
 import { auth, db, secondaryAuth } from '../firebase';
+import { useMoneda } from '../hooks/useMoneda';
 import { UserPlus, Users, Shield, UserCheck, UserX, Mail, Eye, EyeOff, Package, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
@@ -23,6 +24,7 @@ export default function Usuarios() {
   const { user } = useAuth();
   const { suscripciones } = useSuscripciones(user);
   const { planes } = usePlanes(user);
+  const { formatearDesdeBase } = useMoneda();
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -78,7 +80,7 @@ export default function Usuarios() {
         correo: form.correo,
         rol: form.rol || 'usuario',
         estado: form.estado || 'activo',
-        activoHasta: form.activoHasta || '',
+        activoHasta: form.activoHasta ? Timestamp.fromDate(new Date(form.activoHasta)) : null,
         createdAt: new Date().toISOString(),
       };
       await setDoc(doc(db, 'usuarios', userCred.user.uid), profile);
@@ -114,7 +116,10 @@ export default function Usuarios() {
     }
   };
 
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+
   const toggleEstado = async (uid: string, estadoActual: string) => {
+    setTogglingId(uid);
     try {
       const ref = doc(db, 'usuarios', uid);
       await updateDoc(ref, { estado: estadoActual === 'activo' ? 'inactivo' : 'activo' });
@@ -122,6 +127,8 @@ export default function Usuarios() {
     } catch (err: unknown) {
       console.error(err);
       toast.error('No se pudo actualizar el estado');
+    } finally {
+      setTogglingId(null);
     }
   };
 
@@ -390,13 +397,14 @@ export default function Usuarios() {
                         </button>
                         <button
                           onClick={() => toggleEstado(u.id, u.estado)}
-                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          disabled={togglingId === u.id || guardandoPlan}
+                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                             u.estado === 'activo'
                               ? 'bg-orange-100 text-orange-600 hover:bg-orange-200'
                               : 'bg-green-100 text-green-600 hover:bg-green-200'
                           }`}
                         >
-                          {u.estado === 'activo' ? 'Desactivar' : 'Activar'}
+                          {togglingId === u.id ? 'Procesando...' : (u.estado === 'activo' ? 'Desactivar' : 'Activar')}
                         </button>
                       </div>
                     </td>
@@ -445,7 +453,7 @@ export default function Usuarios() {
                   <option value="">Seleccionar plan...</option>
                   {planes.filter(p => p.activo).map(p => (
                     <option key={p.id} value={p.id}>
-                      {p.nombre} — ${p.precio.toLocaleString()} ({p.duracionDias} días)
+                      {p.nombre} — {formatearDesdeBase(p.precio)} ({p.duracionDias} días)
                     </option>
                   ))}
                 </select>

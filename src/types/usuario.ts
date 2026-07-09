@@ -7,7 +7,7 @@ export interface Usuario {
   correo: string;
   rol: 'admin' | 'usuario';
   estado: 'activo' | 'inactivo';
-  activoHasta: string | Timestamp;
+  activoHasta: Timestamp | null;
   plan?: string;
   moneda?: string;
   tasa?: number;

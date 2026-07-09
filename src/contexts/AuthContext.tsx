@@ -146,7 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         estado: 'activo',
         moneda: data.moneda,
         tasa: data.tasa,
-        activoHasta: '',
+        activoHasta: null,
         createdAt: new Date().toISOString(),
       };
 
