@@ -201,6 +201,12 @@ service cloud.firestore {
             (
               request.resource.data.diff(resource.data).affectedKeys().hasOnly(['saldoPendiente']) &&
               request.resource.data.saldoPendiente is number
+            ) ||
+            // Caso 4: updateDoc de cuentaId/perfilAsignado (asignar/desasignar perfil)
+            (
+              request.resource.data.diff(resource.data).affectedKeys().hasOnly(['cuentaId', 'perfilAsignado']) &&
+              (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['cuentaId']) || request.resource.data.cuentaId is string) &&
+              (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['perfilAsignado']) || request.resource.data.perfilAsignado is string)
             )
           )
         )
@@ -409,6 +415,18 @@ service cloud.firestore {
     // Solo Cloud Functions vía Admin SDK pueden leer/escribir.
     match /cuentas_secretos/{docId} {
       allow read, write: if false;
+    }
+
+    // ============================================
+    // COLECCIÓN: notificaciones
+    // ============================================
+    // Solo la cron (Admin SDK) puede escribir notificaciones.
+    // Lectura solo para admins (futuro panel de notificaciones).
+    match /notificaciones/{notifId} {
+      allow read: if isAdmin();
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     // ============================================
