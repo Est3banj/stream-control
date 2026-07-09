@@ -547,6 +547,31 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         });
       }
 
+      // ── 1b. Marcar cuenta completa como asignada ──
+      if (cuentaId && !perfilAsignado) {
+        const cuentaRef = doc(db, 'cuentas', cuentaId);
+        const cuentaSnap = await getDoc(cuentaRef);
+        if (cuentaSnap.exists()) {
+          const cuentaData = cuentaSnap.data();
+          const perfiles = [...(cuentaData.perfiles || [])] as Array<any>;
+          const hoy = new Date().toISOString().split('T')[0];
+          let modified = false;
+          for (let i = 0; i < perfiles.length; i++) {
+            if (perfiles[i].estado === 'disponible') {
+              perfiles[i] = { ...perfiles[i], estado: 'asignado', clienteNombre: venta.nombre.trim(), fechaAsignacion: hoy };
+              modified = true;
+            }
+          }
+          if (modified) {
+            await updateDoc(cuentaRef, {
+              perfiles,
+              estado: 'asignada',
+              updatedAt: serverTimestamp(),
+            });
+          }
+        }
+      }
+
       // ── 2. Venta ──
       await addDoc(collection(db, 'ventas'), nuevaVenta);
 
@@ -657,9 +682,9 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       const costoPorPantalla = totalPantallas > 0 ? Number(costoTotalCombo) / totalPantallas : 0;
 
       // ── 0. Marcar perfiles en cuentas (antes de escribir cualquier cosa) ──
-      const cuentasAMarcar = new Map<string, Array<{ perfilNombre: string; perfilPin: string | null }>>();
+      const cuentasAMarcar = new Map<string, Array<{ perfilNombre: string | null; perfilPin: string | null }>>();
       for (const s of serviciosValidos) {
-        if (s.cuentaId && s.perfilNombre) {
+        if (s.cuentaId) {
           if (!cuentasAMarcar.has(s.cuentaId)) cuentasAMarcar.set(s.cuentaId, []);
           cuentasAMarcar.get(s.cuentaId)!.push({ perfilNombre: s.perfilNombre, perfilPin: s.perfilPin });
         }
@@ -672,9 +697,20 @@ export default function VentasForm({ initialData }: VentasFormProps) {
           console.warn(`Cuenta ${cuentaId} no existe, saltando asignación de perfil`);
           continue;
         }
-        const perfiles = [...(cuentaSnap.data().perfiles || [])] as Array<any>;
+        const cuentaData = cuentaSnap.data();
+        const perfiles = [...(cuentaData.perfiles || [])] as Array<any>;
         let modified = false;
         for (const { perfilNombre } of perfilesAMarcar) {
+          if (!perfilNombre) {
+            // Cuenta completa: marcar TODOS los perfiles como asignados
+            for (let i = 0; i < perfiles.length; i++) {
+              if (perfiles[i].estado === 'disponible') {
+                perfiles[i] = { ...perfiles[i], estado: 'asignado', clienteNombre: venta.nombre.trim(), fechaAsignacion: hoy };
+                modified = true;
+              }
+            }
+            continue;
+          }
           const idx = perfiles.findIndex((p: any) => p.nombre === perfilNombre);
           if (idx === -1) {
             console.warn(`Perfil "${perfilNombre}" no encontrado en cuenta ${cuentaId}, saltando`);
