@@ -135,10 +135,16 @@ function TelegramConfigContent({ user }: { user: ReturnType<typeof useAuth>['use
     try {
       const functions = getFunctions();
       const fn = httpsCallable(functions, 'desvincularTelegram');
-      await fn();
+      const result = await fn();
+      const data = result.data as { success: boolean; alreadyUnlinked?: boolean };
 
       setVinculado(false);
-      toast.success('✅ Telegram desvinculado correctamente');
+
+      if (data.alreadyUnlinked) {
+        toast('ℹ️ Ya estaba desvinculado', { icon: 'ℹ️' });
+      } else {
+        toast.success('✅ Telegram desvinculado correctamente');
+      }
     } catch (error: unknown) {
       console.error('Error desvinculando:', error);
       const err = error as { code?: string; message?: string };
