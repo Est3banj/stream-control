@@ -372,8 +372,8 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
         <button type="button" onClick={onCancel} className="btn-secondary flex-1" disabled={loading || submitting}>
           Cancelar
         </button>
-        <button type="submit" className="btn-primary flex-1" disabled={loading || submitting}>
-          {loading ? 'Guardando...' : isEdit ? 'Guardar Cambios' : 'Guardar Cuenta'}
+        <button type="submit" className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed" disabled={loading || submitting}>
+          {loading || submitting ? 'Guardando...' : isEdit ? 'Guardar Cambios' : 'Guardar Cuenta'}
         </button>
       </div>
     </form>
