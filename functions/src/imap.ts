@@ -1,6 +1,6 @@
 import { ImapFlow } from 'imapflow';
 import { simpleParser } from 'mailparser';
-import { CODE_PATTERNS, GENERIC_CODE } from './regex';
+import { CODE_PATTERNS, LINK_PATTERNS, URL_PATTERNS, GENERIC_CODE } from './regex';
 
 export interface IMAPConfig {
   correo: string;
@@ -11,9 +11,13 @@ export interface IMAPConfig {
 
 export interface CodigoResult {
   codigo: string;
+  /** 'numerico' = código de dígitos, 'link' = enlace para abrir */
+  tipo: 'numerico' | 'link';
   fecha: string;
   remitente: string;
   asunto: string;
+  /** Minutos hasta que expira (solo para links) */
+  expiraEn?: number;
 }
 
 const SENDER_MAP: Record<string, string[]> = {
@@ -27,10 +31,10 @@ const SENDER_MAP: Record<string, string[]> = {
 // Palabras clave en el ASUNTO para filtrar por tipo de código
 // Basado en asuntos reales de los emails de cada servicio
 const SUBJECT_KEYWORDS: Record<string, RegExp> = {
-  viajenet: /viaje|travel|dispositivo nuevo|nuevo dispositivo|estás viajando|fuera/i,
-  hogarnet: /hogar|home|tv en casa|código hogar/i,
+  viajenet: /viaje|travel|acceso temporal|código.*acceso|dispositivo nuevo|nuevo dispositivo|estás viajando|fuera|solicitud.*código/i,
+  hogarnet: /hogar|home|tv en casa|código hogar|confirmación.*hogar|confirma.*hogar/i,
   resetnet: /reset|restablecer|cambiar contraseña|password|restablecimiento/i,
-  ininet: /inicio.*sesi[oó]n|sign in|iniciar sesi[oó]n|código.*sesi[oó]n/i,
+  ininet: /inicio.*sesi[óo]n|sign in|iniciar sesi[óo]n|código.*sesi[óo]n|código.*verificación/i,
   wincode: /código|win/i,
   cgptcode: /verification|código|chatgpt|openai/i,
   univer1: /código|universal/i,
@@ -48,15 +52,68 @@ function connectWithTimeout(client: ImapFlow, ms: number): Promise<void> {
   ]);
 }
 
-async function extractCodeFromBody(body: string, caso: string): Promise<string | null> {
-  const pattern = CODE_PATTERNS[caso];
-  if (pattern) {
-    const match = body.match(pattern);
-    if (match?.[1]) return match[1];
+/**
+ * Extrae el valor del email según el caso:
+ * - viajenet → busca un LINK (Netflix manda "Obtener código" con href)
+ * - hogarnet → busca código numérico primero, link como fallback
+ * - resto → busca código numérico
+ */
+async function extractFromBody(
+  parsed: any,
+  caso: string
+): Promise<{ codigo: string; tipo: 'numerico' | 'link' } | null> {
+  const textBody = parsed.text || '';
+  const htmlBody = parsed.html || '';
+
+  // ── "Estoy de viaje" → Netflix manda un LINK, no código numérico ──
+  if (caso === 'viajenet') {
+    // 1. Buscar link del botón "Obtener código" en el HTML
+    const linkMatch = htmlBody.match(LINK_PATTERNS.viajenet);
+    if (linkMatch?.[1]) {
+      const href = linkMatch[1];
+      return { codigo: href.startsWith('http') ? href : `https://www.netflix.com${href}`, tipo: 'link' };
+    }
+    // 2. Fallback: URL directa en texto plano
+    const urlMatch = textBody.match(URL_PATTERNS.viajenet);
+    if (urlMatch) {
+      return { codigo: urlMatch[0], tipo: 'link' };
+    }
+    return null;
   }
 
-  const fallback = body.match(GENERIC_CODE);
-  if (fallback?.[1]) return fallback[1];
+  // ── "Código Hogar" → puede ser código numérico o link ──
+  if (caso === 'hogarnet') {
+    // 1. Intentar código numérico primero
+    const codigoMatch = textBody.match(CODE_PATTERNS.hogarnet);
+    if (codigoMatch?.[1]) return { codigo: codigoMatch[1], tipo: 'numerico' };
+    // 2. También buscar en HTML
+    if (htmlBody) {
+      const htmlCodigoMatch = htmlBody.match(CODE_PATTERNS.hogarnet);
+      if (htmlCodigoMatch?.[1]) return { codigo: htmlCodigoMatch[1], tipo: 'numerico' };
+    }
+    // 3. Fallback a link genérico que contenga netflix en el HTML
+    const linkMatch = htmlBody.match(/<a[^>]*href="([^"]*)"[^>]*>/i);
+    if (linkMatch?.[1]) {
+      const href = linkMatch[1];
+      if (href.includes('netflix.com') || href.includes('account.netflix.com')) {
+        return { codigo: href.startsWith('http') ? href : `https://www.netflix.com${href}`, tipo: 'link' };
+      }
+    }
+    return null;
+  }
+
+  // ── Casos default: extraer código numérico con el patrón específico ──
+  const pattern = CODE_PATTERNS[caso];
+  const bodyToSearch = textBody || htmlBody;
+
+  if (pattern) {
+    const match = bodyToSearch.match(pattern);
+    if (match?.[1]) return { codigo: match[1], tipo: 'numerico' };
+  }
+
+  // Fallback genérico
+  const fallback = bodyToSearch.match(GENERIC_CODE);
+  if (fallback?.[1]) return { codigo: fallback[1], tipo: 'numerico' };
 
   return null;
 }
@@ -94,9 +151,10 @@ export async function buscarCodigoVerificacion(
 
       // Buscar TODOS los emails de los últimos 24h del remitente
       let search = await client.search({ from: senders[0], since });
+      if (!Array.isArray(search)) search = [];
       if (search.length === 0 && senders.length > 1) {
         const altSearch = await client.search({ from: senders[1], since });
-        if (altSearch.length > 0) {
+        if (Array.isArray(altSearch) && altSearch.length > 0) {
           search = altSearch;
         }
       }
@@ -110,7 +168,7 @@ export async function buscarCodigoVerificacion(
           envelope: true,
         });
 
-        if (!msg?.source) continue;
+        if (!msg || !msg.source) continue;
 
         const parsed = await simpleParser(msg.source);
         const asunto = parsed.subject || '(sin asunto)';
@@ -128,14 +186,17 @@ export async function buscarCodigoVerificacion(
         const body = parsed.text || parsed.html || '';
         if (!body) continue;
 
-        const codigo = await extractCodeFromBody(body, caso);
-        if (!codigo) continue;
+        // Usar la nueva función que soporta links y códigos
+        const result = await extractFromBody(parsed, caso);
+        if (!result) continue;
 
         return {
-          codigo,
+          codigo: result.codigo,
+          tipo: result.tipo,
           fecha: parsed.date?.toISOString() || new Date().toISOString(),
           remitente: parsed.from?.text || senders[0],
           asunto: parsed.subject || '',
+          expiraEn: result.tipo === 'link' ? 15 : undefined,
         };
       }
 
