@@ -95,7 +95,7 @@ export default function App() {
           />
 
           <Route
-            path="/GestionClientes"
+            path="/gestion-clientes"
             element={
               <PrivateRoute roles={['usuario']}>
                 <Layout>
