@@ -141,9 +141,9 @@ function TelegramConfigContent({ user }: { user: ReturnType<typeof useAuth>['use
       setVinculado(false);
 
       if (data.alreadyUnlinked) {
-        toast('ℹ️ Ya estaba desvinculado', { icon: 'ℹ️' });
+        toast('Ya estaba desvinculado');
       } else {
-        toast.success('✅ Telegram desvinculado correctamente');
+        toast.success('Telegram desvinculado correctamente');
       }
     } catch (error: unknown) {
       console.error('Error desvinculando:', error);
