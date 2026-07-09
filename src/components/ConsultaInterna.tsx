@@ -2,7 +2,8 @@ import React, { useState, useCallback } from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { Loader2, AlertCircle, Mail, Monitor } from 'lucide-react';
 import CasoSelector, { CASE_LABELS } from './CasoSelector';
-import CodeResult, { maskEmail } from './CodeResult';
+import CodeResult from './CodeResult';
+import { maskEmail } from '../constants';
 
 const PROVEEDOR_CASOS: Record<string, string[]> = {
   Netflix: ['viajenet', 'hogarnet', 'resetnet', 'ininet'],

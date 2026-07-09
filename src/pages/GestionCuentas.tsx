@@ -13,23 +13,11 @@ import FeatureBlocked from '../components/FeatureBlocked';
 import Paginador from '../components/Paginador';
 import DropdownMenu from '../components/DropdownMenu';
 import toast from 'react-hot-toast';
-import { Search, Eye, Edit, EyeOff, Users, CheckCircle, AlertCircle, AlertTriangle, Film, X, Download, Key, Link, Check, AlertTriangle as AlertTriangleIcon, RefreshCw } from 'lucide-react';
+import { Search, Eye, Edit, EyeOff, Users, CheckCircle, AlertCircle, AlertTriangle, Film, X, Download, Key, Link, Check, RefreshCw } from 'lucide-react';
 import type { Cuenta, CreateCuentaInput } from '../types/cuenta';
+import { ESTADO_BADGES, maskEmail } from '../constants';
 
 const PROVEEDORES = ['Todos', 'Netflix', 'Max', 'Disney+', 'Prime Video', 'ChatGPT', 'Win Sports+', 'Universal+', 'Paramount+', 'Otro'];
-
-const ESTADO_BADGES: Record<string, { label: string; class: string }> = {
-  disponible: { label: 'Disponible', class: 'bg-green-100 text-green-700' },
-  asignada: { label: 'Asignada', class: 'bg-blue-100 text-blue-700' },
-  expirada: { label: 'Expirada', class: 'bg-red-100 text-red-700' },
-};
-
-function maskEmail(email: string): string {
-  if (!email || !email.includes('@')) return email;
-  const [name, domain] = email.split('@');
-  const maskedName = name.length > 4 ? name.slice(0, 4) + '***' : name.slice(0, 1) + '***';
-  return `${maskedName}@${domain}`;
-}
 
 export default function GestionCuentas() {
   const { user } = useAuth();
@@ -952,7 +940,7 @@ export default function GestionCuentas() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="card max-w-md w-full animate-scale-in text-center">
             <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-              <AlertTriangleIcon className="text-red-600" size={32} />
+              <AlertTriangle className="text-red-600" size={32} />
             </div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">
               {confirmarAccion.accion === 'desactivar' ? 'Desactivar cuenta' : 'Reactivar cuenta'}
