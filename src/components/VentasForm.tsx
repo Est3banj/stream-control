@@ -188,6 +188,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
   const [costoPorPerfil, setCostoPorPerfil] = useState<number>(0);
 
   // ─── Utility calculations ───
+  // Calcular utilidad individual
   useEffect(() => {
     const p = Number(venta.precioVenta) || 0;
     const c = Number(venta.costoServicio) || 0;
@@ -195,6 +196,12 @@ export default function VentasForm({ initialData }: VentasFormProps) {
     const cp = costoPorPerfil || 0;
     setUtilidad((pant * p) - (cp || c));
   }, [venta.precioVenta, venta.costoServicio, venta.pantallas, costoPorPerfil]);
+
+  // Auto-calcular costo total del combo desde los servicios
+  useEffect(() => {
+    const total = servicios.reduce((sum, s) => sum + (Number(s.costoServicio) || Number(s.costoPorPerfil) || 0), 0);
+    if (total > 0) setCostoTotalCombo(total);
+  }, [servicios]);
 
   const utilidadCombo = Number(precioTotalCombo) - Number(costoTotalCombo);
 
