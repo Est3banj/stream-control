@@ -44,8 +44,10 @@ export default function Ajustes() {
   const handleSaveMoneda = async () => {
     setGuardandoMoneda(true);
     try {
-      await updateProfileData({ moneda });
-      toast.success('Moneda actualizada correctamente');
+      const monedaInfo = MONEDAS.find(m => m.codigo === moneda);
+      const tasa = monedaInfo?.defTasa ?? 1;
+      await updateProfileData({ moneda, tasa });
+      toast.success(`Moneda actualizada a ${moneda}`);
     } catch (err: unknown) {
       const error = err as Error;
       toast.error(error.message || 'Error al actualizar la moneda');
