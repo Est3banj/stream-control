@@ -81,18 +81,11 @@ export default function TicketModal({ cliente, onClose }: TicketModalProps) {
           const v = vDoc.data() as Record<string, unknown>;
 
           if (v.servicios && Array.isArray(v.servicios)) {
-            // Venta combinada — múltiples servicios
+            // Venta combinada — múltiples servicios (cada uno con su fechaVencimiento)
             for (const s of v.servicios as Array<Record<string, unknown>>) {
-              const cuentaId = (s.cuentaId as string) || null;
+              const fechaVenc = (s.fechaVencimiento as string) || (v.fechaVencimiento as string) || '';
               let diasRestantes: number | null = null;
-
-              if (cuentaId) {
-                const cuentaSnap = await getDoc(doc(db, 'cuentas', cuentaId));
-                if (cuentaSnap.exists()) {
-                  const fv = cuentaSnap.data().fechaVencimiento as string;
-                  if (fv) diasRestantes = calcularDiasRestantes(fv);
-                }
-              }
+              if (fechaVenc) diasRestantes = calcularDiasRestantes(fechaVenc);
 
               serviciosEncontrados.push({
                 plataforma: (s.plataforma as string) || '',
@@ -100,22 +93,15 @@ export default function TicketModal({ cliente, onClose }: TicketModalProps) {
                 contrasena: (s.contrasena as string) || '',
                 perfil: (s.perfilNombre as string) || (s.perfil as string) || '',
                 pin: (s.perfilPin as string) || (s.pinPerfil as string) || '',
-                cuentaId,
+                cuentaId: (s.cuentaId as string) || null,
                 diasRestantes,
               });
             }
           } else {
             // Venta simple
-            const cuentaId = (v.cuentaId as string) || null;
+            const fechaVenc = (v.fechaVencimiento as string) || '';
             let diasRestantes: number | null = null;
-
-            if (cuentaId) {
-              const cuentaSnap = await getDoc(doc(db, 'cuentas', cuentaId));
-              if (cuentaSnap.exists()) {
-                const fv = cuentaSnap.data().fechaVencimiento as string;
-                if (fv) diasRestantes = calcularDiasRestantes(fv);
-              }
-            }
+            if (fechaVenc) diasRestantes = calcularDiasRestantes(fechaVenc);
 
             serviciosEncontrados.push({
               plataforma: (v.plataforma as string) || '',
@@ -123,13 +109,17 @@ export default function TicketModal({ cliente, onClose }: TicketModalProps) {
               contrasena: (v.contrasena as string) || '',
               perfil: (v.perfilNombre as string) || (v.perfil as string) || '',
               pin: (v.perfilPin as string) || (v.pinPerfil as string) || '',
-              cuentaId,
+              cuentaId: (v.cuentaId as string) || null,
               diasRestantes,
             });
           }
         }
 
-        if (!cancel) setServicios(serviciosEncontrados);
+        // Filtrar servicios vencidos (solo mostrar vigentes o sin fecha)
+        const vigentes = serviciosEncontrados.filter(
+          s => s.diasRestantes === null || s.diasRestantes > 0,
+        );
+        if (!cancel) setServicios(vigentes);
 
         // ── 2. Buscar token activo del cliente ──
         const tokensSnap = await getDocs(
