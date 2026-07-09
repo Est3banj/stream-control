@@ -76,7 +76,7 @@ const db = admin.firestore();
 
 export const TELEGRAM_TOKEN = defineSecret('TELEGRAM_TOKEN');
 export const TELEGRAM_WEBHOOK_SECRET = defineSecret('TELEGRAM_WEBHOOK_SECRET');
-export const APP_URL = defineString('APP_URL');
+export const APP_URL = defineString('APP_URL', { default: 'https://streamcontrol-10837.firebaseapp.com' });
 
 const BOT_TOKEN = () => TELEGRAM_TOKEN.value();
 const WEBHOOK_SECRET = () => TELEGRAM_WEBHOOK_SECRET.value();
@@ -85,6 +85,21 @@ const TELEGRAM_API = 'https://api.telegram.org/bot';
 // ============================================================
 // TELEGRAM API HELPERS
 // ============================================================
+
+/**
+ * Formatea un número de teléfono para wa.me
+ * - El `+` es OBLIGATORIO en nuevos registros (validación: /^\+[1-9]\d{6,14}$/)
+ * - Si empieza con '+' → usa el código de país explícito
+ * - Si no → asume Colombia (backward compat con datos existentes sin código de país)
+ */
+function formatWaNumber(raw: string): string {
+  if (!raw) return '';
+  if (raw.startsWith('+')) return raw.replace(/[^0-9]/g, '');
+  // Legacy: sin + → asume Colombia
+  const digits = raw.replace(/[^0-9]/g, '');
+  if (!digits) return '';
+  return `57${digits}`;
+}
 
 export async function sendMessage(chatId: string, text: string, extra: Record<string, unknown> = {}): Promise<unknown> {
   const token = BOT_TOKEN();
@@ -316,7 +331,7 @@ export async function enviarNotificacionVencimiento(notificacion: NotificacionPa
     const reply_markup = {
       inline_keyboard: [
         [
-          { text: '📱 Contactar', url: `https://wa.me/${notificacion.telefono?.replace(/[^0-9]/g, '') || ''}?text=${waTexto}` },
+          { text: '📱 Contactar', url: `https://wa.me/${formatWaNumber(notificacion.telefono || '')}?text=${waTexto}` },
         ],
         [
           { text: '👤 Ver cliente', url: `${options.appUrl || ''}/gestion-clientes` },
@@ -453,7 +468,7 @@ export async function enviarNotificacionMora(cliente: Record<string, unknown>, o
     const reply_markup = {
       inline_keyboard: [
         [
-          { text: '📱 Contactar', url: `https://wa.me/${(cliente.telefono as string)?.replace(/[^0-9]/g, '') || ''}?text=${waTexto}` },
+          { text: '📱 Contactar', url: `https://wa.me/${formatWaNumber((cliente.telefono as string) || '')}?text=${waTexto}` },
         ],
         [
           { text: '💰 Cobrado', url: `${options.appUrl || ''}/gestion-clientes` },
