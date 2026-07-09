@@ -21,6 +21,7 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
   const [costo, setCosto] = useState(initialData?.costo?.toString() || '');
 
   const [estado, setEstado] = useState<'disponible' | 'asignada' | 'expirada'>(initialData?.estado || 'disponible');
+  const [tipoVenta, setTipoVenta] = useState<'perfiles' | 'completa'>(initialData?.tipoVenta || 'perfiles');
   const [perfiles, setPerfiles] = useState<{ nombre: string; pin: string }[]>(
     Array.isArray(initialData?.perfiles)
       ? initialData.perfiles.map(p => ({ nombre: p.nombre, pin: p.pin }))
@@ -76,11 +77,26 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
       return;
     }
 
-    const perfilesData: PerfilCuenta[] = validos.map(p => ({
-      nombre: p.nombre.trim(),
-      pin: p.pin.trim(),
-      estado: 'disponible' as const,
-    }));
+    const perfilesData: PerfilCuenta[] = validos.map(p => {
+      // Si es edición, buscar perfil original por nombre para preservar asignaciones activas
+      if (isEdit && initialData?.perfiles) {
+        const original = initialData.perfiles.find(op => op.nombre === p.nombre.trim());
+        if (original && original.estado === 'asignado') {
+          return {
+            nombre: p.nombre.trim(),
+            pin: p.pin.trim(),
+            estado: original.estado,
+            clienteNombre: original.clienteNombre,
+            fechaAsignacion: original.fechaAsignacion,
+          };
+        }
+      }
+      return {
+        nombre: p.nombre.trim(),
+        pin: p.pin.trim(),
+        estado: 'disponible' as const,
+      };
+    });
 
     const fechaVencimiento = fechaVencimientoCal || undefined;
     const fechaInicioVal = fechaInicio || undefined;
@@ -90,7 +106,7 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
       await onSubmit({
         costo: Number(costo),
         estado,
-        tipoVenta: 'perfiles',
+        tipoVenta,
         perfiles: perfilesData,
         fechaInicio: fechaInicioVal,
         diasServicio: diasServicioVal,
@@ -103,7 +119,7 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
         correoCuenta: correoCuenta.trim(),
         contrasena: contrasena.trim(),
         costo: Number(costo),
-        tipoVenta: 'perfiles',
+        tipoVenta,
         perfiles: perfilesData,
         estado: 'disponible' as const,
         fechaInicio: fechaInicioVal,
@@ -143,6 +159,39 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
             disabled={isEdit}
           />
         )}
+      </div>
+
+      {/* Tipo de venta */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-3">
+          Tipo de venta <span className="text-red-500">*</span>
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => setTipoVenta('perfiles')}
+            className={`p-4 rounded-xl border-2 text-left transition-all ${
+              tipoVenta === 'perfiles'
+                ? 'border-indigo-500 bg-indigo-50'
+                : 'border-gray-200 bg-white hover:border-gray-300'
+            }`}
+          >
+            <p className="font-semibold text-gray-900">Por perfiles</p>
+            <p className="text-sm text-gray-500 mt-1">Vendé cada perfil por separado</p>
+          </button>
+          <button
+            type="button"
+            onClick={() => setTipoVenta('completa')}
+            className={`p-4 rounded-xl border-2 text-left transition-all ${
+              tipoVenta === 'completa'
+                ? 'border-indigo-500 bg-indigo-50'
+                : 'border-gray-200 bg-white hover:border-gray-300'
+            }`}
+          >
+            <p className="font-semibold text-gray-900">Completa</p>
+            <p className="text-sm text-gray-500 mt-1">Vendé la cuenta completa</p>
+          </button>
+        </div>
       </div>
 
       {/* Credenciales — solo en creación */}
