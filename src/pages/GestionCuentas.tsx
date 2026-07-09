@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import useCuentas, { crearCuenta, actualizarCuenta, asignarPerfil } from '../hooks/useCuentas';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../firebase';
 import usePermisos from '../hooks/usePermisos';
 import useClientes from '../hooks/useClientes';
@@ -13,7 +14,7 @@ import FeatureBlocked from '../components/FeatureBlocked';
 import Paginador from '../components/Paginador';
 import DropdownMenu from '../components/DropdownMenu';
 import toast from 'react-hot-toast';
-import { Search, Eye, Edit, EyeOff, Users, CheckCircle, AlertCircle, AlertTriangle, Film, X, Download, Key, Link, Check, RefreshCw } from 'lucide-react';
+import { Search, Eye, Edit, EyeOff, Users, CheckCircle, AlertCircle, AlertTriangle, Film, X, Download, Key, Link, Check, RefreshCw, Copy } from 'lucide-react';
 import type { Cuenta, CreateCuentaInput } from '../types/cuenta';
 import { ESTADO_BADGES, maskEmail } from '../constants';
 
@@ -115,6 +116,37 @@ export default function GestionCuentas() {
     setRenovarFechaInicio(new Date().toISOString().split('T')[0]);
     setRenovarDiasServicio('30');
     setMostrarRenovar(true);
+  };
+
+  const handleCopiarDatos = async (cuenta: Cuenta) => {
+    try {
+      const functions = getFunctions();
+      const fn = httpsCallable(functions, 'obtenerCredencialesCuenta');
+      const result = await fn({ cuentaId: cuenta.id });
+      const data = result.data as {
+        proveedor: string;
+        correoCuenta: string;
+        correo: string;
+        contrasena: string;
+        perfiles: Array<{ nombre: string; pin?: string; estado: string }>;
+      };
+
+      let texto = `${data.proveedor}\n`;
+      texto += `Correo: ${data.correo || data.correoCuenta}\n`;
+      if (data.contrasena) texto += `Contrasena: ${data.contrasena}\n`;
+      if (data.perfiles?.length) {
+        texto += `\nPerfiles:\n`;
+        data.perfiles.forEach((p: { nombre: string; pin?: string; estado: string }) => {
+          texto += `  ${p.nombre}${p.pin ? ` - PIN: ${p.pin}` : ''} [${p.estado}]\n`;
+        });
+      }
+
+      await navigator.clipboard.writeText(texto.trim());
+      toast.success('Datos de la cuenta copiados al portapapeles');
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      toast.error(error.message || 'Error al obtener datos de la cuenta');
+    }
   };
 
   const confirmarRenovarCuenta = async () => {
@@ -572,6 +604,11 @@ export default function GestionCuentas() {
                                 setCuentaSeleccionada(c);
                                 setMostrarIMAP(true);
                               },
+                            },
+                            {
+                              label: 'Copiar datos',
+                              icon: <Copy size={16} />,
+                              onClick: () => handleCopiarDatos(c),
                             },
                             {
                               label: c.estado === 'expirada' ? 'Reactivar cuenta' : 'Desactivar cuenta',

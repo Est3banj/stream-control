@@ -618,3 +618,42 @@ export const generarTokenSubdistribuidor = functions
       expiraEn: expiraDate.toISOString(),
     };
   });
+
+export const obtenerCredencialesCuenta = functions
+  .runWith({ timeoutSeconds: 15, memory: '128MB' })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión');
+    }
+
+    const uid = context.auth.uid;
+    const { cuentaId } = data;
+
+    if (!cuentaId) {
+      throw new functions.https.HttpsError('invalid-argument', 'cuentaId es requerido');
+    }
+
+    // Verificar que la cuenta pertenece al usuario
+    const cuentaRef = db.collection('cuentas').doc(cuentaId);
+    const cuentaSnap = await cuentaRef.get();
+    if (!cuentaSnap.exists) {
+      throw new functions.https.HttpsError('not-found', 'Cuenta no encontrada');
+    }
+
+    const cuentaData = cuentaSnap.data()!;
+    if (cuentaData.propietarioId !== uid) {
+      throw new functions.https.HttpsError('permission-denied', 'No tienes permisos sobre esta cuenta');
+    }
+
+    // Obtener credenciales de cuentas_secretos
+    const secretosSnap = await db.collection('cuentas_secretos').doc(cuentaId).get();
+    const secretos = secretosSnap.exists ? secretosSnap.data() : null;
+
+    return {
+      proveedor: cuentaData.proveedor || '',
+      correoCuenta: cuentaData.correoCuenta || '',
+      perfiles: cuentaData.perfiles || [],
+      correo: secretos?.correo || '',
+      contrasena: secretos?.contrasena || '',
+    };
+  });

@@ -11,7 +11,7 @@ import * as telegram from './telegram';
 import { APP_URL } from './telegram';
 import { sendWelcomeEmail, sendPasswordChangedEmail, sendEmailChangedEmail, sendResetPasswordEmail } from './email';
 import { desasignarPerfil as desasignarPerfilCore, limpiarPerfilesVencidos } from './src/desasignar';
-export { generarToken, validarToken, consultarCodigo, guardarCredenciales, toggleToken, consultarCodigoDirecto, generarTokenSubdistribuidor } from './src/codigos';
+export { generarToken, validarToken, consultarCodigo, guardarCredenciales, toggleToken, consultarCodigoDirecto, generarTokenSubdistribuidor, obtenerCredencialesCuenta } from './src/codigos';
 
 // Inicializar Firebase Admin si no está inicializado
 if (!admin.apps.length) {
