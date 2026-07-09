@@ -507,7 +507,7 @@ export default function GestionCuentas() {
                             ? 'bg-green-100 text-green-700'
                             : 'bg-gray-100 text-gray-500'
                         }`}>
-                          IMAP{c.imapConfigurado ? ' ✓' : ''}
+                          IMAP
                         </span>
                       </td>
                       <td className="px-4 py-4 text-center">

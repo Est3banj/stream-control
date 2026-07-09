@@ -352,12 +352,6 @@ export const guardarCredenciales = functions
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
 
-    // Marcar la cuenta como IMAP configurado
-    await db.collection('cuentas').doc(cuentaId).update({
-      imapConfigurado: true,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
     return { success: true, cuentaId };
   });
 

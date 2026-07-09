@@ -30,6 +30,7 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
   const [otroProveedor, setOtroProveedor] = useState('');
   const [fechaInicio, setFechaInicio] = useState(initialData?.fechaInicio || '');
   const [diasServicio, setDiasServicio] = useState(initialData?.diasServicio?.toString() || '');
+  const [submitting, setSubmitting] = useState(false);
 
   const proveedorActual = proveedor === 'Otro' ? otroProveedor : proveedor;
 
@@ -54,26 +55,32 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
 
     if (!proveedorActual.trim()) {
       toast.error('El proveedor es obligatorio');
+      setSubmitting(false);
       return;
     }
     if (!isEdit && !correoCuenta.trim()) {
       toast.error('El correo de la cuenta es obligatorio');
+      setSubmitting(false);
       return;
     }
     if (!isEdit && !contrasena.trim()) {
       toast.error('La contraseña es obligatoria');
+      setSubmitting(false);
       return;
     }
     if (!costo || Number(costo) <= 0) {
       toast.error('El costo debe ser mayor a 0');
+      setSubmitting(false);
       return;
     }
     const validos = perfiles.filter(p => p.nombre.trim());
     if (validos.length === 0) {
       toast.error('Agregá al menos un perfil con nombre');
+      setSubmitting(false);
       return;
     }
 
@@ -127,6 +134,7 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
         fechaVencimiento,
       } as CreateCuentaInput & { contrasena: string; fechaInicio?: string; diasServicio?: number; fechaVencimiento?: string });
     }
+    setSubmitting(false);
   };
 
   return (
@@ -361,10 +369,10 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
 
       {/* Acciones */}
       <div className="flex gap-3 pt-4 border-t border-gray-100">
-        <button type="button" onClick={onCancel} className="btn-secondary flex-1" disabled={loading}>
+        <button type="button" onClick={onCancel} className="btn-secondary flex-1" disabled={loading || submitting}>
           Cancelar
         </button>
-        <button type="submit" className="btn-primary flex-1" disabled={loading}>
+        <button type="submit" className="btn-primary flex-1" disabled={loading || submitting}>
           {loading ? 'Guardando...' : isEdit ? 'Guardar Cambios' : 'Guardar Cuenta'}
         </button>
       </div>
