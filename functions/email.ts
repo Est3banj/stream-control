@@ -1,14 +1,20 @@
 import * as nodemailer from 'nodemailer';
+import { defineSecret } from 'firebase-functions/params';
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+const SMTP_USER = defineSecret('SMTP_USER');
+const SMTP_PASS = defineSecret('SMTP_PASS');
+
+function getTransporter(): nodemailer.Transporter {
+  return nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    auth: {
+      user: SMTP_USER.value(),
+      pass: SMTP_PASS.value(),
+    },
+  });
+}
 
 function buildWelcomeHtml(userName: string): string {
   return `
@@ -62,8 +68,8 @@ function buildWelcomeHtml(userName: string): string {
 
 export async function sendWelcomeEmail(to: string, userName: string): Promise<void> {
   try {
-    await transporter.sendMail({
-      from: `"StreamControl" <${process.env.SMTP_USER}>`,
+    await getTransporter().sendMail({
+      from: `"StreamControl" <${SMTP_USER.value()}>`,
       to,
       subject: `¡Bienvenido a StreamControl, ${userName}!`,
       html: buildWelcomeHtml(userName),
@@ -229,8 +235,8 @@ function buildResetPasswordHtml(userName: string, resetLink: string): string {
 
 export async function sendPasswordChangedEmail(to: string, userName: string): Promise<void> {
   try {
-    await transporter.sendMail({
-      from: `"StreamControl" <${process.env.SMTP_USER}>`,
+    await getTransporter().sendMail({
+      from: `"StreamControl" <${SMTP_USER.value()}>`,
       to,
       subject: `StreamControl — Tu contraseña fue cambiada`,
       html: buildPasswordChangedHtml(userName),
@@ -243,8 +249,8 @@ export async function sendPasswordChangedEmail(to: string, userName: string): Pr
 
 export async function sendEmailChangedEmail(to: string, userName: string, newEmail: string): Promise<void> {
   try {
-    await transporter.sendMail({
-      from: `"StreamControl" <${process.env.SMTP_USER}>`,
+    await getTransporter().sendMail({
+      from: `"StreamControl" <${SMTP_USER.value()}>`,
       to,
       subject: `StreamControl — Tu correo fue actualizado`,
       html: buildEmailChangedHtml(userName, newEmail),
@@ -257,8 +263,8 @@ export async function sendEmailChangedEmail(to: string, userName: string, newEma
 
 export async function sendResetPasswordEmail(to: string, userName: string, resetLink: string): Promise<void> {
   try {
-    await transporter.sendMail({
-      from: `"StreamControl" <${process.env.SMTP_USER}>`,
+    await getTransporter().sendMail({
+      from: `"StreamControl" <${SMTP_USER.value()}>`,
       to,
       subject: `StreamControl — Restablece tu contraseña`,
       html: buildResetPasswordHtml(userName, resetLink),
