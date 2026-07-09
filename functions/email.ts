@@ -4,16 +4,21 @@ import { defineSecret } from 'firebase-functions/params';
 const SMTP_USER = defineSecret('SMTP_USER');
 const SMTP_PASS = defineSecret('SMTP_PASS');
 
+let transporter: nodemailer.Transporter | null = null;
+
 function getTransporter(): nodemailer.Transporter {
-  return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    auth: {
-      user: SMTP_USER.value(),
-      pass: SMTP_PASS.value(),
-    },
-  });
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
+      auth: {
+        user: SMTP_USER.value(),
+        pass: SMTP_PASS.value(),
+      },
+    });
+  }
+  return transporter;
 }
 
 function buildWelcomeHtml(userName: string): string {
