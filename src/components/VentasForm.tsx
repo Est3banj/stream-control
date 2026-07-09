@@ -460,8 +460,6 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       const perfilesValidos = venta.perfiles.filter(p => p.nombre || p.pin);
       const nuevaVenta: VentaInput = {
         ...venta,
-        perfil: perfilesValidos[0]?.nombre || '',
-        pinPerfil: perfilesValidos[0]?.pin || '',
         perfiles: perfilesValidos,
         diasServicio: Number(venta.diasServicio),
         pantallas: Number(venta.pantallas),

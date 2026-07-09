@@ -14,7 +14,9 @@ export interface Venta {
   fechaInicio: string;
   fechaVenta: string;
   diasServicio: number;
+  /** @deprecated Usar perfilNombre en nuevos registros */
   perfil?: string;
+  /** @deprecated Usar perfilPin en nuevos registros */
   pinPerfil?: string;
   pagado: boolean;
   saldoPendiente: number;
