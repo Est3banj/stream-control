@@ -3,9 +3,11 @@ import { auth, db } from "../firebase";
 import {
   EmailAuthProvider,
   createUserWithEmailAndPassword,
+  GoogleAuthProvider,
   onAuthStateChanged,
   reauthenticateWithCredential,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut,
   updateEmail,
   updatePassword,
@@ -17,10 +19,11 @@ import type { FirebaseUserWithData } from '../types/usuario';
 interface AuthContextValue {
   user: FirebaseUserWithData | null;
   login: (email: string, password: string) => Promise<UserCredential>;
+  loginWithGoogle: () => Promise<void>;
   register: (data: { nombre: string; correo: string; password: string; moneda: string; tasa: number }) => Promise<UserCredential>;
   logout: () => Promise<void>;
   loading: boolean;
-  updateProfileData: (data: { nombre?: string }) => Promise<void>;
+  updateProfileData: (data: { nombre?: string; moneda?: string; tasa?: number }) => Promise<void>;
   updateUserEmail: (newEmail: string, currentPassword: string) => Promise<void>;
   updateUserPassword: (newPassword: string, currentPassword: string) => Promise<void>;
 }
@@ -128,6 +131,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const loginWithGoogle = async (): Promise<void> => {
+    try {
+      setLoading(true);
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const { user: firebaseUser } = result;
+      const ref = doc(db, 'usuarios', firebaseUser.uid);
+      const snap = await getDoc(ref);
+
+      if (!snap.exists()) {
+        const profile = {
+          nombre: firebaseUser.displayName || 'Usuario Google',
+          correo: firebaseUser.email,
+          rol: 'usuario' as const,
+          estado: 'activo' as const,
+          moneda: 'COP',
+          tasa: 1,
+          activoHasta: null,
+          createdAt: new Date().toISOString(),
+        };
+        await setDoc(ref, profile);
+        setUser({ ...firebaseUser, ...profile } as FirebaseUserWithData);
+      } else {
+        const userData = snap.data() as Record<string, unknown>;
+        if (userData.estado === 'inactivo') {
+          await signOut(auth);
+          setLoading(false);
+          throw new Error('Tu cuenta está inactiva. Contacta al administrador.');
+        }
+        if (isExpired(userData.activoHasta)) {
+          await signOut(auth);
+          setLoading(false);
+          throw new Error('Tu cuenta ha vencido. Contacta al administrador.');
+        }
+        setUser({ ...firebaseUser, ...userData } as FirebaseUserWithData);
+      }
+      setLoading(false);
+    } catch (error: unknown) {
+      setLoading(false);
+      const err = error as { code?: string; message?: string };
+      if (err.code === 'auth/account-exists-with-different-credential') {
+        throw new Error('Ya existe una cuenta con este correo electrónico. Iniciá sesión con tu correo y contraseña.');
+      }
+      throw error;
+    }
+  };
+
   const logout = async () => {
     await signOut(auth);
     setUser(null);
@@ -166,7 +216,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await reauthenticateWithCredential(auth.currentUser, credential);
   };
 
-  const updateProfileData = async (data: { nombre?: string }): Promise<void> => {
+  const updateProfileData = async (data: { nombre?: string; moneda?: string; tasa?: number }): Promise<void> => {
     if (!user?.uid) throw new Error("No hay sesión activa");
     await updateDoc(doc(db, "usuarios", user.uid), data);
     setUser(prev => prev ? { ...prev, ...data } as FirebaseUserWithData : null);
@@ -208,7 +258,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading, updateProfileData, updateUserEmail, updateUserPassword }}>
+    <AuthContext.Provider value={{ user, login, loginWithGoogle, register, logout, loading, updateProfileData, updateUserEmail, updateUserPassword }}>
       {children}
     </AuthContext.Provider>
   );

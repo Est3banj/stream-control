@@ -70,19 +70,23 @@ service cloud.firestore {
         )
       );
       
-      // Actualización: Admin actualiza estado/plan, usuario actualiza su propio nombre/correo
+      // Actualización: Admin actualiza estado/plan/moneda/tasa, usuario actualiza su propio nombre/correo/moneda/tasa
       allow update: if isAuthenticated() && (
-        // Admin puede actualizar estado y plan de cualquier usuario
+        // Admin puede actualizar estado, plan, moneda y tasa de cualquier usuario
         (isAdmin() &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado', 'plan']) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado', 'plan', 'moneda', 'tasa']) &&
           (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['estado']) || 
             (request.resource.data.estado is string && request.resource.data.estado in ['activo', 'inactivo'])) &&
           (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan']) || 
-            request.resource.data.plan is string)
+            request.resource.data.plan is string) &&
+          (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['tasa']) || 
+            request.resource.data.tasa is number) &&
+          (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['moneda']) || 
+            request.resource.data.moneda is string)
         ) ||
-        // El usuario puede actualizar su propio nombre y correo
+        // El usuario puede actualizar su propio nombre, correo, moneda y tasa
         (userId == getUserId() &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre', 'correo']) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre', 'correo', 'moneda', 'tasa']) &&
           request.resource.data.nombre is string &&
           (request.resource.data.correo == null || request.resource.data.correo is string)
         )
