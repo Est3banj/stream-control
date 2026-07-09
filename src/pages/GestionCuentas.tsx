@@ -707,6 +707,7 @@ export default function GestionCuentas() {
               </button>
             </div>
             <CuentaForm
+              key={cuentaSeleccionada.id}
               initialData={cuentaSeleccionada}
               onSubmit={handleEditarCuenta}
               onCancel={() => {
