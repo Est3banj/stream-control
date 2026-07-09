@@ -10,6 +10,7 @@ import * as admin from 'firebase-admin';
 import * as telegram from './telegram';
 import { APP_URL } from './telegram';
 import { sendWelcomeEmail, sendPasswordChangedEmail, sendEmailChangedEmail, sendResetPasswordEmail } from './email';
+import { desasignarPerfil as desasignarPerfilCore, limpiarPerfilesVencidos } from './src/desasignar';
 export { generarToken, validarToken, consultarCodigo, guardarCredenciales, toggleToken, consultarCodigoDirecto, generarTokenSubdistribuidor } from './src/codigos';
 
 // Inicializar Firebase Admin si no está inicializado
@@ -344,11 +345,107 @@ export const generarNotificacionesVencimientos = functions
         await batch.commit();
       }
 
-      console.log(`✅ ${notificacionesCreadas} notifs Firestore, ${telegramEnviados} Telegram vencimientos, ${morasNotificadas} Telegram moras, ${autoExpiradas} suscripciones auto-expiradas`);
+      // ── Auto-cleanup: liberar perfiles de clientes vencidos hace +3 días ──
+      const perfilesLiberados = await limpiarPerfilesVencidos(3);
+      if (perfilesLiberados > 0) {
+        console.log(`${perfilesLiberados} perfil(es) liberado(s) automáticamente`);
+      }
+
+      console.log(`${notificacionesCreadas} notifs Firestore, ${telegramEnviados} Telegram vencimientos, ${morasNotificadas} Telegram moras, ${autoExpiradas} suscripciones auto-expiradas, ${perfilesLiberados} perfiles liberados`);
       return null;
     } catch (error) {
       console.error('❌ Error generando notificaciones:', error);
       throw error;
+    }
+  });
+
+/**
+ * Cloud Function para desasignar manualmente un perfil de un cliente.
+ * 
+ * Llamada desde el botón "Liberar perfil" en GestionClientes.
+ * Usa Admin SDK (bypasea reglas de Firestore).
+ */
+export const desasignarPerfil = functions
+  .runWith({ timeoutSeconds: 30, memory: '256MB' })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión');
+    }
+
+    const uid = context.auth.uid;
+    const { clienteId, cuentaId, perfilNombre } = data || {};
+
+    if (!clienteId || !cuentaId || !perfilNombre) {
+      throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Faltan campos requeridos: clienteId, cuentaId, perfilNombre'
+      );
+    }
+
+    // Verificar que la cuenta pertenece al usuario
+    const cuentaSnap = await admin.firestore().collection('cuentas').doc(cuentaId).get();
+    if (!cuentaSnap.exists) {
+      throw new functions.https.HttpsError('not-found', 'La cuenta no existe');
+    }
+    const cuenta = cuentaSnap.data()!;
+    if (cuenta.propietarioId !== uid) {
+      throw new functions.https.HttpsError('permission-denied', 'No tienes permisos sobre esta cuenta');
+    }
+
+    const result = await desasignarPerfilCore(clienteId, cuentaId, perfilNombre);
+
+    if (!result.success) {
+      throw new functions.https.HttpsError('internal', result.error || 'Error al desasignar el perfil');
+    }
+
+    return { success: true, perfilNombre, cuentaId };
+  });
+
+/**
+ * Desvincula la cuenta de Telegram del usuario autenticado.
+ * Usa Admin SDK para bypassear Firestore Rules (la colección vinculaciones
+ * solo permite delete via Admin SDK por seguridad).
+ * 
+ * Llamada desde TelegramConfig.tsx.
+ */
+export const desvincularTelegram = functions
+  .https.onCall(async (_data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        'unauthenticated',
+        'Debes iniciar sesión'
+      );
+    }
+
+    const uid = context.auth.uid;
+
+    try {
+      const snapshot = await db
+        .collection('vinculaciones')
+        .where('uid', '==', uid)
+        .get();
+
+      if (snapshot.empty) {
+        // Idempotente: si ya está desvinculado, no es error
+        return { success: true, alreadyUnlinked: true };
+      }
+
+      const batch = db.batch();
+      snapshot.docs.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+
+      const result: { success: boolean; multipleDeleted?: boolean } = { success: true };
+      if (snapshot.docs.length > 1) {
+        result.multipleDeleted = true;
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Error desvinculando Telegram:', error);
+      throw new functions.https.HttpsError(
+        'internal',
+        'Error al desvincular Telegram'
+      );
     }
   });
 

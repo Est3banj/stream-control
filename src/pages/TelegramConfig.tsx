@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { doc, setDoc, deleteDoc, collection, Timestamp, query, where, getDocs, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
+import { doc, setDoc, collection, Timestamp, query, where, getDocs, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { useAuth } from '../contexts/AuthContext';
 import { MessageCircle, Link2, Unlink, Copy, Check, RefreshCw, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -132,19 +133,20 @@ function TelegramConfigContent({ user }: { user: ReturnType<typeof useAuth>['use
     setDesvinculando(true);
 
     try {
-      // Buscar la vinculación del usuario
-      const snapshot: QuerySnapshot<DocumentData> = await getDocs(
-        query(collection(db, 'vinculaciones'), where('uid', '==', user.uid))
-      );
-
-      const promises = snapshot.docs.map(doc => deleteDoc(doc.ref));
-      await Promise.all(promises);
+      const functions = getFunctions();
+      const fn = httpsCallable(functions, 'desvincularTelegram');
+      await fn();
 
       setVinculado(false);
       toast.success('✅ Telegram desvinculado correctamente');
     } catch (error: unknown) {
       console.error('Error desvinculando:', error);
-      toast.error('Error al desvincular');
+      const err = error as { code?: string; message?: string };
+      if (err.code === 'functions/unauthenticated') {
+        toast.error('Sesión expirada. Iniciá sesión de nuevo.');
+      } else {
+        toast.error('Error de conexión. Intentá de nuevo.');
+      }
     } finally {
       setDesvinculando(false);
     }
