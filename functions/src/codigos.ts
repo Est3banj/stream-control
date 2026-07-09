@@ -199,7 +199,6 @@ export const consultarCodigo = functions
     }
 
     const cuentaId = tokenData.cuentaId as string;
-    const proveedor = tokenData.proveedor as string;
 
     const cuentaDoc = await db.collection('cuentas').doc(cuentaId).get();
     if (!cuentaDoc.exists) {
@@ -212,70 +211,31 @@ export const consultarCodigo = functions
     const cuentaData = cuentaDoc.data()!;
     const servicio = cuentaData.proveedor as string;
 
-    const secretosDoc = await db.collection('cuentas_secretos').doc(cuentaId).get();
-    if (!secretosDoc.exists) {
-      throw new functions.https.HttpsError(
-        'not-found',
-        'Credenciales de cuenta no encontradas'
-      );
-    }
+    const result = await consultarCodigoIMAP(cuentaId, servicio, caso, {
+      auth: 'Error de autenticación IMAP — verifica las credenciales de la cuenta',
+    });
 
-    const secretos = secretosDoc.data()!;
-
-    const imapConfig = {
-      correo: secretos.correo as string,
-      contrasena: secretos.contrasena as string,
-      host: (secretos.imapHost as string) || getDefaultIMAPHost(secretos.proveedorIMAP as string),
-      port: (secretos.imapPort as number) || 993,
-    };
-
-    try {
-      const result = await buscarCodigoVerificacion(imapConfig, servicio, caso);
-
-      if (!result) {
-        return {
-          encontrado: false,
-          mensaje: 'Código no encontrado — verifica que el código haya sido enviado al correo',
-        };
-      }
-
-      // Incrementar contador solo en consultas exitosas
-      await db.collection('tokens').doc(token).update({
-        useCount: admin.firestore.FieldValue.increment(1),
-        'rateLimit.count': admin.firestore.FieldValue.increment(1),
-        'rateLimit.windowStart': tokenData.rateLimit?.windowStart || now,
-      });
-
+    if (!result) {
       return {
-        encontrado: true,
-        codigo: result.codigo,
-        email: imapConfig.correo,
-        fecha: result.fecha,
-        tipo: caso,
+        encontrado: false,
+        mensaje: 'Código no encontrado — verifica que el código haya sido enviado al correo',
       };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Error desconocido';
-      console.error('Error en consultarCodigo (IMAP):', message);
-
-      if (message.includes('Connection timeout') || message.includes('connect')) {
-        throw new functions.https.HttpsError(
-          'unavailable',
-          'No se pudo conectar al correo de la cuenta'
-        );
-      }
-
-      if (message.includes('authentication') || message.includes('auth')) {
-        throw new functions.https.HttpsError(
-          'permission-denied',
-          'Error de autenticación IMAP — verifica las credenciales de la cuenta'
-        );
-      }
-
-      throw new functions.https.HttpsError(
-        'internal',
-        'Error al consultar el código'
-      );
     }
+
+    // Incrementar contador solo en consultas exitosas
+    await db.collection('tokens').doc(token).update({
+      useCount: admin.firestore.FieldValue.increment(1),
+      'rateLimit.count': admin.firestore.FieldValue.increment(1),
+      'rateLimit.windowStart': tokenData.rateLimit?.windowStart || now,
+    });
+
+    return {
+      encontrado: true,
+      codigo: result.codigo,
+      email: result.correo,
+      fecha: result.fecha,
+      tipo: caso,
+    };
   });
 
 function getCasosPorProveedor(proveedor: string): string[] {
@@ -295,6 +255,53 @@ function getDefaultIMAPHost(proveedorIMAP: string): string {
     outlook: 'outlook.office365.com',
   };
   return hosts[proveedorIMAP] || 'imap.gmail.com';
+}
+
+/**
+ * Helper compartido entre consultarCodigo y consultarCodigoDirecto.
+ * Busca credenciales IMAP, configura la conexión y ejecuta la búsqueda.
+ */
+async function consultarCodigoIMAP(
+  cuentaId: string,
+  servicio: string,
+  caso: string,
+  errorMsgs?: { notFound?: string; auth?: string }
+): Promise<{ codigo: string; correo: string; fecha: string; tipo: string } | null> {
+  const secretosDoc = await db.collection('cuentas_secretos').doc(cuentaId).get();
+  if (!secretosDoc.exists) {
+    throw new functions.https.HttpsError('not-found', errorMsgs?.notFound || 'Credenciales de cuenta no encontradas');
+  }
+
+  const secretos = secretosDoc.data()!;
+  const imapConfig = {
+    correo: secretos.correo as string,
+    contrasena: secretos.contrasena as string,
+    host: (secretos.imapHost as string) || getDefaultIMAPHost(secretos.proveedorIMAP as string),
+    port: (secretos.imapPort as number) || 993,
+  };
+
+  try {
+    const result = await buscarCodigoVerificacion(imapConfig, servicio, caso);
+    if (!result) return null;
+    return {
+      codigo: result.codigo,
+      correo: imapConfig.correo,
+      fecha: result.fecha,
+      tipo: caso,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
+    console.error(`Error en IMAP para cuenta ${cuentaId}:`, message);
+
+    if (message.includes('Connection timeout') || message.includes('connect')) {
+      throw new functions.https.HttpsError('unavailable', 'No se pudo conectar al correo de la cuenta');
+    }
+    if (message.includes('authentication') || message.includes('auth')) {
+      throw new functions.https.HttpsError('permission-denied', errorMsgs?.auth || 'Error de autenticación IMAP');
+    }
+
+    throw new functions.https.HttpsError('internal', 'Error al consultar el código');
+  }
 }
 
 export const guardarCredenciales = functions
@@ -443,50 +450,25 @@ export const consultarCodigoDirecto = functions
 
     const servicio = cuentaData.proveedor as string;
 
-    // Buscar credenciales IMAP
-    const secretosDoc = await db.collection('cuentas_secretos').doc(cuentaId).get();
-    if (!secretosDoc.exists) {
-      throw new functions.https.HttpsError('not-found', 'Credenciales IMAP no configuradas');
-    }
+    const result = await consultarCodigoIMAP(cuentaId, servicio, caso, {
+      notFound: 'Credenciales IMAP no configuradas',
+      auth: 'Error de autenticación IMAP',
+    });
 
-    const secretos = secretosDoc.data()!;
-    const imapConfig = {
-      correo: secretos.correo as string,
-      contrasena: secretos.contrasena as string,
-      host: (secretos.imapHost as string) || getDefaultIMAPHost(secretos.proveedorIMAP as string),
-      port: (secretos.imapPort as number) || 993,
-    };
-
-    try {
-      const result = await buscarCodigoVerificacion(imapConfig, servicio, caso);
-
-      if (!result) {
-        return {
-          encontrado: false,
-          mensaje: 'Código no encontrado — verifica que el código haya sido enviado al correo',
-        };
-      }
-
+    if (!result) {
       return {
-        encontrado: true,
-        codigo: result.codigo,
-        email: imapConfig.correo,
-        fecha: result.fecha,
-        tipo: caso,
+        encontrado: false,
+        mensaje: 'Código no encontrado — verifica que el código haya sido enviado al correo',
       };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Error desconocido';
-      console.error('Error en consultarCodigoDirecto (IMAP):', message);
-
-      if (message.includes('Connection timeout') || message.includes('connect')) {
-        throw new functions.https.HttpsError('unavailable', 'No se pudo conectar al correo de la cuenta');
-      }
-      if (message.includes('authentication') || message.includes('auth')) {
-        throw new functions.https.HttpsError('permission-denied', 'Error de autenticación IMAP');
-      }
-
-      throw new functions.https.HttpsError('internal', 'Error al consultar el código');
     }
+
+    return {
+      encontrado: true,
+      codigo: result.codigo,
+      email: result.correo,
+      fecha: result.fecha,
+      tipo: caso,
+    };
   });
 
 export const generarTokenSubdistribuidor = functions
