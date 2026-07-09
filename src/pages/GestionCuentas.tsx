@@ -40,6 +40,8 @@ export default function GestionCuentas() {
   const [guardando, setGuardando] = useState(false);
   const [confirmarAccion, setConfirmarAccion] = useState<{ cuenta: Cuenta; accion: 'desactivar' | 'reactivar' } | null>(null);
   const [mostrarIMAP, setMostrarIMAP] = useState(false);
+  const [mostrarDatosCuenta, setMostrarDatosCuenta] = useState(false);
+  const [datosCuenta, setDatosCuenta] = useState<{ proveedor: string; correoCuenta: string; correo: string; contrasena: string; perfiles: Array<{ nombre: string; pin?: string; estado: string }> } | null>(null);
   const [mostrarAsignar, setMostrarAsignar] = useState(false);
   const [cuentaAsignando, setCuentaAsignando] = useState<Cuenta | null>(null);
   const [perfilIdxAsignando, setPerfilIdxAsignando] = useState<number>(0);
@@ -130,19 +132,8 @@ export default function GestionCuentas() {
         contrasena: string;
         perfiles: Array<{ nombre: string; pin?: string; estado: string }>;
       };
-
-      let texto = `${data.proveedor}\n`;
-      texto += `Correo: ${data.correo || data.correoCuenta}\n`;
-      if (data.contrasena) texto += `Contrasena: ${data.contrasena}\n`;
-      if (data.perfiles?.length) {
-        texto += `\nPerfiles:\n`;
-        data.perfiles.forEach((p: { nombre: string; pin?: string; estado: string }) => {
-          texto += `  ${p.nombre}${p.pin ? ` - PIN: ${p.pin}` : ''} [${p.estado}]\n`;
-        });
-      }
-
-      await navigator.clipboard.writeText(texto.trim());
-      toast.success('Datos de la cuenta copiados al portapapeles');
+      setDatosCuenta(data);
+      setMostrarDatosCuenta(true);
     } catch (err: unknown) {
       const error = err as { message?: string };
       toast.error(error.message || 'Error al obtener datos de la cuenta');
@@ -765,6 +756,87 @@ export default function GestionCuentas() {
                 toast.success('Credenciales IMAP guardadas ✓');
               }}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Datos de la cuenta */}
+      {mostrarDatosCuenta && datosCuenta && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="card max-w-lg w-full animate-scale-in">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
+                  <Copy size={20} className="text-indigo-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">{datosCuenta.proveedor}</h2>
+                  <p className="text-sm text-gray-500">Datos de la cuenta</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { setMostrarDatosCuenta(false); setDatosCuenta(null); }}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <X size={24} className="text-gray-600" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                <div>
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Correo</span>
+                  <p className="text-sm font-medium text-gray-900 mt-0.5 select-all">{datosCuenta.correo || datosCuenta.correoCuenta}</p>
+                </div>
+                {datosCuenta.contrasena && (
+                  <div>
+                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Contrasena</span>
+                    <p className="text-sm font-medium text-gray-900 mt-0.5 select-all font-mono">{datosCuenta.contrasena}</p>
+                  </div>
+                )}
+              </div>
+
+              {datosCuenta.perfiles?.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Perfiles</h3>
+                  <div className="space-y-2">
+                    {datosCuenta.perfiles.map((p, i) => (
+                      <div key={i} className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-xl">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{p.nombre}</p>
+                          {p.pin && <p className="text-xs text-gray-500">PIN: {p.pin}</p>}
+                        </div>
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                          p.estado === 'disponible' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          {p.estado === 'disponible' ? 'Disponible' : 'Asignado'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={async () => {
+                  let texto = `${datosCuenta.proveedor}\n`;
+                  texto += `Correo: ${datosCuenta.correo || datosCuenta.correoCuenta}\n`;
+                  if (datosCuenta.contrasena) texto += `Contrasena: ${datosCuenta.contrasena}\n`;
+                  if (datosCuenta.perfiles?.length) {
+                    texto += `\nPerfiles:\n`;
+                    datosCuenta.perfiles.forEach((p: { nombre: string; pin?: string; estado: string }) => {
+                      texto += `  ${p.nombre}${p.pin ? ` - PIN: ${p.pin}` : ''} [${p.estado}]\n`;
+                    });
+                  }
+                  await navigator.clipboard.writeText(texto.trim());
+                  toast.success('Datos copiados al portapapeles');
+                }}
+                className="btn-primary w-full flex items-center justify-center gap-2"
+              >
+                <Copy size={18} />
+                Copiar datos
+              </button>
+            </div>
           </div>
         </div>
       )}
