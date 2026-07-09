@@ -10,6 +10,7 @@ import useCuentas from '../hooks/useCuentas';
 import SelectorCuenta from '../components/SelectorCuenta';
 import { Check, Plus, X, Layers } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { useMoneda } from '../hooks/useMoneda';
 import type { VentaInput } from '../types/venta';
 
@@ -269,6 +270,22 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       console.warn('⚠️ [handleCuentaSelected] Cuenta no encontrada en useCuentas:', { newCuentaId, cuentasCount: cuentas.length, cuentas });
       return;
     }
+
+    // Cargar contraseña desde cuentas_secretos via Cloud Function
+    const cargarContrasena = async () => {
+      try {
+        const functions = getFunctions();
+        const fn = httpsCallable(functions, 'obtenerCredencialesCuenta');
+        const result = await fn({ cuentaId: newCuentaId });
+        const data = result.data as { contrasena: string };
+        if (data.contrasena) {
+          setVenta(prev => ({ ...prev, contrasena: data.contrasena }));
+        }
+      } catch {
+        // Si falla, la contraseña se deja vacía (el usuario la ingresa manual)
+      }
+    };
+    cargarContrasena();
 
     setVenta(prev => ({
       ...prev,
