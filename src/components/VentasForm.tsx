@@ -10,6 +10,7 @@ import useCuentas from '../hooks/useCuentas';
 import SelectorCuenta from '../components/SelectorCuenta';
 import { Check, Plus, X, Layers } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useMoneda } from '../hooks/useMoneda';
 import type { VentaInput } from '../types/venta';
 
 // ─── Types ───────────────────────────────────────────────────────────────
@@ -18,6 +19,7 @@ interface VentaFormState {
   nombre: string;
   telefono: string;
   correo: string;
+  contrasena: string;
   plataforma: string;
   pantallas: number;
   precioVenta: number;
@@ -34,6 +36,7 @@ interface ServicioItem {
   id: string;
   plataforma: string;
   correo: string;
+  contrasena: string;
   pantallas: number;
   precioVenta: number;
   costoServicio: number;
@@ -64,6 +67,7 @@ function crearServicioVacio(): ServicioItem {
     id: uid(),
     plataforma: '',
     correo: '',
+    contrasena: '',
     pantallas: 1,
     precioVenta: 0,
     costoServicio: 0,
@@ -129,12 +133,14 @@ export default function VentasForm({ initialData }: VentasFormProps) {
   const { user } = useAuth();
   const permisos = usePermisos(user);
   const { cuentas } = useCuentas(user);
+  const { formatear } = useMoneda();
 
   // ─── Single-service state (backward compatible) ───
   const [venta, setVenta] = useState<VentaFormState>({
     nombre: initialData?.nombre ?? '',
     telefono: initialData?.telefono ?? '',
     correo: initialData?.correo ?? '',
+    contrasena: initialData?.contrasena ?? '',
     plataforma: initialData?.plataforma ?? '',
     pantallas: initialData?.pantallas ?? 1,
     precioVenta: initialData?.precioVenta ?? 0,
@@ -319,8 +325,8 @@ export default function VentasForm({ initialData }: VentasFormProps) {
   const handleServicioCuentaSelected = (
     servicioId: string,
     newCuentaId: string | null,
-    _newPerfilNombre: string | null,
-    _newPerfilPin: string | null,
+    newPerfilNombre: string | null,
+    newPerfilPin: string | null,
     newCostoPorPerfil: number,
   ) => {
     setServicios(prev => prev.map(s => {
@@ -341,6 +347,8 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       return {
         ...s,
         cuentaId: newCuentaId,
+        perfilNombre: newPerfilNombre,
+        perfilPin: newPerfilPin,
         correo: cuenta.correoCuenta || s.correo,
         costoServicio: newCostoPorPerfil || s.costoServicio,
         costoPorPerfil: newCostoPorPerfil,
@@ -369,8 +377,8 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       return 'El costo del servicio debe ser válido.';
     if (!venta.pagado && (venta.saldoPendiente === '' || isNaN(venta.saldoPendiente as unknown as number) || Number(venta.saldoPendiente) <= 0))
       return 'Indicá el saldo pendiente cuando el pago está incompleto.';
-    if (venta.telefono && !/^\d+$/.test(venta.telefono.trim()))
-      return 'El teléfono solo debe contener números.';
+    if (venta.telefono && !/^\+[1-9]\d{6,14}$/.test(venta.telefono.trim()))
+      return 'El teléfono debe incluir código de país. Ej: +573219704246 (Colombia), +521234567890 (México)';
     if (venta.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(venta.correo.trim()))
       return 'El correo electrónico no es válido.';
     return null;
@@ -379,8 +387,8 @@ export default function VentasForm({ initialData }: VentasFormProps) {
   const validarMulti = (): string | null => {
     if (!venta.nombre.trim()) return 'El nombre del cliente es obligatorio.';
     if (!venta.telefono.trim()) return 'El teléfono es obligatorio.';
-    if (venta.telefono && !/^\d+$/.test(venta.telefono.trim()))
-      return 'El teléfono solo debe contener números.';
+    if (venta.telefono && !/^\+[1-9]\d{6,14}$/.test(venta.telefono.trim()))
+      return 'El teléfono debe incluir código de país. Ej: +573219704246 (Colombia), +521234567890 (México)';
     if (servicios.length === 0) return 'Agregá al menos un servicio.';
 
     for (const s of servicios) {
@@ -409,6 +417,10 @@ export default function VentasForm({ initialData }: VentasFormProps) {
     const err = validarSimple();
     if (err) { toast.error(err); return; }
 
+    // ⚠️ Bloqueo anti-doble clic: se activa ANTES del primer await
+    // para que el botón se deshabilite antes de que JavaScript suelte el event loop
+    setSubmitting(true);
+
     // Duplicate phone check
     try {
       const dupQuery = query(
@@ -419,8 +431,10 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       const dupSnap = await getDocs(dupQuery);
       if (!dupSnap.empty) {
         const existingName = dupSnap.docs[0].data().nombre as string;
-        if (existingName !== venta.nombre.trim())
+        if (existingName !== venta.nombre.trim()) {
+          setSubmitting(false);
           return toast.error(`El teléfono ${venta.telefono} ya está registrado con "${existingName}". Usá otro teléfono o editá el cliente existente.`);
+        }
       }
     } catch { console.warn('No se pudo verificar teléfono duplicado'); }
 
@@ -429,12 +443,13 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       try {
         const countQuery = query(collection(db, 'clientes'), where('propietarioId', '==', user.uid));
         const countSnap = await getDocs(countQuery);
-        if (countSnap.size >= permisos.clienteLimit)
+        if (countSnap.size >= permisos.clienteLimit) {
+          setSubmitting(false);
           return toast.error(`Alcanzaste el límite de ${permisos.clienteLimit} clientes del plan Starter. Actualizá a Professional para clientes ilimitados.`);
+        }
       } catch { console.warn('No se pudo verificar límite de clientes'); }
     }
 
-    setSubmitting(true);
     try {
       const fechaInicioDate = new Date(venta.fechaInicio);
       const dias = Number(venta.diasServicio);
@@ -467,9 +482,36 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         ...(costoPorPerfil ? { costoPorPerfil } : {}),
       };
 
+      // ── 1. Marcar perfil PRIMERO (antes de escribir cualquier cosa) ──
+      // Si falla, no se crea ni venta ni cliente ni movimiento → datos consistentes
+      if (cuentaId && perfilAsignado) {
+        const cuentaRef = doc(db, 'cuentas', cuentaId);
+        const cuentaSnap = await getDoc(cuentaRef);
+        if (!cuentaSnap.exists()) throw new Error('La cuenta no existe');
+        const perfiles = cuentaSnap.data().perfiles;
+        if (!Array.isArray(perfiles)) throw new Error('perfiles no es un array');
+        const idx = perfiles.findIndex((p: { nombre: string }) => p.nombre === perfilAsignado);
+        if (idx === -1) throw new Error(`Perfil "${perfilAsignado}" no encontrado en la cuenta`);
+
+        const hoy = new Date().toISOString().split('T')[0];
+        perfiles[idx] = {
+          ...perfiles[idx],
+          estado: 'asignado',
+          clienteNombre: venta.nombre.trim(),
+          fechaAsignacion: hoy,
+        };
+        const quedanDisponibles = perfiles.some((p: { estado: string }) => p.estado === 'disponible');
+        await updateDoc(cuentaRef, {
+          perfiles,
+          ...(quedanDisponibles ? {} : { estado: 'asignada' as const }),
+          updatedAt: serverTimestamp(),
+        });
+      }
+
+      // ── 2. Venta ──
       await addDoc(collection(db, 'ventas'), nuevaVenta);
 
-      // Cliente
+      // ── 3. Cliente ──
       const clienteRef = doc(db, 'clientes', `${user.uid}_${venta.nombre}`);
       const clienteData = {
         nombre: venta.nombre,
@@ -491,7 +533,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         });
       }
 
-      // Movimiento
+      // ── 4. Movimiento ──
       const montoTotal = Number(venta.pantallas) * Number(venta.precioVenta);
       await addDoc(collection(db, 'movimientos'), {
         tipo: 'Ingreso',
@@ -502,40 +544,11 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         usuarioEmail: user.email,
       });
 
-      // Marcar perfil en cuenta
-      if (cuentaId && perfilAsignado) {
-        try {
-          const cuentaRef = doc(db, 'cuentas', cuentaId);
-          const cuentaSnap = await getDoc(cuentaRef);
-          if (cuentaSnap.exists()) {
-            const perfiles = cuentaSnap.data().perfiles;
-            if (Array.isArray(perfiles)) {
-              const idx = perfiles.findIndex((p: { nombre: string }) => p.nombre === perfilAsignado);
-              if (idx !== -1) {
-                const hoy = new Date().toISOString().split('T')[0];
-                perfiles[idx] = {
-                  ...perfiles[idx],
-                  estado: 'asignado',
-                  clienteNombre: venta.nombre.trim(),
-                  fechaAsignacion: hoy,
-                };
-                const quedanDisponibles = perfiles.some((p: { estado: string }) => p.estado === 'disponible');
-                await updateDoc(cuentaRef, {
-                  perfiles,
-                  ...(quedanDisponibles ? {} : { estado: 'asignada' as const }),
-                  updatedAt: serverTimestamp(),
-                });
-              }
-            }
-          }
-        } catch { console.warn('⚠️ No se pudo marcar el perfil como asignado'); }
-      }
-
       toast.success('Venta registrada correctamente');
 
       // Reset
       setVenta({
-        nombre: '', telefono: '', correo: '', plataforma: '', pantallas: 1,
+        nombre: '', telefono: '', correo: '', contrasena: '', plataforma: '', pantallas: 1,
         precioVenta: 0, costoServicio: 0, fechaInicio: '', diasServicio: '',
         fechaVenta: getToday(), perfiles: [{ nombre: '', pin: '' }], pagado: true, saldoPendiente: '',
       });
@@ -580,6 +593,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         return {
           plataforma: s.plataforma,
           correo: s.correo || '',
+          contrasena: s.contrasena || '',
           pantallas: Number(s.pantallas),
           perfiles: s.perfiles.filter(p => p.nombre || p.pin),
           fechaInicio: s.fechaInicio,
@@ -602,6 +616,47 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       // (que calcula precioVenta * pantallas) muestre los totales correctos
       const precioPorPantalla = totalPantallas > 0 ? Number(precioTotalCombo) / totalPantallas : 0;
       const costoPorPantalla = totalPantallas > 0 ? Number(costoTotalCombo) / totalPantallas : 0;
+
+      // ── 0. Marcar perfiles en cuentas (antes de escribir cualquier cosa) ──
+      const cuentasAMarcar = new Map<string, Array<{ perfilNombre: string; perfilPin: string | null }>>();
+      for (const s of serviciosValidos) {
+        if (s.cuentaId && s.perfilNombre) {
+          if (!cuentasAMarcar.has(s.cuentaId)) cuentasAMarcar.set(s.cuentaId, []);
+          cuentasAMarcar.get(s.cuentaId)!.push({ perfilNombre: s.perfilNombre, perfilPin: s.perfilPin });
+        }
+      }
+      const hoy = new Date().toISOString().split('T')[0];
+      for (const [cuentaId, perfilesAMarcar] of cuentasAMarcar) {
+        const cuentaRef = doc(db, 'cuentas', cuentaId);
+        const cuentaSnap = await getDoc(cuentaRef);
+        if (!cuentaSnap.exists()) {
+          console.warn(`Cuenta ${cuentaId} no existe, saltando asignación de perfil`);
+          continue;
+        }
+        const perfiles = [...(cuentaSnap.data().perfiles || [])] as Array<any>;
+        let modified = false;
+        for (const { perfilNombre } of perfilesAMarcar) {
+          const idx = perfiles.findIndex((p: any) => p.nombre === perfilNombre);
+          if (idx === -1) {
+            console.warn(`Perfil "${perfilNombre}" no encontrado en cuenta ${cuentaId}, saltando`);
+            continue;
+          }
+          perfiles[idx] = {
+            ...perfiles[idx],
+            estado: 'asignado',
+            clienteNombre: venta.nombre.trim(),
+            fechaAsignacion: hoy,
+          };
+          modified = true;
+        }
+        if (!modified) continue;
+        const quedanDisponibles = perfiles.some((p: any) => p.estado === 'disponible');
+        await updateDoc(cuentaRef, {
+          perfiles,
+          ...(quedanDisponibles ? {} : { estado: 'asignada' as const }),
+          updatedAt: serverTimestamp(),
+        });
+      }
 
       // UN solo doc — el combo es una sola venta
       await addDoc(collection(db, 'ventas'), {
@@ -631,6 +686,9 @@ export default function VentasForm({ initialData }: VentasFormProps) {
 
       // Cliente
       const clienteRef = doc(db, 'clientes', `${user.uid}_${venta.nombre}`);
+      const primeraCuenta = cuentasAMarcar.entries().next().value;
+      const clienteCuentaId = primeraCuenta ? primeraCuenta[0] : undefined;
+      const clientePerfil = primeraCuenta ? primeraCuenta[1][0]?.perfilNombre : undefined;
       await setDoc(clienteRef, {
         nombre: venta.nombre,
         telefono: venta.telefono,
@@ -640,6 +698,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
         propietarioId: user.uid,
         usuarioEmail: user.email,
         fechaVencimiento,
+        ...(clienteCuentaId ? { cuentaId: clienteCuentaId, perfilAsignado: clientePerfil || '' } : {}),
       }, { merge: true });
 
       // Saldo pendiente
@@ -663,7 +722,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
 
       // Reset
       setVenta({
-        nombre: '', telefono: '', correo: '', plataforma: '', pantallas: 1,
+        nombre: '', telefono: '', correo: '', contrasena: '', plataforma: '', pantallas: 1,
         precioVenta: 0, costoServicio: 0, fechaInicio: '', diasServicio: '',
         fechaVenta: getToday(), perfiles: [{ nombre: '', pin: '' }], pagado: true, saldoPendiente: '',
       });
@@ -753,7 +812,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
               <div className="mt-1 flex items-center gap-1.5 px-2 py-1 bg-indigo-50 rounded border border-indigo-100">
                 <Check size={11} className="text-indigo-600 shrink-0" />
                 <span className="text-xs text-indigo-700">
-                  {s.plataforma} — ${s.costoPorPerfil.toLocaleString()}/perfil
+                  {s.plataforma} — {formatear(s.costoPorPerfil)}/perfil
                 </span>
               </div>
             )}
@@ -768,6 +827,18 @@ export default function VentasForm({ initialData }: VentasFormProps) {
             onChange={e => handleServicioChange(s.id, 'correo', e.target.value)}
             placeholder="email de la cuenta (Netflix...)"
             className="w-full text-sm"
+          />
+        </div>
+
+        <div className="col-span-2 sm:col-span-4">
+          <InputLabel>Contraseña del servicio</InputLabel>
+          <input
+            type="text"
+            value={s.contrasena}
+            onChange={e => handleServicioChange(s.id, 'contrasena', e.target.value)}
+            placeholder="contraseña de la cuenta"
+            className="w-full text-sm"
+            autoComplete="off"
           />
         </div>
 
@@ -937,6 +1008,19 @@ export default function VentasForm({ initialData }: VentasFormProps) {
                 />
               </div>
 
+              <div>
+                <InputLabel>Contraseña del servicio</InputLabel>
+                <input
+                  type="text"
+                  name="contrasena"
+                  value={venta.contrasena}
+                  onChange={handleChange}
+                  placeholder="contraseña de la cuenta"
+                  className="w-full"
+                  autoComplete="off"
+                />
+              </div>
+
               {/* Selector de cuentas — justo después de elegir plataforma */}
               {permisos.puedeGestionarCuentas && venta.plataforma && (
                 <div className="sm:col-span-2">
@@ -948,7 +1032,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
                     <div className="mt-1 flex items-center gap-1.5 px-2 py-1 bg-indigo-50 rounded border border-indigo-100">
                       <Check size={11} className="text-indigo-600 shrink-0" />
                       <span className="text-xs text-indigo-700">
-                        {venta.plataforma} — ${costoPorPerfil.toLocaleString()}/perfil
+                        {venta.plataforma} — {formatear(costoPorPerfil)}/perfil
                       </span>
                     </div>
                   )}
@@ -1033,7 +1117,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
             <div className="flex items-center justify-between bg-indigo-50/80 rounded-lg px-3 py-2 border border-indigo-100">
               <span className="text-xs font-semibold text-indigo-600">Utilidad estimada</span>
               <span className="text-base font-bold text-indigo-700">
-                ${utilidad.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                {formatear(utilidad)}
               </span>
             </div>
 
@@ -1129,15 +1213,15 @@ export default function VentasForm({ initialData }: VentasFormProps) {
               <div className="bg-indigo-50/80 rounded-lg px-3 py-2 border border-indigo-100 space-y-0.5">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-gray-600">Precio del combo</span>
-                  <span className="font-bold text-gray-900">${Number(precioTotalCombo).toLocaleString()}</span>
+                  <span className="font-bold text-gray-900">{formatear(Number(precioTotalCombo))}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-gray-600">Costo del combo</span>
-                  <span className="font-bold text-gray-500">${Number(costoTotalCombo).toLocaleString()}</span>
+                  <span className="font-bold text-gray-500">{formatear(Number(costoTotalCombo))}</span>
                 </div>
                 <div className="border-t border-indigo-200/50 pt-0.5 flex items-center justify-between text-xs">
                   <span className="font-semibold text-indigo-600">Utilidad estimada</span>
-                  <span className="font-bold text-indigo-700">${utilidadCombo.toLocaleString()}</span>
+                  <span className="font-bold text-indigo-700">{formatear(utilidadCombo)}</span>
                 </div>
               </div>
             )}

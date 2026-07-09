@@ -2,16 +2,19 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
 import { collection, query, where, onSnapshot, updateDoc, doc, increment, addDoc, serverTimestamp, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { useAuth } from '../contexts/AuthContext';
 import useClientes from '../hooks/useClientes';
 import useTokens, { generarToken, revocarToken } from '../hooks/useTokens';
 import usePermisos from '../hooks/usePermisos';
 import useCuentas from '../hooks/useCuentas';
+import { useMoneda } from '../hooks/useMoneda';
 import Paginador from '../components/Paginador';
 import ConsultaInterna from '../components/ConsultaInterna';
 import DropdownMenu from '../components/DropdownMenu';
+import TicketModal from '../components/TicketModal';
 import toast from 'react-hot-toast';
-import { Search, Download, MessageCircle, Calendar, Users, TrendingUp, X, AlertCircle, Edit, Mail, DollarSign, CheckCircle, UserCheck, AlertTriangle, RefreshCw, Sparkles, Link, Key, Copy, ExternalLink, Shield } from 'lucide-react';
+import { Search, Download, MessageCircle, Calendar, Users, TrendingUp, X, AlertCircle, Edit, Mail, DollarSign, CheckCircle, UserCheck, AlertTriangle, RefreshCw, Sparkles, Link, Key, Copy, ExternalLink, Shield, LogOut } from 'lucide-react';
 import type { Venta } from '../types/venta';
 import type { Cliente } from '../types/cliente';
 
@@ -22,6 +25,7 @@ export default function GestionClientes() {
   const permisos = usePermisos(user);
   const { tokens: todosLosTokens } = useTokens(user);
   const { cuentas } = useCuentas(user);
+  const { formatear } = useMoneda();
   const [clientes, setClientes] = useState<{ activos: Cliente[]; inactivos: Cliente[]; todos: Cliente[] }>({ activos: [], inactivos: [], todos: [] });
   const [filtro, setFiltro] = useState<'activos' | 'inactivos' | 'todos'>('activos');
   const [busqueda, setBusqueda] = useState('');
@@ -49,6 +53,11 @@ export default function GestionClientes() {
   const [consultaData, setConsultaData] = useState<{ clienteNombre: string; proveedor: string; correoCuenta: string; tokenId: string } | null>(null);
   const [confirmarRevocar, setConfirmarRevocar] = useState<{ tokenId: string; clienteNombre: string } | null>(null);
   const [revocando, setRevocando] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const [confirmarLiberar, setConfirmarLiberar] = useState<Cliente | null>(null);
+  const [mostrarTicket, setMostrarTicket] = useState(false);
+  const [clienteTicket, setClienteTicket] = useState<Cliente | null>(null);
+  const [liberando, setLiberando] = useState(false);
 
   // Clasificar clientes cuando cambian los datos (incluye array vacío)
   useEffect(() => {
@@ -134,8 +143,8 @@ export default function GestionClientes() {
       toast.error('El teléfono es obligatorio');
       return;
     }
-    if (!/^\d+$/.test(formEditar.telefono.trim())) {
-      toast.error('El teléfono solo debe contener números');
+    if (!/^\+[1-9]\d{6,14}$/.test(formEditar.telefono.trim())) {
+      toast.error('El teléfono debe incluir código de país. Ej: +573219704246 (Colombia), +521234567890 (México)');
       return;
     }
     if (formEditar.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formEditar.correo.trim())) {
@@ -147,6 +156,7 @@ export default function GestionClientes() {
       return;
     }
 
+    setGuardando(true);
     try {
       const clienteRef = doc(db, 'clientes', clienteEditando!.id);
       await updateDoc(clienteRef, {
@@ -162,6 +172,9 @@ export default function GestionClientes() {
     } catch (error: unknown) {
       console.error('Error actualizando cliente:', error);
       toast.error('Error al actualizar el cliente');
+      setMostrarEditar(false);
+    } finally {
+      setGuardando(false);
     }
   };
 
@@ -171,7 +184,7 @@ export default function GestionClientes() {
     const mensaje = (cliente.diasRestantes ?? 0) > 0
       ? `Hola ${cliente.nombre}, tu servicio de ${cliente.plataforma || 'streaming'} vence en ${dias} día(s). Te invitamos a renovarlo para seguir disfrutando sin interrupciones.`
       : `Hola ${cliente.nombre}, te informamos que tu servicio de ${cliente.plataforma || 'streaming'} finalizó hace ${dias} días. Para seguir accediendo a tus series y películas favoritas sin interrupciones, podés renovar tu plan. Si no deseas continuar, no es necesario que hagas nada. ¡Gracias por confiar en nosotros!`;
-    const url = `https://wa.me/57${cliente.telefono}?text=${encodeURIComponent(mensaje)}`;
+    const url = `https://wa.me/${cliente.telefono.startsWith('+') ? cliente.telefono.replace(/[^0-9]/g, '') : `57${cliente.telefono}`}?text=${encodeURIComponent(mensaje)}`;
     window.open(url, '_blank');
   };
 
@@ -239,6 +252,7 @@ export default function GestionClientes() {
     if (monto > clienteCobrar.saldoPendiente)
       return toast.error('El pago no puede superar el saldo pendiente');
 
+    setGuardando(true);
     try {
       // Reducir saldo pendiente del cliente
       await updateDoc(doc(db, 'clientes', clienteCobrar.id), {
@@ -255,13 +269,15 @@ export default function GestionClientes() {
         usuarioEmail: user.email,
       });
 
-      toast.success(`✅ Pago de $${monto.toLocaleString()} registrado correctamente`);
+      toast.success(`✅ Pago de ${formatear(monto)} registrado correctamente`);
       setMostrarCobrar(false);
       setClienteCobrar(null);
       setMontoPago('');
     } catch (error: unknown) {
       console.error('Error registrando pago:', error);
       toast.error('Error al registrar el pago');
+    } finally {
+      setGuardando(false);
     }
   };
 
@@ -331,6 +347,36 @@ export default function GestionClientes() {
       tokenId: tokenCliente.id,
     });
     setMostrarConsultaCodigo(true);
+  };
+
+  const confirmarLiberarPerfil = (cliente: Cliente) => {
+    setConfirmarLiberar(cliente);
+  };
+
+  const handleLiberarPerfil = async () => {
+    if (!confirmarLiberar) return;
+    setLiberando(true);
+    try {
+      const liberarFn = getFunctions();
+      const desasignar = httpsCallable(liberarFn, 'desasignarPerfil');
+      const result = await desasignar({
+        clienteId: confirmarLiberar.id,
+        cuentaId: confirmarLiberar.cuentaId,
+        perfilNombre: confirmarLiberar.perfilAsignado,
+      });
+      const data = result.data as { success: boolean };
+      if (data.success) {
+        toast.success(`Perfil de ${confirmarLiberar.nombre} liberado correctamente`);
+        setConfirmarLiberar(null);
+        // Los clientes se actualizan solos via onSnapshot
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error al liberar el perfil';
+      console.error('Error liberando perfil:', err);
+      toast.error(`${msg}`);
+    } finally {
+      setLiberando(false);
+    }
   };
 
   const abrirHistorial = (cliente: Cliente) => {
@@ -564,7 +610,7 @@ export default function GestionClientes() {
                       {c.saldoPendiente > 0 ? (
                         <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-red-100 text-red-700 text-sm font-semibold">
                           <AlertCircle size={14} />
-                          Debe ${c.saldoPendiente.toLocaleString()}
+                          Debe ${formatear(c.saldoPendiente)}
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-semibold">
@@ -633,6 +679,14 @@ export default function GestionClientes() {
                               icon: <RefreshCw size={16} />,
                               onClick: () => navigate('/ventas', { state: { cliente: c } }),
                             },
+                            {
+                              label: 'Generar ticket',
+                              icon: <Copy size={16} />,
+                              onClick: () => {
+                                setClienteTicket(c);
+                                setMostrarTicket(true);
+                              },
+                            },
                             ...(c.cuentaId ? [{
                               label: 'Consultar código',
                               icon: <Shield size={16} />,
@@ -643,6 +697,11 @@ export default function GestionClientes() {
                               icon: <Link size={16} />,
                               onClick: () => generarLinkCodigos(c),
                               disabled: tokenGenerando,
+                            }] : []),
+                            ...(c.cuentaId ? [{
+                              label: 'Liberar perfil',
+                              icon: <LogOut size={16} />,
+                              onClick: () => confirmarLiberarPerfil(c),
                             }] : []),
                             {
                               label: 'WhatsApp',
@@ -763,8 +822,8 @@ export default function GestionClientes() {
                 >
                   Cancelar
                 </button>
-                <button type="submit" className="btn-primary flex-1">
-                  💾 Guardar Cambios
+                <button type="submit" disabled={guardando} className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed">
+                  {guardando ? 'Guardando...' : '💾 Guardar Cambios'}
                 </button>
               </div>
             </form>
@@ -814,7 +873,7 @@ export default function GestionClientes() {
                           </div>
                         )}
                         <div className="text-sm text-gray-600 mt-1">
-                          {venta.pantallas} pantalla(s) • ${(venta.precioVenta * venta.pantallas).toLocaleString()}
+                          {venta.pantallas} pantalla(s) • {formatear(venta.precioVenta * venta.pantallas)}
                         </div>
                         {venta.perfil && (
                           <div className="text-xs text-gray-500 mt-1">
@@ -846,7 +905,7 @@ export default function GestionClientes() {
                       </div>
                       <div className="text-right">
                         <div className="text-lg font-bold text-green-600">
-                          Utilidad: ${venta.utilidad?.toLocaleString() || '0'}
+                          Utilidad: {formatear(venta.utilidad || 0)}
                         </div>
                       </div>
                     </div>
@@ -1004,7 +1063,7 @@ export default function GestionClientes() {
                 <p className="text-sm text-gray-600">
                   Saldo pendiente:{' '}
                   <span className="font-bold text-orange-700">
-                    ${clienteCobrar.saldoPendiente.toLocaleString()}
+                    {formatear(clienteCobrar.saldoPendiente)}
                   </span>
                 </p>
               </div>
@@ -1027,7 +1086,7 @@ export default function GestionClientes() {
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Máximo: ${clienteCobrar.saldoPendiente.toLocaleString()}
+                  Máximo: {formatear(clienteCobrar.saldoPendiente)}
                 </p>
               </div>
 
@@ -1045,14 +1104,63 @@ export default function GestionClientes() {
                 </button>
                 <button
                   type="submit"
-                  className="btn-primary flex-1 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
+                  disabled={guardando}
+                  className="btn-primary flex-1 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  💰 Cobrar
+                  {guardando ? 'Registrando...' : '💰 Cobrar'}
                 </button>
               </div>
             </form>
           </div>
         </div>
+      )}
+
+      {/* Modal: Confirmar liberación de perfil */}
+      {confirmarLiberar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="card max-w-md w-full animate-scale-in text-center">
+            <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center mx-auto mb-4">
+              <LogOut className="text-orange-600" size={32} />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Liberar perfil</h2>
+            <p className="text-gray-600 mb-2">
+              ¿Estás seguro de liberar el perfil <strong>{confirmarLiberar.perfilAsignado}</strong> de <strong>{confirmarLiberar.nombre}</strong>?
+            </p>
+            <p className="text-sm text-gray-500 mb-6">
+              El perfil volverá a estar disponible para otros clientes. Esta acción no se puede deshacer.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmarLiberar(null)}
+                className="btn-secondary flex-1"
+                disabled={liberando}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleLiberarPerfil}
+                disabled={liberando}
+                className="flex-1 py-2.5 rounded-xl font-semibold text-white transition-all bg-orange-600 hover:bg-orange-700 disabled:opacity-50"
+              >
+                {liberando ? 'Liberando...' : 'Sí, liberar perfil'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {mostrarTicket && clienteTicket && (
+        <TicketModal
+          cliente={{
+            nombre: clienteTicket.nombre,
+            telefono: clienteTicket.telefono,
+            id: clienteTicket.id,
+          }}
+          onClose={() => {
+            setMostrarTicket(false);
+            setClienteTicket(null);
+          }}
+        />
       )}
     </div>
   );
