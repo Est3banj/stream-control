@@ -162,7 +162,7 @@ export default function Login(){
 
         {modo === 'login' ? (
           /* ═══ FORMULARIO DE INICIO DE SESIÓN ═══ */
-          <form onSubmit={handleLogin} className="flex flex-col gap-6">
+          <form onSubmit={handleLogin} className="flex flex-col gap-3">
             <input 
               type="email"
               value={email} 
@@ -200,18 +200,18 @@ export default function Login(){
               </button>
             </div>
             <button 
-              className="btn rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-violet-600 hover:to-indigo-600 transition-colors duration-500 text-white font-semibold py-4 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-lg tracking-wide"
+              className="btn rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-violet-600 hover:to-indigo-600 transition-colors duration-500 text-white font-semibold py-3 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-lg tracking-wide"
               disabled={loading}
             >
               {loading ? 'Entrando...' : 'Entrar'}
             </button>
 
-            <div className="relative my-4">
+            <div className="relative my-3">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/20"></div>
+                <div className="w-full border-t border-white/10"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-3 bg-transparent text-white/60">o continua con</span>
+                <span className="px-3 bg-transparent text-white/40">o continua con</span>
               </div>
             </div>
 
@@ -219,7 +219,7 @@ export default function Login(){
               type="button"
               onClick={handleGoogleSignIn}
               disabled={loading}
-              className="btn rounded-2xl bg-white hover:bg-gray-100 text-gray-800 font-semibold py-4 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-lg tracking-wide flex items-center justify-center gap-3 transition-colors"
+              className="btn rounded-2xl bg-white/10 border border-white/20 text-white hover:bg-white/20 font-semibold py-3 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-lg tracking-wide flex items-center justify-center gap-3 transition-colors"
             >
               <svg className="w-6 h-6" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -238,7 +238,7 @@ export default function Login(){
           </form>
         ) : (
           /* ═══ FORMULARIO DE REGISTRO ═══ */
-          <form onSubmit={handleRegister} className="flex flex-col gap-4">
+          <form onSubmit={handleRegister} className="flex flex-col gap-3">
             <input 
               type="text"
               value={regNombre} 
@@ -299,7 +299,7 @@ export default function Login(){
             </div>
 
             <button 
-              className="btn rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-emerald-600 hover:to-green-600 transition-colors duration-500 text-white font-semibold py-4 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-lg tracking-wide mt-2"
+              className="btn rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-emerald-600 hover:to-green-600 transition-colors duration-500 text-white font-semibold py-3 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-lg tracking-wide mt-2"
               disabled={loading}
             >
               {loading ? 'Creando cuenta...' : 'Crear cuenta gratis'}
@@ -307,10 +307,10 @@ export default function Login(){
 
             <div className="relative my-3">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/20"></div>
+                <div className="w-full border-t border-white/10"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-3 bg-transparent text-white/60">o registrate con</span>
+                <span className="px-3 bg-transparent text-white/40">o registrate con</span>
               </div>
             </div>
 
@@ -318,7 +318,7 @@ export default function Login(){
               type="button"
               onClick={handleGoogleSignIn}
               disabled={loading}
-              className="btn rounded-2xl bg-white hover:bg-gray-100 text-gray-800 font-semibold py-4 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-lg tracking-wide flex items-center justify-center gap-3 transition-colors"
+              className="btn rounded-2xl bg-white/10 border border-white/20 text-white hover:bg-white/20 font-semibold py-3 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-lg tracking-wide flex items-center justify-center gap-3 transition-colors"
             >
               <svg className="w-6 h-6" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
