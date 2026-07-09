@@ -193,6 +193,7 @@ export default function GestionClientes() {
     (c: Cliente) =>
       c.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
       (c.plataforma && c.plataforma.toLowerCase().includes(busqueda.toLowerCase())) ||
+      (c.correo && c.correo.toLowerCase().includes(busqueda.toLowerCase())) ||
       (c.telefono && c.telefono.includes(busqueda))
   ) || []).sort((a, b) => {
     const aDias = a.diasRestantes ?? 0;
