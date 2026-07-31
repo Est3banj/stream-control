@@ -140,11 +140,13 @@ export default function GestionClientes() {
       return;
     }
     if (!formEditar.telefono.trim()) {
-      toast.error('El teléfono es obligatorio');
+      toast.error('El teléfono o usuario es obligatorio');
       return;
     }
-    if (!/^\+[1-9]\d{6,14}$/.test(formEditar.telefono.trim())) {
-      toast.error('El teléfono debe incluir código de país. Ej: +573219704246 (Colombia), +521234567890 (México)');
+    const tel = formEditar.telefono.trim();
+    const telefonoValido = tel.startsWith('@') ? tel.length > 1 : /^\+[1-9]\d{6,14}$/.test(tel);
+    if (!telefonoValido) {
+      toast.error('Ingresá un número con código de país (+57...) o un usuario de WhatsApp (@usuario)');
       return;
     }
     if (formEditar.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formEditar.correo.trim())) {
@@ -184,6 +186,14 @@ export default function GestionClientes() {
     const mensaje = (cliente.diasRestantes ?? 0) > 0
       ? `Hola ${cliente.nombre}, tu servicio de ${cliente.plataforma || 'streaming'} vence en ${dias} día(s). Te invitamos a renovarlo para seguir disfrutando sin interrupciones.`
       : `Hola ${cliente.nombre}, te informamos que tu servicio de ${cliente.plataforma || 'streaming'} finalizó hace ${dias} días. Para seguir accediendo a tus series y películas favoritas sin interrupciones, podés renovar tu plan. Si no deseas continuar, no es necesario que hagas nada. ¡Gracias por confiar en nosotros!`;
+
+    // Usuario de WhatsApp (@...): los enlaces wa.me no lo soportan, copiar al portapapeles
+    if (cliente.telefono.startsWith('@')) {
+      navigator.clipboard.writeText(cliente.telefono);
+      toast.success(`Usuario ${cliente.telefono} copiado — buscálo en WhatsApp`, { duration: 4000 });
+      return;
+    }
+
     const url = `https://wa.me/${cliente.telefono.startsWith('+') ? cliente.telefono.replace(/[^0-9]/g, '') : `57${cliente.telefono}`}?text=${encodeURIComponent(mensaje)}`;
     window.open(url, '_blank');
   };
@@ -776,12 +786,13 @@ export default function GestionClientes() {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Teléfono <span className="text-red-500">*</span>
+                  Teléfono o usuario <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={formEditar.telefono}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEditar({ ...formEditar, telefono: e.target.value })}
+                  placeholder="+573104567890 o @usuario"
                   className="w-full"
                   required
                 />

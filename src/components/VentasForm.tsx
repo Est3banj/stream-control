@@ -401,9 +401,16 @@ export default function VentasForm({ initialData }: VentasFormProps) {
   };
 
   // ─── Validation helpers ───
+  /** Acepta número con código de país (+5732...) o usuario de WhatsApp (@usuario) */
+  const telefonoValido = (t: string): boolean => {
+    const v = t.trim();
+    if (v.startsWith('@')) return v.length > 1;
+    return /^\+[1-9]\d{6,14}$/.test(v);
+  };
+
   const validarSimple = (): string | null => {
     if (!venta.nombre.trim()) return 'El nombre del cliente es obligatorio.';
-    if (!venta.telefono.trim()) return 'El teléfono es obligatorio.';
+    if (!venta.telefono.trim()) return 'El teléfono o usuario es obligatorio.';
     if (!venta.plataforma.trim()) return 'La plataforma o servicio es obligatorio.';
     if (!venta.fechaInicio.trim()) return 'La fecha de inicio es obligatoria.';
     if (!venta.diasServicio || isNaN(venta.diasServicio as unknown as number) || Number(venta.diasServicio) <= 0)
@@ -416,8 +423,8 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       return 'El costo del servicio debe ser válido.';
     if (!venta.pagado && (venta.saldoPendiente === '' || isNaN(venta.saldoPendiente as unknown as number) || Number(venta.saldoPendiente) <= 0))
       return 'Indicá el saldo pendiente cuando el pago está incompleto.';
-    if (venta.telefono && !/^\+[1-9]\d{6,14}$/.test(venta.telefono.trim()))
-      return 'El teléfono debe incluir código de país. Ej: +573219704246 (Colombia), +521234567890 (México)';
+    if (venta.telefono && !telefonoValido(venta.telefono))
+      return 'Ingresá un número con código de país (+57...) o un usuario de WhatsApp (@usuario)';
     if (venta.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(venta.correo.trim()))
       return 'El correo electrónico no es válido.';
     return null;
@@ -425,9 +432,9 @@ export default function VentasForm({ initialData }: VentasFormProps) {
 
   const validarMulti = (): string | null => {
     if (!venta.nombre.trim()) return 'El nombre del cliente es obligatorio.';
-    if (!venta.telefono.trim()) return 'El teléfono es obligatorio.';
-    if (venta.telefono && !/^\+[1-9]\d{6,14}$/.test(venta.telefono.trim()))
-      return 'El teléfono debe incluir código de país. Ej: +573219704246 (Colombia), +521234567890 (México)';
+    if (!venta.telefono.trim()) return 'El teléfono o usuario es obligatorio.';
+    if (venta.telefono && !telefonoValido(venta.telefono))
+      return 'Ingresá un número con código de país (+57...) o un usuario de WhatsApp (@usuario)';
     if (servicios.length === 0) return 'Agregá al menos un servicio.';
 
     for (const s of servicios) {
@@ -1013,14 +1020,14 @@ export default function VentasForm({ initialData }: VentasFormProps) {
             />
           </div>
           <div>
-            <InputLabel required>Teléfono</InputLabel>
+            <InputLabel required>Teléfono o usuario</InputLabel>
             <input
               type="text"
               name="telefono"
               value={venta.telefono}
               onChange={handleChange}
               onBlur={handleBlurTelefono}
-              placeholder="Ej: 3104567890"
+              placeholder="Ej: +573104567890 o @usuario"
               className="w-full"
               required
             />
