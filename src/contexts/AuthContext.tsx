@@ -241,11 +241,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await setDoc(doc(db, 'usuarios', uid), profile);
       setUser({ ...userCredential.user, ...profile } as FirebaseUserWithData);
 
-      // Enviar email de verificación (bloqueo total: no se entra hasta verificar)
+      // Enviar email de verificación con template personalizado (via Cloud Function)
+      // Fallback al nativo de Firebase si la callable falla
       try {
-        await sendEmailVerification(userCredential.user);
+        await sendVerificationEmail();
       } catch (err) {
-        console.warn('No se pudo enviar email de verificación:', err);
+        console.warn('No se pudo enviar email de verificación personalizado, usando nativo:', err);
+        try {
+          await sendEmailVerification(userCredential.user);
+        } catch (err2) {
+          console.warn('No se pudo enviar email de verificación nativo:', err2);
+        }
       }
 
       setLoading(false);
