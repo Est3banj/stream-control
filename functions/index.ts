@@ -9,7 +9,7 @@ import * as functions from 'firebase-functions/v1';
 import * as admin from 'firebase-admin';
 import * as telegram from './telegram';
 import { APP_URL } from './telegram';
-import { sendWelcomeEmail, sendPasswordChangedEmail, sendEmailChangedEmail, sendResetPasswordEmail } from './email';
+import { sendWelcomeEmail, sendPasswordChangedEmail, sendEmailChangedEmail, sendResetPasswordEmail, sendVerificationEmail } from './email';
 import { desasignarPerfil as desasignarPerfilCore, limpiarPerfilesVencidos } from './src/desasignar';
 export { generarToken, validarToken, consultarCodigo, guardarCredenciales, toggleToken, consultarCodigoDirecto, generarTokenSubdistribuidor, obtenerCredencialesCuenta } from './src/codigos';
 
@@ -524,4 +524,104 @@ export const enviarCorreoRecuperacion = functions
       console.error('❌ Error sending recovery email:', error);
       throw new functions.https.HttpsError('internal', 'Error al enviar el correo de recuperación');
     }
+  });
+
+/**
+ * Envía un correo con un enlace para verificar la cuenta.
+ * Se usa cuando un usuario reenvía el link de verificación
+ * desde la pantalla "Verificá tu correo".
+ */
+// Rate limiting simple para verification emails (en memoria, por email)
+const verificationRateLimit = new Map<string, number>();
+
+export const enviarCorreoVerificacion = functions
+  .runWith({ secrets: ['SMTP_USER', 'SMTP_PASS'] })
+  .https.onCall(async (data, context) => {
+    const { email, nombre } = data;
+    if (!email) {
+      throw new functions.https.HttpsError('invalid-argument', 'Email es requerido');
+    }
+
+    // Rate limiting: max 1 verification email por email cada 60 segundos
+    const ahora = Date.now();
+    const ultimoEnvio = verificationRateLimit.get(email);
+    if (ultimoEnvio && ahora - ultimoEnvio < 60_000) {
+      throw new functions.https.HttpsError(
+        'resource-exhausted',
+        'Esperá un minuto antes de reenviar el correo de verificación'
+      );
+    }
+    verificationRateLimit.set(email, ahora);
+
+    try {
+      const verifyLink = await admin.auth().generateEmailVerificationLink(email, {
+        url: 'https://streamcontrol-10837.firebaseapp.com',
+      });
+
+      await sendVerificationEmail(email, nombre || 'Usuario', verifyLink);
+      return { success: true };
+    } catch (error) {
+      console.error('❌ Error sending verification email:', error);
+      throw new functions.https.HttpsError('internal', 'Error al enviar el correo de verificación');
+    }
+  });
+
+/**
+ * Devuelve el mapa uid -> emailVerified de todos los usuarios de Auth.
+ * Solo admin. Se usa en Usuarios.tsx para mostrar el badge de verificación.
+ */
+export const listarVerificados = functions
+  .https.onCall(async (_data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión');
+    }
+    if (context.auth.token.role !== 'admin') {
+      // Fallback: chequear Firestore si el claim no está
+      const snap = await admin.firestore().collection('usuarios').doc(context.auth.uid).get();
+      if (!snap.exists || snap.data()?.rol !== 'admin') {
+        throw new functions.https.HttpsError('permission-denied', 'Solo admin puede listar verificados');
+      }
+    }
+
+    const mapa: Record<string, boolean> = {};
+    const listAll = async (nextPageToken?: string) => {
+      const result = await admin.auth().listUsers(1000, nextPageToken);
+      result.users.forEach(u => { mapa[u.uid] = u.emailVerified; });
+      if (result.pageToken) await listAll(result.pageToken);
+    };
+    await listAll();
+
+    return { verificados: mapa };
+  });
+
+/**
+ * MIGRACIÓN ÚNICA: marca como verificados a TODOS los usuarios existentes
+ * que fueron creados ANTES de activar el bloqueo de verificación de email.
+ * Solo admin. Ejecutar UNA vez antes del deploy (o inmediatamente después).
+ * Después de la migración, se puede eliminar esta función.
+ */
+export const migrarVerificados = functions
+  .https.onCall(async (_data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión');
+    }
+    const snap = await admin.firestore().collection('usuarios').doc(context.auth.uid).get();
+    if (!snap.exists || snap.data()?.rol !== 'admin') {
+      throw new functions.https.HttpsError('permission-denied', 'Solo admin puede ejecutar la migración');
+    }
+
+    let migrados = 0;
+    const listAll = async (nextPageToken?: string) => {
+      const result = await admin.auth().listUsers(1000, nextPageToken);
+      for (const u of result.users) {
+        if (!u.emailVerified && u.providerData.some(p => p.providerId === 'password')) {
+          await admin.auth().updateUser(u.uid, { emailVerified: true });
+          migrados++;
+        }
+      }
+      if (result.pageToken) await listAll(result.pageToken);
+    };
+    await listAll();
+
+    return { migrados };
   });

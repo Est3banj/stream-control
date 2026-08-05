@@ -279,3 +279,71 @@ export async function sendResetPasswordEmail(to: string, userName: string, reset
     console.error('❌ Error sending reset password email to', to, error);
   }
 }
+
+function buildVerificationHtml(userName: string, verifyLink: string): string {
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin: 0; padding: 0; background-color: #f4f7f9; font-family: 'Segoe UI', Arial, sans-serif; }
+    .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+    .card { background: #ffffff; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .logo { text-align: center; margin-bottom: 32px; }
+    .logo h1 { color: #1a73e8; font-size: 28px; margin: 0; }
+    .logo span { color: #5f6368; font-size: 14px; }
+    h2 { color: #202124; font-size: 22px; margin: 0 0 12px 0; }
+    p { color: #5f6368; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; }
+    .highlight { background: #e8f0fe; border-radius: 8px; padding: 16px 20px; margin: 24px 0; }
+    .highlight p { margin: 0; font-size: 14px; color: #1a73e8; }
+    .highlight strong { color: #202124; }
+    .btn { display: inline-block; background: #1a73e8; color: #ffffff !important; text-decoration: none; padding: 14px 36px; border-radius: 8px; font-size: 16px; font-weight: 600; margin: 8px 0 24px 0; }
+    .footer { margin-top: 32px; padding-top: 24px; border-top: 1px solid #e0e0e0; text-align: center; }
+    .footer p { font-size: 13px; color: #9aa0a6; margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="logo">
+        <h1>StreamControl</h1>
+        <span>Streaming Control Platform</span>
+      </div>
+      <h2>Hola ${userName}, confirmá tu correo electrónico</h2>
+      <p>Para activar tu cuenta de StreamControl, hacé click en el botón de abajo. El enlace es válido por un tiempo limitado.</p>
+      <div class="highlight">
+        <p><strong>Importante:</strong> Si no creaste una cuenta en StreamControl, podés ignorar este mensaje.</p>
+      </div>
+      <p style="text-align: center;">
+        <a class="btn" href="${verifyLink}" target="_blank">Verificar mi correo</a>
+      </p>
+      <p style="text-align: center; font-size: 13px; color: #9aa0a6;">
+        Si el botón no funciona, copiá y pegá este enlace en tu navegador:<br>
+        <span style="word-break: break-all;">${verifyLink}</span>
+      </p>
+    </div>
+    <div class="footer">
+      <p>StreamControl Pro — Gestiona tus plataformas de streaming</p>
+      <p>¿Necesitas ayuda? Escríbenos al <strong>+57 324 734 9128</strong></p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+export async function sendVerificationEmail(to: string, userName: string, verifyLink: string): Promise<void> {
+  try {
+    await getTransporter().sendMail({
+      from: `"StreamControl" <${SMTP_USER.value()}>`,
+      to,
+      subject: `StreamControl — Confirmá tu correo electrónico`,
+      html: buildVerificationHtml(userName, verifyLink),
+    });
+    console.log('✅ Verification email sent to', to);
+  } catch (error) {
+    console.error('❌ Error sending verification email to', to, error);
+    throw error;
+  }
+}

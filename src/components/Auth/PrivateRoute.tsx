@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import VerificarEmail from './VerificarEmail';
 
 interface PrivateRouteProps {
   children: React.ReactNode;
@@ -19,6 +20,11 @@ export default function PrivateRoute({ children, roles }: PrivateRouteProps) {
   }
 
   if (!user) return <Navigate to="/login" replace />;
+
+  // Email sin verificar → bloqueo total (excepto admins y Google que ya verifica)
+  if (!user.emailVerified && user.rol !== 'admin') {
+    return <VerificarEmail />;
+  }
 
   if (roles && !user.rol) {
     return (

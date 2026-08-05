@@ -2,9 +2,10 @@
 import React, { useEffect, useState } from 'react';
 import { collection, doc, setDoc, updateDoc, onSnapshot, Timestamp, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, sendPasswordResetEmail, signOut as signOutAuth } from 'firebase/auth';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { auth, db, secondaryAuth } from '../firebase';
 import { useMoneda } from '../hooks/useMoneda';
-import { UserPlus, Users, Shield, UserCheck, UserX, Mail, Eye, EyeOff, Package, X } from 'lucide-react';
+import { UserPlus, Users, Shield, UserCheck, UserX, Mail, MailCheck, Eye, EyeOff, Package, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import useSuscripciones, { crearSuscripcion, actualizarSuscripcion } from '../hooks/useSuscripciones';
@@ -26,6 +27,7 @@ export default function Usuarios() {
   const { planes } = usePlanes(user);
   const { formatearDesdeBase } = useMoneda();
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [verificados, setVerificados] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState<UsuarioFormState>({
@@ -47,6 +49,45 @@ export default function Usuarios() {
 
     return () => unsubscribe();
   }, []);
+
+  // Cargar emailVerified de Firebase Auth (no está en Firestore)
+  useEffect(() => {
+    (async () => {
+      try {
+        const functions = getFunctions();
+        const fn = httpsCallable(functions, 'listarVerificados');
+        const result = await fn();
+        const data = result.data as { verificados: Record<string, boolean> };
+        setVerificados(data.verificados || {});
+      } catch {
+        // Si falla, no mostrar el badge
+      }
+    })();
+  }, []);
+
+  // MIGRACIÓN ÚNICA: marcar usuarios existentes como verificados
+  // Ejecutar UNA vez después del deploy. Se puede eliminar después.
+  const [migrando, setMigrando] = useState(false);
+  const handleMigrarVerificados = async () => {
+    if (!confirm('Marcar TODOS los usuarios existentes como verificados? Esta acción es irreversible y se ejecuta UNA vez.')) return;
+    setMigrando(true);
+    try {
+      const functions = getFunctions();
+      const fn = httpsCallable(functions, 'migrarVerificados');
+      const result = await fn();
+      const data = result.data as { migrados: number };
+      toast.success(`${data.migrados} usuarios marcados como verificados`);
+      // Recargar el estado de verificación
+      const listFn = httpsCallable(functions, 'listarVerificados');
+      const listResult = await listFn();
+      setVerificados((listResult.data as { verificados: Record<string, boolean> }).verificados || {});
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      toast.error(error.message || 'Error al ejecutar la migración');
+    } finally {
+      setMigrando(false);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value } as UsuarioFormState);
@@ -212,10 +253,23 @@ export default function Usuarios() {
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
-          Gestión de Usuarios
-        </h1>
-        <p className="text-gray-600">Administra los usuarios del sistema</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+              Gestión de Usuarios
+            </h1>
+            <p className="text-gray-600">Administra los usuarios del sistema</p>
+          </div>
+          {migrando ? (
+            <button className="btn-secondary" disabled>
+              Migrando...
+            </button>
+          ) : (
+            <button className="btn-secondary" onClick={handleMigrarVerificados} title="Migración única: marcar usuarios existentes como verificados">
+              Migrar verificados
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Formulario de creación */}
@@ -331,6 +385,7 @@ export default function Usuarios() {
                 <th className="px-4 py-4 text-left text-sm font-semibold">Nombre</th>
                 <th className="px-4 py-4 text-left text-sm font-semibold">Correo</th>
                 <th className="px-4 py-4 text-left text-sm font-semibold">Rol</th>
+                <th className="px-4 py-4 text-center text-sm font-semibold">Correo</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Plan Actual</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Estado</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Acciones</th>
@@ -353,6 +408,21 @@ export default function Usuarios() {
                         <Shield size={14} className="inline mr-1" />
                         {u.rol === 'admin' ? 'Administrador' : 'Usuario'}
                       </span>
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      {verificados[u.id] === undefined ? (
+                        <span className="text-gray-300 text-sm">—</span>
+                      ) : verificados[u.id] ? (
+                        <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-medium">
+                          <MailCheck size={14} className="inline mr-1" />
+                          Verificado
+                        </span>
+                      ) : (
+                        <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-sm font-medium">
+                          <Mail size={14} className="inline mr-1" />
+                          Sin verificar
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-4 text-center">
                       {(() => {

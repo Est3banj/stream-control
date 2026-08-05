@@ -6,6 +6,7 @@ import {
   GoogleAuthProvider,
   onAuthStateChanged,
   reauthenticateWithCredential,
+  sendEmailVerification,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
@@ -13,6 +14,7 @@ import {
   updatePassword,
 } from "firebase/auth";
 import { collection, addDoc, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import type { UserCredential } from 'firebase/auth';
 import type { FirebaseUserWithData } from '../types/usuario';
 
@@ -23,6 +25,8 @@ interface AuthContextValue {
   register: (data: { nombre: string; correo: string; password: string; moneda: string; tasa: number }) => Promise<UserCredential>;
   logout: () => Promise<void>;
   loading: boolean;
+  sendVerificationEmail: () => Promise<void>;
+  refreshUser: () => Promise<boolean>;
   updateProfileData: (data: { nombre?: string; moneda?: string; tasa?: number }) => Promise<void>;
   updateUserEmail: (newEmail: string, currentPassword: string) => Promise<void>;
   updateUserPassword: (newPassword: string, currentPassword: string) => Promise<void>;
@@ -121,6 +125,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error("Tu cuenta ha vencido. Contacta al administrador para renovar.");
       }
 
+      // Verificación de email obligatoria (excepto admins y Google)
+      if (!firebaseUser.emailVerified && userData.rol !== 'admin') {
+        setUser({ ...firebaseUser, ...userData } as FirebaseUserWithData);
+        setLoading(false);
+        throw new Error("Verificá tu correo antes de continuar. Revisá tu bandeja de entrada.");
+      }
+
       setUser({ ...firebaseUser, ...userData } as FirebaseUserWithData);
       setLoading(false);
       return userCredential;
@@ -129,6 +140,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
       throw error;
     }
+  };
+
+  /**
+   * Envía el correo de verificación via Cloud Function (patrón enviarCorreoRecuperacion).
+   * Funciona incluso sin sesión activa, solo necesita el email.
+   */
+  const sendVerificationEmail = async (): Promise<void> => {
+    const email = auth.currentUser?.email;
+    const nombre = user?.nombre;
+    if (!email) throw new Error('No hay correo asociado a la sesión');
+    const functions = getFunctions();
+    const fn = httpsCallable(functions, 'enviarCorreoVerificacion');
+    await fn({ email, nombre });
+  };
+
+  /**
+   * Recarga el usuario de Firebase Auth y devuelve si ya verificó el correo.
+   */
+  const refreshUser = async (): Promise<boolean> => {
+    const current = auth.currentUser;
+    if (!current) return false;
+    await current.reload();
+    const verified = auth.currentUser?.emailVerified ?? false;
+    if (verified && user) {
+      setUser({ ...user, emailVerified: verified } as FirebaseUserWithData);
+    }
+    return verified;
   };
 
   const loginWithGoogle = async (): Promise<void> => {
@@ -202,6 +240,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       await setDoc(doc(db, 'usuarios', uid), profile);
       setUser({ ...userCredential.user, ...profile } as FirebaseUserWithData);
+
+      // Enviar email de verificación (bloqueo total: no se entra hasta verificar)
+      try {
+        await sendEmailVerification(userCredential.user);
+      } catch (err) {
+        console.warn('No se pudo enviar email de verificación:', err);
+      }
+
       setLoading(false);
       return userCredential;
     } catch (error) {
@@ -227,7 +273,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await reauthenticate(currentPassword);
     await updateEmail(auth.currentUser, newEmail);
     await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { correo: newEmail });
-    setUser(prev => prev ? { ...prev, correo: newEmail } as FirebaseUserWithData : null);
+    // updateEmail resetea emailVerified a false → el usuario debe re-verificar
+    setUser(prev => prev ? { ...prev, correo: newEmail, emailVerified: false } as FirebaseUserWithData : null);
     try {
       await addDoc(collection(db, 'notificacionesEmail'), {
         tipo: 'email_changed',
@@ -258,7 +305,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, loginWithGoogle, register, logout, loading, updateProfileData, updateUserEmail, updateUserPassword }}>
+    <AuthContext.Provider value={{ user, login, loginWithGoogle, register, logout, loading, sendVerificationEmail, refreshUser, updateProfileData, updateUserEmail, updateUserPassword }}>
       {children}
     </AuthContext.Provider>
   );

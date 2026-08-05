@@ -49,6 +49,9 @@ export default function Login(){
         toast.error("Tu cuenta está inactiva. Contacta al administrador.");
       } else if (err.message?.includes("no registrado")) {
         toast.error("Este usuario no está registrado en la base de datos.");
+      } else if (err.message?.includes("Verificá tu correo")) {
+        toast.error("Verificá tu correo antes de continuar. Revisá tu bandeja de entrada.");
+        nav('/verificar-email');
       } else if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password") {
         toast.error("Correo o contraseña incorrectos.");
       } else {
@@ -79,8 +82,8 @@ export default function Login(){
         moneda: regMoneda,
         tasa: Number(regTasa) || TASA_POR_DEFECTO,
       });
-      toast.success('Cuenta creada correctamente. ¡Bienvenido!');
-      nav('/');
+      toast.success('Cuenta creada. Revisá tu correo para verificar tu cuenta.');
+      nav('/verificar-email');
     } catch (error) {
       console.error(error);
       const err = error as { code?: string; message?: string };

@@ -76,7 +76,7 @@ export default function Ajustes() {
     setGuardando(true);
     try {
       await updateUserEmail(newEmail.trim(), currentPassword);
-      toast.success('Correo actualizado correctamente');
+      toast.success('Correo actualizado. Verificá el correo nuevo para seguir usando la app.', { duration: 5000 });
       setModal(null);
     } catch (err: unknown) {
       const error = err as { code?: string; message?: string };
