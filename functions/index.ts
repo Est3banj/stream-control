@@ -561,7 +561,17 @@ export const enviarCorreoVerificacion = functions
       await sendVerificationEmail(email, nombre || 'Usuario', verifyLink);
       return { success: true };
     } catch (error) {
-      console.error('❌ Error sending verification email:', error);
+      const message = error instanceof Error ? error.message : '';
+      console.error('❌ Error sending verification email:', message);
+
+      // Firebase Auth limita la generación de links (TOO_MANY_ATTEMPTS_TRY_LATER)
+      if (message.includes('TOO_MANY_ATTEMPTS')) {
+        throw new functions.https.HttpsError(
+          'resource-exhausted',
+          'Demasiados intentos. Esperá unos minutos y volvé a intentar.'
+        );
+      }
+
       throw new functions.https.HttpsError('internal', 'Error al enviar el correo de verificación');
     }
   });
