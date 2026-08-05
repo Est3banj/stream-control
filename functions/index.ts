@@ -603,3 +603,51 @@ export const listarVerificados = functions
 
     return { verificados: mapa };
   });
+
+/**
+ * Cron diario: elimina usuarios que se registraron con email/password
+ * y nunca verificaron su correo después de 3 días.
+ *
+ * Evita que correos ficticios queden ocupados en Firebase Auth para siempre.
+ * Exentos: admins (rol 'admin') y cuentas de Google (emailVerified true de origen).
+ */
+export const cleanupNoVerificados = functions
+  .pubsub
+  .schedule('every 24 hours')
+  .timeZone('America/Bogota')
+  .onRun(async () => {
+    const ahora = Date.now();
+    const LIMITE_MS = 3 * 24 * 60 * 60 * 1000; // 3 días
+
+    let eliminados = 0;
+    let candidatos = 0;
+
+    const listAll = async (nextPageToken?: string) => {
+      const result = await admin.auth().listUsers(1000, nextPageToken);
+      for (const u of result.users) {
+        // Solo email/password sin verificar
+        if (u.emailVerified) continue;
+        if (!u.providerData.some(p => p.providerId === 'password')) continue;
+
+        // Solo creados hace más de 3 días
+        const createdAt = u.metadata.creationTime ? new Date(u.metadata.creationTime).getTime() : 0;
+        if (!createdAt || ahora - createdAt < LIMITE_MS) continue;
+
+        candidatos++;
+
+        // Exento: admins
+        const snap = await admin.firestore().collection('usuarios').doc(u.uid).get();
+        if (snap.exists && snap.data()?.rol === 'admin') continue;
+
+        // Eliminar de Auth y Firestore
+        await admin.auth().deleteUser(u.uid);
+        await snap.ref.delete().catch(() => {});
+        eliminados++;
+      }
+      if (result.pageToken) await listAll(result.pageToken);
+    };
+
+    await listAll();
+    console.log(`cleanupNoVerificados: ${eliminados} eliminados, ${candidatos} candidatos`);
+    return null;
+  });
