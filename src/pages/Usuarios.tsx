@@ -65,30 +65,6 @@ export default function Usuarios() {
     })();
   }, []);
 
-  // MIGRACIÓN ÚNICA: marcar usuarios existentes como verificados
-  // Ejecutar UNA vez después del deploy. Se puede eliminar después.
-  const [migrando, setMigrando] = useState(false);
-  const handleMigrarVerificados = async () => {
-    if (!confirm('Marcar TODOS los usuarios existentes como verificados? Esta acción es irreversible y se ejecuta UNA vez.')) return;
-    setMigrando(true);
-    try {
-      const functions = getFunctions();
-      const fn = httpsCallable(functions, 'migrarVerificados');
-      const result = await fn();
-      const data = result.data as { migrados: number };
-      toast.success(`${data.migrados} usuarios marcados como verificados`);
-      // Recargar el estado de verificación
-      const listFn = httpsCallable(functions, 'listarVerificados');
-      const listResult = await listFn();
-      setVerificados((listResult.data as { verificados: Record<string, boolean> }).verificados || {});
-    } catch (err: unknown) {
-      const error = err as { message?: string };
-      toast.error(error.message || 'Error al ejecutar la migración');
-    } finally {
-      setMigrando(false);
-    }
-  };
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value } as UsuarioFormState);
   };
@@ -253,22 +229,11 @@ export default function Usuarios() {
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
-              Gestión de Usuarios
-            </h1>
-            <p className="text-gray-600">Administra los usuarios del sistema</p>
-          </div>
-          {migrando ? (
-            <button className="btn-secondary" disabled>
-              Migrando...
-            </button>
-          ) : (
-            <button className="btn-secondary" onClick={handleMigrarVerificados} title="Migración única: marcar usuarios existentes como verificados">
-              Migrar verificados
-            </button>
-          )}
+        <div>
+          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+            Gestión de Usuarios
+          </h1>
+          <p className="text-gray-600">Administra los usuarios del sistema</p>
         </div>
       </div>
 

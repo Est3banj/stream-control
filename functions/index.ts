@@ -593,35 +593,3 @@ export const listarVerificados = functions
 
     return { verificados: mapa };
   });
-
-/**
- * MIGRACIÓN ÚNICA: marca como verificados a TODOS los usuarios existentes
- * que fueron creados ANTES de activar el bloqueo de verificación de email.
- * Solo admin. Ejecutar UNA vez antes del deploy (o inmediatamente después).
- * Después de la migración, se puede eliminar esta función.
- */
-export const migrarVerificados = functions
-  .https.onCall(async (_data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión');
-    }
-    const snap = await admin.firestore().collection('usuarios').doc(context.auth.uid).get();
-    if (!snap.exists || snap.data()?.rol !== 'admin') {
-      throw new functions.https.HttpsError('permission-denied', 'Solo admin puede ejecutar la migración');
-    }
-
-    let migrados = 0;
-    const listAll = async (nextPageToken?: string) => {
-      const result = await admin.auth().listUsers(1000, nextPageToken);
-      for (const u of result.users) {
-        if (!u.emailVerified && u.providerData.some(p => p.providerId === 'password')) {
-          await admin.auth().updateUser(u.uid, { emailVerified: true });
-          migrados++;
-        }
-      }
-      if (result.pageToken) await listAll(result.pageToken);
-    };
-    await listAll();
-
-    return { migrados };
-  });
