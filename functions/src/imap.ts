@@ -43,15 +43,6 @@ const SUBJECT_KEYWORDS: Record<string, RegExp> = {
 
 const CONNECTION_TIMEOUT = 10_000;
 
-function connectWithTimeout(client: ImapFlow, ms: number): Promise<void> {
-  return Promise.race([
-    client.connect(),
-    new Promise<void>((_, reject) =>
-      setTimeout(() => reject(new Error('Connection timeout')), ms)
-    ),
-  ]);
-}
-
 /**
  * Extrae el valor del email según el caso:
  * - viajenet → busca un LINK (Netflix manda "Obtener código" con href)
@@ -139,10 +130,11 @@ export async function buscarCodigoVerificacion(
       pass: config.contrasena,
     },
     logger: false,
+    connectionTimeout: CONNECTION_TIMEOUT,
   });
 
   try {
-    await connectWithTimeout(client, CONNECTION_TIMEOUT);
+    await client.connect();
 
     const lock = await client.getMailboxLock('INBOX');
     try {
@@ -176,9 +168,9 @@ export async function buscarCodigoVerificacion(
         // Si hay patrón de asunto para este caso, verificar que coincida
         if (subjectPattern) {
           if (parsed.subject && subjectPattern.test(parsed.subject)) {
-            console.error(`[imap] Asunto COINCIDE con "${caso}": "${asunto}"`);
+            console.log(`[imap] Asunto COINCIDE con "${caso}": "${asunto}"`);
           } else {
-            console.error(`[imap] Asunto NO coincide con "${caso}": "${asunto}"`);
+            console.log(`[imap] Asunto NO coincide con "${caso}": "${asunto}"`);
             continue;
           }
         }

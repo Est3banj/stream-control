@@ -181,14 +181,35 @@ export const consultarCodigo = onCall(
       );
     }
 
-    const now = Date.now();
-    if (tokenData.rateLimit && tokenData.rateLimit.count >= MAX_REQUESTS
-        && (now - (tokenData.rateLimit.windowStart as number)) < RATE_LIMIT_WINDOW) {
-      throw new HttpsError(
-        'resource-exhausted',
-        'Demasiadas consultas. Intenta de nuevo en unos minutos.'
-      );
-    }
+    // ── Rate-limit transaccional (AD-8): cuenta INTENTOS, antes del IMAP ──
+    // Check + increment atómicos: sin ventana de carrera entre lectura y escritura.
+    const tokenRef = db.collection('tokens').doc(token);
+    await db.runTransaction(async (transaction) => {
+      const doc = await transaction.get(tokenRef);
+      if (!doc.exists) {
+        throw new HttpsError('not-found', 'Token no encontrado');
+      }
+      const data = doc.data()!;
+      const now = Date.now();
+      const rateLimit = data.rateLimit || { count: 0, windowStart: now };
+
+      // Ventana vencida → reiniciar contador
+      if (now - (rateLimit.windowStart as number) >= RATE_LIMIT_WINDOW) {
+        rateLimit.count = 0;
+        rateLimit.windowStart = now;
+      }
+
+      if ((rateLimit.count as number) >= MAX_REQUESTS) {
+        throw new HttpsError(
+          'resource-exhausted',
+          'Demasiadas consultas. Intenta de nuevo en unos minutos.'
+        );
+      }
+
+      transaction.update(tokenRef, {
+        rateLimit: { count: (rateLimit.count as number) + 1, windowStart: rateLimit.windowStart },
+      });
+    });
 
     const currentUses = (tokenData.useCount as number) || 0;
     if (currentUses >= TOKEN_MAX_USES) {
@@ -222,11 +243,9 @@ export const consultarCodigo = onCall(
       };
     }
 
-    // Incrementar contador solo en consultas exitosas
+    // Incrementar contador de usos solo en consultas exitosas (no transaccional)
     await db.collection('tokens').doc(token).update({
       useCount: admin.firestore.FieldValue.increment(1),
-      'rateLimit.count': admin.firestore.FieldValue.increment(1),
-      'rateLimit.windowStart': tokenData.rateLimit?.windowStart || now,
     });
 
     return {
