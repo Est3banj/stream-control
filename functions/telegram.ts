@@ -16,7 +16,6 @@
 import { defineSecret, defineString } from 'firebase-functions/params';
 import * as admin from 'firebase-admin';
 import * as crypto from 'crypto';
-import type * as functions from 'firebase-functions/v1';
 
 interface TelegramMessage {
   chat_id: string;
@@ -128,7 +127,7 @@ export async function sendMessage(chatId: string, text: string, extra: Record<st
   return response.json() as Promise<unknown>;
 }
 
-export function verifyWebhook(req: functions.https.Request): boolean {
+export function verifyWebhook(req: { headers: Record<string, string | string[] | undefined> }): boolean {
   const secret = WEBHOOK_SECRET();
   if (!secret) return true;
   

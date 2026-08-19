@@ -1,4 +1,4 @@
-import * as functions from 'firebase-functions/v1';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { buscarCodigoVerificacion, IMAPConfig } from './imap';
@@ -10,22 +10,22 @@ const DEFAULT_TOKEN_EXPIRY_DAYS = 30;
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const MAX_REQUESTS = 5; // max 5 requests per token per minute
 
-export const generarToken = functions
-  .runWith({ timeoutSeconds: 30, memory: '256MB' })
-  .https.onCall(async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError(
+export const generarToken = onCall(
+  { timeoutSeconds: 30, memory: '256MiB' },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError(
         'unauthenticated',
         'Debes iniciar sesión'
       );
     }
 
-    const uid = context.auth.uid;
+    const uid = request.auth.uid;
 
     // Validar que el usuario existe en la colección usuarios
     const userDoc = await db.collection('usuarios').doc(uid).get();
     if (!userDoc.exists) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'permission-denied',
         'Usuario no encontrado'
       );
@@ -38,7 +38,7 @@ export const generarToken = functions
       .find(s => s.usuarioId === uid && s.estado === 'activa');
 
     if (!suscripcionActiva) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'permission-denied',
         'Se requiere plan Enterprise para generar tokens'
       );
@@ -46,16 +46,16 @@ export const generarToken = functions
 
     const plan = (suscripcionActiva.planNombre as string)?.toLowerCase() || '';
     if (!plan.includes('enterprise')) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'permission-denied',
         'Se requiere plan Enterprise para generar tokens'
       );
     }
 
-    const { cuentaId, perfilNombre, clienteId, clienteNombre, expiraEn } = data;
+    const { cuentaId, perfilNombre, clienteId, clienteNombre, expiraEn } = request.data;
 
     if (!cuentaId || !perfilNombre || !clienteId || !clienteNombre) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'invalid-argument',
         'Faltan campos requeridos: cuentaId, perfilNombre, clienteId, clienteNombre'
       );
@@ -63,7 +63,7 @@ export const generarToken = functions
 
     const cuentaDoc = await db.collection('cuentas').doc(cuentaId).get();
     if (!cuentaDoc.exists) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'not-found',
         'La cuenta especificada no existe'
       );
@@ -71,7 +71,7 @@ export const generarToken = functions
 
     const cuenta = cuentaDoc.data()!;
     if (cuenta.propietarioId !== uid) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'permission-denied',
         'No tienes permisos sobre esta cuenta'
       );
@@ -102,12 +102,12 @@ export const generarToken = functions
     };
   });
 
-export const validarToken = functions
-  .runWith({ timeoutSeconds: 15, memory: '128MB' })
-  .https.onCall(async (data) => {
-    const { token } = data;
+export const validarToken = onCall(
+  { timeoutSeconds: 15, memory: '128MiB' },
+  async (request) => {
+    const { token } = request.data;
     if (!token || typeof token !== 'string') {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'invalid-argument',
         'Token es requerido'
       );
@@ -144,13 +144,13 @@ export const validarToken = functions
     };
   });
 
-export const consultarCodigo = functions
-  .runWith({ timeoutSeconds: 60, memory: '256MB' })
-  .https.onCall(async (data) => {
-    const { token, caso } = data;
+export const consultarCodigo = onCall(
+  { timeoutSeconds: 60, memory: '256MiB' },
+  async (request) => {
+    const { token, caso } = request.data;
 
     if (!token || !caso) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'invalid-argument',
         'Token y caso son requeridos'
       );
@@ -158,7 +158,7 @@ export const consultarCodigo = functions
 
     const tokenDoc = await db.collection('tokens').doc(token).get();
     if (!tokenDoc.exists) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'not-found',
         'Token no encontrado'
       );
@@ -167,7 +167,7 @@ export const consultarCodigo = functions
     const tokenData = tokenDoc.data()!;
 
     if (!tokenData.activo) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'permission-denied',
         'Token revocado — contacta a tu vendedor'
       );
@@ -175,7 +175,7 @@ export const consultarCodigo = functions
 
     const expiraEn = new Date(tokenData.expiraEn as string);
     if (expiraEn < new Date()) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'permission-denied',
         'Token expirado'
       );
@@ -184,7 +184,7 @@ export const consultarCodigo = functions
     const now = Date.now();
     if (tokenData.rateLimit && tokenData.rateLimit.count >= MAX_REQUESTS
         && (now - (tokenData.rateLimit.windowStart as number)) < RATE_LIMIT_WINDOW) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'resource-exhausted',
         'Demasiadas consultas. Intenta de nuevo en unos minutos.'
       );
@@ -192,7 +192,7 @@ export const consultarCodigo = functions
 
     const currentUses = (tokenData.useCount as number) || 0;
     if (currentUses >= TOKEN_MAX_USES) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'resource-exhausted',
         'Límite de consultas alcanzado para este token'
       );
@@ -202,7 +202,7 @@ export const consultarCodigo = functions
 
     const cuentaDoc = await db.collection('cuentas').doc(cuentaId).get();
     if (!cuentaDoc.exists) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'not-found',
         'Cuenta no encontrada'
       );
@@ -269,7 +269,7 @@ async function consultarCodigoIMAP(
 ): Promise<{ codigo: string; correo: string; fecha: string; tipo: string } | null> {
   const secretosDoc = await db.collection('cuentas_secretos').doc(cuentaId).get();
   if (!secretosDoc.exists) {
-    throw new functions.https.HttpsError('not-found', errorMsgs?.notFound || 'Credenciales de cuenta no encontradas');
+    throw new HttpsError('not-found', errorMsgs?.notFound || 'Credenciales de cuenta no encontradas');
   }
 
   const secretos = secretosDoc.data()!;
@@ -294,31 +294,31 @@ async function consultarCodigoIMAP(
     console.error(`Error en IMAP para cuenta ${cuentaId}:`, message);
 
     if (message.includes('Connection timeout') || message.includes('connect')) {
-      throw new functions.https.HttpsError('unavailable', 'No se pudo conectar al correo de la cuenta');
+      throw new HttpsError('unavailable', 'No se pudo conectar al correo de la cuenta');
     }
     if (message.includes('authentication') || message.includes('auth')) {
-      throw new functions.https.HttpsError('permission-denied', errorMsgs?.auth || 'Error de autenticación IMAP');
+      throw new HttpsError('permission-denied', errorMsgs?.auth || 'Error de autenticación IMAP');
     }
 
-    throw new functions.https.HttpsError('internal', 'Error al consultar el código');
+    throw new HttpsError('internal', 'Error al consultar el código');
   }
 }
 
-export const guardarCredenciales = functions
-  .runWith({ timeoutSeconds: 15, memory: '128MB' })
-  .https.onCall(async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError(
+export const guardarCredenciales = onCall(
+  { timeoutSeconds: 15, memory: '128MiB' },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError(
         'unauthenticated',
         'Debes iniciar sesión'
       );
     }
 
-    const uid = context.auth.uid;
-    const { cuentaId, correo, contrasena, imapHost, imapPort, proveedorIMAP } = data;
+    const uid = request.auth.uid;
+    const { cuentaId, correo, contrasena, imapHost, imapPort, proveedorIMAP } = request.data;
 
     if (!cuentaId || !correo || !contrasena) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'invalid-argument',
         'Faltan campos requeridos: cuentaId, correo, contrasena'
       );
@@ -327,7 +327,7 @@ export const guardarCredenciales = functions
     // Verificar que la cuenta existe y pertenece al usuario
     const cuentaDoc = await db.collection('cuentas').doc(cuentaId).get();
     if (!cuentaDoc.exists) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'not-found',
         'La cuenta especificada no existe'
       );
@@ -335,7 +335,7 @@ export const guardarCredenciales = functions
 
     const cuenta = cuentaDoc.data()!;
     if (cuenta.propietarioId !== uid) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'permission-denied',
         'No tienes permisos sobre esta cuenta'
       );
@@ -355,32 +355,32 @@ export const guardarCredenciales = functions
     return { success: true, cuentaId };
   });
 
-export const toggleToken = functions
-  .runWith({ timeoutSeconds: 15, memory: '128MB' })
-  .https.onCall(async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión');
+export const toggleToken = onCall(
+  { timeoutSeconds: 15, memory: '128MiB' },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'Debes iniciar sesión');
     }
 
-    const uid = context.auth.uid;
-    const { tokenId, activo } = data;
+    const uid = request.auth.uid;
+    const { tokenId, activo } = request.data;
 
     if (!tokenId) {
-      throw new functions.https.HttpsError('invalid-argument', 'tokenId es requerido');
+      throw new HttpsError('invalid-argument', 'tokenId es requerido');
     }
 
     if (typeof activo !== 'boolean') {
-      throw new functions.https.HttpsError('invalid-argument', 'activo debe ser booleano');
+      throw new HttpsError('invalid-argument', 'activo debe ser booleano');
     }
 
     const tokenDoc = await db.collection('tokens').doc(tokenId).get();
     if (!tokenDoc.exists) {
-      throw new functions.https.HttpsError('not-found', 'Token no encontrado');
+      throw new HttpsError('not-found', 'Token no encontrado');
     }
 
     const tokenData = tokenDoc.data()!;
     if (tokenData.vendedorId !== uid) {
-      throw new functions.https.HttpsError('permission-denied', 'No tienes permisos sobre este token');
+      throw new HttpsError('permission-denied', 'No tienes permisos sobre este token');
     }
 
     await db.collection('tokens').doc(tokenId).update({
@@ -402,7 +402,7 @@ function checkRateLimit(map: Map<string, number[]>, key: string, maxRequests: nu
   const timestamps = map.get(key) || [];
   const ventana = timestamps.filter(t => ahora - t < windowMs);
   if (ventana.length >= maxRequests) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       'resource-exhausted',
       'Demasiadas consultas. Esperá un momento antes de intentar de nuevo.'
     );
@@ -411,18 +411,18 @@ function checkRateLimit(map: Map<string, number[]>, key: string, maxRequests: nu
   map.set(key, ventana);
 }
 
-export const consultarCodigoDirecto = functions
-  .runWith({ timeoutSeconds: 60, memory: '256MB' })
-  .https.onCall(async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión');
+export const consultarCodigoDirecto = onCall(
+  { timeoutSeconds: 60, memory: '256MiB' },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'Debes iniciar sesión');
     }
 
-    const uid = context.auth.uid;
-    const { cuentaId, caso } = data;
+    const uid = request.auth.uid;
+    const { cuentaId, caso } = request.data;
 
     if (!cuentaId || !caso) {
-      throw new functions.https.HttpsError('invalid-argument', 'cuentaId y caso son requeridos');
+      throw new HttpsError('invalid-argument', 'cuentaId y caso son requeridos');
     }
 
     // Rate limiting: max 10 consultas por usuario por minuto
@@ -431,12 +431,12 @@ export const consultarCodigoDirecto = functions
     // Verificar que la cuenta existe y pertenece al usuario
     const cuentaDoc = await db.collection('cuentas').doc(cuentaId).get();
     if (!cuentaDoc.exists) {
-      throw new functions.https.HttpsError('not-found', 'Cuenta no encontrada');
+      throw new HttpsError('not-found', 'Cuenta no encontrada');
     }
 
     const cuentaData = cuentaDoc.data()!;
     if (cuentaData.propietarioId !== uid) {
-      throw new functions.https.HttpsError('permission-denied', 'No tienes permisos sobre esta cuenta');
+      throw new HttpsError('permission-denied', 'No tienes permisos sobre esta cuenta');
     }
 
     // Rate limiting: max 5 consultas por cuenta por minuto (protección IMAP)
@@ -465,35 +465,35 @@ export const consultarCodigoDirecto = functions
     };
   });
 
-export const generarTokenSubdistribuidor = functions
-  .runWith({ timeoutSeconds: 30, memory: '256MB' })
-  .https.onCall(async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión');
+export const generarTokenSubdistribuidor = onCall(
+  { timeoutSeconds: 30, memory: '256MiB' },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'Debes iniciar sesión');
     }
 
-    const uid = context.auth.uid;
-    const userEmail = context.auth.token?.email || '';
+    const uid = request.auth.uid;
+    const userEmail = request.auth.token?.email || '';
     const {
       cuentaId, perfilNombre, expiraEn, clienteNombre,
       cantidad, totalRecibido, precioPorPerfil, totalCosto, utilidad,
       diasAcceso, perfilesSeleccionados, proveedor, costoServicio,
-    } = data;
+    } = request.data;
 
     if (!cuentaId || !expiraEn) {
-      throw new functions.https.HttpsError('invalid-argument', 'cuentaId y expiraEn son requeridos');
+      throw new HttpsError('invalid-argument', 'cuentaId y expiraEn son requeridos');
     }
 
     // Validar que expiraEn sea una fecha futura
     const expiraDate = new Date(expiraEn);
     if (isNaN(expiraDate.getTime()) || expiraDate <= new Date()) {
-      throw new functions.https.HttpsError('invalid-argument', 'expiraEn debe ser una fecha futura');
+      throw new HttpsError('invalid-argument', 'expiraEn debe ser una fecha futura');
     }
 
     // Verificar suscripción Enterprise
     const userDoc = await db.collection('usuarios').doc(uid).get();
     if (!userDoc.exists) {
-      throw new functions.https.HttpsError('permission-denied', 'Usuario no encontrado');
+      throw new HttpsError('permission-denied', 'Usuario no encontrado');
     }
 
     const suscripcionSnapshot = await db.collection('suscripciones').get();
@@ -502,7 +502,7 @@ export const generarTokenSubdistribuidor = functions
       .find((s: any) => s.usuarioId === uid && s.estado === 'activa');
 
     if (!suscripcionActiva) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'permission-denied',
         'Se requiere plan Enterprise para generar links para sub-distribuidores'
       );
@@ -510,7 +510,7 @@ export const generarTokenSubdistribuidor = functions
 
     const plan = ((suscripcionActiva as any).planNombre as string)?.toLowerCase() || '';
     if (!plan.includes('enterprise')) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'permission-denied',
         'Se requiere plan Enterprise para generar links para sub-distribuidores'
       );
@@ -524,12 +524,12 @@ export const generarTokenSubdistribuidor = functions
       const cuentaSnap = await transaction.get(cuentaRef);
 
       if (!cuentaSnap.exists) {
-        throw new functions.https.HttpsError('not-found', 'Cuenta no encontrada');
+        throw new HttpsError('not-found', 'Cuenta no encontrada');
       }
 
       const cuentaData = cuentaSnap.data()!;
       if (cuentaData.propietarioId !== uid) {
-        throw new functions.https.HttpsError('permission-denied', 'No tienes permisos sobre esta cuenta');
+        throw new HttpsError('permission-denied', 'No tienes permisos sobre esta cuenta');
       }
 
       // Crear token
@@ -619,30 +619,30 @@ export const generarTokenSubdistribuidor = functions
     };
   });
 
-export const obtenerCredencialesCuenta = functions
-  .runWith({ timeoutSeconds: 15, memory: '128MB' })
-  .https.onCall(async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión');
+export const obtenerCredencialesCuenta = onCall(
+  { timeoutSeconds: 15, memory: '128MiB' },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'Debes iniciar sesión');
     }
 
-    const uid = context.auth.uid;
-    const { cuentaId } = data;
+    const uid = request.auth.uid;
+    const { cuentaId } = request.data;
 
     if (!cuentaId) {
-      throw new functions.https.HttpsError('invalid-argument', 'cuentaId es requerido');
+      throw new HttpsError('invalid-argument', 'cuentaId es requerido');
     }
 
     // Verificar que la cuenta pertenece al usuario
     const cuentaRef = db.collection('cuentas').doc(cuentaId);
     const cuentaSnap = await cuentaRef.get();
     if (!cuentaSnap.exists) {
-      throw new functions.https.HttpsError('not-found', 'Cuenta no encontrada');
+      throw new HttpsError('not-found', 'Cuenta no encontrada');
     }
 
     const cuentaData = cuentaSnap.data()!;
     if (cuentaData.propietarioId !== uid) {
-      throw new functions.https.HttpsError('permission-denied', 'No tienes permisos sobre esta cuenta');
+      throw new HttpsError('permission-denied', 'No tienes permisos sobre esta cuenta');
     }
 
     // Obtener credenciales de cuentas_secretos

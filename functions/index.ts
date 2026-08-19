@@ -5,7 +5,9 @@
  * cuando los clientes están próximos a vencer (1, 2 o 3 días)
  */
 
-import * as functions from 'firebase-functions/v1';
+import { onRequest, onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onDocumentCreated } from 'firebase-functions/v2/firestore';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as admin from 'firebase-admin';
 import * as telegram from './telegram';
 import { APP_URL } from './telegram';
@@ -30,9 +32,9 @@ const db = admin.firestore();
  * Para activar el webhook (pegar URL después del primer deploy):
  *   curl -F "url=DEPLOYED_URL/telegramWebhook" -F "secret_token=SECRET" https://api.telegram.org/botTOKEN/setWebhook
  */
-export const telegramWebhook = functions
-  .runWith({ secrets: ['TELEGRAM_TOKEN', 'TELEGRAM_WEBHOOK_SECRET'] })
-  .https.onRequest(async (req: functions.https.Request, res: functions.Response) => {
+export const telegramWebhook = onRequest(
+  { secrets: ['TELEGRAM_TOKEN', 'TELEGRAM_WEBHOOK_SECRET'] },
+  async (req, res) => {
   if (req.method !== 'POST') {
     res.status(405).send('Method Not Allowed');
     return;
@@ -62,11 +64,11 @@ export const telegramWebhook = functions
  *   firebase functions:secrets:set SMTP_USER
  *   firebase functions:secrets:set SMTP_PASS
  */
-export const onNuevoUsuario = functions
-  .runWith({ secrets: ['SMTP_USER', 'SMTP_PASS'] })
-  .firestore
-  .document('usuarios/{uid}')
-  .onCreate(async (snap, context) => {
+export const onNuevoUsuario = onDocumentCreated(
+  { document: 'usuarios/{uid}', secrets: ['SMTP_USER', 'SMTP_PASS'] },
+  async (event) => {
+    const snap = event.data;
+    if (!snap) return;
     const { correo, nombre } = snap.data() as { correo?: string; nombre?: string };
 
     if (!correo) {
@@ -85,12 +87,9 @@ export const onNuevoUsuario = functions
 /**
  * Extensión del cron: envía notificaciones por Telegram
  */
-export const generarNotificacionesVencimientos = functions
-  .runWith({ secrets: ['TELEGRAM_TOKEN', 'TELEGRAM_WEBHOOK_SECRET'] })
-  .pubsub
-  .schedule('every 24 hours')
-  .timeZone('America/Bogota')
-  .onRun(async (context: functions.EventContext) => {
+export const generarNotificacionesVencimientos = onSchedule(
+  { schedule: 'every 24 hours', timeZone: 'America/Bogota', secrets: ['TELEGRAM_TOKEN', 'TELEGRAM_WEBHOOK_SECRET'] },
+  async () => {
     console.log('🔔 Iniciando generación de notificaciones de vencimientos...');
 
     try {
@@ -352,7 +351,6 @@ export const generarNotificacionesVencimientos = functions
       }
 
       console.log(`${notificacionesCreadas} notifs Firestore, ${telegramEnviados} Telegram vencimientos, ${morasNotificadas} Telegram moras, ${autoExpiradas} suscripciones auto-expiradas, ${perfilesLiberados} perfiles liberados`);
-      return null;
     } catch (error) {
       console.error('❌ Error generando notificaciones:', error);
       throw error;
@@ -365,18 +363,18 @@ export const generarNotificacionesVencimientos = functions
  * Llamada desde el botón "Liberar perfil" en GestionClientes.
  * Usa Admin SDK (bypasea reglas de Firestore).
  */
-export const desasignarPerfil = functions
-  .runWith({ timeoutSeconds: 30, memory: '256MB' })
-  .https.onCall(async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión');
+export const desasignarPerfil = onCall(
+  { timeoutSeconds: 30, memory: '256MiB' },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'Debes iniciar sesión');
     }
 
-    const uid = context.auth.uid;
-    const { clienteId, cuentaId, perfilNombre } = data || {};
+    const uid = request.auth.uid;
+    const { clienteId, cuentaId, perfilNombre } = request.data || {};
 
     if (!clienteId || !cuentaId || !perfilNombre) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'invalid-argument',
         'Faltan campos requeridos: clienteId, cuentaId, perfilNombre'
       );
@@ -385,17 +383,17 @@ export const desasignarPerfil = functions
     // Verificar que la cuenta pertenece al usuario
     const cuentaSnap = await admin.firestore().collection('cuentas').doc(cuentaId).get();
     if (!cuentaSnap.exists) {
-      throw new functions.https.HttpsError('not-found', 'La cuenta no existe');
+      throw new HttpsError('not-found', 'La cuenta no existe');
     }
     const cuenta = cuentaSnap.data()!;
     if (cuenta.propietarioId !== uid) {
-      throw new functions.https.HttpsError('permission-denied', 'No tienes permisos sobre esta cuenta');
+      throw new HttpsError('permission-denied', 'No tienes permisos sobre esta cuenta');
     }
 
     const result = await desasignarPerfilCore(clienteId, cuentaId, perfilNombre);
 
     if (!result.success) {
-      throw new functions.https.HttpsError('internal', result.error || 'Error al desasignar el perfil');
+      throw new HttpsError('internal', result.error || 'Error al desasignar el perfil');
     }
 
     return { success: true, perfilNombre, cuentaId };
@@ -408,16 +406,16 @@ export const desasignarPerfil = functions
  * 
  * Llamada desde TelegramConfig.tsx.
  */
-export const desvincularTelegram = functions
-  .https.onCall(async (_data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError(
+export const desvincularTelegram = onCall(
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError(
         'unauthenticated',
         'Debes iniciar sesión'
       );
     }
 
-    const uid = context.auth.uid;
+    const uid = request.auth.uid;
 
     try {
       const snapshot = await db
@@ -442,7 +440,7 @@ export const desvincularTelegram = functions
       return result;
     } catch (error) {
       console.error('Error desvinculando Telegram:', error);
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'internal',
         'Error al desvincular Telegram'
       );
@@ -455,11 +453,11 @@ export const desvincularTelegram = functions
  * 
  * Tipos: 'password_changed', 'email_changed'
  */
-export const onNotificacionEmail = functions
-  .runWith({ secrets: ['SMTP_USER', 'SMTP_PASS'] })
-  .firestore
-  .document('notificacionesEmail/{docId}')
-  .onCreate(async (snap, context) => {
+export const onNotificacionEmail = onDocumentCreated(
+  { document: 'notificacionesEmail/{docId}', secrets: ['SMTP_USER', 'SMTP_PASS'] },
+  async (event) => {
+    const snap = event.data;
+    if (!snap) return;
     const data = snap.data();
     const { tipo, nombre, correo, nuevoCorreo } = data as Record<string, string>;
 
@@ -494,19 +492,19 @@ export const onNotificacionEmail = functions
 // Rate limiting simple para recovery emails (en memoria, por email)
 const recoveryRateLimit = new Map<string, number>();
 
-export const enviarCorreoRecuperacion = functions
-  .runWith({ secrets: ['SMTP_USER', 'SMTP_PASS'] })
-  .https.onCall(async (data, context) => {
-    const { email, nombre } = data;
+export const enviarCorreoRecuperacion = onCall(
+  { secrets: ['SMTP_USER', 'SMTP_PASS'] },
+  async (request) => {
+    const { email, nombre } = request.data;
     if (!email) {
-      throw new functions.https.HttpsError('invalid-argument', 'Email es requerido');
+      throw new HttpsError('invalid-argument', 'Email es requerido');
     }
 
     // Rate limiting: max 1 recovery email por email cada 60 segundos
     const ahora = Date.now();
     const ultimoEnvio = recoveryRateLimit.get(email);
     if (ultimoEnvio && ahora - ultimoEnvio < 60_000) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'resource-exhausted',
         'Esperá un minuto antes de solicitar otro correo de recuperación'
       );
@@ -522,7 +520,7 @@ export const enviarCorreoRecuperacion = functions
       return { success: true };
     } catch (error) {
       console.error('❌ Error sending recovery email:', error);
-      throw new functions.https.HttpsError('internal', 'Error al enviar el correo de recuperación');
+      throw new HttpsError('internal', 'Error al enviar el correo de recuperación');
     }
   });
 
@@ -534,19 +532,19 @@ export const enviarCorreoRecuperacion = functions
 // Rate limiting simple para verification emails (en memoria, por email)
 const verificationRateLimit = new Map<string, number>();
 
-export const enviarCorreoVerificacion = functions
-  .runWith({ secrets: ['SMTP_USER', 'SMTP_PASS'] })
-  .https.onCall(async (data, context) => {
-    const { email, nombre } = data;
+export const enviarCorreoVerificacion = onCall(
+  { secrets: ['SMTP_USER', 'SMTP_PASS'] },
+  async (request) => {
+    const { email, nombre } = request.data;
     if (!email) {
-      throw new functions.https.HttpsError('invalid-argument', 'Email es requerido');
+      throw new HttpsError('invalid-argument', 'Email es requerido');
     }
 
     // Rate limiting: max 1 verification email por email cada 60 segundos
     const ahora = Date.now();
     const ultimoEnvio = verificationRateLimit.get(email);
     if (ultimoEnvio && ahora - ultimoEnvio < 60_000) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'resource-exhausted',
         'Esperá un minuto antes de reenviar el correo de verificación'
       );
@@ -566,13 +564,13 @@ export const enviarCorreoVerificacion = functions
 
       // Firebase Auth limita la generación de links (TOO_MANY_ATTEMPTS_TRY_LATER)
       if (message.includes('TOO_MANY_ATTEMPTS')) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           'resource-exhausted',
           'Demasiados intentos. Esperá unos minutos y volvé a intentar.'
         );
       }
 
-      throw new functions.https.HttpsError('internal', 'Error al enviar el correo de verificación');
+      throw new HttpsError('internal', 'Error al enviar el correo de verificación');
     }
   });
 
@@ -580,16 +578,16 @@ export const enviarCorreoVerificacion = functions
  * Devuelve el mapa uid -> emailVerified de todos los usuarios de Auth.
  * Solo admin. Se usa en Usuarios.tsx para mostrar el badge de verificación.
  */
-export const listarVerificados = functions
-  .https.onCall(async (_data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión');
+export const listarVerificados = onCall(
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'Debes iniciar sesión');
     }
-    if (context.auth.token.role !== 'admin') {
+    if (request.auth.token.role !== 'admin') {
       // Fallback: chequear Firestore si el claim no está
-      const snap = await admin.firestore().collection('usuarios').doc(context.auth.uid).get();
+      const snap = await admin.firestore().collection('usuarios').doc(request.auth.uid).get();
       if (!snap.exists || snap.data()?.rol !== 'admin') {
-        throw new functions.https.HttpsError('permission-denied', 'Solo admin puede listar verificados');
+        throw new HttpsError('permission-denied', 'Solo admin puede listar verificados');
       }
     }
 
@@ -611,11 +609,9 @@ export const listarVerificados = functions
  * Evita que correos ficticios queden ocupados en Firebase Auth para siempre.
  * Exentos: admins (rol 'admin') y cuentas de Google (emailVerified true de origen).
  */
-export const cleanupNoVerificados = functions
-  .pubsub
-  .schedule('every 24 hours')
-  .timeZone('America/Bogota')
-  .onRun(async () => {
+export const cleanupNoVerificados = onSchedule(
+  { schedule: 'every 24 hours', timeZone: 'America/Bogota' },
+  async () => {
     const ahora = Date.now();
     const LIMITE_MS = 3 * 24 * 60 * 60 * 1000; // 3 días
 
@@ -649,5 +645,4 @@ export const cleanupNoVerificados = functions
 
     await listAll();
     console.log(`cleanupNoVerificados: ${eliminados} eliminados, ${candidatos} candidatos`);
-    return null;
   });
