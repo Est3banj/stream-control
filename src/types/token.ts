@@ -13,4 +13,4 @@ export interface TokenCliente {
   createdAt: Timestamp;
 }
 
-export type CreateTokenInput = Omit<TokenCliente, 'id' | 'createdAt'>;
+export type CreateTokenInput = Pick<TokenCliente, 'cuentaId' | 'perfilNombre' | 'clienteId' | 'clienteNombre' | 'expiraEn'>;

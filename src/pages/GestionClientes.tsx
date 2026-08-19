@@ -297,14 +297,11 @@ export default function GestionClientes() {
     setTokenGenerando(true);
     try {
       const linkData = {
-        token: '',
         cuentaId: cliente.cuentaId,
         perfilNombre: cliente.perfilAsignado || '',
         clienteId: cliente.id,
         clienteNombre: cliente.nombre,
-        vendedorId: user.uid!,
         expiraEn: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        activo: true,
       };
       const docId = await generarToken(linkData);
       const url = `${window.location.origin}/r/${docId}`;
@@ -312,7 +309,8 @@ export default function GestionClientes() {
       setMostrarTokenModal(true);
     } catch (err) {
       console.error('Error generando token:', err);
-      toast.error('Error al generar el link de códigos');
+      const message = err instanceof Error ? err.message : 'Error al generar el link de códigos';
+      toast.error(message);
     } finally {
       setTokenGenerando(false);
     }
