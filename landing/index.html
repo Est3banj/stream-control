@@ -127,9 +127,161 @@
       .tweet-card:nth-child(7) {
         animation-delay: 480ms;
       }
-      .tweet-card:nth-child(8) {
-        animation-delay: 560ms;
-      }
+        .tweet-card:nth-child(8) {
+          animation-delay: 560ms;
+        }
+
+        /* ═══ MOCKUP BROWSER ═══ */
+        .mockup-browser {
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 30px 60px -15px rgba(0,0,0,0.25);
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.15);
+            backdrop-filter: blur(20px);
+            transform: perspective(1200px) rotateY(-2deg) rotateX(1deg);
+            transition: transform 0.6s ease;
+        }
+        .mockup-browser:hover {
+            transform: perspective(1200px) rotateY(0deg) rotateX(0deg);
+        }
+        .mockup-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 18px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .mockup-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .mockup-dot-red { background: #ef4444; }
+        .mockup-dot-yellow { background: #eab308; }
+        .mockup-dot-green { background: #22c55e; }
+        .mockup-url {
+            flex: 1;
+            text-align: center;
+            font-size: 11px;
+            color: #9ca3af;
+            background: #e5e7eb;
+            padding: 5px 14px;
+            border-radius: 6px;
+            font-family: ui-monospace, monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .mockup-screen {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 10;
+            background: #e5e7eb;
+            overflow: hidden;
+        }
+        .mockup-slide {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+        .mockup-slide.active {
+            opacity: 1;
+        }
+
+        /* ═══ MOCKUP INDICATORS ═══ */
+        .mockup-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-top: 1px solid #e5e7eb;
+        }
+        .mockup-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #d1d5db;
+            transition: all 0.4s ease;
+            cursor: default;
+        }
+        .mockup-indicator.active {
+            background: #6366f1;
+            width: 24px;
+            border-radius: 4px;
+        }
+
+        /* ═══ TOAST MICRO-ANIMATION ═══ */
+        .mockup-toast {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(12px);
+            padding: 10px 18px;
+            border-radius: 10px;
+            box-shadow: 0 12px 30px -8px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.8);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #374151;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 5;
+        }
+        .mockup-toast-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+        .mockup-toast-icon.success { background: #dcfce7; color: #16a34a; }
+        .mockup-toast-icon.sale { background: #dbeafe; color: #2563eb; }
+        .mockup-toast-1 {
+            animation: toastLife 10s ease-in-out infinite;
+        }
+        .mockup-toast-2 {
+            animation: toastLife 10s ease-in-out infinite;
+            animation-delay: 5s;
+        }
+        @keyframes toastLife {
+            0% { opacity: 0; transform: translateX(-50%) translateY(12px); }
+            6% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            24% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            30% { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+        }
+
+        /* ═══ MOCKUP GLOW ═══ */
+        .mockup-glow {
+            position: absolute;
+            inset: -60px;
+            background: radial-gradient(ellipse at 50% 30%, rgba(99,102,241,0.12), transparent 70%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        @media (max-width: 768px) {
+            .mockup-browser {
+                transform: none;
+            }
+        }
     </style>
   </head>
   <body class="bg-white text-gray-900 font-sans antialiased">
@@ -261,55 +413,97 @@
 
     <main>
       <!-- ═══ HERO ═══ -->
-      <section class="relative pt-32 pb-16 sm:pt-36 sm:pb-20 lg:pt-40 lg:pb-24">
+      <section class="relative pt-28 pb-16 sm:pt-32 sm:pb-20 lg:pt-36 lg:pb-28 overflow-hidden">
         <div class="max-w-6xl mx-auto px-5 sm:px-8">
-          <div class="max-w-3xl mx-auto text-center">
-            <div
-              class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-sm font-medium mb-8 fade-in"
-            >
-              Más de 100 revendedores activos
-            </div>
-            <h1
-              class="text-[clamp(1.75rem,7vw,4rem)] sm:text-5xl lg:text-6xl font-extrabold leading-[1.1] tracking-tight mb-5 fade-in-d2 text-gray-900"
-            >
-              Gestioná tus cuentas streaming<br />
-              <span class="text-indigo-600">como un profesional</span>
-            </h1>
-            <p
-              class="text-base sm:text-lg lg:text-xl text-gray-500 leading-relaxed max-w-2xl mx-auto mb-10 fade-in-d2"
-            >
-              La herramienta que usan los revendedores que venden en serio.
-              Clientes, cuentas, perfiles y códigos de verificación en un solo
-              lugar.
-            </p>
-            <div
-              class="flex flex-col sm:flex-row items-center justify-center gap-3 fade-in-d4 mb-12"
-            >
-              <a
-                href="/app/login"
-                class="inline-flex items-center px-8 py-3.5 rounded-xl bg-gray-900 text-white font-semibold text-sm hover:bg-gray-800 transition-all active:scale-95 shadow-xl shadow-black/10 w-full sm:w-auto justify-center"
+          <div class="grid md:grid-cols-2 gap-10 lg:gap-16 items-center">
+            <!-- Left: Text -->
+            <div class="text-center md:text-left max-w-lg mx-auto md:mx-0">
+              <div
+                class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-sm font-medium mb-6 fade-in"
               >
-                Empezar ahora
-                <svg
-                  class="ml-2 w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                Más de 100 revendedores activos
+              </div>
+              <h1
+                class="text-[clamp(1.75rem,7vw,3.5rem)] sm:text-5xl lg:text-6xl font-extrabold leading-[1.1] tracking-tight mb-5 fade-in-d2 text-gray-900"
+              >
+                Gestioná tus cuentas streaming<br />
+                <span class="text-indigo-600">como un profesional</span>
+              </h1>
+              <p
+                class="text-base sm:text-lg lg:text-xl text-gray-500 leading-relaxed mb-8 fade-in-d2"
+              >
+                La herramienta que usan los revendedores que venden en serio.
+                Clientes, cuentas, perfiles y códigos de verificación en un solo
+                lugar.
+              </p>
+              <div
+                class="flex flex-col sm:flex-row items-center md:items-start gap-3 fade-in-d4"
+              >
+                <a
+                  href="/app/login"
+                  class="inline-flex items-center px-8 py-3.5 rounded-xl bg-gray-900 text-white font-semibold text-sm hover:bg-gray-800 transition-all active:scale-95 shadow-xl shadow-black/10 w-full sm:w-auto justify-center"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M17 8l4 4m0 0l-4 4m4-4H3"
-                  />
-                </svg>
-              </a>
-              <a
-                href="#features"
-                class="inline-flex items-center px-8 py-3.5 rounded-xl border border-gray-200 text-gray-600 font-semibold text-sm hover:border-gray-300 hover:text-gray-900 transition-all w-full sm:w-auto justify-center"
-              >
-                Ver funciones
-              </a>
+                  Empezar ahora
+                  <svg
+                    class="ml-2 w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M17 8l4 4m0 0l-4 4m4-4H3"
+                    />
+                  </svg>
+                </a>
+                <a
+                  href="#features"
+                  class="inline-flex items-center px-8 py-3.5 rounded-xl border border-gray-200 text-gray-600 font-semibold text-sm hover:border-gray-300 hover:text-gray-900 transition-all w-full sm:w-auto justify-center"
+                >
+                  Ver funciones
+                </a>
+              </div>
+            </div>
+
+            <!-- Right: Mockup Browser -->
+            <div class="relative fade-in-d4">
+              <div class="mockup-glow"></div>
+              <div class="mockup-browser">
+                <!-- Header -->
+                <div class="mockup-header">
+                  <div class="mockup-dot mockup-dot-red"></div>
+                  <div class="mockup-dot mockup-dot-yellow"></div>
+                  <div class="mockup-dot mockup-dot-green"></div>
+                  <div class="mockup-url">streamcontrolpro.app</div>
+                </div>
+                <!-- Screen -->
+                <div class="mockup-screen" id="mockup-screen">
+                  <img class="mockup-slide" src="/captura_stream/dashboard.png" alt="Dashboard StreamControl" />
+                  <img class="mockup-slide" src="/captura_stream/gestioncuentas.png" alt="Gestión de Cuentas" />
+                  <img class="mockup-slide" src="/captura_stream/gestionclientes.png" alt="Gestión de Clientes" />
+                  <img class="mockup-slide" src="/captura_stream/consultacodigos.png" alt="Consulta de Códigos" />
+
+                  <!-- Toast 1 -->
+                  <div class="mockup-toast mockup-toast-1">
+                    <div class="mockup-toast-icon success">✓</div>
+                    Código entregado a María G.
+                  </div>
+                  <!-- Toast 2 -->
+                  <div class="mockup-toast mockup-toast-2">
+                    <div class="mockup-toast-icon sale">$</div>
+                    Venta registrada — Netflix
+                  </div>
+                </div>
+                <!-- Indicators -->
+                <div class="mockup-indicators" id="mockup-indicators">
+                  <span class="mockup-indicator active"></span>
+                  <span class="mockup-indicator"></span>
+                  <span class="mockup-indicator"></span>
+                  <span class="mockup-indicator"></span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -330,7 +524,7 @@
           <div class="relative w-full rounded-2xl overflow-hidden shadow-2xl bg-gray-900" style="aspect-ratio: 16 / 9">
             <iframe
               class="absolute inset-0 w-full h-full"
-              src="https://www.youtube.com/embed/xHCRfmlReVI"
+              src="https://www.youtube.com/embed/czre0nj1eOs"
               title="StreamControl Pro — Demo"
               frameborder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -1333,6 +1527,22 @@
             iconClose.classList.add("hidden");
           });
         });
+      })();
+
+      /* ═══ MOCKUP CAROUSEL ═══ */
+      (function () {
+        var slides = document.querySelectorAll("#mockup-screen .mockup-slide");
+        var indicators = document.querySelectorAll("#mockup-indicators .mockup-indicator");
+        if (!slides.length || !indicators.length) return;
+        var current = 0;
+        slides[0].classList.add("active");
+        setInterval(function () {
+          slides[current].classList.remove("active");
+          indicators[current].classList.remove("active");
+          current = (current + 1) % slides.length;
+          slides[current].classList.add("active");
+          indicators[current].classList.add("active");
+        }, 4500);
       })();
     </script>
   </body>

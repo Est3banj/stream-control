@@ -110,16 +110,27 @@
           <p class="text-sm text-gray-500" id="plan-precio"></p>
         </div>
 
-        <!-- Submit -->
-        <button
-          type="submit"
-          class="w-full py-3.5 rounded-xl bg-gray-900 text-white font-semibold text-sm hover:bg-gray-800 transition-all active:scale-95 shadow-lg shadow-black/10 flex items-center justify-center gap-2"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-          Enviar solicitud por WhatsApp
-        </button>
+        <!-- Botones de envío -->
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button
+            type="submit"
+            data-method="whatsapp"
+            class="flex-1 inline-flex items-center justify-center py-3.5 rounded-xl bg-gray-900 text-white font-semibold text-sm hover:bg-gray-800 transition-all active:scale-95 shadow-lg shadow-black/10 gap-2"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+            WhatsApp
+          </button>
+          <button
+            type="submit"
+            data-method="correo"
+            class="flex-1 inline-flex items-center justify-center py-3.5 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold text-sm hover:border-gray-400 hover:text-gray-900 transition-all active:scale-95 gap-2"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            Correo electrónico
+          </button>
+        </div>
 
-        <p class="text-xs text-gray-400 text-center">Al enviar, serás redirigido a WhatsApp para confirmar tu solicitud. Sin compromiso.</p>
+        <p class="text-xs text-gray-400 text-center">Elegí cómo querés enviar tu solicitud. Sin compromiso.</p>
       </form>
 
       <div class="text-center mt-6">
@@ -169,10 +180,16 @@
   })();
 
   // ===========================================
-  // Submit — Redirigir a WhatsApp
+  // Submit — WhatsApp o Correo
   // ===========================================
+  var EMAIL_ADMIN = 'streamcontrolpro@gmail.com';
+
   document.getElementById('solicitud-form').addEventListener('submit', function(e) {
     e.preventDefault();
+
+    var submitter = e.submitter;
+    var method = submitter ? submitter.getAttribute('data-method') : null;
+    if (!method) return;
 
     var planKey = document.getElementById('field-plan').value;
     var plan = PLANES[planKey];
@@ -190,15 +207,29 @@
       return;
     }
 
-    var mensaje = 'Hola, quiero activar el plan ' + plan.nombre + ' de StreamControl Pro.%0A%0A' +
-      'Mis datos:%0A' +
-      '• Nombre: ' + nombre + '%0A' +
-      '• Email: ' + email + '%0A' +
-      (negocio ? '• Negocio: ' + negocio + '%0A' : '') +
-      '%0A' + plan.label + '%0A' +
-      'Quedo atento a la activación. Gracias!';
+    if (method === 'whatsapp') {
+      var mensaje = 'Hola, quiero activar el plan ' + plan.nombre + ' de StreamControl Pro.%0A%0A' +
+        'Mis datos:%0A' +
+        '• Nombre: ' + nombre + '%0A' +
+        '• Email: ' + email + '%0A' +
+        (negocio ? '• Negocio: ' + negocio + '%0A' : '') +
+        '%0A' + plan.label + '%0A' +
+        'Quedo atento a la activación. Gracias!';
 
-    window.location.href = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + mensaje;
+      window.location.href = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + mensaje;
+    } else if (method === 'correo') {
+      var asunto = 'Solicitud Plan ' + plan.nombre + ' - ' + nombre;
+      var cuerpo =
+        'Hola, quiero activar el plan ' + plan.nombre + ' de StreamControl Pro.\n\n' +
+        'Mis datos:\n' +
+        '• Nombre: ' + nombre + '\n' +
+        '• Email: ' + email + '\n' +
+        (negocio ? '• Negocio: ' + negocio + '\n' : '') +
+        '\n' + plan.label + '\n\n' +
+        'Quedo atento a la activación. Gracias!';
+
+      window.location.href = 'mailto:' + EMAIL_ADMIN + '?subject=' + encodeURIComponent(asunto) + '&body=' + encodeURIComponent(cuerpo);
+    }
   });
 </script>
 </body>
