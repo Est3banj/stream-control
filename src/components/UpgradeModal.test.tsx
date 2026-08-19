@@ -62,6 +62,16 @@ const enterprisePermisos = {
   tieneSoporte247: true,
 };
 
+vi.mock('../hooks/useMoneda', () => ({
+  useMoneda: () => ({
+    moneda: 'COP',
+    simbolo: '$',
+    tasa: 1,
+    formatear: (v: number) => `$${v.toLocaleString('es-CO')}`,
+    formatearDesdeBase: (v: number) => `$${v.toLocaleString('es-CO')}`,
+  }),
+}));
+
 describe('UpgradeModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
