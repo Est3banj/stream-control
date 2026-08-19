@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useMoneda } from '../hooks/useMoneda';
 import { Bell, X, Calendar, AlertCircle } from 'lucide-react';
 import useClientesConNotificaciones from '../hooks/useClientesConNotificaciones';
 import type { NotificacionDerivada } from '../types/hooks';
@@ -7,6 +8,7 @@ import type { NotificacionDerivada } from '../types/hooks';
 export default function NotificationsPanel() {
   const { user } = useAuth();
   const { notificaciones, loading } = useClientesConNotificaciones(user);
+  const { formatear } = useMoneda();
   const [mostrarPanel, setMostrarPanel] = useState(false);
   const [notificacionesLeidas, setNotificacionesLeidas] = useState<string[]>([]);
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -198,7 +200,7 @@ export default function NotificationsPanel() {
                               <div className="mt-2">
                                 <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
                                   <AlertCircle size={12} />
-                                  Debe ${notif.saldoPendiente?.toLocaleString()}
+                                  Debe {formatear(notif.saldoPendiente || 0)}
                                 </span>
                               </div>
                             )}

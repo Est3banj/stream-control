@@ -5,6 +5,7 @@ import usePermisos from '../hooks/usePermisos';
 import type { Cuenta, PerfilCuenta } from '../types/cuenta';
 import { Plus, X, Check, Save, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useMoneda } from '../hooks/useMoneda';
 
 interface SelectorCuentaProps {
   proveedor: string;
@@ -37,6 +38,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
   const { user } = useAuth();
   const permisos = usePermisos(user);
   const { cuentas, loading } = useCuentas(user);
+  const { formatear } = useMoneda();
 
   const cuentasDisponibles = useMemo(() => {
     if (!proveedor) return [];
@@ -184,7 +186,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
                   <option value="">Seleccioná una cuenta...</option>
                   {cuentasDisponibles.map(c => (
                     <option key={c.id} value={c.id}>
-                      {maskEmail(c.correoCuenta)} — ${c.costo.toLocaleString()} 
+                      {maskEmail(c.correoCuenta)} — {formatear(c.costo)} 
                       {c.tipoVenta === 'completa' 
                         ? ' (Completa)' 
                         : ` (${(Array.isArray(c.perfiles) ? c.perfiles : []).filter(p => p.estado === 'disponible').length}/${(Array.isArray(c.perfiles) ? c.perfiles : []).length} perfiles)`
@@ -231,7 +233,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
                 <span className="font-medium">
                   {cuentaSeleccionada.tipoVenta === 'completa' ? 'Costo total:' : 'Costo por perfil:'}
                 </span>{' '}
-                ${calcularCostoPorPerfil(cuentaSeleccionada).toLocaleString()}
+                {formatear(calcularCostoPorPerfil(cuentaSeleccionada))}
               </p>
               <p className="text-xs text-indigo-500 mt-0.5">
                 {cuentaSeleccionada.tipoVenta === 'completa'

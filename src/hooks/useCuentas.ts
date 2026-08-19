@@ -169,13 +169,6 @@ export async function asignarPerfil(
   }
 }
 
-export async function toggleCuentaActiva(id: string, current: boolean): Promise<void> {
-  await updateDoc(doc(db, 'cuentas', id), {
-    estado: current ? 'disponible' : 'expirada',
-    updatedAt: serverTimestamp(),
-  });
-}
-
 export default function useCuentas(user: { uid?: string; rol?: string } | null): { cuentas: Cuenta[]; loading: boolean; error: string | null } {
   const [state, setState] = useState<{ cuentas: Cuenta[]; loading: boolean; error: string | null }>(() => ({
     cuentas: sharedData,

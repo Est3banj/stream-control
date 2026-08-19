@@ -4,6 +4,7 @@ import usePlanes, { crearPlan, actualizarPlan, togglePlanActive, eliminarPlan } 
 import useSuscripciones from '../hooks/useSuscripciones';
 import { useAdminConfig, updateAdminConfig, sanitizarWhatsApp } from '../hooks/useAdminConfig';
 import PlanForm from '../components/PlanForm';
+import { useMoneda } from '../hooks/useMoneda';
 import { Package, Plus, Edit, ToggleLeft, Trash2, AlertCircle, MessageCircle, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { type Plan, type PlanInput } from '../types/plan';
@@ -13,11 +14,13 @@ export default function AdminPlanes() {
   const { planes, loading, error } = usePlanes(user);
   const { suscripciones } = useSuscripciones(user);
   const { config, loading: configLoading } = useAdminConfig();
+  const { formatearDesdeBase } = useMoneda();
   const [whatsapp, setWhatsapp] = useState(config.whatsapp);
   const [guardandoWhatsapp, setGuardandoWhatsapp] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   // Sincroniza el input cuando se carga la config desde Firestore
   useEffect(() => {
@@ -65,6 +68,7 @@ export default function AdminPlanes() {
   };
 
   const handleToggle = async (id: string, current: boolean) => {
+    setTogglingId(id);
     try {
       await togglePlanActive(id, current);
       toast.success(`Plan ${current ? 'desactivado' : 'activado'} correctamente`);
@@ -72,6 +76,8 @@ export default function AdminPlanes() {
       const error = err as Error;
       console.error('Error toggling plan:', error);
       toast.error('Error al cambiar estado del plan');
+    } finally {
+      setTogglingId(null);
     }
   };
 
@@ -197,7 +203,7 @@ export default function AdminPlanes() {
                         )}
                       </td>
                       <td className="px-4 py-4 font-medium text-gray-900">
-                        ${plan.precio.toLocaleString()} /mes
+                        {formatearDesdeBase(plan.precio)} /mes
                       </td>
                       <td className="px-4 py-4 text-center text-gray-700">
                         {plan.duracionDias} días
@@ -221,7 +227,7 @@ export default function AdminPlanes() {
                         </span>
                       </td>
                       <td className="px-4 py-4 text-center font-medium text-green-700">
-                        ${monthlyRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        {formatearDesdeBase(monthlyRevenue)}
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center justify-center gap-2">
@@ -234,7 +240,8 @@ export default function AdminPlanes() {
                           </button>
                           <button
                             onClick={() => handleToggle(plan.id, plan.activo)}
-                            className={`p-2 rounded-lg transition-colors ${plan.activo
+                            disabled={togglingId === plan.id || deletingId === plan.id}
+                            className={`p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${plan.activo
                                 ? 'bg-orange-100 text-orange-600 hover:bg-orange-200'
                                 : 'bg-green-100 text-green-600 hover:bg-green-200'
                               }`}

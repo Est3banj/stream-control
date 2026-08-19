@@ -29,7 +29,7 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
   const [casos, setCasos] = useState<string[]>([]);
   const [selectedCaso, setSelectedCaso] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
-  const [codeResult, setCodeResult] = useState<{ codigo: string; email: string; fecha: string; tipo: string } | null>(null);
+  const [codeResult, setCodeResult] = useState<{ codigo: string; email: string; fecha: string; tipo: string; expiraEn?: number } | null>(null);
   const [notFoundMsg, setNotFoundMsg] = useState('');
   const [sessionWarning, setSessionWarning] = useState(false);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -122,6 +122,7 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
           email: data.email as string,
           fecha: data.fecha as string,
           tipo: data.tipo as string,
+          expiraEn: data.expiraEn as number | undefined,
         });
         setState('result');
       } else {
@@ -239,6 +240,7 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
                 email={codeResult.email}
                 fecha={codeResult.fecha}
                 tipo={codeResult.tipo}
+                expiraEn={codeResult.expiraEn}
               />
               <button
                 onClick={() => {

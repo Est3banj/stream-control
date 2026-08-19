@@ -4,6 +4,7 @@ import { collection, getDocs, Timestamp } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import useSuscripciones, { crearSuscripcion, actualizarSuscripcion, marcarPagada } from '../hooks/useSuscripciones';
 import usePlanes from '../hooks/usePlanes';
+import { useMoneda } from '../hooks/useMoneda';
 import SuscripcionCard from '../components/SuscripcionCard';
 import { CreditCard, Plus, X, Eye, AlertCircle, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -13,6 +14,7 @@ export default function AdminSuscripciones() {
   const { user } = useAuth();
   const { suscripciones, loading, error } = useSuscripciones(user);
   const { planes } = usePlanes(user);
+  const { formatearDesdeBase } = useMoneda();
 
   const [filtroEstado, setFiltroEstado] = useState<EstadoSuscripcion | 'todas'>('todas');
   const [filtroPago, setFiltroPago] = useState<PagoEstado | 'todos'>('todos');
@@ -77,7 +79,10 @@ export default function AdminSuscripciones() {
     }
   };
 
+  const [marcandoPagada, setMarcandoPagada] = useState<string | null>(null);
+
   const handleMarcarPagada = async (id: string) => {
+    setMarcandoPagada(id);
     try {
       await marcarPagada(id);
       toast.success('Suscripción marcada como pagada');
@@ -85,6 +90,8 @@ export default function AdminSuscripciones() {
       const error = err as Error;
       console.error('Error marcando como pagada:', error);
       toast.error('Error al marcar como pagada');
+    } finally {
+      setMarcandoPagada(null);
     }
   };
 
@@ -251,7 +258,7 @@ export default function AdminSuscripciones() {
                         </span>
                       </td>
                       <td className="px-4 py-4 text-center font-semibold text-gray-900">
-                        ${s.monto.toLocaleString()}
+                        {formatearDesdeBase(s.monto)}
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center justify-center gap-2">
@@ -351,7 +358,7 @@ export default function AdminSuscripciones() {
                   <option value="">Seleccionar plan...</option>
                   {planes.filter(p => p.activo).map(p => (
                     <option key={p.id} value={p.id}>
-                      {p.nombre} - ${p.precio.toLocaleString()} ({p.duracionDias} días)
+                      {p.nombre} - {formatearDesdeBase(p.precio)} ({p.duracionDias} días)
                     </option>
                   ))}
                 </select>
@@ -410,6 +417,7 @@ export default function AdminSuscripciones() {
             <SuscripcionCard
               suscripcion={viewSuscripcion}
               onMarcarPagada={handleMarcarPagada}
+              cargandoId={marcandoPagada}
             />
           </div>
         </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useMoneda } from '../hooks/useMoneda';
 import { X, Plus, Trash2, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { Plan, PlanInput, PreciosPeriodo } from '../types/plan';
@@ -16,6 +17,7 @@ const PERIODOS = [
 ];
 
 export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
+  const { formatearDesdeBase, simbolo } = useMoneda();
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [precio, setPrecio] = useState('');
@@ -218,7 +220,7 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
                   <div key={key}>
                     <label className="block text-xs text-gray-500 mb-1">{label}</label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">{simbolo}</span>
                       <input
                         type="number"
                         value={val}
@@ -226,7 +228,7 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
                         className="w-full pl-7"
                         min="0"
                         step="0.01"
-                        placeholder={sugerido > 0 ? `~${sugerido.toLocaleString()}` : ''}
+                        placeholder={sugerido > 0 ? `~${formatearDesdeBase(sugerido)}` : ''}
                       />
                     </div>
                   </div>
