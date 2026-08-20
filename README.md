@@ -156,6 +156,8 @@ streamcontrol/
 | `guardarCredenciales` | 15s | Guarda credenciales IMAP en cuentas_secretos |
 | `toggleToken` | 15s | Activa/desactiva un token |
 
+> **Migración Vercel (2026-08)**: las Cloud Functions fueron portadas a un backend Express en Vercel (`api/`) — ver [Backend Express](#backend-express-api). Los triggers de Firestore (`onNuevoUsuario`, `onNotificacionEmail`) ya NO existen como triggers: el frontend los invoca como llamadas explícitas fire-and-forget (1 reintento) tras cada write. **Esto pierde la garantía de at-least-once**: si el proceso muere entre el write y la llamada, el email se pierde (recuperable a mano: reenviar desde admin o escribir el doc y reinvocar). La idempotencia está protegida con claims transaccionales (`emailBienvenidaEnviado`, `procesadoEnviado`): reintentos duplicados no reenvían emails.
+
 ### Planes y Suscripciones
 
 | Feature | Starter | Professional | Enterprise |
