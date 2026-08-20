@@ -1,11 +1,12 @@
 /**
- * Middlewares: CORS estricto (solo https://streamcontrol.pro), auth Bearer,
- * requireAdmin (claims + fallback Firestore), cronSecret (constant-time), errorMiddleware.
+ * Middlewares: CORS estricto (allowlist de orígenes de Hosting, match exacto),
+ * auth Bearer, requireAdmin (claims + fallback Firestore), cronSecret (constant-time),
+ * errorMiddleware.
  */
 
 import type { NextFunction, Request, Response } from 'express';
 import * as crypto from 'crypto';
-import { ALLOWED_ORIGIN, CRON_SECRET } from './config.js';
+import { ALLOWED_ORIGINS, CRON_SECRET } from './config.js';
 import { APIError, errorEnvelope, errorStatusFor } from './errors.js';
 import { db, getAdmin } from './firebase.js';
 
@@ -28,8 +29,8 @@ export function corsMiddleware(req: Request, res: Response, next: NextFunction):
     return;
   }
 
-  if (origin === ALLOWED_ORIGIN) {
-    res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Vary', 'Origin');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');

@@ -15,6 +15,13 @@ vi.mock('firebase-admin', () => mockFirebaseAdmin());
 
 const ALLOWED = 'https://streamcontrol.pro';
 
+// Hosting sirve la SPA en los 3 dominios canónicos (verificado HTTP 200):
+const HOSTING_ORIGINS = [
+  'https://streamcontrol.pro',
+  'https://streamcontrol-10837.web.app',
+  'https://streamcontrol-10837.firebaseapp.com',
+];
+
 function corsApp(handlerSpy?: () => Promise<unknown>) {
   const registry: Record<string, RouteDef> = {
     echo: { auth: 'none', handler: (handlerSpy ?? (async () => ({ ok: true }))) as RouteDef['handler'] },
@@ -74,5 +81,35 @@ describe('CORS estricto', () => {
       .send({ data: { x: 1 } });
     expect(res.status).toBe(200);
     expect(res.headers['access-control-allow-origin']).toBe(ALLOWED);
+  });
+
+  it.each(HOSTING_ORIGINS)('preflight OPTIONS desde %s → 204 con ACAO exacto', async (origin) => {
+    const app = corsApp();
+    const res = await request(app)
+      .options('/api/echo')
+      .set('Origin', origin)
+      .set('Access-Control-Request-Method', 'POST');
+    expect(res.status).toBe(204);
+    expect(res.headers['access-control-allow-origin']).toBe(origin);
+  });
+
+  it.each(HOSTING_ORIGINS)('POST real desde %s → 200 con ACAO exacto', async (origin) => {
+    const app = corsApp();
+    const res = await request(app)
+      .post('/api/echo')
+      .set('Origin', origin)
+      .send({ data: { x: 1 } });
+    expect(res.status).toBe(200);
+    expect(res.headers['access-control-allow-origin']).toBe(origin);
+  });
+
+  it('variante con subdominio falso (x-streamcontrol.pro) → SIN ACAO', async () => {
+    const app = corsApp();
+    const res = await request(app)
+      .options('/api/echo')
+      .set('Origin', 'https://x-streamcontrol.pro')
+      .set('Access-Control-Request-Method', 'POST');
+    expect(res.status).toBe(204);
+    expect(res.headers['access-control-allow-origin']).toBeUndefined();
   });
 });

@@ -3,7 +3,16 @@
  * NUNCA se expone el valor de un secreto en mensajes de error.
  */
 
-export const ALLOWED_ORIGIN = 'https://streamcontrol.pro';
+/**
+ * Allowlist de orígenes legítimos (match EXACTO, sin comodines):
+ * Firebase Hosting sirve la SPA en los 3 dominios canónicos del proyecto
+ * (custom, web.app y firebaseapp.com) — verificado HTTP 200 en los tres.
+ */
+export const ALLOWED_ORIGINS: string[] = [
+  'https://streamcontrol.pro',
+  'https://streamcontrol-10837.web.app',
+  'https://streamcontrol-10837.firebaseapp.com',
+];
 
 export const DEFAULT_APP_URL = 'https://streamcontrol-10837.firebaseapp.com';
 
