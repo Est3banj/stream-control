@@ -5,11 +5,5 @@
       "src": "api/index.ts",
       "use": "@vercel/node"
     }
-  ],
-  "functions": {
-    "api/index.ts": {
-      "maxDuration": 300,
-      "memory": 1024
-    }
-  }
+  ]
 }

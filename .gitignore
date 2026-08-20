@@ -89,3 +89,4 @@ api/.env*
 .atl/
 
 .DS_Store
+.vercel

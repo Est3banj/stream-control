@@ -5,4 +5,9 @@
 
 import { createApp } from './src/app.js';
 
+export const config = {
+  maxDuration: 300,
+  memory: 1024,
+};
+
 export default createApp();
