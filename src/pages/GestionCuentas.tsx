@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import useCuentas, { crearCuenta, actualizarCuenta, toggleCuentaActiva, asignarPerfil } from '../hooks/useCuentas';
+import useCuentas, { crearCuenta, actualizarCuenta, asignarPerfil } from '../hooks/useCuentas';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { callFunction } from '../lib/apiClient';
+import { db } from '../firebase';
 import usePermisos from '../hooks/usePermisos';
 import useClientes from '../hooks/useClientes';
+import { useMoneda } from '../hooks/useMoneda';
 import CuentaForm from '../components/CuentaForm';
 import CuentaDetail from '../components/CuentaDetail';
 import ConfigurarIMAP from '../components/ConfigurarIMAP';
@@ -10,29 +14,18 @@ import FeatureBlocked from '../components/FeatureBlocked';
 import Paginador from '../components/Paginador';
 import DropdownMenu from '../components/DropdownMenu';
 import toast from 'react-hot-toast';
-import { Search, Eye, Edit, EyeOff, Users, CheckCircle, AlertCircle, AlertTriangle, Film, X, Download, Key, Link, Check, AlertTriangle as AlertTriangleIcon } from 'lucide-react';
+import { Search, Eye, Edit, EyeOff, Users, CheckCircle, AlertCircle, AlertTriangle, Film, X, Download, Key, Link, Check, RefreshCw, Copy } from 'lucide-react';
 import type { Cuenta, CreateCuentaInput } from '../types/cuenta';
+import { ESTADO_BADGES, maskEmail } from '../constants';
 
 const PROVEEDORES = ['Todos', 'Netflix', 'Max', 'Disney+', 'Prime Video', 'ChatGPT', 'Win Sports+', 'Universal+', 'Paramount+', 'Otro'];
-
-const ESTADO_BADGES: Record<string, { label: string; class: string }> = {
-  disponible: { label: 'Disponible', class: 'bg-green-100 text-green-700' },
-  asignada: { label: 'Asignada', class: 'bg-blue-100 text-blue-700' },
-  expirada: { label: 'Expirada', class: 'bg-red-100 text-red-700' },
-};
-
-function maskEmail(email: string): string {
-  if (!email || !email.includes('@')) return email;
-  const [name, domain] = email.split('@');
-  const maskedName = name.length > 4 ? name.slice(0, 4) + '***' : name.slice(0, 1) + '***';
-  return `${maskedName}@${domain}`;
-}
 
 export default function GestionCuentas() {
   const { user } = useAuth();
   const { cuentas: todasLasCuentas, loading, error } = useCuentas(user);
   const permisos = usePermisos(user);
   const { clientes: todosLosClientes, loading: loadingClientes } = useClientes(user);
+  const { formatear } = useMoneda();
 
   const [busqueda, setBusqueda] = useState('');
   const [filtroProveedor, setFiltroProveedor] = useState('Todos');
@@ -47,10 +40,17 @@ export default function GestionCuentas() {
   const [guardando, setGuardando] = useState(false);
   const [confirmarAccion, setConfirmarAccion] = useState<{ cuenta: Cuenta; accion: 'desactivar' | 'reactivar' } | null>(null);
   const [mostrarIMAP, setMostrarIMAP] = useState(false);
+  const [mostrarDatosCuenta, setMostrarDatosCuenta] = useState(false);
+  const [datosCuenta, setDatosCuenta] = useState<{ proveedor: string; correoCuenta: string; correo: string; contrasena: string; perfiles: Array<{ nombre: string; pin?: string; estado: string }> } | null>(null);
   const [mostrarAsignar, setMostrarAsignar] = useState(false);
   const [cuentaAsignando, setCuentaAsignando] = useState<Cuenta | null>(null);
   const [perfilIdxAsignando, setPerfilIdxAsignando] = useState<number>(0);
   const [busquedaCliente, setBusquedaCliente] = useState('');
+  const [mostrarRenovar, setMostrarRenovar] = useState(false);
+  const [cuentaRenovar, setCuentaRenovar] = useState<Cuenta | null>(null);
+  const [renovarFechaInicio, setRenovarFechaInicio] = useState('');
+  const [renovarDiasServicio, setRenovarDiasServicio] = useState('30');
+  const [renovando, setRenovando] = useState(false);
 
   useEffect(() => {
     setPaginaActual(1);
@@ -113,22 +113,100 @@ export default function GestionCuentas() {
     }
   };
 
+  const handleRenovarCuenta = (cuenta: Cuenta) => {
+    setCuentaRenovar(cuenta);
+    setRenovarFechaInicio(new Date().toISOString().split('T')[0]);
+    setRenovarDiasServicio('30');
+    setMostrarRenovar(true);
+  };
+
+  const handleCopiarDatos = async (cuenta: Cuenta) => {
+    try {
+      const data = await callFunction<{ cuentaId: string }, {
+        proveedor: string;
+        correoCuenta: string;
+        correo: string;
+        contrasena: string;
+        perfiles: Array<{ nombre: string; pin?: string; estado: string }>;
+      }>('obtenerCredencialesCuenta', { cuentaId: cuenta.id });
+      setDatosCuenta(data);
+      setMostrarDatosCuenta(true);
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      toast.error(error.message || 'Error al obtener datos de la cuenta');
+    }
+  };
+
+  const confirmarRenovarCuenta = async () => {
+    if (!cuentaRenovar || !renovarFechaInicio || !renovarDiasServicio) return;
+    setRenovando(true);
+    try {
+      const fechaInicio = renovarFechaInicio;
+      const dias = Number(renovarDiasServicio);
+      if (!dias || dias <= 0) {
+        toast.error('Los dias de servicio deben ser mayor a 0');
+        setRenovando(false);
+        return;
+      }
+      const fd = new Date(fechaInicio);
+      fd.setDate(fd.getDate() + dias);
+      const fechaVencimiento = fd.toISOString().split('T')[0];
+
+      // Estado: si tiene perfiles asignados → 'asignada', sino → 'disponible'
+      const perfilesAsignados = (cuentaRenovar.perfiles || []).filter(p => p.estado === 'asignado');
+      const nuevoEstado = perfilesAsignados.length > 0 ? 'asignada' : 'disponible';
+
+      await actualizarCuenta(cuentaRenovar.id, {
+        fechaInicio,
+        diasServicio: dias,
+        fechaVencimiento,
+        estado: nuevoEstado,
+        // NO tocamos perfiles — eso preserva las asignaciones existentes
+      });
+
+      toast.success(`Cuenta renovada hasta el ${fechaVencimiento}`);
+      setMostrarRenovar(false);
+      setCuentaRenovar(null);
+    } catch (err: unknown) {
+      console.error('Error renovando cuenta:', err);
+      toast.error('Error al renovar la cuenta');
+    } finally {
+      setRenovando(false);
+    }
+  };
+
   const handleToggleEstado = async (cuenta: Cuenta) => {
     const accion = cuenta.estado === 'expirada' ? 'reactivar' : 'desactivar';
     setConfirmarAccion({ cuenta, accion });
   };
 
+  const [togglendoEstado, setTogglendoEstado] = useState(false);
+
   const confirmarToggleEstado = async () => {
     if (!confirmarAccion) return;
     const { cuenta, accion } = confirmarAccion;
     setConfirmarAccion(null);
+    setTogglendoEstado(true);
+
     try {
+      // Validar: no reactivar si hay perfiles asignados
+      if (accion === 'reactivar') {
+        const perfilesAsignados = (cuenta.perfiles || []).filter(p => p.estado === 'asignado');
+        if (perfilesAsignados.length > 0) {
+          toast.error(`No se puede reactivar: ${perfilesAsignados.length} perfil(es) están asignados. Liberalos primero.`);
+          setTogglendoEstado(false);
+          return;
+        }
+      }
+
       const nuevoEstado = accion === 'reactivar' ? 'disponible' : 'expirada';
       await actualizarCuenta(cuenta.id, { estado: nuevoEstado });
       toast.success(`Cuenta ${nuevoEstado === 'expirada' ? 'desactivada' : 'reactivada'} correctamente`);
     } catch (err: unknown) {
       console.error('Error cambiando estado:', err);
       toast.error('Error al cambiar estado de la cuenta');
+    } finally {
+      setTogglendoEstado(false);
     }
   };
 
@@ -399,6 +477,7 @@ export default function GestionCuentas() {
                 <th className="px-4 py-4 text-center text-sm font-semibold">Perfiles</th>
                 <th className="px-4 py-4 text-right text-sm font-semibold">Costo</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Estado</th>
+                <th className="px-4 py-4 text-center text-sm font-semibold">IMAP</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Días Restantes</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Acciones</th>
               </tr>
@@ -434,12 +513,21 @@ export default function GestionCuentas() {
                       </td>
                       <td className="px-4 py-4 text-right">
                         <span className="font-semibold text-gray-900">
-                          ${c.costo.toLocaleString()}
+                          {formatear(c.costo)}
                         </span>
                       </td>
                       <td className="px-4 py-4 text-center">
                         <span className={`px-3 py-1 rounded-full text-sm font-semibold ${badge.class}`}>
                           {badge.label}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-center">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                          c.imapConfigurado
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-gray-100 text-gray-500'
+                        }`}>
+                          IMAP
                         </span>
                       </td>
                       <td className="px-4 py-4 text-center">
@@ -480,6 +568,11 @@ export default function GestionCuentas() {
                                 setMostrarEditar(true);
                               },
                             },
+                            {
+                              label: 'Renovar cuenta',
+                              icon: <RefreshCw size={16} />,
+                              onClick: () => handleRenovarCuenta(c),
+                            },
                             ...(perfilesDisp > 0 ? [{
                               label: 'Asignar perfil',
                               icon: <Link size={16} />,
@@ -493,12 +586,17 @@ export default function GestionCuentas() {
                               },
                             }] : []),
                             {
-                              label: 'Configurar IMAP',
+                              label: c.imapConfigurado ? 'Ver IMAP' : 'Configurar IMAP',
                               icon: <Key size={16} />,
                               onClick: () => {
                                 setCuentaSeleccionada(c);
                                 setMostrarIMAP(true);
                               },
+                            },
+                            {
+                              label: 'Copiar datos',
+                              icon: <Copy size={16} />,
+                              onClick: () => handleCopiarDatos(c),
                             },
                             {
                               label: c.estado === 'expirada' ? 'Reactivar cuenta' : 'Desactivar cuenta',
@@ -514,7 +612,7 @@ export default function GestionCuentas() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-gray-500">
+                  <td colSpan={8} className="text-center py-12 text-gray-500">
                     <Film size={48} className="mx-auto mb-3 text-gray-300" />
                     <p className="font-medium">No se encontraron cuentas</p>
                   </td>
@@ -606,6 +704,7 @@ export default function GestionCuentas() {
               </button>
             </div>
             <CuentaForm
+              key={cuentaSeleccionada.id}
               initialData={cuentaSeleccionada}
               onSubmit={handleEditarCuenta}
               onCancel={() => {
@@ -643,8 +742,99 @@ export default function GestionCuentas() {
                 setMostrarIMAP(false);
                 setCuentaSeleccionada(null);
               }}
-              onSuccess={() => toast.success('Credenciales configuradas')}
+              onSuccess={async () => {
+                try {
+                  await updateDoc(doc(db, 'cuentas', cuentaSeleccionada.id), {
+                    imapConfigurado: true,
+                    updatedAt: serverTimestamp(),
+                  });
+                } catch (err) {
+                  console.warn('No se pudo marcar imapConfigurado:', err);
+                }
+                toast.success('Credenciales IMAP guardadas ✓');
+              }}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Datos de la cuenta */}
+      {mostrarDatosCuenta && datosCuenta && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="card max-w-lg w-full animate-scale-in">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
+                  <Copy size={20} className="text-indigo-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">{datosCuenta.proveedor}</h2>
+                  <p className="text-sm text-gray-500">Datos de la cuenta</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { setMostrarDatosCuenta(false); setDatosCuenta(null); }}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <X size={24} className="text-gray-600" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                <div>
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Correo</span>
+                  <p className="text-sm font-medium text-gray-900 mt-0.5 select-all">{datosCuenta.correo || datosCuenta.correoCuenta}</p>
+                </div>
+                {datosCuenta.contrasena && (
+                  <div>
+                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Contrasena</span>
+                    <p className="text-sm font-medium text-gray-900 mt-0.5 select-all font-mono">{datosCuenta.contrasena}</p>
+                  </div>
+                )}
+              </div>
+
+              {datosCuenta.perfiles?.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Perfiles</h3>
+                  <div className="space-y-2">
+                    {datosCuenta.perfiles.map((p, i) => (
+                      <div key={i} className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-xl">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{p.nombre}</p>
+                          {p.pin && <p className="text-xs text-gray-500">PIN: {p.pin}</p>}
+                        </div>
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                          p.estado === 'disponible' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          {p.estado === 'disponible' ? 'Disponible' : 'Asignado'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={async () => {
+                  let texto = `${datosCuenta.proveedor}\n`;
+                  texto += `Correo: ${datosCuenta.correo || datosCuenta.correoCuenta}\n`;
+                  if (datosCuenta.contrasena) texto += `Contrasena: ${datosCuenta.contrasena}\n`;
+                  if (datosCuenta.perfiles?.length) {
+                    texto += `\nPerfiles:\n`;
+                    datosCuenta.perfiles.forEach((p: { nombre: string; pin?: string; estado: string }) => {
+                      texto += `  ${p.nombre}${p.pin ? ` - PIN: ${p.pin}` : ''} [${p.estado}]\n`;
+                    });
+                  }
+                  await navigator.clipboard.writeText(texto.trim());
+                  toast.success('Datos copiados al portapapeles');
+                }}
+                className="btn-primary w-full flex items-center justify-center gap-2"
+              >
+                <Copy size={18} />
+                Copiar datos
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -771,12 +961,93 @@ export default function GestionCuentas() {
         </div>
       )}
 
+      {/* Modal: Renovar Cuenta */}
+      {mostrarRenovar && cuentaRenovar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="card max-w-md w-full animate-scale-in">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Renovar Cuenta</h2>
+              <button
+                onClick={() => {
+                  setMostrarRenovar(false);
+                  setCuentaRenovar(null);
+                }}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <X size={24} className="text-gray-600" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              {cuentaRenovar.proveedor} — {maskEmail(cuentaRenovar.correoCuenta)}
+            </p>
+            <p className="text-xs text-gray-500 mb-6">
+              Solo se actualizaran las fechas y el estado. Los perfiles asignados no se modifican.
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Fecha de inicio</label>
+                <input
+                  type="date"
+                  value={renovarFechaInicio}
+                  onChange={(e) => setRenovarFechaInicio(e.target.value)}
+                  className="w-full"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Dias de servicio</label>
+                <input
+                  type="number"
+                  value={renovarDiasServicio}
+                  onChange={(e) => setRenovarDiasServicio(e.target.value)}
+                  className="w-full"
+                  min="1"
+                  placeholder="Ej: 30"
+                  required
+                />
+              </div>
+              {renovarFechaInicio && renovarDiasServicio && Number(renovarDiasServicio) > 0 && (
+                <div className="flex items-center justify-between px-3 py-2 bg-indigo-50 rounded-lg border border-indigo-100">
+                  <span className="text-sm font-medium text-indigo-600">Nuevo vencimiento</span>
+                  <span className="text-sm font-bold text-indigo-700">
+                    {(() => {
+                      const d = new Date(renovarFechaInicio);
+                      d.setDate(d.getDate() + Number(renovarDiasServicio));
+                      return d.toISOString().split('T')[0];
+                    })()}
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-3 pt-6">
+              <button
+                onClick={() => {
+                  setMostrarRenovar(false);
+                  setCuentaRenovar(null);
+                }}
+                className="btn-secondary flex-1"
+                disabled={renovando}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmarRenovarCuenta}
+                disabled={renovando || !renovarFechaInicio || !renovarDiasServicio}
+                className="btn-primary flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:opacity-50"
+              >
+                {renovando ? 'Renovando...' : 'Renovar cuenta'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal: Confirmar acción */}
       {confirmarAccion && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="card max-w-md w-full animate-scale-in text-center">
             <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-              <AlertTriangleIcon className="text-red-600" size={32} />
+              <AlertTriangle className="text-red-600" size={32} />
             </div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">
               {confirmarAccion.accion === 'desactivar' ? 'Desactivar cuenta' : 'Reactivar cuenta'}
@@ -796,13 +1067,14 @@ export default function GestionCuentas() {
               </button>
               <button
                 onClick={confirmarToggleEstado}
-                className={`flex-1 py-2.5 rounded-xl font-semibold text-white transition-all ${
+                disabled={togglendoEstado}
+                className={`flex-1 py-2.5 rounded-xl font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                   confirmarAccion.accion === 'desactivar'
                     ? 'bg-red-600 hover:bg-red-700'
                     : 'bg-green-600 hover:bg-green-700'
                 }`}
               >
-                {confirmarAccion.accion === 'desactivar' ? 'Sí, desactivar' : 'Sí, reactivar'}
+                {togglendoEstado ? 'Procesando...' : (confirmarAccion.accion === 'desactivar' ? 'Sí, desactivar' : 'Sí, reactivar')}
               </button>
             </div>
           </div>

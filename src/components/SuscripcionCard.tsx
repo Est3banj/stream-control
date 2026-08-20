@@ -1,11 +1,13 @@
 import React from 'react';
 import { Timestamp } from 'firebase/firestore';
+import { useMoneda } from '../hooks/useMoneda';
 import { CheckCircle, XCircle, Clock, AlertTriangle, DollarSign, Calendar } from 'lucide-react';
 import type { Suscripcion } from '../types/suscripcion';
 
 interface SuscripcionCardProps {
   suscripcion: Suscripcion;
   onMarcarPagada?: (id: string) => void;
+  cargandoId?: string | null;
 }
 
 function formatDate(ts: Timestamp): string {
@@ -54,7 +56,8 @@ function pagoBadge(pagoEstado: string) {
   );
 }
 
-export default function SuscripcionCard({ suscripcion, onMarcarPagada }: SuscripcionCardProps) {
+export default function SuscripcionCard({ suscripcion, onMarcarPagada, cargandoId }: SuscripcionCardProps) {
+  const { formatear } = useMoneda();
   return (
     <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
@@ -83,7 +86,7 @@ export default function SuscripcionCard({ suscripcion, onMarcarPagada }: Suscrip
             {pagoBadge(suscripcion.pagoEstado)}
             <span className="flex items-center gap-1 text-sm font-semibold text-gray-900">
               <DollarSign size={14} className="text-green-500" />
-              ${suscripcion.monto.toLocaleString()}
+              {formatear(suscripcion.monto)}
             </span>
           </div>
 
@@ -97,9 +100,10 @@ export default function SuscripcionCard({ suscripcion, onMarcarPagada }: Suscrip
         {onMarcarPagada && suscripcion.pagoEstado !== 'pagado' && (
           <button
             onClick={() => onMarcarPagada(suscripcion.id)}
-            className="btn-primary text-sm py-2 px-4 whitespace-nowrap"
+            disabled={cargandoId === suscripcion.id}
+            className="btn-primary text-sm py-2 px-4 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Marcar como pagada
+            {cargandoId === suscripcion.id ? 'Procesando...' : 'Marcar como pagada'}
           </button>
         )}
       </div>

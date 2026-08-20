@@ -1,13 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { db } from '../firebase';
-import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
 import useCuentas from '../hooks/useCuentas';
 import useTokens, { revocarToken, reactivarToken } from '../hooks/useTokens';
 import usePermisos from '../hooks/usePermisos';
 import FeatureBlocked from '../components/FeatureBlocked';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { Copy, Loader2, AlertCircle, Monitor, Calendar, X, RefreshCw, Search, Link, List } from 'lucide-react';
+import { callFunction } from '../lib/apiClient';
+import { useMoneda } from '../hooks/useMoneda';
+import { Copy, Loader2, AlertCircle, Monitor, Calendar, X, RefreshCw, Search, Link, List, ExternalLink, AlertTriangle } from 'lucide-react';
 import { CASE_OPTIONS, CASE_LABELS } from '../components/CasoSelector';
 import DropdownMenu from '../components/DropdownMenu';
 import toast from 'react-hot-toast';
@@ -27,11 +26,13 @@ export default function ConsultaCodigos() {
   const { cuentas } = useCuentas(user);
   const { tokens } = useTokens(user);
   const permisos = usePermisos(user);
+  const { formatear } = useMoneda();
 
   const [cuentaId, setCuentaId] = useState('');
   const [selectedCaso, setSelectedCaso] = useState('');
   const [estado, setEstado] = useState<Estado>('idle');
   const [codigo, setCodigo] = useState('');
+  const [codigoTipo, setCodigoTipo] = useState<'numerico' | 'link'>('numerico');
   const [email, setEmail] = useState('');
   const [fecha, setFecha] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -76,13 +77,11 @@ export default function ConsultaCodigos() {
     setErrorMsg('');
 
     try {
-      const functions = getFunctions();
-      const fn = httpsCallable(functions, 'consultarCodigoDirecto');
-      const result = await fn({ cuentaId, caso: selectedCaso });
-      const data = result.data as Record<string, unknown>;
+      const data = await callFunction<{ cuentaId: string; caso: string }, Record<string, unknown>>('consultarCodigoDirecto', { cuentaId, caso: selectedCaso });
 
       if (data.encontrado) {
         setCodigo(data.codigo as string);
+        setCodigoTipo((data.tipo as 'numerico' | 'link') || 'numerico');
         setEmail(data.email as string);
         setFecha(data.fecha as string);
         setEstado('result');
@@ -104,92 +103,24 @@ export default function ConsultaCodigos() {
 
     try {
       const expiraEn = new Date(Date.now() + diasAcceso * 24 * 60 * 60 * 1000).toISOString();
-      const functions = getFunctions();
-      const fn = httpsCallable(functions, 'generarTokenSubdistribuidor');
-      const result = await fn({ cuentaId, expiraEn, clienteNombre: nombreSub.trim() || 'Sub-distribuidor' });
-      const data = result.data as Record<string, unknown>;
+      const data = await callFunction<object, { url: string }>('generarTokenSubdistribuidor', {
+        cuentaId,
+        expiraEn,
+        clienteNombre: nombreSub.trim() || 'Sub-distribuidor',
+        cantidad,
+        totalRecibido,
+        precioPorPerfil,
+        totalCosto,
+        utilidad,
+        diasAcceso,
+        perfilesSeleccionados,
+        proveedor: cuentaSeleccionada?.proveedor || '',
+        costoServicio,
+      });
 
       const url = `${window.location.origin}${data.url}`;
       setLinkGenerado(url);
       setLinkExpira(new Date(expiraEn).toLocaleDateString('es-CO'));
-
-      // 🟢 Registrar venta de cuenta/subdistribuidor
-      if (totalRecibido > 0 && user) {
-        try {
-          await addDoc(collection(db, 'ventas'), {
-            nombre: nombreSub.trim() || 'Sub-distribuidor',
-            telefono: '0000000000',
-            correo: '',
-            plataforma: cuentaSeleccionada?.proveedor || '',
-            pantallas: cantidad,
-            precioVenta: precioPorPerfil,
-            costoServicio: totalCosto,
-            utilidad,
-            fechaInicio: new Date().toISOString().split('T')[0],
-            fechaVenta: new Date().toISOString().split('T')[0],
-            diasServicio: diasAcceso,
-            perfil: '',
-            pinPerfil: '',
-            pagado: true,
-            saldoPendiente: 0,
-            fechaRegistro: serverTimestamp(),
-            fechaRegistroSistema: null,
-            fechaVencimiento: new Date(expiraEn).toISOString().split('T')[0],
-            propietarioId: user.uid!,
-            usuarioEmail: user.email!,
-            cuentaId,
-            tokenGenerado: data.token as string,
-            costoPorPerfil: costoServicio,
-            esSubdistribuidor: true,
-          });
-
-          // 🟢 Registrar movimiento financiero
-          await addDoc(collection(db, 'movimientos'), {
-            tipo: 'Ingreso',
-            monto: totalRecibido,
-            descripcion: `Venta ${cantidad} perfil(es) ${cuentaSeleccionada?.proveedor || ''} (Sub-distribuidor)`,
-            fecha: serverTimestamp(),
-            propietarioId: user.uid,
-            usuarioEmail: user.email,
-          });
-        } catch (err) {
-            console.warn('⚠️ No se pudo registrar la venta:', err);
-            toast.error('El link se generó pero la venta no quedó registrada en reportes');
-          }
-      }
-
-      // 🟢 Marcar perfiles como asignados en la cuenta
-      if (perfilesSeleccionados.length > 0) {
-        try {
-          const cuentaRef = doc(db, 'cuentas', cuentaId);
-          const cuentaSnap = await getDoc(cuentaRef);
-          if (cuentaSnap.exists()) {
-            const perfiles = cuentaSnap.data().perfiles;
-            if (Array.isArray(perfiles)) {
-              const hoy = new Date().toISOString().split('T')[0];
-              perfilesSeleccionados.forEach(idx => {
-                if (idx >= 0 && idx < perfiles.length) {
-                  perfiles[idx] = {
-                    ...perfiles[idx],
-                    estado: 'asignado',
-                    clienteNombre: nombreSub.trim() || 'Sub-distribuidor',
-                    fechaAsignacion: hoy,
-                  };
-                }
-              });
-              const quedanDisponibles = perfiles.some((p: { estado: string }) => p.estado === 'disponible');
-              await updateDoc(cuentaRef, {
-                perfiles,
-                ...(quedanDisponibles ? {} : { estado: 'asignada' as const }),
-                updatedAt: serverTimestamp(),
-              });
-            }
-          }
-        } catch (err) {
-          console.warn('⚠️ No se pudieron marcar los perfiles como asignados:', err);
-        }
-      }
-
       setEstado('idle');
       toast.success('Link generado correctamente');
     } catch (err: unknown) {
@@ -335,7 +266,43 @@ export default function ConsultaCodigos() {
             ) : 'Consultar código'}
           </button>
 
-          {estado === 'result' && codigo && (
+          {estado === 'result' && codigo && codigoTipo === 'link' && (
+            <div className="mt-6 bg-gradient-to-r from-indigo-50 to-violet-50 rounded-xl p-6 border border-indigo-100">
+              <div className="text-center">
+                <p className="text-sm text-gray-500 mb-3">Enlace de código temporal</p>
+                <div className="bg-white rounded-lg p-3 border border-indigo-100 break-all">
+                  <a
+                    href={codigo}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-600 hover:underline text-sm font-mono"
+                  >
+                    {codigo}
+                  </a>
+                </div>
+              </div>
+              <div className="flex gap-3 mt-4">
+                <a
+                  href={codigo}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors"
+                >
+                  <ExternalLink size={16} />
+                  Abrir enlace
+                </a>
+                <button
+                  onClick={() => navigator.clipboard.writeText(codigo).then(() => toast.success('Enlace copiado'))}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-white text-indigo-600 text-sm font-semibold border border-indigo-200 hover:bg-indigo-50 transition-colors"
+                >
+                  <Copy size={16} />
+                  Copiar enlace
+                </button>
+              </div>
+            </div>
+          )}
+
+          {estado === 'result' && codigo && codigoTipo !== 'link' && (
             <div className="mt-6 text-center bg-gradient-to-r from-indigo-50 to-violet-50 rounded-xl p-6 border border-indigo-100">
               <p className="text-sm text-gray-500 mb-2">Código de verificación</p>
               <p className="text-4xl sm:text-5xl font-bold tracking-widest text-indigo-700 select-all font-mono">
@@ -369,7 +336,7 @@ export default function ConsultaCodigos() {
               <p className="text-sm font-semibold text-indigo-900">{cuentaSeleccionada?.proveedor}</p>
               <p className="text-xs text-indigo-600">{cuentaSeleccionada?.correoCuenta}</p>
             </div>
-            <span className="text-sm font-bold text-indigo-700">${cuentaSeleccionada?.costo.toLocaleString()}</span>
+            <span className="text-sm font-bold text-indigo-700">{formatear(cuentaSeleccionada?.costo || 0)}</span>
           </div>
 
           {/* Selector de perfiles */}
@@ -491,7 +458,7 @@ export default function ConsultaCodigos() {
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Costo total</label>
               <div className="flex items-center h-[42px] px-4 bg-gray-50 rounded-xl border border-gray-200 text-sm font-semibold text-gray-500">
-                ${totalCosto.toLocaleString()}
+                {formatear(totalCosto)}
               </div>
             </div>
             <div>
@@ -501,13 +468,13 @@ export default function ConsultaCodigos() {
                   ? 'bg-green-50 border-green-200 text-green-700'
                   : 'bg-red-50 border-red-200 text-red-700'
               }`}>
-                ${utilidad.toLocaleString()}
+                {formatear(utilidad)}
               </div>
             </div>
           </div>
           {totalRecibido > 0 && cantidad > 0 && (
             <p className="text-xs text-gray-400 mb-6 text-right">
-              ${totalRecibido.toLocaleString()} ÷ {cantidad} = ${precioPorPerfil.toLocaleString()} x perfil
+              {formatear(totalRecibido)} ÷ {cantidad} = {formatear(precioPorPerfil)} x perfil
             </p>
           )}
 

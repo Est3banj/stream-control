@@ -2,8 +2,10 @@
 import React, { useEffect, useState } from 'react';
 import { collection, doc, setDoc, updateDoc, onSnapshot, Timestamp, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, sendPasswordResetEmail, signOut as signOutAuth } from 'firebase/auth';
+import { callFunction } from '../lib/apiClient';
 import { auth, db, secondaryAuth } from '../firebase';
-import { UserPlus, Users, Shield, UserCheck, UserX, Mail, Eye, EyeOff, Package, X } from 'lucide-react';
+import { useMoneda } from '../hooks/useMoneda';
+import { UserPlus, Users, Shield, UserCheck, UserX, Mail, MailCheck, Eye, EyeOff, Package, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import useSuscripciones, { crearSuscripcion, actualizarSuscripcion } from '../hooks/useSuscripciones';
@@ -23,7 +25,9 @@ export default function Usuarios() {
   const { user } = useAuth();
   const { suscripciones } = useSuscripciones(user);
   const { planes } = usePlanes(user);
+  const { formatearDesdeBase } = useMoneda();
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [verificados, setVerificados] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState<UsuarioFormState>({
@@ -44,6 +48,18 @@ export default function Usuarios() {
     });
 
     return () => unsubscribe();
+  }, []);
+
+  // Cargar emailVerified de Firebase Auth (no está en Firestore)
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await callFunction<Record<string, never>, { verificados: Record<string, boolean> }>('listarVerificados');
+        setVerificados(data.verificados || {});
+      } catch {
+        // Si falla, no mostrar el badge
+      }
+    })();
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -78,7 +94,7 @@ export default function Usuarios() {
         correo: form.correo,
         rol: form.rol || 'usuario',
         estado: form.estado || 'activo',
-        activoHasta: form.activoHasta || '',
+        activoHasta: form.activoHasta ? Timestamp.fromDate(new Date(form.activoHasta)) : null,
         createdAt: new Date().toISOString(),
       };
       await setDoc(doc(db, 'usuarios', userCred.user.uid), profile);
@@ -114,7 +130,10 @@ export default function Usuarios() {
     }
   };
 
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+
   const toggleEstado = async (uid: string, estadoActual: string) => {
+    setTogglingId(uid);
     try {
       const ref = doc(db, 'usuarios', uid);
       await updateDoc(ref, { estado: estadoActual === 'activo' ? 'inactivo' : 'activo' });
@@ -122,6 +141,8 @@ export default function Usuarios() {
     } catch (err: unknown) {
       console.error(err);
       toast.error('No se pudo actualizar el estado');
+    } finally {
+      setTogglingId(null);
     }
   };
 
@@ -205,10 +226,12 @@ export default function Usuarios() {
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
-          Gestión de Usuarios
-        </h1>
-        <p className="text-gray-600">Administra los usuarios del sistema</p>
+        <div>
+          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+            Gestión de Usuarios
+          </h1>
+          <p className="text-gray-600">Administra los usuarios del sistema</p>
+        </div>
       </div>
 
       {/* Formulario de creación */}
@@ -324,6 +347,7 @@ export default function Usuarios() {
                 <th className="px-4 py-4 text-left text-sm font-semibold">Nombre</th>
                 <th className="px-4 py-4 text-left text-sm font-semibold">Correo</th>
                 <th className="px-4 py-4 text-left text-sm font-semibold">Rol</th>
+                <th className="px-4 py-4 text-center text-sm font-semibold">Correo</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Plan Actual</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Estado</th>
                 <th className="px-4 py-4 text-center text-sm font-semibold">Acciones</th>
@@ -346,6 +370,21 @@ export default function Usuarios() {
                         <Shield size={14} className="inline mr-1" />
                         {u.rol === 'admin' ? 'Administrador' : 'Usuario'}
                       </span>
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      {verificados[u.id] === undefined ? (
+                        <span className="text-gray-300 text-sm">—</span>
+                      ) : verificados[u.id] ? (
+                        <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-medium">
+                          <MailCheck size={14} className="inline mr-1" />
+                          Verificado
+                        </span>
+                      ) : (
+                        <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-sm font-medium">
+                          <Mail size={14} className="inline mr-1" />
+                          Sin verificar
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-4 text-center">
                       {(() => {
@@ -390,13 +429,14 @@ export default function Usuarios() {
                         </button>
                         <button
                           onClick={() => toggleEstado(u.id, u.estado)}
-                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          disabled={togglingId === u.id || guardandoPlan}
+                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                             u.estado === 'activo'
                               ? 'bg-orange-100 text-orange-600 hover:bg-orange-200'
                               : 'bg-green-100 text-green-600 hover:bg-green-200'
                           }`}
                         >
-                          {u.estado === 'activo' ? 'Desactivar' : 'Activar'}
+                          {togglingId === u.id ? 'Procesando...' : (u.estado === 'activo' ? 'Desactivar' : 'Activar')}
                         </button>
                       </div>
                     </td>
@@ -445,7 +485,7 @@ export default function Usuarios() {
                   <option value="">Seleccionar plan...</option>
                   {planes.filter(p => p.activo).map(p => (
                     <option key={p.id} value={p.id}>
-                      {p.nombre} — ${p.precio.toLocaleString()} ({p.duracionDias} días)
+                      {p.nombre} — {formatearDesdeBase(p.precio)} ({p.duracionDias} días)
                     </option>
                   ))}
                 </select>

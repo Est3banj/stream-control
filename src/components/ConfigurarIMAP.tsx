@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { callFunction } from '../lib/apiClient';
 import { Key, Mail, Server, Shield } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { Cuenta } from '../types/cuenta';
@@ -51,9 +51,7 @@ export default function ConfigurarIMAP({ cuenta, onClose, onSuccess }: Configura
 
     setGuardando(true);
     try {
-      const functions = getFunctions();
-      const guardar = httpsCallable(functions, 'guardarCredenciales');
-      await guardar({
+      await callFunction('guardarCredenciales', {
         cuentaId: cuenta.id,
         correo: correo.trim(),
         contrasena: contrasena.trim(),

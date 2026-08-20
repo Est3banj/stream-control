@@ -1,4 +1,4 @@
-import * as functions from 'firebase-functions/v1';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { buscarCodigoVerificacion, IMAPConfig } from './imap';
@@ -10,22 +10,22 @@ const DEFAULT_TOKEN_EXPIRY_DAYS = 30;
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const MAX_REQUESTS = 5; // max 5 requests per token per minute
 
-export const generarToken = functions
-  .runWith({ timeoutSeconds: 30, memory: '256MB' })
-  .https.onCall(async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError(
+export const generarToken = onCall(
+  { timeoutSeconds: 30, memory: '256MiB' },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError(
         'unauthenticated',
         'Debes iniciar sesión'
       );
     }
 
-    const uid = context.auth.uid;
+    const uid = request.auth.uid;
 
     // Validar que el usuario existe en la colección usuarios
     const userDoc = await db.collection('usuarios').doc(uid).get();
     if (!userDoc.exists) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'permission-denied',
         'Usuario no encontrado'
       );
@@ -38,7 +38,7 @@ export const generarToken = functions
       .find(s => s.usuarioId === uid && s.estado === 'activa');
 
     if (!suscripcionActiva) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'permission-denied',
         'Se requiere plan Enterprise para generar tokens'
       );
@@ -46,16 +46,16 @@ export const generarToken = functions
 
     const plan = (suscripcionActiva.planNombre as string)?.toLowerCase() || '';
     if (!plan.includes('enterprise')) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'permission-denied',
         'Se requiere plan Enterprise para generar tokens'
       );
     }
 
-    const { cuentaId, perfilNombre, clienteId, clienteNombre, expiraEn } = data;
+    const { cuentaId, perfilNombre, clienteId, clienteNombre, expiraEn } = request.data;
 
     if (!cuentaId || !perfilNombre || !clienteId || !clienteNombre) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'invalid-argument',
         'Faltan campos requeridos: cuentaId, perfilNombre, clienteId, clienteNombre'
       );
@@ -63,7 +63,7 @@ export const generarToken = functions
 
     const cuentaDoc = await db.collection('cuentas').doc(cuentaId).get();
     if (!cuentaDoc.exists) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'not-found',
         'La cuenta especificada no existe'
       );
@@ -71,7 +71,7 @@ export const generarToken = functions
 
     const cuenta = cuentaDoc.data()!;
     if (cuenta.propietarioId !== uid) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'permission-denied',
         'No tienes permisos sobre esta cuenta'
       );
@@ -102,12 +102,12 @@ export const generarToken = functions
     };
   });
 
-export const validarToken = functions
-  .runWith({ timeoutSeconds: 15, memory: '128MB' })
-  .https.onCall(async (data) => {
-    const { token } = data;
+export const validarToken = onCall(
+  { timeoutSeconds: 15, memory: '128MiB' },
+  async (request) => {
+    const { token } = request.data;
     if (!token || typeof token !== 'string') {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'invalid-argument',
         'Token es requerido'
       );
@@ -144,13 +144,13 @@ export const validarToken = functions
     };
   });
 
-export const consultarCodigo = functions
-  .runWith({ timeoutSeconds: 60, memory: '256MB' })
-  .https.onCall(async (data) => {
-    const { token, caso } = data;
+export const consultarCodigo = onCall(
+  { timeoutSeconds: 60, memory: '256MiB' },
+  async (request) => {
+    const { token, caso } = request.data;
 
     if (!token || !caso) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'invalid-argument',
         'Token y caso son requeridos'
       );
@@ -158,7 +158,7 @@ export const consultarCodigo = functions
 
     const tokenDoc = await db.collection('tokens').doc(token).get();
     if (!tokenDoc.exists) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'not-found',
         'Token no encontrado'
       );
@@ -167,7 +167,7 @@ export const consultarCodigo = functions
     const tokenData = tokenDoc.data()!;
 
     if (!tokenData.activo) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'permission-denied',
         'Token revocado — contacta a tu vendedor'
       );
@@ -175,35 +175,55 @@ export const consultarCodigo = functions
 
     const expiraEn = new Date(tokenData.expiraEn as string);
     if (expiraEn < new Date()) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'permission-denied',
         'Token expirado'
       );
     }
 
-    const now = Date.now();
-    if (tokenData.rateLimit && tokenData.rateLimit.count >= MAX_REQUESTS
-        && (now - (tokenData.rateLimit.windowStart as number)) < RATE_LIMIT_WINDOW) {
-      throw new functions.https.HttpsError(
-        'resource-exhausted',
-        'Demasiadas consultas. Intenta de nuevo en unos minutos.'
-      );
-    }
+    // ── Rate-limit transaccional (AD-8): cuenta INTENTOS, antes del IMAP ──
+    // Check + increment atómicos: sin ventana de carrera entre lectura y escritura.
+    const tokenRef = db.collection('tokens').doc(token);
+    await db.runTransaction(async (transaction) => {
+      const doc = await transaction.get(tokenRef);
+      if (!doc.exists) {
+        throw new HttpsError('not-found', 'Token no encontrado');
+      }
+      const data = doc.data()!;
+      const now = Date.now();
+      const rateLimit = data.rateLimit || { count: 0, windowStart: now };
+
+      // Ventana vencida → reiniciar contador
+      if (now - (rateLimit.windowStart as number) >= RATE_LIMIT_WINDOW) {
+        rateLimit.count = 0;
+        rateLimit.windowStart = now;
+      }
+
+      if ((rateLimit.count as number) >= MAX_REQUESTS) {
+        throw new HttpsError(
+          'resource-exhausted',
+          'Demasiadas consultas. Intenta de nuevo en unos minutos.'
+        );
+      }
+
+      transaction.update(tokenRef, {
+        rateLimit: { count: (rateLimit.count as number) + 1, windowStart: rateLimit.windowStart },
+      });
+    });
 
     const currentUses = (tokenData.useCount as number) || 0;
     if (currentUses >= TOKEN_MAX_USES) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'resource-exhausted',
         'Límite de consultas alcanzado para este token'
       );
     }
 
     const cuentaId = tokenData.cuentaId as string;
-    const proveedor = tokenData.proveedor as string;
 
     const cuentaDoc = await db.collection('cuentas').doc(cuentaId).get();
     if (!cuentaDoc.exists) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'not-found',
         'Cuenta no encontrada'
       );
@@ -212,70 +232,29 @@ export const consultarCodigo = functions
     const cuentaData = cuentaDoc.data()!;
     const servicio = cuentaData.proveedor as string;
 
-    const secretosDoc = await db.collection('cuentas_secretos').doc(cuentaId).get();
-    if (!secretosDoc.exists) {
-      throw new functions.https.HttpsError(
-        'not-found',
-        'Credenciales de cuenta no encontradas'
-      );
-    }
+    const result = await consultarCodigoIMAP(cuentaId, servicio, caso, {
+      auth: 'Error de autenticación IMAP — verifica las credenciales de la cuenta',
+    });
 
-    const secretos = secretosDoc.data()!;
-
-    const imapConfig = {
-      correo: secretos.correo as string,
-      contrasena: secretos.contrasena as string,
-      host: (secretos.imapHost as string) || getDefaultIMAPHost(secretos.proveedorIMAP as string),
-      port: (secretos.imapPort as number) || 993,
-    };
-
-    try {
-      const result = await buscarCodigoVerificacion(imapConfig, servicio, caso);
-
-      if (!result) {
-        return {
-          encontrado: false,
-          mensaje: 'Código no encontrado — verifica que el código haya sido enviado al correo',
-        };
-      }
-
-      // Incrementar contador solo en consultas exitosas
-      await db.collection('tokens').doc(token).update({
-        useCount: admin.firestore.FieldValue.increment(1),
-        'rateLimit.count': admin.firestore.FieldValue.increment(1),
-        'rateLimit.windowStart': tokenData.rateLimit?.windowStart || now,
-      });
-
+    if (!result) {
       return {
-        encontrado: true,
-        codigo: result.codigo,
-        email: imapConfig.correo,
-        fecha: result.fecha,
-        tipo: caso,
+        encontrado: false,
+        mensaje: 'Código no encontrado — verifica que el código haya sido enviado al correo',
       };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Error desconocido';
-      console.error('Error en consultarCodigo (IMAP):', message);
-
-      if (message.includes('Connection timeout') || message.includes('connect')) {
-        throw new functions.https.HttpsError(
-          'unavailable',
-          'No se pudo conectar al correo de la cuenta'
-        );
-      }
-
-      if (message.includes('authentication') || message.includes('auth')) {
-        throw new functions.https.HttpsError(
-          'permission-denied',
-          'Error de autenticación IMAP — verifica las credenciales de la cuenta'
-        );
-      }
-
-      throw new functions.https.HttpsError(
-        'internal',
-        'Error al consultar el código'
-      );
     }
+
+    // Incrementar contador de usos solo en consultas exitosas (no transaccional)
+    await db.collection('tokens').doc(token).update({
+      useCount: admin.firestore.FieldValue.increment(1),
+    });
+
+    return {
+      encontrado: true,
+      codigo: result.codigo,
+      email: result.correo,
+      fecha: result.fecha,
+      tipo: caso,
+    };
   });
 
 function getCasosPorProveedor(proveedor: string): string[] {
@@ -297,21 +276,68 @@ function getDefaultIMAPHost(proveedorIMAP: string): string {
   return hosts[proveedorIMAP] || 'imap.gmail.com';
 }
 
-export const guardarCredenciales = functions
-  .runWith({ timeoutSeconds: 15, memory: '128MB' })
-  .https.onCall(async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError(
+/**
+ * Helper compartido entre consultarCodigo y consultarCodigoDirecto.
+ * Busca credenciales IMAP, configura la conexión y ejecuta la búsqueda.
+ */
+async function consultarCodigoIMAP(
+  cuentaId: string,
+  servicio: string,
+  caso: string,
+  errorMsgs?: { notFound?: string; auth?: string }
+): Promise<{ codigo: string; correo: string; fecha: string; tipo: string } | null> {
+  const secretosDoc = await db.collection('cuentas_secretos').doc(cuentaId).get();
+  if (!secretosDoc.exists) {
+    throw new HttpsError('not-found', errorMsgs?.notFound || 'Credenciales de cuenta no encontradas');
+  }
+
+  const secretos = secretosDoc.data()!;
+  const imapConfig = {
+    correo: secretos.correo as string,
+    contrasena: secretos.contrasena as string,
+    host: (secretos.imapHost as string) || getDefaultIMAPHost(secretos.proveedorIMAP as string),
+    port: (secretos.imapPort as number) || 993,
+  };
+
+  try {
+    const result = await buscarCodigoVerificacion(imapConfig, servicio, caso);
+    if (!result) return null;
+    return {
+      codigo: result.codigo,
+      correo: imapConfig.correo,
+      fecha: result.fecha,
+      tipo: caso,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
+    console.error(`Error en IMAP para cuenta ${cuentaId}:`, message);
+
+    if (message.includes('Connection timeout') || message.includes('connect')) {
+      throw new HttpsError('unavailable', 'No se pudo conectar al correo de la cuenta');
+    }
+    if (message.includes('authentication') || message.includes('auth')) {
+      throw new HttpsError('permission-denied', errorMsgs?.auth || 'Error de autenticación IMAP');
+    }
+
+    throw new HttpsError('internal', 'Error al consultar el código');
+  }
+}
+
+export const guardarCredenciales = onCall(
+  { timeoutSeconds: 15, memory: '128MiB' },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError(
         'unauthenticated',
         'Debes iniciar sesión'
       );
     }
 
-    const uid = context.auth.uid;
-    const { cuentaId, correo, contrasena, imapHost, imapPort, proveedorIMAP } = data;
+    const uid = request.auth.uid;
+    const { cuentaId, correo, contrasena, imapHost, imapPort, proveedorIMAP } = request.data;
 
     if (!cuentaId || !correo || !contrasena) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'invalid-argument',
         'Faltan campos requeridos: cuentaId, correo, contrasena'
       );
@@ -320,7 +346,7 @@ export const guardarCredenciales = functions
     // Verificar que la cuenta existe y pertenece al usuario
     const cuentaDoc = await db.collection('cuentas').doc(cuentaId).get();
     if (!cuentaDoc.exists) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'not-found',
         'La cuenta especificada no existe'
       );
@@ -328,7 +354,7 @@ export const guardarCredenciales = functions
 
     const cuenta = cuentaDoc.data()!;
     if (cuenta.propietarioId !== uid) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'permission-denied',
         'No tienes permisos sobre esta cuenta'
       );
@@ -348,32 +374,32 @@ export const guardarCredenciales = functions
     return { success: true, cuentaId };
   });
 
-export const toggleToken = functions
-  .runWith({ timeoutSeconds: 15, memory: '128MB' })
-  .https.onCall(async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión');
+export const toggleToken = onCall(
+  { timeoutSeconds: 15, memory: '128MiB' },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'Debes iniciar sesión');
     }
 
-    const uid = context.auth.uid;
-    const { tokenId, activo } = data;
+    const uid = request.auth.uid;
+    const { tokenId, activo } = request.data;
 
     if (!tokenId) {
-      throw new functions.https.HttpsError('invalid-argument', 'tokenId es requerido');
+      throw new HttpsError('invalid-argument', 'tokenId es requerido');
     }
 
     if (typeof activo !== 'boolean') {
-      throw new functions.https.HttpsError('invalid-argument', 'activo debe ser booleano');
+      throw new HttpsError('invalid-argument', 'activo debe ser booleano');
     }
 
     const tokenDoc = await db.collection('tokens').doc(tokenId).get();
     if (!tokenDoc.exists) {
-      throw new functions.https.HttpsError('not-found', 'Token no encontrado');
+      throw new HttpsError('not-found', 'Token no encontrado');
     }
 
     const tokenData = tokenDoc.data()!;
     if (tokenData.vendedorId !== uid) {
-      throw new functions.https.HttpsError('permission-denied', 'No tienes permisos sobre este token');
+      throw new HttpsError('permission-denied', 'No tienes permisos sobre este token');
     }
 
     await db.collection('tokens').doc(tokenId).update({
@@ -395,7 +421,7 @@ function checkRateLimit(map: Map<string, number[]>, key: string, maxRequests: nu
   const timestamps = map.get(key) || [];
   const ventana = timestamps.filter(t => ahora - t < windowMs);
   if (ventana.length >= maxRequests) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       'resource-exhausted',
       'Demasiadas consultas. Esperá un momento antes de intentar de nuevo.'
     );
@@ -404,18 +430,18 @@ function checkRateLimit(map: Map<string, number[]>, key: string, maxRequests: nu
   map.set(key, ventana);
 }
 
-export const consultarCodigoDirecto = functions
-  .runWith({ timeoutSeconds: 60, memory: '256MB' })
-  .https.onCall(async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión');
+export const consultarCodigoDirecto = onCall(
+  { timeoutSeconds: 60, memory: '256MiB' },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'Debes iniciar sesión');
     }
 
-    const uid = context.auth.uid;
-    const { cuentaId, caso } = data;
+    const uid = request.auth.uid;
+    const { cuentaId, caso } = request.data;
 
     if (!cuentaId || !caso) {
-      throw new functions.https.HttpsError('invalid-argument', 'cuentaId y caso son requeridos');
+      throw new HttpsError('invalid-argument', 'cuentaId y caso son requeridos');
     }
 
     // Rate limiting: max 10 consultas por usuario por minuto
@@ -424,12 +450,12 @@ export const consultarCodigoDirecto = functions
     // Verificar que la cuenta existe y pertenece al usuario
     const cuentaDoc = await db.collection('cuentas').doc(cuentaId).get();
     if (!cuentaDoc.exists) {
-      throw new functions.https.HttpsError('not-found', 'Cuenta no encontrada');
+      throw new HttpsError('not-found', 'Cuenta no encontrada');
     }
 
     const cuentaData = cuentaDoc.data()!;
     if (cuentaData.propietarioId !== uid) {
-      throw new functions.https.HttpsError('permission-denied', 'No tienes permisos sobre esta cuenta');
+      throw new HttpsError('permission-denied', 'No tienes permisos sobre esta cuenta');
     }
 
     // Rate limiting: max 5 consultas por cuenta por minuto (protección IMAP)
@@ -437,70 +463,56 @@ export const consultarCodigoDirecto = functions
 
     const servicio = cuentaData.proveedor as string;
 
-    // Buscar credenciales IMAP
-    const secretosDoc = await db.collection('cuentas_secretos').doc(cuentaId).get();
-    if (!secretosDoc.exists) {
-      throw new functions.https.HttpsError('not-found', 'Credenciales IMAP no configuradas');
-    }
+    const result = await consultarCodigoIMAP(cuentaId, servicio, caso, {
+      notFound: 'Credenciales IMAP no configuradas',
+      auth: 'Error de autenticación IMAP',
+    });
 
-    const secretos = secretosDoc.data()!;
-    const imapConfig = {
-      correo: secretos.correo as string,
-      contrasena: secretos.contrasena as string,
-      host: (secretos.imapHost as string) || getDefaultIMAPHost(secretos.proveedorIMAP as string),
-      port: (secretos.imapPort as number) || 993,
-    };
-
-    try {
-      const result = await buscarCodigoVerificacion(imapConfig, servicio, caso);
-
-      if (!result) {
-        return {
-          encontrado: false,
-          mensaje: 'Código no encontrado — verifica que el código haya sido enviado al correo',
-        };
-      }
-
+    if (!result) {
       return {
-        encontrado: true,
-        codigo: result.codigo,
-        email: imapConfig.correo,
-        fecha: result.fecha,
-        tipo: caso,
+        encontrado: false,
+        mensaje: 'Código no encontrado — verifica que el código haya sido enviado al correo',
       };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Error desconocido';
-      console.error('Error en consultarCodigoDirecto (IMAP):', message);
-
-      if (message.includes('Connection timeout') || message.includes('connect')) {
-        throw new functions.https.HttpsError('unavailable', 'No se pudo conectar al correo de la cuenta');
-      }
-      if (message.includes('authentication') || message.includes('auth')) {
-        throw new functions.https.HttpsError('permission-denied', 'Error de autenticación IMAP');
-      }
-
-      throw new functions.https.HttpsError('internal', 'Error al consultar el código');
     }
+
+    return {
+      encontrado: true,
+      codigo: result.codigo,
+      email: result.correo,
+      fecha: result.fecha,
+      tipo: caso,
+    };
   });
 
-export const generarTokenSubdistribuidor = functions
-  .runWith({ timeoutSeconds: 30, memory: '256MB' })
-  .https.onCall(async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión');
+export const generarTokenSubdistribuidor = onCall(
+  { timeoutSeconds: 30, memory: '256MiB' },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'Debes iniciar sesión');
     }
 
-    const uid = context.auth.uid;
-    const { cuentaId, perfilNombre, expiraEn, clienteNombre } = data;
+    const uid = request.auth.uid;
+    const userEmail = request.auth.token?.email || '';
+    const {
+      cuentaId, perfilNombre, expiraEn, clienteNombre,
+      cantidad, totalRecibido, precioPorPerfil, totalCosto, utilidad,
+      diasAcceso, perfilesSeleccionados, proveedor, costoServicio,
+    } = request.data;
 
     if (!cuentaId || !expiraEn) {
-      throw new functions.https.HttpsError('invalid-argument', 'cuentaId y expiraEn son requeridos');
+      throw new HttpsError('invalid-argument', 'cuentaId y expiraEn son requeridos');
     }
 
-    // Verificar suscripción Enterprise (misma lógica que generarToken)
+    // Validar que expiraEn sea una fecha futura
+    const expiraDate = new Date(expiraEn);
+    if (isNaN(expiraDate.getTime()) || expiraDate <= new Date()) {
+      throw new HttpsError('invalid-argument', 'expiraEn debe ser una fecha futura');
+    }
+
+    // Verificar suscripción Enterprise
     const userDoc = await db.collection('usuarios').doc(uid).get();
     if (!userDoc.exists) {
-      throw new functions.https.HttpsError('permission-denied', 'Usuario no encontrado');
+      throw new HttpsError('permission-denied', 'Usuario no encontrado');
     }
 
     const suscripcionSnapshot = await db.collection('suscripciones').get();
@@ -509,7 +521,7 @@ export const generarTokenSubdistribuidor = functions
       .find((s: any) => s.usuarioId === uid && s.estado === 'activa');
 
     if (!suscripcionActiva) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'permission-denied',
         'Se requiere plan Enterprise para generar links para sub-distribuidores'
       );
@@ -517,46 +529,150 @@ export const generarTokenSubdistribuidor = functions
 
     const plan = ((suscripcionActiva as any).planNombre as string)?.toLowerCase() || '';
     if (!plan.includes('enterprise')) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'permission-denied',
         'Se requiere plan Enterprise para generar links para sub-distribuidores'
       );
     }
 
-    // Verificar que la cuenta existe y pertenece al usuario
-    const cuentaDoc = await db.collection('cuentas').doc(cuentaId).get();
-    if (!cuentaDoc.exists) {
-      throw new functions.https.HttpsError('not-found', 'Cuenta no encontrada');
-    }
-
-    const cuentaData = cuentaDoc.data()!;
-    if (cuentaData.propietarioId !== uid) {
-      throw new functions.https.HttpsError('permission-denied', 'No tienes permisos sobre esta cuenta');
-    }
-
-    // Validar que expiraEn sea una fecha futura
-    const expiraDate = new Date(expiraEn);
-    if (isNaN(expiraDate.getTime()) || expiraDate <= new Date()) {
-      throw new functions.https.HttpsError('invalid-argument', 'expiraEn debe ser una fecha futura');
-    }
-
     const token = uuidv4();
-    await db.collection('tokens').doc(token).set({
-      token,
-      cuentaId,
-      perfilNombre: perfilNombre || null,
-      clienteId: '',
-      clienteNombre: clienteNombre || '',
-      vendedorId: uid,
-      expiraEn: expiraDate.toISOString(),
-      activo: true,
-      useCount: 0,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+
+    // Transacción atómica: o se escriben todos los documentos o ninguno
+    await db.runTransaction(async (transaction) => {
+      const cuentaRef = db.collection('cuentas').doc(cuentaId);
+      const cuentaSnap = await transaction.get(cuentaRef);
+
+      if (!cuentaSnap.exists) {
+        throw new HttpsError('not-found', 'Cuenta no encontrada');
+      }
+
+      const cuentaData = cuentaSnap.data()!;
+      if (cuentaData.propietarioId !== uid) {
+        throw new HttpsError('permission-denied', 'No tienes permisos sobre esta cuenta');
+      }
+
+      // Crear token
+      const tokenRef = db.collection('tokens').doc(token);
+      transaction.set(tokenRef, {
+        token,
+        cuentaId,
+        perfilNombre: perfilNombre || null,
+        clienteId: '',
+        clienteNombre: clienteNombre || '',
+        vendedorId: uid,
+        expiraEn: expiraDate.toISOString(),
+        activo: true,
+        useCount: 0,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      // Registrar venta y movimiento (si hay precio)
+      if (totalRecibido > 0) {
+        const ventaRef = db.collection('ventas').doc();
+        transaction.set(ventaRef, {
+          nombre: clienteNombre || 'Sub-distribuidor',
+          telefono: '0000000000',
+          correo: '',
+          plataforma: proveedor || '',
+          pantallas: cantidad || 1,
+          precioVenta: precioPorPerfil || 0,
+          costoServicio: totalCosto || 0,
+          utilidad: utilidad || 0,
+          fechaInicio: new Date().toISOString().split('T')[0],
+          fechaVenta: new Date().toISOString().split('T')[0],
+          diasServicio: diasAcceso || 30,
+          perfil: '',
+          pinPerfil: '',
+          pagado: true,
+          saldoPendiente: 0,
+          fechaRegistro: admin.firestore.FieldValue.serverTimestamp(),
+          fechaRegistroSistema: null,
+          fechaVencimiento: expiraDate.toISOString().split('T')[0],
+          propietarioId: uid,
+          usuarioEmail: userEmail,
+          cuentaId,
+          tokenGenerado: token,
+          costoPorPerfil: costoServicio || 0,
+          esSubdistribuidor: true,
+        });
+
+        const movRef = db.collection('movimientos').doc();
+        transaction.set(movRef, {
+          tipo: 'Ingreso',
+          monto: totalRecibido,
+          descripcion: `Venta ${cantidad || 1} perfil(es) ${proveedor || ''} (Sub-distribuidor)`,
+          fecha: admin.firestore.FieldValue.serverTimestamp(),
+          propietarioId: uid,
+          usuarioEmail: userEmail,
+        });
+      }
+
+      // Actualizar perfiles seleccionados
+      if (perfilesSeleccionados && perfilesSeleccionados.length > 0) {
+        const perfiles = [...(Array.isArray(cuentaData.perfiles) ? cuentaData.perfiles : [])];
+        const hoy = new Date().toISOString().split('T')[0];
+
+        perfilesSeleccionados.forEach((idx: number) => {
+          if (idx >= 0 && idx < perfiles.length) {
+            perfiles[idx] = {
+              ...perfiles[idx],
+              estado: 'asignado' as const,
+              clienteNombre: clienteNombre || 'Sub-distribuidor',
+              fechaAsignacion: hoy,
+            };
+          }
+        });
+
+        const quedanDisponibles = perfiles.some((p: any) => p.estado === 'disponible');
+        transaction.update(cuentaRef, {
+          perfiles,
+          ...(quedanDisponibles ? {} : { estado: 'asignada' as const }),
+        });
+      }
     });
 
     return {
       token,
       url: `/r/${token}`,
       expiraEn: expiraDate.toISOString(),
+    };
+  });
+
+export const obtenerCredencialesCuenta = onCall(
+  { timeoutSeconds: 15, memory: '128MiB' },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'Debes iniciar sesión');
+    }
+
+    const uid = request.auth.uid;
+    const { cuentaId } = request.data;
+
+    if (!cuentaId) {
+      throw new HttpsError('invalid-argument', 'cuentaId es requerido');
+    }
+
+    // Verificar que la cuenta pertenece al usuario
+    const cuentaRef = db.collection('cuentas').doc(cuentaId);
+    const cuentaSnap = await cuentaRef.get();
+    if (!cuentaSnap.exists) {
+      throw new HttpsError('not-found', 'Cuenta no encontrada');
+    }
+
+    const cuentaData = cuentaSnap.data()!;
+    if (cuentaData.propietarioId !== uid) {
+      throw new HttpsError('permission-denied', 'No tienes permisos sobre esta cuenta');
+    }
+
+    // Obtener credenciales de cuentas_secretos
+    const secretosSnap = await db.collection('cuentas_secretos').doc(cuentaId).get();
+    const secretos = secretosSnap.exists ? secretosSnap.data() : null;
+
+    return {
+      proveedor: cuentaData.proveedor || '',
+      correoCuenta: cuentaData.correoCuenta || '',
+      perfiles: cuentaData.perfiles || [],
+      correo: secretos?.correo || '',
+      contrasena: secretos?.contrasena || '',
     };
   });

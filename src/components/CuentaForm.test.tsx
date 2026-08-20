@@ -1,5 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { Timestamp } from 'firebase/firestore';
+import type { Cuenta } from '../types/cuenta';
 import CuentaForm from './CuentaForm';
 
 vi.mock('react-hot-toast', () => ({
@@ -63,19 +65,19 @@ describe('CuentaForm', () => {
   });
 
   it('renders with initial data in edit mode', () => {
-    const initialData = {
+    const initialData: Cuenta = {
       id: 'test-id',
       proveedor: 'Netflix',
       correoCuenta: 'netflix@test.com',
       costo: 30000,
-      tipoVenta: 'perfiles' as const,
+      tipoVenta: 'perfiles',
       perfiles: [
-        { nombre: 'Perfil 1', pin: '1234', estado: 'disponible' as const },
+        { nombre: 'Perfil 1', pin: '1234', estado: 'disponible' },
       ],
-      estado: 'disponible' as const,
+      estado: 'disponible',
       propietarioId: 'user-id',
-      createdAt: { seconds: 1000, nanoseconds: 0 },
-      updatedAt: { seconds: 1000, nanoseconds: 0 },
+      createdAt: Timestamp.fromMillis(1000),
+      updatedAt: Timestamp.fromMillis(1000),
     };
 
     render(<CuentaForm onSubmit={mockSubmit} onCancel={mockCancel} initialData={initialData} />);

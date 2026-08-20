@@ -74,7 +74,19 @@ dist/
 # Vite build
 dist/
 
+# ── Migración Vercel (AD-5) ──
+# NUNCA exponer Service Account Keys ni config de Vercel
+*.service-account.json
+streamcontrol-10837-firebase-adminsdk-*.json
+.env.local
+.env.production
+.env.vercel
+api/.env*
+!api/.env.example
+.vercel/
+
 # SDD artifacts
 .atl/
 
 .DS_Store
+.vercel

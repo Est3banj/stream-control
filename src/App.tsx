@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import PrivateRoute from './components/Auth/PrivateRoute';
 import Layout from './components/Layout';
 import Login from './components/Auth/Login';
+import VerificarEmail from './components/Auth/VerificarEmail';
 import ErrorBoundary from './components/ErrorBoundary';
 import AnalyticsTracker from './components/AnalyticsTracker';
 
@@ -48,6 +49,7 @@ export default function App() {
           <Routes>
           {/* Ruta pública */}
           <Route path="/login" element={<Login />} />
+          <Route path="/verificar-email" element={<VerificarEmail />} />
 
           {/* Rutas privadas */}
           <Route
@@ -95,7 +97,7 @@ export default function App() {
           />
 
           <Route
-            path="/GestionClientes"
+            path="/gestion-clientes"
             element={
               <PrivateRoute roles={['usuario']}>
                 <Layout>

@@ -10,7 +10,7 @@ import {
   type QuerySnapshot,
   type DocumentData,
 } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { callFunction } from '../lib/apiClient';
 import type { TokenCliente, CreateTokenInput } from '../types/token';
 
 let sharedVendedorId: string | null = null;
@@ -70,13 +70,10 @@ function stopListener() {
 }
 
 export async function generarToken(data: CreateTokenInput): Promise<string> {
-  const functions = getFunctions();
-  const fn = httpsCallable<
+  const result = await callFunction<
     { cuentaId: string; perfilNombre: string; clienteId: string; clienteNombre: string; expiraEn?: string },
     { token: string; url: string }
-  >(functions, 'generarToken');
-
-  const result = await fn({
+  >('generarToken', {
     cuentaId: data.cuentaId,
     perfilNombre: data.perfilNombre,
     clienteId: data.clienteId,
@@ -84,19 +81,15 @@ export async function generarToken(data: CreateTokenInput): Promise<string> {
     expiraEn: data.expiraEn,
   });
 
-  return result.data.token;
+  return result.token;
 }
 
 export async function revocarToken(id: string): Promise<void> {
-  const functions = getFunctions();
-  const fn = httpsCallable<{ tokenId: string; activo: boolean }, { success: boolean }>(functions, 'toggleToken');
-  await fn({ tokenId: id, activo: false });
+  await callFunction<{ tokenId: string; activo: boolean }, { success: boolean }>('toggleToken', { tokenId: id, activo: false });
 }
 
 export async function reactivarToken(id: string): Promise<void> {
-  const functions = getFunctions();
-  const fn = httpsCallable<{ tokenId: string; activo: boolean }, { success: boolean }>(functions, 'toggleToken');
-  await fn({ tokenId: id, activo: true });
+  await callFunction<{ tokenId: string; activo: boolean }, { success: boolean }>('toggleToken', { tokenId: id, activo: true });
 }
 
 export default function useTokens(user: { uid?: string; rol?: string } | null): { tokens: TokenCliente[]; loading: boolean; error: string | null } {

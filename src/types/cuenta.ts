@@ -4,7 +4,6 @@ export interface PerfilCuenta {
   nombre: string;
   pin: string;
   estado: 'disponible' | 'asignado';
-  clienteId?: string;
   clienteNombre?: string;
   fechaAsignacion?: string;
 }
@@ -22,6 +21,7 @@ export interface Cuenta {
   diasServicio?: number;
   fechaVencimiento?: string;
   diasRestantes?: number | null;
+  imapConfigurado?: boolean;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

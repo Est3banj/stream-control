@@ -11,15 +11,45 @@
       "**/node_modules/**"
     ],
     "redirects": [
-      { "source": "/login", "destination": "/app/login", "type": 302 }
+      {
+        "source": "/login",
+        "destination": "/app/login",
+        "type": 302
+      }
     ],
     "rewrites": [
-      { "source": "/r/**", "destination": "/app/index.html" },
-      { "source": "/app/**", "destination": "/app/index.html" },
-      { "source": "**", "destination": "/index.html" }
+      {
+        "source": "/r/**",
+        "destination": "/app/index.html"
+      },
+      {
+        "source": "/app/**",
+        "destination": "/app/index.html"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
     ]
   },
   "functions": {
     "source": "functions"
+  },
+  "emulators": {
+    "functions": {
+      "port": 5001
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "auth": {
+      "port": 9099
+    },
+    "pubsub": {
+      "port": 8085
+    },
+    "ui": {
+      "enabled": true
+    }
   }
 }

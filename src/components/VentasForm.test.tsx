@@ -56,6 +56,14 @@ vi.mock('../contexts/AuthContext', () => ({
   useAuth: () => ({ user: mockUser }),
 }));
 
+vi.mock('../hooks/useMoneda', () => ({
+  useMoneda: () => ({
+    moneda: 'COP',
+    simbolo: '$',
+    formatear: (v: number) => `$${v.toLocaleString('es-CO')}`,
+  }),
+}));
+
 vi.mock('react-hot-toast', () => ({
   default: { success: vi.fn(), error: vi.fn() },
 }));
@@ -89,7 +97,7 @@ function createDocSnapshot(id: string, data: Record<string, unknown> | null, exi
 /** Completa los campos obligatorios del formulario excepto saldoPendiente */
 async function fillRequiredFields(user: ReturnType<typeof userEvent.setup>, container: HTMLElement): Promise<void> {
   await user.type(screen.getByPlaceholderText('Ej: Juan Pérez'), 'Cliente Test');
-  await user.type(screen.getByPlaceholderText('Ej: 3104567890'), '3001234567');
+  await user.type(screen.getByPlaceholderText('Ej: +573104567890 o @usuario'), '+573001234567');
   await user.type(
     screen.getByPlaceholderText('Ej: Netflix, Disney+, Spotify...'),
     'Netflix',
@@ -115,7 +123,7 @@ describe('VentasForm — Renderizado', () => {
 
     // Inputs con placeholder
     expect(screen.getByPlaceholderText('Ej: Juan Pérez')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Ej: 3104567890')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Ej: +573104567890 o @usuario')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('email de la cuenta (Netflix...)')).toBeInTheDocument();
     expect(
       screen.getByPlaceholderText('Ej: Netflix, Disney+, Spotify...'),
@@ -191,15 +199,15 @@ describe('VentasForm — Validaciones', () => {
 
     // Completar todos los campos obligatorios con teléfono inválido
     await fillRequiredFields(user, container);
-    // Sobreescribir teléfono con caracteres no numéricos
-    const telInput = screen.getByPlaceholderText('Ej: 3104567890');
+    // Sobreescribir teléfono con caracteres no numéricos (sin + ni @)
+    const telInput = screen.getByPlaceholderText('Ej: +573104567890 o @usuario');
     await user.clear(telInput);
     await user.type(telInput, 'ABCD1234');
 
     submitForm();
 
     expect(toast.error).toHaveBeenCalledWith(
-      'El teléfono solo debe contener números.',
+      'Ingresá un número con código de país (+57...) o un usuario de WhatsApp (@usuario)',
     );
   });
 
@@ -343,7 +351,7 @@ describe('VentasForm — Autocompletado', () => {
 
     // Verificar que se cargaron los datos del cliente
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('Ej: 3104567890')).toHaveValue(
+      expect(screen.getByPlaceholderText('Ej: +573104567890 o @usuario')).toHaveValue(
         '3007654321',
       );
     });

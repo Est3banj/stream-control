@@ -49,6 +49,15 @@ export default defineConfig({
     }),
   ],
   publicDir: 'public',
+  server: {
+    proxy: {
+      // Dev: redirige /api/* → Express local (api: npm run dev)
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+    },
+  },
   build: {
     outDir: 'dist/app',
     rollupOptions: {
@@ -65,5 +74,6 @@ export default defineConfig({
     globals: true,
     setupFiles: './src/test/setup.ts',
     css: true,
+    exclude: ['api/**', '**/node_modules/**', 'dist/**', 'functions/**'],
   },
 })

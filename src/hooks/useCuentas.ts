@@ -13,7 +13,7 @@ import {
   type QuerySnapshot,
   type DocumentData,
 } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { callFunction } from '../lib/apiClient';
 import type { Cuenta, CreateCuentaInput, UpdateCuentaInput } from '../types/cuenta';
 
 let sharedUid: string | null = null;
@@ -95,9 +95,7 @@ export async function crearCuenta(data: CreateCuentaInput, contrasena?: string):
   // Guardar credenciales via Cloud Function (solo Admin SDK escribe en cuentas_secretos)
   if (contrasena) {
     try {
-      const functions = getFunctions();
-      const guardar = httpsCallable(functions, 'guardarCredenciales');
-      await guardar({
+      await callFunction('guardarCredenciales', {
         cuentaId: cuentaRef.id,
         correo: data.correoCuenta,
         contrasena,
@@ -167,13 +165,6 @@ export async function asignarPerfil(
     // Si falla (cliente no encontrado, reglas, etc.), no bloquear la asignación
     console.warn('No se pudo actualizar el cliente con cuentaId:', err);
   }
-}
-
-export async function toggleCuentaActiva(id: string, current: boolean): Promise<void> {
-  await updateDoc(doc(db, 'cuentas', id), {
-    estado: current ? 'disponible' : 'expirada',
-    updatedAt: serverTimestamp(),
-  });
 }
 
 export default function useCuentas(user: { uid?: string; rol?: string } | null): { cuentas: Cuenta[]; loading: boolean; error: string | null } {

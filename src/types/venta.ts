@@ -5,6 +5,7 @@ export interface Venta {
   nombre: string;
   telefono: string;
   correo?: string;
+  contrasena?: string;
   plataforma: string;
   pantallas: number;
   precioVenta: number;
@@ -13,8 +14,12 @@ export interface Venta {
   fechaInicio: string;
   fechaVenta: string;
   diasServicio: number;
+  /** @deprecated Usar perfilNombre en nuevos registros */
   perfil?: string;
+  /** @deprecated Usar perfilNombre en nuevos registros */
   pinPerfil?: string;
+  monedaVenta?: string;
+  tasaVenta?: number;
   pagado: boolean;
   saldoPendiente: number;
   fechaRegistro: Timestamp;

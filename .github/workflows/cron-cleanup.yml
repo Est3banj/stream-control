@@ -1,0 +1,33 @@
+name: Cron Cleanup No Verificados
+
+on:
+  schedule:
+    # 13:00 UTC → 8:00 America/Bogota
+    - cron: '0 13 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.repository == 'Est3banj/stream-control'
+    steps:
+      - name: Invocar cleanupNoVerificados
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          status=$(curl -s -o /tmp/cleanup-response.txt -w "%{http_code}" \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "x-cron-secret: ${CRON_SECRET}" \
+            -d '{"data":{}}' \
+            https://api.streamcontrol.pro/api/cleanupNoVerificados)
+          echo "HTTP status: ${status}"
+          cat /tmp/cleanup-response.txt
+          if [ "${status}" != "200" ]; then
+            echo "::error::cleanupNoVerificados respondió ${status}"
+            exit 1
+          fi

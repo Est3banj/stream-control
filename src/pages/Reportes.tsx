@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import useVentas from '../hooks/useVentas';
+import { useMoneda } from '../hooks/useMoneda';
 import usePermisos from '../hooks/usePermisos';
 import FeatureBlocked from '../components/FeatureBlocked';
 import Paginador from '../components/Paginador';
@@ -14,6 +15,7 @@ export default function Reportes() {
   const { user } = useAuth();
   const permisos = usePermisos(user);
   const { ventas: todasLasVentas, loading, error } = useVentas(user);
+  const { formatear, formatearDesdeVenta, convertirVenta } = useMoneda();
   const [fechaInicio, setFechaInicio] = useState('');
   const [fechaFin, setFechaFin] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -145,8 +147,8 @@ export default function Reportes() {
   const indexPrimero = indexUltimo - itemsPorPagina;
   const ventasPaginadas = filteredVentas.slice(indexPrimero, indexUltimo);
 
-  const totalIngresos = ventas.reduce((acc, v) => acc + (v.precioVenta * v.pantallas), 0);
-  const totalCostos = ventas.reduce((acc, v) => acc + Number(v.costoServicio || 0), 0);
+  const totalIngresos = ventas.reduce((acc, v) => acc + convertirVenta((v.precioVenta * v.pantallas) || 0, v.monedaVenta, v.tasaVenta), 0);
+  const totalCostos = ventas.reduce((acc, v) => acc + convertirVenta(Number(v.costoServicio || 0), v.monedaVenta, v.tasaVenta), 0);
   const totalUtilidad = totalIngresos - totalCostos;
   const esAdmin = user?.rol === 'admin';
   const colCount = esAdmin ? 9 : 8;
@@ -276,7 +278,7 @@ export default function Reportes() {
             <TrendingUp className="text-green-500" size={24} />
           </div>
           <p className="text-sm font-medium text-gray-600 mb-1">Ingresos Totales</p>
-          <p className="text-3xl font-bold text-green-600">${totalIngresos.toLocaleString()}</p>
+          <p className="text-3xl font-bold text-green-600">{formatear(totalIngresos)}</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
@@ -287,7 +289,7 @@ export default function Reportes() {
             <TrendingDown className="text-red-500" size={24} />
           </div>
           <p className="text-sm font-medium text-gray-600 mb-1">Costos Totales</p>
-          <p className="text-3xl font-bold text-red-600">${totalCostos.toLocaleString()}</p>
+          <p className="text-3xl font-bold text-red-600">{formatear(totalCostos)}</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
@@ -301,7 +303,7 @@ export default function Reportes() {
           </div>
           <p className="text-sm font-medium text-gray-600 mb-1">Utilidad Total</p>
           <p className={`text-3xl font-bold ${totalUtilidad >= 0 ? 'text-indigo-600' : 'text-red-600'}`}>
-            ${totalUtilidad.toLocaleString()}
+            {formatear(totalUtilidad)}
           </p>
         </div>
       </div>
@@ -316,7 +318,7 @@ export default function Reportes() {
               <TrendingUp className="text-indigo-500" size={24} />
             </div>
             <p className="text-sm font-medium text-gray-600 mb-1">Promedio por Venta</p>
-            <p className="text-3xl font-bold text-indigo-600">${promedioPorVenta.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            <p className="text-3xl font-bold text-indigo-600">{formatear(promedioPorVenta)}</p>
           </div>
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
@@ -385,13 +387,13 @@ export default function Reportes() {
                         </td>
                         <td className="px-4 py-4 text-center text-gray-700">{v.pantallas}</td>
                         <td className="px-4 py-4 text-right font-semibold text-green-600">
-                          ${((v.precioVenta || 0) * (v.pantallas || 0)).toLocaleString()}
+                          {formatearDesdeVenta((v.precioVenta || 0) * (v.pantallas || 0), v.monedaVenta, v.tasaVenta)}
                         </td>
-                        <td className="px-4 py-4 text-right font-semibold text-red-600">
-                          ${Number(v.costoServicio || 0).toLocaleString()}
+                        <td className="px-4 py-4 text-right">
+                          {formatearDesdeVenta(Number(v.costoServicio || 0), v.monedaVenta, v.tasaVenta)}
                         </td>
-                        <td className="px-4 py-4 text-right font-semibold text-indigo-600">
-                          ${Number(v.utilidad || 0).toLocaleString()}
+                        <td className="px-4 py-4 text-right">
+                          {formatearDesdeVenta(Number(v.utilidad || 0), v.monedaVenta, v.tasaVenta)}
                         </td>
                         {esAdmin && <td className="px-4 py-4 text-gray-600">{v.usuarioEmail || '—'}</td>}
                         <td className="px-4 py-4 text-gray-600">

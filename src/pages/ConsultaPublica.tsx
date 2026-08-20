@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { callFunction } from '../lib/apiClient';
 import { AlertCircle, Loader2, Search, RefreshCw, WifiOff, Timer, MessageCircle } from 'lucide-react';
 import CasoSelector from '../components/CasoSelector';
 import CodeResult from '../components/CodeResult';
@@ -29,7 +29,7 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
   const [casos, setCasos] = useState<string[]>([]);
   const [selectedCaso, setSelectedCaso] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
-  const [codeResult, setCodeResult] = useState<{ codigo: string; email: string; fecha: string; tipo: string } | null>(null);
+  const [codeResult, setCodeResult] = useState<{ codigo: string; email: string; fecha: string; tipo: string; expiraEn?: number } | null>(null);
   const [notFoundMsg, setNotFoundMsg] = useState('');
   const [sessionWarning, setSessionWarning] = useState(false);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -69,10 +69,7 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
 
     const validate = async () => {
       try {
-        const functions = getFunctions();
-        const validar = httpsCallable(functions, 'validarToken');
-        const result = await validar({ token });
-        const data = result.data as Record<string, unknown>;
+        const data = await callFunction<{ token: string }, Record<string, unknown>>('validarToken', { token });
 
         if (cancelled) return;
 
@@ -111,10 +108,7 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
     resetIdleTimer();
 
     try {
-      const functions = getFunctions();
-      const consultar = httpsCallable(functions, 'consultarCodigo');
-      const result = await consultar({ token, caso: selectedCaso });
-      const data = result.data as Record<string, unknown>;
+      const data = await callFunction<{ token: string; caso: string }, Record<string, unknown>>('consultarCodigo', { token, caso: selectedCaso });
 
       if (data.encontrado) {
         setCodeResult({
@@ -122,6 +116,7 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
           email: data.email as string,
           fecha: data.fecha as string,
           tipo: data.tipo as string,
+          expiraEn: data.expiraEn as number | undefined,
         });
         setState('result');
       } else {
@@ -239,6 +234,7 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
                 email={codeResult.email}
                 fecha={codeResult.fecha}
                 tipo={codeResult.tipo}
+                expiraEn={codeResult.expiraEn}
               />
               <button
                 onClick={() => {

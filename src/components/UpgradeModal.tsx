@@ -3,6 +3,7 @@ import { X, Check } from 'lucide-react';
 import usePermisos, { PLAN_FEATURES, detectarFamilia } from '../hooks/usePermisos';
 import usePlanes from '../hooks/usePlanes';
 import { FEATURE_LABELS, PLAN_LABELS } from '../hooks/planFeatures';
+import { useMoneda } from '../hooks/useMoneda';
 import { useAdminConfig, sanitizarWhatsApp } from '../hooks/useAdminConfig';
 import type { Permisos } from '../hooks/usePermisos';
 import { PERIODOS, PERIODOS_LABELS, PERIODOS_MESES, type Plan, type Periodo } from '../types/plan';
@@ -91,6 +92,7 @@ export default function UpgradeModal({ user, onClose }: UpgradeModalProps) {
   const permisos = usePermisos(user);
   const { planes, loading: planesLoading } = usePlanes(user);
   const { config: adminConfig, loading: configLoading } = useAdminConfig();
+  const { formatearDesdeBase } = useMoneda();
   const [dismissed, setDismissed] = useState(false);
   const [showAllFeatures, setShowAllFeatures] = useState(false);
   const [periodo, setPeriodo] = useState<Periodo>('mensual');
@@ -156,7 +158,7 @@ export default function UpgradeModal({ user, onClose }: UpgradeModalProps) {
     const sufijo = periodo === 'mensual' ? 'mes' : periodo === 'trimestral' ? 'trimestre' : periodo === 'semestral' ? 'semestre' : 'año';
     const precioDisplay = planFirestore
       ? (precioActual > 0
-          ? `$${precioActual.toLocaleString('es-CO')}/${sufijo}`
+          ? `${formatearDesdeBase(precioActual)}/${sufijo}`
           : 'Gratuito')
       : 'Consultar';
 
@@ -167,12 +169,12 @@ export default function UpgradeModal({ user, onClose }: UpgradeModalProps) {
       : 0;
 
     const formatoOrig = precioOrig > 0
-      ? `$${precioOrig.toLocaleString('es-CO')}/${sufijo}`
+      ? `${formatearDesdeBase(precioOrig)}/${sufijo}`
       : '';
 
     const descuento = periodo === 'mensual'
       ? (precioOrig > 0 ? Math.round((1 - precioActual / precioOrig) * 100) : 0)
-      : Math.round((1 - precioActual / precioBaseMeses) * 100);
+      : (precioBaseMeses > 0 ? Math.round((1 - precioActual / precioBaseMeses) * 100) : 0);
 
     const ctaHref = esActual
       ? ''

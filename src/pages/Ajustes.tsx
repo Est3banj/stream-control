@@ -1,16 +1,21 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { callFunction } from '../lib/apiClient';
 import { User, Mail, Lock, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { MONEDAS } from '../types/usuario';
+import { useMoneda } from '../hooks/useMoneda';
 
 type ModalType = 'email' | 'password' | null;
 
 export default function Ajustes() {
   const { user, logout, updateProfileData, updateUserEmail, updateUserPassword } = useAuth();
+  const { moneda: monedaActual } = useMoneda();
 
   const [nombre, setNombre] = useState(user?.nombre || '');
   const [guardandoNombre, setGuardandoNombre] = useState(false);
+  const [moneda, setMoneda] = useState(monedaActual);
+  const [guardandoMoneda, setGuardandoMoneda] = useState(false);
 
   const [modal, setModal] = useState<ModalType>(null);
   const [currentPassword, setCurrentPassword] = useState('');
@@ -36,6 +41,21 @@ export default function Ajustes() {
     }
   };
 
+  const handleSaveMoneda = async () => {
+    setGuardandoMoneda(true);
+    try {
+      const monedaInfo = MONEDAS.find(m => m.codigo === moneda);
+      const tasa = monedaInfo?.defTasa ?? 1;
+      await updateProfileData({ moneda, tasa });
+      toast.success(`Moneda actualizada a ${moneda}`);
+    } catch (err: unknown) {
+      const error = err as Error;
+      toast.error(error.message || 'Error al actualizar la moneda');
+    } finally {
+      setGuardandoMoneda(false);
+    }
+  };
+
   const abrirModal = (tipo: ModalType) => {
     setCurrentPassword('');
     setNewEmail('');
@@ -56,7 +76,7 @@ export default function Ajustes() {
     setGuardando(true);
     try {
       await updateUserEmail(newEmail.trim(), currentPassword);
-      toast.success('Correo actualizado correctamente');
+      toast.success('Correo actualizado. Verificá el correo nuevo para seguir usando la app.', { duration: 5000 });
       setModal(null);
     } catch (err: unknown) {
       const error = err as { code?: string; message?: string };
@@ -109,20 +129,23 @@ export default function Ajustes() {
     }
   };
 
+  const [recuperandoPass, setRecuperandoPass] = useState(false);
+
   const handlePasswordReset = async () => {
     if (!user?.email || !user?.nombre) {
       toast.error('No se encontró tu correo electrónico');
       return;
     }
+    setRecuperandoPass(true);
     try {
-      const functions = getFunctions();
-      const enviarRecuperacion = httpsCallable(functions, 'enviarCorreoRecuperacion');
-      await enviarRecuperacion({ email: user.email, nombre: user.nombre });
+      await callFunction('enviarCorreoRecuperacion', { email: user.email, nombre: user.nombre });
       toast.success('Te enviamos un enlace para restablecer tu contraseña');
       setModal(null);
     } catch (err: unknown) {
       const error = err as { code?: string; message?: string };
       toast.error(error.message || 'Error al enviar el correo de recuperación');
+    } finally {
+      setRecuperandoPass(false);
     }
   };
 
@@ -157,6 +180,37 @@ export default function Ajustes() {
             className="btn-primary"
           >
             {guardandoNombre ? 'Guardando...' : 'Guardar cambios'}
+          </button>
+        </div>
+      </div>
+
+      {/* Section: Moneda */}
+      <div className="card">
+        <div className="flex items-center gap-2 mb-6">
+          <User className="text-indigo-600" size={24} />
+          <h2 className="text-xl font-bold text-gray-900">Moneda</h2>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Moneda predeterminada</label>
+            <select
+              value={moneda}
+              onChange={(e) => setMoneda(e.target.value)}
+              className="w-full"
+            >
+              {MONEDAS.map(m => (
+                <option key={m.codigo} value={m.codigo}>
+                  {m.simbolo} — {m.pais} ({m.codigo})
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            onClick={handleSaveMoneda}
+            disabled={guardandoMoneda}
+            className="btn-primary"
+          >
+            {guardandoMoneda ? 'Guardando...' : 'Guardar moneda'}
           </button>
         </div>
       </div>
@@ -248,9 +302,10 @@ export default function Ajustes() {
                   <button
                     type="button"
                     onClick={handlePasswordReset}
-                    className="text-xs text-indigo-600 hover:text-indigo-800 hover:underline mt-1.5 transition-colors"
+                    disabled={recuperandoPass}
+                    className="text-xs text-indigo-600 hover:text-indigo-800 hover:underline mt-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    ¿Olvidaste tu contraseña?
+                    {recuperandoPass ? 'Enviando...' : '¿Olvidaste tu contraseña?'}
                   </button>
                 )}
               </div>

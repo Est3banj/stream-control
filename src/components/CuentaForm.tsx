@@ -21,6 +21,7 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
   const [costo, setCosto] = useState(initialData?.costo?.toString() || '');
 
   const [estado, setEstado] = useState<'disponible' | 'asignada' | 'expirada'>(initialData?.estado || 'disponible');
+  const [tipoVenta, setTipoVenta] = useState<'perfiles' | 'completa'>(initialData?.tipoVenta || 'perfiles');
   const [perfiles, setPerfiles] = useState<{ nombre: string; pin: string }[]>(
     Array.isArray(initialData?.perfiles)
       ? initialData.perfiles.map(p => ({ nombre: p.nombre, pin: p.pin }))
@@ -29,6 +30,7 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
   const [otroProveedor, setOtroProveedor] = useState('');
   const [fechaInicio, setFechaInicio] = useState(initialData?.fechaInicio || '');
   const [diasServicio, setDiasServicio] = useState(initialData?.diasServicio?.toString() || '');
+  const [submitting, setSubmitting] = useState(false);
 
   const proveedorActual = proveedor === 'Otro' ? otroProveedor : proveedor;
 
@@ -53,34 +55,55 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
 
     if (!proveedorActual.trim()) {
       toast.error('El proveedor es obligatorio');
+      setSubmitting(false);
       return;
     }
     if (!isEdit && !correoCuenta.trim()) {
       toast.error('El correo de la cuenta es obligatorio');
+      setSubmitting(false);
       return;
     }
     if (!isEdit && !contrasena.trim()) {
       toast.error('La contraseña es obligatoria');
+      setSubmitting(false);
       return;
     }
     if (!costo || Number(costo) <= 0) {
       toast.error('El costo debe ser mayor a 0');
+      setSubmitting(false);
       return;
     }
     const validos = perfiles.filter(p => p.nombre.trim());
     if (validos.length === 0) {
       toast.error('Agregá al menos un perfil con nombre');
+      setSubmitting(false);
       return;
     }
 
-    const perfilesData: PerfilCuenta[] = validos.map(p => ({
-      nombre: p.nombre.trim(),
-      pin: p.pin.trim(),
-      estado: 'disponible' as const,
-    }));
+    const perfilesData: PerfilCuenta[] = validos.map(p => {
+      // Si es edición, buscar perfil original por nombre para preservar asignaciones activas
+      if (isEdit && initialData?.perfiles) {
+        const original = initialData.perfiles.find(op => op.nombre === p.nombre.trim());
+        if (original && original.estado === 'asignado') {
+          return {
+            nombre: p.nombre.trim(),
+            pin: p.pin.trim(),
+            estado: original.estado,
+            clienteNombre: original.clienteNombre,
+            fechaAsignacion: original.fechaAsignacion,
+          };
+        }
+      }
+      return {
+        nombre: p.nombre.trim(),
+        pin: p.pin.trim(),
+        estado: 'disponible' as const,
+      };
+    });
 
     const fechaVencimiento = fechaVencimientoCal || undefined;
     const fechaInicioVal = fechaInicio || undefined;
@@ -90,7 +113,7 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
       await onSubmit({
         costo: Number(costo),
         estado,
-        tipoVenta: 'perfiles',
+        tipoVenta,
         perfiles: perfilesData,
         fechaInicio: fechaInicioVal,
         diasServicio: diasServicioVal,
@@ -103,7 +126,7 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
         correoCuenta: correoCuenta.trim(),
         contrasena: contrasena.trim(),
         costo: Number(costo),
-        tipoVenta: 'perfiles',
+        tipoVenta,
         perfiles: perfilesData,
         estado: 'disponible' as const,
         fechaInicio: fechaInicioVal,
@@ -111,6 +134,7 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
         fechaVencimiento,
       } as CreateCuentaInput & { contrasena: string; fechaInicio?: string; diasServicio?: number; fechaVencimiento?: string });
     }
+    setSubmitting(false);
   };
 
   return (
@@ -143,6 +167,39 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
             disabled={isEdit}
           />
         )}
+      </div>
+
+      {/* Tipo de venta */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-3">
+          Tipo de venta <span className="text-red-500">*</span>
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => setTipoVenta('perfiles')}
+            className={`p-4 rounded-xl border-2 text-left transition-all ${
+              tipoVenta === 'perfiles'
+                ? 'border-indigo-500 bg-indigo-50'
+                : 'border-gray-200 bg-white hover:border-gray-300'
+            }`}
+          >
+            <p className="font-semibold text-gray-900">Por perfiles</p>
+            <p className="text-sm text-gray-500 mt-1">Vendé cada perfil por separado</p>
+          </button>
+          <button
+            type="button"
+            onClick={() => setTipoVenta('completa')}
+            className={`p-4 rounded-xl border-2 text-left transition-all ${
+              tipoVenta === 'completa'
+                ? 'border-indigo-500 bg-indigo-50'
+                : 'border-gray-200 bg-white hover:border-gray-300'
+            }`}
+          >
+            <p className="font-semibold text-gray-900">Completa</p>
+            <p className="text-sm text-gray-500 mt-1">Vendé la cuenta completa</p>
+          </button>
+        </div>
       </div>
 
       {/* Credenciales — solo en creación */}
@@ -312,11 +369,11 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
 
       {/* Acciones */}
       <div className="flex gap-3 pt-4 border-t border-gray-100">
-        <button type="button" onClick={onCancel} className="btn-secondary flex-1" disabled={loading}>
+        <button type="button" onClick={onCancel} className="btn-secondary flex-1" disabled={loading || submitting}>
           Cancelar
         </button>
-        <button type="submit" className="btn-primary flex-1" disabled={loading}>
-          {loading ? 'Guardando...' : isEdit ? 'Guardar Cambios' : 'Guardar Cuenta'}
+        <button type="submit" className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed" disabled={loading || submitting}>
+          {loading || submitting ? 'Guardando...' : isEdit ? 'Guardar Cambios' : 'Guardar Cuenta'}
         </button>
       </div>
     </form>

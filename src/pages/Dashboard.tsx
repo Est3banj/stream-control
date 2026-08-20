@@ -4,6 +4,7 @@ import useVentas from '../hooks/useVentas';
 import useClientes from '../hooks/useClientes';
 import useSuscripciones from '../hooks/useSuscripciones';
 import usePermisos from '../hooks/usePermisos';
+import { useMoneda } from '../hooks/useMoneda';
 import FeatureBlocked from '../components/FeatureBlocked';
 import { DollarSign, TrendingUp, TrendingDown, Users, Tv, ShoppingCart, AlertCircle, CreditCard } from 'lucide-react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -20,6 +21,7 @@ export default function Dashboard() {
   const { ventas, loading, error } = useVentas(user);
   const { clientes } = useClientes(user);
   const { suscripciones } = useSuscripciones(user);
+  const { formatear, convertirVenta } = useMoneda();
 
   const [usuariosCount, setUsuariosCount] = useState(0);
 
@@ -72,10 +74,10 @@ export default function Dashboard() {
     const vendedores: Record<string, number> = {};
 
     ventas.forEach((v: Venta) => {
-      const ingresoVenta = (v.precioVenta * v.pantallas) || 0;
+      const ingresoVenta = convertirVenta((v.precioVenta * v.pantallas) || 0, v.monedaVenta, v.tasaVenta);
       ingresos += ingresoVenta;
-      costos += Number(v.costoServicio) || 0;
-      utilidad += Number(v.utilidad) || 0;
+      costos += convertirVenta(Number(v.costoServicio) || 0, v.monedaVenta, v.tasaVenta);
+      utilidad += convertirVenta(Number(v.utilidad) || 0, v.monedaVenta, v.tasaVenta);
 
       if (v.nombre) {
         clientes[v.nombre] = (clientes[v.nombre] || 0) + ingresoVenta;
@@ -225,7 +227,7 @@ export default function Dashboard() {
             </div>
             <div className="space-y-1">
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Ingresos Totales</p>
-              <p className="text-3xl font-bold text-gray-900">${totalIngresos.toLocaleString()}</p>
+              <p className="text-3xl font-bold text-gray-900">{formatear(totalIngresos)}</p>
             </div>
           </div>
 
@@ -239,7 +241,7 @@ export default function Dashboard() {
             </div>
             <div className="space-y-1">
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Ingresos Este Mes</p>
-              <p className="text-3xl font-bold text-gray-900">${ingresosEsteMes.toLocaleString()}</p>
+              <p className="text-3xl font-bold text-gray-900">{formatear(ingresosEsteMes)}</p>
             </div>
           </div>
         </div>
@@ -255,7 +257,7 @@ export default function Dashboard() {
             </div>
             <div className="space-y-1">
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Ingresos</p>
-              <p className="text-3xl font-bold text-gray-900">${totales.ingresos.toLocaleString()}</p>
+              <p className="text-3xl font-bold text-gray-900">{formatear(totales.ingresos)}</p>
             </div>
           </div>
 
@@ -269,7 +271,7 @@ export default function Dashboard() {
             </div>
             <div className="space-y-1">
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Egresos</p>
-              <p className="text-3xl font-bold text-gray-900">${totales.egresos.toLocaleString()}</p>
+              <p className="text-3xl font-bold text-gray-900">{formatear(totales.egresos)}</p>
             </div>
           </div>
 
@@ -286,7 +288,7 @@ export default function Dashboard() {
             <div className="space-y-1">
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Utilidad</p>
               <p className={`text-3xl font-bold ${totales.utilidad >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                ${totales.utilidad.toLocaleString()}
+                {formatear(totales.utilidad)}
               </p>
             </div>
           </div>
@@ -310,7 +312,7 @@ export default function Dashboard() {
                     <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                     <YAxis tick={{ fontSize: 12 }} />
                     <Tooltip
-                      formatter={(value: any) => [`$${value.toLocaleString()}`, 'Ventas']}
+                      formatter={(value: any) => [formatear(value), 'Ventas']}
                       labelFormatter={(label: any, payload: any) => payload?.[0]?.payload?.fullName || label}
                     />
                     <Bar dataKey="ventas" fill="#4F46E5" radius={[8, 8, 0, 0]} />
@@ -386,7 +388,7 @@ export default function Dashboard() {
                         >
                           <td className="px-4 py-3 font-medium text-gray-700">{cliente.nombre}</td>
                           <td className="px-4 py-3 text-right font-semibold text-indigo-600">
-                            ${cliente.ventas.toLocaleString()}
+                            {formatear(cliente.ventas)}
                           </td>
                         </tr>
                       ))

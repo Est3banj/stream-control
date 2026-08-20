@@ -5,10 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && cp landing/index.html dist/ && cp landing/solicitar.html dist/ && cp public/stream.webp dist/ && rm -f dist/favicon.ico; true",
+    "build": "vite build && cp landing/index.html dist/ && cp landing/solicitar.html dist/ && cp public/stream.webp dist/ && cp -R public/captura_stream dist/ && rm -f dist/favicon.ico; true",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:api": "npm --prefix api test",
+    "build:api": "npm --prefix api run build",
+    "typecheck": "tsc --noEmit && npm --prefix api run typecheck"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.0.4",

@@ -4,17 +4,13 @@ import { asignarPerfil } from '../hooks/useCuentas';
 import { useAuth } from '../contexts/AuthContext';
 import useClientes from '../hooks/useClientes';
 import toast from 'react-hot-toast';
+import { useMoneda } from '../hooks/useMoneda';
 import type { Cuenta } from '../types/cuenta';
+import { ESTADO_BADGES } from '../constants';
 
 interface CuentaDetailProps {
   cuenta: Cuenta;
 }
-
-const ESTADO_BADGES: Record<string, { label: string; class: string }> = {
-  disponible: { label: 'Disponible', class: 'bg-green-100 text-green-700' },
-  asignada: { label: 'Asignada', class: 'bg-blue-100 text-blue-700' },
-  expirada: { label: 'Expirada', class: 'bg-red-100 text-red-700' },
-};
 
 const PERFIL_BADGES: Record<string, { label: string; class: string }> = {
   disponible: { label: 'Disponible', class: 'bg-green-100 text-green-700' },
@@ -24,6 +20,7 @@ const PERFIL_BADGES: Record<string, { label: string; class: string }> = {
 export default function CuentaDetail({ cuenta }: CuentaDetailProps) {
   const { user } = useAuth();
   const { clientes: todosLosClientes, loading: loadingClientes } = useClientes(user);
+  const { formatear } = useMoneda();
 
   const badge = ESTADO_BADGES[cuenta.estado] || { label: cuenta.estado, class: 'bg-gray-100 text-gray-700' };
   const perfiles = Array.isArray(cuenta.perfiles) ? cuenta.perfiles : [];
@@ -73,7 +70,7 @@ export default function CuentaDetail({ cuenta }: CuentaDetailProps) {
         </div>
         <div className="p-4 bg-gradient-to-br from-indigo-50 to-violet-50 rounded-xl border border-indigo-100">
           <p className="text-xs font-medium text-indigo-600 uppercase tracking-wide mb-1">Costo</p>
-          <p className="text-lg font-bold text-gray-900">${cuenta.costo.toLocaleString()}</p>
+          <p className="text-lg font-bold text-gray-900">{formatear(cuenta.costo)}</p>
         </div>
       </div>
 

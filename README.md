@@ -156,6 +156,8 @@ streamcontrol/
 | `guardarCredenciales` | 15s | Guarda credenciales IMAP en cuentas_secretos |
 | `toggleToken` | 15s | Activa/desactiva un token |
 
+> **Migración Vercel (2026-08)**: las Cloud Functions fueron portadas a un backend Express en Vercel (`api/`) — ver [Backend Express](#backend-express-api). Los triggers de Firestore (`onNuevoUsuario`, `onNotificacionEmail`) ya NO existen como triggers: el frontend los invoca como llamadas explícitas fire-and-forget (1 reintento) tras cada write. **Esto pierde la garantía de at-least-once**: si el proceso muere entre el write y la llamada, el email se pierde (recuperable a mano: reenviar desde admin o escribir el doc y reinvocar). La idempotencia está protegida con claims transaccionales (`emailBienvenidaEnviado`, `procesadoEnviado`): reintentos duplicados no reenvían emails.
+
 ### Planes y Suscripciones
 
 | Feature | Starter | Professional | Enterprise |
@@ -209,7 +211,7 @@ firebase.json
 
 ### Requisitos
 - Node.js 18+
-- Cuenta de Firebase (plan Blaze para Functions)
+- Cuenta de Firebase (plan gratuito: Firestore, Auth y Hosting — el backend NO usa Cloud Functions)
 - CLI de Firebase: `npm install -g firebase-tools`
 
 ### Desarrollo Local
@@ -219,7 +221,7 @@ firebase.json
 git clone https://github.com/Est3banj/stream-control.git
 cd streamcontrol
 npm install
-cd functions && npm install && cd ..
+cd api && npm install && cd ..   # backend Express (Vercel); functions/ es solo código de referencia
 
 # 2. Configurar variables de entorno
 cp .env.example .env
@@ -231,31 +233,37 @@ npm run dev
 
 ### Despliegue a Producción
 
+El backend Express (`api/`) corre en **Vercel**; los crons de vencimientos y cleanup corren en **GitHub Actions**; el frontend y las reglas se despliegan en Firebase Hosting/Firestore:
+
 ```bash
-# 1. Configurar secrets de Functions (solo la primera vez)
-firebase functions:secrets:set SMTP_USER
-firebase functions:secrets:set SMTP_PASS
+# 1. Backend (Vercel): se publica automáticamente al pushear a la rama principal
+#    (vercel.json define el build de api/index.ts → @vercel/node; maxDuration 300s, memory 1GB)
+git push origin main
 
-# 2. Recompilar TypeScript de Functions (importante!)
-cd functions && npx tsc && cd ..
+# 2. Frontend (Firebase Hosting)
+firebase deploy --only hosting
 
-# 3. Commitear y pushear a GitHub
-git add .
-git commit -m "descripción del cambio"
-git push
-
-# 4. Deployar todo
-firebase deploy
-
-# O deploy específico:
-firebase deploy --only hosting          # Solo frontend
-firebase deploy --only functions        # Solo Cloud Functions
-firebase deploy --only firestore:rules  # Solo reglas
+# 3. Reglas de Firestore
+firebase deploy --only firestore:rules
 ```
 
-> **Nota 1**: Firebase Functions usa el código compilado en `functions/lib/`. Siempre ejecutar `npx tsc` en `functions/` antes de deployar para asegurar que los cambios en TypeScript se incluyan.
+> **Nota 1**: NO ejecutar `firebase deploy` sin `--only` ni `firebase deploy --only functions`: `functions/` es SOLO código de referencia (las Cloud Functions ya NO se despliegan — billing de Firebase cerrado) y `firebase.json` aún la declara como fuente.
 >
 > **Nota 2**: El build de la SPA compila a `dist/app/` gracias al `base: '/app/'` en Vite. El script de build también copia `landing/index.html` y `landing/solicitar.html` a `dist/`.
+>
+> **Nota 3 (crons)**: GitHub Actions **pausa automáticamente los `schedule` tras 60 días sin push a la rama por defecto**. Si los crons se detienen, reactivarlos con el fallback documentado (`workflow_dispatch`, ya configurado en ambos): `gh workflow run cron-vencimientos.yml` y `gh workflow run cron-cleanup.yml`.
+
+### Rollback
+
+Mecanismo: **revertir el puntero del backend del frontend** — `VITE_API_BASE_URL` (única constante de decisión, `src/lib/apiClient.ts:4`, con fallback `https://api.streamcontrol.pro`). El backend `api/` en Vercel NO se des-despliega: cambiar de backend es cambiar la variable de entorno, no la infraestructura.
+
+1. Revertir el cambio que apuntó `VITE_API_BASE_URL` al endpoint de Vercel.
+2. Re-deployar el hosting: `firebase deploy --only hosting`.
+3. El backend `api/` queda desplegado en Vercel **sin tocar** (cero downtime del lado del API).
+
+- `functions/` es código de referencia MUERTO: las Cloud Functions originales ya no están accesibles (billing de Firebase cerrado) — **NO son un destino de rollback viable**.
+- Tiempo de rollback estimado: **< 30 min** (revert del puntero + redeploy de hosting).
+- El backend es portable: `api/` (Express estándar) puede hostearse en cualquier runtime Node (Fly.io, Railway, etc.) sin cambios de código.
 
 ---
 

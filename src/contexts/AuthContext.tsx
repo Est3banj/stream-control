@@ -3,24 +3,35 @@ import { auth, db } from "../firebase";
 import {
   EmailAuthProvider,
   createUserWithEmailAndPassword,
+  GoogleAuthProvider,
   onAuthStateChanged,
   reauthenticateWithCredential,
+  sendEmailVerification,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut,
   updateEmail,
   updatePassword,
 } from "firebase/auth";
 import { collection, addDoc, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { callFunction } from '../lib/apiClient';
 import type { UserCredential } from 'firebase/auth';
 import type { FirebaseUserWithData } from '../types/usuario';
+
+const fireAndForget = (fn: string, data?: unknown): void => {
+  callFunction(fn, data).catch(() => callFunction(fn, data).catch(() => undefined));
+};
 
 interface AuthContextValue {
   user: FirebaseUserWithData | null;
   login: (email: string, password: string) => Promise<UserCredential>;
+  loginWithGoogle: () => Promise<void>;
   register: (data: { nombre: string; correo: string; password: string; moneda: string; tasa: number }) => Promise<UserCredential>;
   logout: () => Promise<void>;
   loading: boolean;
-  updateProfileData: (data: { nombre?: string }) => Promise<void>;
+  sendVerificationEmail: () => Promise<void>;
+  refreshUser: () => Promise<boolean>;
+  updateProfileData: (data: { nombre?: string; moneda?: string; tasa?: number }) => Promise<void>;
   updateUserEmail: (newEmail: string, currentPassword: string) => Promise<void>;
   updateUserPassword: (newPassword: string, currentPassword: string) => Promise<void>;
 }
@@ -118,12 +129,91 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error("Tu cuenta ha vencido. Contacta al administrador para renovar.");
       }
 
+      // Verificación de email obligatoria (excepto admins y Google)
+      if (!firebaseUser.emailVerified && userData.rol !== 'admin') {
+        setUser({ ...firebaseUser, ...userData } as FirebaseUserWithData);
+        setLoading(false);
+        throw new Error("Verificá tu correo antes de continuar. Revisá tu bandeja de entrada.");
+      }
+
       setUser({ ...firebaseUser, ...userData } as FirebaseUserWithData);
       setLoading(false);
       return userCredential;
     } catch (error) {
       console.error("Error en login:", error);
       setLoading(false);
+      throw error;
+    }
+  };
+
+  /**
+   * Envía el correo de verificación via Cloud Function (patrón enviarCorreoRecuperacion).
+   * Funciona incluso sin sesión activa, solo necesita el email.
+   */
+  const sendVerificationEmail = async (): Promise<void> => {
+    const email = auth.currentUser?.email;
+    const nombre = user?.nombre;
+    if (!email) throw new Error('No hay correo asociado a la sesión');
+    await callFunction('enviarCorreoVerificacion', { email, nombre });
+  };
+
+  /**
+   * Recarga el usuario de Firebase Auth y devuelve si ya verificó el correo.
+   */
+  const refreshUser = async (): Promise<boolean> => {
+    const current = auth.currentUser;
+    if (!current) return false;
+    await current.reload();
+    const verified = auth.currentUser?.emailVerified ?? false;
+    if (verified && user) {
+      setUser({ ...user, emailVerified: verified } as FirebaseUserWithData);
+    }
+    return verified;
+  };
+
+  const loginWithGoogle = async (): Promise<void> => {
+    try {
+      setLoading(true);
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const { user: firebaseUser } = result;
+      const ref = doc(db, 'usuarios', firebaseUser.uid);
+      const snap = await getDoc(ref);
+
+      if (!snap.exists()) {
+        const profile = {
+          nombre: firebaseUser.displayName || 'Usuario Google',
+          correo: firebaseUser.email,
+          rol: 'usuario' as const,
+          estado: 'activo' as const,
+          moneda: 'COP',
+          tasa: 1,
+          activoHasta: null,
+          createdAt: new Date().toISOString(),
+        };
+        await setDoc(ref, profile);
+        setUser({ ...firebaseUser, ...profile } as FirebaseUserWithData);
+      } else {
+        const userData = snap.data() as Record<string, unknown>;
+        if (userData.estado === 'inactivo') {
+          await signOut(auth);
+          setLoading(false);
+          throw new Error('Tu cuenta está inactiva. Contacta al administrador.');
+        }
+        if (isExpired(userData.activoHasta)) {
+          await signOut(auth);
+          setLoading(false);
+          throw new Error('Tu cuenta ha vencido. Contacta al administrador.');
+        }
+        setUser({ ...firebaseUser, ...userData } as FirebaseUserWithData);
+      }
+      setLoading(false);
+    } catch (error: unknown) {
+      setLoading(false);
+      const err = error as { code?: string; message?: string };
+      if (err.code === 'auth/account-exists-with-different-credential') {
+        throw new Error('Ya existe una cuenta con este correo electrónico. Iniciá sesión con tu correo y contraseña.');
+      }
       throw error;
     }
   };
@@ -146,12 +236,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         estado: 'activo',
         moneda: data.moneda,
         tasa: data.tasa,
-        activoHasta: '',
+        activoHasta: null,
         createdAt: new Date().toISOString(),
       };
 
       await setDoc(doc(db, 'usuarios', uid), profile);
       setUser({ ...userCredential.user, ...profile } as FirebaseUserWithData);
+
+      // Post-write trigger v2 onNuevoUsuario → fire-and-forget (1 reintento, no bloquea)
+      fireAndForget('onNuevoUsuario');
+
+      // Enviar email de verificación con template personalizado (via Cloud Function)
+      // No usar fallback nativo: Firebase limita la generación de links (TOO_MANY_ATTEMPTS)
+      try {
+        await sendVerificationEmail();
+      } catch (err) {
+        console.warn('No se pudo enviar email de verificación:', err);
+      }
+
       setLoading(false);
       return userCredential;
     } catch (error) {
@@ -166,7 +268,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await reauthenticateWithCredential(auth.currentUser, credential);
   };
 
-  const updateProfileData = async (data: { nombre?: string }): Promise<void> => {
+  const updateProfileData = async (data: { nombre?: string; moneda?: string; tasa?: number }): Promise<void> => {
     if (!user?.uid) throw new Error("No hay sesión activa");
     await updateDoc(doc(db, "usuarios", user.uid), data);
     setUser(prev => prev ? { ...prev, ...data } as FirebaseUserWithData : null);
@@ -177,15 +279,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await reauthenticate(currentPassword);
     await updateEmail(auth.currentUser, newEmail);
     await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { correo: newEmail });
-    setUser(prev => prev ? { ...prev, correo: newEmail } as FirebaseUserWithData : null);
+    // updateEmail resetea emailVerified a false → el usuario debe re-verificar
+    setUser(prev => prev ? { ...prev, correo: newEmail, emailVerified: false } as FirebaseUserWithData : null);
     try {
-      await addDoc(collection(db, 'notificacionesEmail'), {
+      const ref = await addDoc(collection(db, 'notificacionesEmail'), {
         tipo: 'email_changed',
         nuevoCorreo: newEmail,
         nombre: user?.nombre || 'Usuario',
         uid: auth.currentUser.uid,
         fecha: new Date().toISOString(),
       });
+      // Post-write trigger v2 onNotificacionEmail → fire-and-forget (1 reintento, no bloquea)
+      fireAndForget('onNotificacionEmail', { notificacionId: ref.id });
     } catch (e) {
       console.error('Error encolando notificación email:', e);
     }
@@ -196,19 +301,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await reauthenticate(currentPassword);
     await updatePassword(auth.currentUser, newPassword);
     try {
-      await addDoc(collection(db, 'notificacionesEmail'), {
+      const ref = await addDoc(collection(db, 'notificacionesEmail'), {
         tipo: 'password_changed',
         nombre: user?.nombre || 'Usuario',
         uid: auth.currentUser.uid,
         fecha: new Date().toISOString(),
       });
+      // Post-write trigger v2 onNotificacionEmail → fire-and-forget (1 reintento, no bloquea)
+      fireAndForget('onNotificacionEmail', { notificacionId: ref.id });
     } catch (e) {
       console.error('Error encolando notificación email:', e);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading, updateProfileData, updateUserEmail, updateUserPassword }}>
+    <AuthContext.Provider value={{ user, login, loginWithGoogle, register, logout, loading, sendVerificationEmail, refreshUser, updateProfileData, updateUserEmail, updateUserPassword }}>
       {children}
     </AuthContext.Provider>
   );

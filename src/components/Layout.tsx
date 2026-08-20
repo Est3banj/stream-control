@@ -64,7 +64,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
         { to: '/ventas', icon: DollarSign, label: 'Ventas' },
         { to: '/reportes', icon: BarChart3, label: 'Reportes' },
-        { to: '/GestionClientes', icon: Users, label: 'Clientes' },
+        { to: '/gestion-clientes', icon: Users, label: 'Clientes' },
         { to: '/cuentas', icon: CreditCard, label: 'Cuentas' },
         { to: '/consulta-codigos', icon: Key, label: 'Códigos' },
         { to: '/ajustes', icon: Settings, label: 'Ajustes' },
