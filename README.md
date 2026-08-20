@@ -10,8 +10,8 @@ StreamControl Pro es una plataforma premium para la gestión eficiente de negoci
 |------|-----------|
 | **Frontend** | React 18 + TypeScript + Vite |
 | **Estilos** | Tailwind CSS |
-| **Backend** | Firebase (Firestore, Auth, Functions, Hosting) |
-| **Cloud Functions** | Node.js 22 (1ª Gen) con TypeScript |
+| **Backend** | Express (TypeScript) en **Vercel** + crons en **GitHub Actions**; Firebase solo como BBDD (Firestore), Auth y Hosting |
+| **Cloud Functions** | `functions/` = código de referencia MUERTO (Node 22 1ª Gen) — ya NO se despliegan (billing cerrado) |
 | **Conexión IMAP** | imapflow + mailparser (códigos de verificación) |
 | **Notificaciones** | Telegram Bot API + nodemailer (SMTP Gmail) |
 | **Estado global** | React Context + hooks con shared listeners |
@@ -77,7 +77,7 @@ streamcontrol/
 │   │   └── formatearPrecio.ts
 │   ├── firebase.ts           # Configuración Firebase
 │   └── App.tsx               # Router principal
-├── functions/                # Cloud Functions
+├── functions/                # Cloud Functions (REFERENCIA MUERTA, no se despliegan)
 │   ├── src/
 │   │   ├── codigos.ts        # Tokens, validación, consulta IMAP
 │   │   ├── imap.ts           # Conexión IMAP + extracción de códigos
@@ -86,6 +86,12 @@ streamcontrol/
 │   ├── email.ts              # Módulo de correos (nodemailer)
 │   ├── telegram.ts           # Bot de Telegram
 │   └── package.json
+├── api/                      # Backend Express (Vercel, DÓNDE vive el backend hoy)
+│   ├── src/                  # server.ts/app.ts, registry.ts (FN_REGISTRY 17 rutas), handlers, rateLimit, firebase.ts, imap.ts
+│   ├── tests/                # Vitest (107 tests, incl. esm-contract y cors multi-origen)
+│   ├── scripts/              # cron-vencimientos.ts (se ejecuta en GitHub Actions)
+│   └── package.json
+├── .github/workflows/        # cron-vencimientos.yml + cron-cleanup.yml (GitHub Actions)
 ├── firestore.rules           # Reglas de seguridad
 ├── firestore.indexes.json
 ├── firebase.json
@@ -141,22 +147,30 @@ streamcontrol/
 - **Rate limiting**: máx. 10 consultas exitosas por token, 5 por minuto
 - **Revocar/reactivar tokens**: desde Gestión de Clientes
 
-### Cloud Functions
+### Backend Express — Endpoints (api/)
 
-| Función | Timeout | Propósito |
-|---------|---------|-----------|
-| `onNuevoUsuario` | - | Email de bienvenida |
-| `onNotificacionEmail` | - | Email cambio password/correo |
-| `enviarCorreoRecuperacion` | 15s | Enlace de reset password |
-| `telegramWebhook` | - | Webhook del bot de Telegram |
-| `generarNotificacionesVencimientos` | - | Notificaciones de vencimientos (cada 24h) |
-| `generarToken` | 30s | Crea token UUID para consulta de códigos |
-| `validarToken` | 15s | Valida token y devuelve casos disponibles |
-| `consultarCodigo` | 60s | Conecta IMAP, busca email y extrae código |
-| `guardarCredenciales` | 15s | Guarda credenciales IMAP en cuentas_secretos |
-| `toggleToken` | 15s | Activa/desactiva un token |
+> Los handlers viven en `api/src/` y corren como rutas `POST /api/{fn}` en Vercel, con **envelope** `{ data: ... }` → `{ result: ... }` | `{ error: { code, message } }` (paridad con el protocolo `httpsCallable`). CORS estricto: allowlist de los 3 dominios de Hosting (match exacto). Rate-limits Firestore transaccionales por scope (email 1/60s, uid 10/min, cuenta 5/min, token 30/min).
 
-> **Migración Vercel (2026-08)**: las Cloud Functions fueron portadas a un backend Express en Vercel (`api/`) — ver [Backend Express](#backend-express-api). Los triggers de Firestore (`onNuevoUsuario`, `onNotificacionEmail`) ya NO existen como triggers: el frontend los invoca como llamadas explícitas fire-and-forget (1 reintento) tras cada write. **Esto pierde la garantía de at-least-once**: si el proceso muere entre el write y la llamada, el email se pierde (recuperable a mano: reenviar desde admin o escribir el doc y reinvocar). La idempotencia está protegida con claims transaccionales (`emailBienvenidaEnviado`, `procesadoEnviado`): reintentos duplicados no reenvían emails.
+| Endpoint | Auth | Propósito |
+|---------|------|-----------|
+| `onNuevoUsuario` | Bearer | Email de bienvenida (fire-and-forget, flags transaccionales) |
+| `onNotificacionEmail` | Bearer | Email cambio password/correo (fire-and-forget) |
+| `enviarCorreoRecuperacion` | none | Enlace de reset password (rate-limit email 1/60s) |
+| `enviarCorreoVerificacion` | none | Reenvío de verificación de email |
+| `telegramWebhook` | none (raw) | Webhook del bot de Telegram (secret_token) |
+| `generarToken` | Bearer | Crea token UUID para consulta de códigos (solo Enterprise) |
+| `generarTokenSubdistribuidor` | Bearer | Token para subdistribuidores |
+| `validarToken` | none | Valida token y devuelve casos disponibles |
+| `consultarCodigo` | none | Conecta IMAP, busca email y extrae código |
+| `consultarCodigoDirecto` | Bearer | Consulta con credenciales guardadas (rate-limits uid/cuenta) |
+| `guardarCredenciales` | Bearer | Guarda credenciales IMAP en cuentas_secretos |
+| `toggleToken` | Bearer | Activa/desactiva un token |
+| `obtenerCredencialesCuenta` | Bearer | Credenciales IMAP de la cuenta |
+| `desasignarPerfil` / `desvincularTelegram` | Bearer | Desasignación de perfiles / desvinculación de bot |
+| `listarVerificados` | Admin | Lista usuarios verificados |
+| `cleanupNoVerificados` | Cron | Limpieza de usuarios no verificados (x-cron-secret) |
+
+> **Migración Vercel (2026-08)**: las Cloud Functions fueron portadas a este backend Express en Vercel (`api/` — sección Backend Express). Los triggers de Firestore (`onNuevoUsuario`, `onNotificacionEmail`) ya NO existen como triggers: el frontend los invoca como llamadas explícitas fire-and-forget (1 reintento) tras cada write. **Esto pierde la garantía de at-least-once**: si el proceso muere entre el write y la llamada, el email se pierde (recuperable a mano: reenviar desde admin o escribir el doc y reinvocar). La idempotencia está protegida con claims transaccionales (`emailBienvenidaEnviado`, `procesadoEnviado`): reintentos duplicados no reenvían emails.
 
 ### Planes y Suscripciones
 
@@ -253,6 +267,27 @@ firebase deploy --only firestore:rules
 >
 > **Nota 3 (crons)**: GitHub Actions **pausa automáticamente los `schedule` tras 60 días sin push a la rama por defecto**. Si los crons se detienen, reactivarlos con el fallback documentado (`workflow_dispatch`, ya configurado en ambos): `gh workflow run cron-vencimientos.yml` y `gh workflow run cron-cleanup.yml`.
 
+### Variables de entorno
+
+**Backend — Vercel (Environment: Production, 6 variables):**
+
+| Variable | Requerida | Descripción |
+|----------|:---:|-------------|
+| `FIREBASE_SERVICE_ACCOUNT` | ✅ | JSON completo del service account `streamcontrol-api@streamcontrol-10837.iam.gserviceaccount.com` (rol `datastore.user`; se carga con `vercel env add FIREBASE_SERVICE_ACCOUNT production` pegando el JSON — multilínea OK) |
+| `TELEGRAM_TOKEN` | ✅ | Token del bot `NotiStream_bot` (`8967036682:...`) |
+| `TELEGRAM_WEBHOOK_SECRET` | ✅ | `secret_token` del webhook (generado con `openssl rand -hex 32`) |
+| `SMTP_USER` | ✅ | `streamcontrolpro@gmail.com` |
+| `SMTP_PASS` | ✅ | App password de Gmail (⚠️ contiene espacios — respetarlos al cargarla) |
+| `CRON_SECRET` | ✅ | Secreto de `x-cron-secret` para `POST /api/cleanupNoVerificados` |
+
+**GitHub Actions (repo secrets, 3):** `FIREBASE_SERVICE_ACCOUNT`, `TELEGRAM_TOKEN`, `CRON_SECRET` (los workflows de `vencimientos` y `cleanup` usan `${{ secrets.X }}` en el 100% de los casos).
+
+**Registro inicial del webhook de Telegram** (solo al cambiar dominio/secret):
+
+```bash
+curl "https://api.telegram.org/bot$TELEGRAM_TOKEN/setWebhook?url=https://api.streamcontrol.pro/api/telegramWebhook&secret_token=$TELEGRAM_WEBHOOK_SECRET"
+```
+
 ### Rollback
 
 Mecanismo: **revertir el puntero del backend del frontend** — `VITE_API_BASE_URL` (única constante de decisión, `src/lib/apiClient.ts:4`, con fallback `https://api.streamcontrol.pro`). El backend `api/` en Vercel NO se des-despliega: cambiar de backend es cambiar la variable de entorno, no la infraestructura.
@@ -264,6 +299,19 @@ Mecanismo: **revertir el puntero del backend del frontend** — `VITE_API_BASE_U
 - `functions/` es código de referencia MUERTO: las Cloud Functions originales ya no están accesibles (billing de Firebase cerrado) — **NO son un destino de rollback viable**.
 - Tiempo de rollback estimado: **< 30 min** (revert del puntero + redeploy de hosting).
 - El backend es portable: `api/` (Express estándar) puede hostearse en cualquier runtime Node (Fly.io, Railway, etc.) sin cambios de código.
+
+---
+
+## Troubleshooting — Errores conocidos (2026-08)
+
+| Síntoma | Causa | Solución |
+|---|---|---|
+| `No 'Access-Control-Allow-Origin' header` en fetch a `api.streamcontrol.pro` | La SPA se sirve en **3 dominios** de Hosting y el origin no está en la allowlist | Confirmar que el origin esté en `ALLOWED_ORIGINS` (`api/src/config.ts`): `streamcontrol.pro`, `streamcontrol-10837.web.app`, `streamcontrol-10837.firebaseapp.com`. Match EXACTO, sin comodines |
+| `500 {"error":{"code":"internal"}}` solo en rutas que **escriben** (generarToken, toggleToken, guardarCredenciales…) | `import * as admin from 'firebase-admin'` — el namespace ESM de node NO expone `firestore` en runtime (TSC no lo detecta; el mock de vitest tampoco) → `admin.firestore.FieldValue` es undefined | Usar SIEMPRE `import admin from 'firebase-admin'` (default import). Protegido por `api/tests/esm-contract.test.ts`. Si agregás un módulo que importe firebase-admin, default import o el 500 te va a morder en prod |
+| `404 NOT_FOUND` en `/api/*` en Vercel | Falta el rewrite legacy en `vercel.json` | `routes: [{ "src": "/api/(.*)", "dest": "/api" }]` (commit d368b9d) |
+| `401 Protected deployment` en URL `*.vercel.app` | Deployment Protection de Vercel sobre URLs temporales | Esperado. El custom domain `api.streamcontrol.pro` es público |
+| Consola: `reload.js:22 WebSocket wss://…/ws/ws failed` | Extensión de navegador que inyecta `reload.js` — NO es código del proyecto (verificado: 0 matches en el repo) | Ignorar |
+| Consola: `Cross-Origin-Opener-Policy policy would block the window.closed call` | Warnings de Firebase Auth (popup flow) — no bloquean nada | Ignorar |
 
 ---
 
