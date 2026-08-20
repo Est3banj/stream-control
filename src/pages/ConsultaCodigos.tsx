@@ -4,7 +4,7 @@ import useCuentas from '../hooks/useCuentas';
 import useTokens, { revocarToken, reactivarToken } from '../hooks/useTokens';
 import usePermisos from '../hooks/usePermisos';
 import FeatureBlocked from '../components/FeatureBlocked';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { callFunction } from '../lib/apiClient';
 import { useMoneda } from '../hooks/useMoneda';
 import { Copy, Loader2, AlertCircle, Monitor, Calendar, X, RefreshCw, Search, Link, List, ExternalLink, AlertTriangle } from 'lucide-react';
 import { CASE_OPTIONS, CASE_LABELS } from '../components/CasoSelector';
@@ -77,10 +77,7 @@ export default function ConsultaCodigos() {
     setErrorMsg('');
 
     try {
-      const functions = getFunctions();
-      const fn = httpsCallable(functions, 'consultarCodigoDirecto');
-      const result = await fn({ cuentaId, caso: selectedCaso });
-      const data = result.data as Record<string, unknown>;
+      const data = await callFunction<{ cuentaId: string; caso: string }, Record<string, unknown>>('consultarCodigoDirecto', { cuentaId, caso: selectedCaso });
 
       if (data.encontrado) {
         setCodigo(data.codigo as string);
@@ -106,9 +103,7 @@ export default function ConsultaCodigos() {
 
     try {
       const expiraEn = new Date(Date.now() + diasAcceso * 24 * 60 * 60 * 1000).toISOString();
-      const functions = getFunctions();
-      const fn = httpsCallable(functions, 'generarTokenSubdistribuidor');
-      const result = await fn({
+      const data = await callFunction<object, { url: string }>('generarTokenSubdistribuidor', {
         cuentaId,
         expiraEn,
         clienteNombre: nombreSub.trim() || 'Sub-distribuidor',
@@ -122,7 +117,6 @@ export default function ConsultaCodigos() {
         proveedor: cuentaSeleccionada?.proveedor || '',
         costoServicio,
       });
-      const data = result.data as Record<string, unknown>;
 
       const url = `${window.location.origin}${data.url}`;
       setLinkGenerado(url);

@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { callFunction } from '../lib/apiClient';
 import { Loader2, AlertCircle, Mail, Monitor } from 'lucide-react';
 import CasoSelector, { CASE_LABELS } from './CasoSelector';
 import CodeResult from './CodeResult';
@@ -41,10 +41,7 @@ export default function ConsultaInterna({ clienteNombre, proveedor, correoCuenta
     setNotFound(false);
 
     try {
-      const functions = getFunctions();
-      const consultarCodigo = httpsCallable(functions, 'consultarCodigo');
-      const result = await consultarCodigo({ token: tokenId, caso: selectedCaso });
-      const data = result.data as Record<string, unknown>;
+      const data = await callFunction<{ token: string; caso: string }, Record<string, unknown>>('consultarCodigo', { token: tokenId, caso: selectedCaso });
 
       if (data.encontrado) {
         setCodeResult({

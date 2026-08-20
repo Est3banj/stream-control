@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import useCuentas, { crearCuenta, actualizarCuenta, asignarPerfil } from '../hooks/useCuentas';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { callFunction } from '../lib/apiClient';
 import { db } from '../firebase';
 import usePermisos from '../hooks/usePermisos';
 import useClientes from '../hooks/useClientes';
@@ -122,16 +122,13 @@ export default function GestionCuentas() {
 
   const handleCopiarDatos = async (cuenta: Cuenta) => {
     try {
-      const functions = getFunctions();
-      const fn = httpsCallable(functions, 'obtenerCredencialesCuenta');
-      const result = await fn({ cuentaId: cuenta.id });
-      const data = result.data as {
+      const data = await callFunction<{ cuentaId: string }, {
         proveedor: string;
         correoCuenta: string;
         correo: string;
         contrasena: string;
         perfiles: Array<{ nombre: string; pin?: string; estado: string }>;
-      };
+      }>('obtenerCredencialesCuenta', { cuentaId: cuenta.id });
       setDatosCuenta(data);
       setMostrarDatosCuenta(true);
     } catch (err: unknown) {

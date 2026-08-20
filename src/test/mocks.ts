@@ -41,6 +41,11 @@ export const mockAuthContext = {
   logout: vi.fn(),
 };
 
+// Mock del API client (ex-Cloud Functions)
+export const mockApiClient = {
+  callFunction: vi.fn(),
+};
+
 // Helper: crear un snapshot simulado de Firestore
 export function createDocSnapshot(id: string, data: Record<string, unknown> | null, existsVal = true): {
   id: string;

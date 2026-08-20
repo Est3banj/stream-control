@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { callFunction } from '../../lib/apiClient';
 import toast from 'react-hot-toast';
 import { MONEDAS, MONEDA_POR_DEFECTO, TASA_POR_DEFECTO } from '../../types/usuario';
 
@@ -107,9 +107,7 @@ export default function Login(){
     }
     setRecuperando(true);
     try {
-      const functions = getFunctions();
-      const fn = httpsCallable(functions, 'enviarCorreoRecuperacion');
-      await fn({ email: emailRecuperacion.trim() });
+      await callFunction('enviarCorreoRecuperacion', { email: emailRecuperacion.trim() });
       setEnviado(true);
     } catch (err: unknown) {
       const error = err as { code?: string; message?: string };

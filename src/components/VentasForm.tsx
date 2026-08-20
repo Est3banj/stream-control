@@ -10,7 +10,7 @@ import useCuentas from '../hooks/useCuentas';
 import SelectorCuenta from '../components/SelectorCuenta';
 import { Check, Plus, X, Layers } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { callFunction } from '../lib/apiClient';
 import { useMoneda } from '../hooks/useMoneda';
 import type { VentaInput } from '../types/venta';
 
@@ -281,10 +281,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
     // Cargar contraseña desde cuentas_secretos via Cloud Function
     const cargarContrasena = async () => {
       try {
-        const functions = getFunctions();
-        const fn = httpsCallable(functions, 'obtenerCredencialesCuenta');
-        const result = await fn({ cuentaId: newCuentaId });
-        const data = result.data as { contrasena: string };
+        const data = await callFunction<{ cuentaId: string }, { contrasena: string }>('obtenerCredencialesCuenta', { cuentaId: newCuentaId });
         if (data.contrasena) {
           setVenta(prev => ({ ...prev, contrasena: data.contrasena }));
         }
@@ -369,10 +366,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       // Cargar contraseña desde cuentas_secretos via Cloud Function
       (async () => {
         try {
-          const functions = getFunctions();
-          const fn = httpsCallable(functions, 'obtenerCredencialesCuenta');
-          const result = await fn({ cuentaId: newCuentaId });
-          const data = result.data as { contrasena: string };
+          const data = await callFunction<{ cuentaId: string }, { contrasena: string }>('obtenerCredencialesCuenta', { cuentaId: newCuentaId });
           if (data.contrasena) {
             setServicios(prev => prev.map(sv => sv.id === servicioId ? { ...sv, contrasena: data.contrasena } : sv));
           }

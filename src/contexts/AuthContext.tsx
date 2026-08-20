@@ -14,9 +14,13 @@ import {
   updatePassword,
 } from "firebase/auth";
 import { collection, addDoc, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { callFunction } from '../lib/apiClient';
 import type { UserCredential } from 'firebase/auth';
 import type { FirebaseUserWithData } from '../types/usuario';
+
+const fireAndForget = (fn: string, data?: unknown): void => {
+  callFunction(fn, data).catch(() => callFunction(fn, data).catch(() => undefined));
+};
 
 interface AuthContextValue {
   user: FirebaseUserWithData | null;
@@ -150,9 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const email = auth.currentUser?.email;
     const nombre = user?.nombre;
     if (!email) throw new Error('No hay correo asociado a la sesión');
-    const functions = getFunctions();
-    const fn = httpsCallable(functions, 'enviarCorreoVerificacion');
-    await fn({ email, nombre });
+    await callFunction('enviarCorreoVerificacion', { email, nombre });
   };
 
   /**
@@ -241,6 +243,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await setDoc(doc(db, 'usuarios', uid), profile);
       setUser({ ...userCredential.user, ...profile } as FirebaseUserWithData);
 
+      // Post-write trigger v2 onNuevoUsuario → fire-and-forget (1 reintento, no bloquea)
+      fireAndForget('onNuevoUsuario');
+
       // Enviar email de verificación con template personalizado (via Cloud Function)
       // No usar fallback nativo: Firebase limita la generación de links (TOO_MANY_ATTEMPTS)
       try {
@@ -277,13 +282,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // updateEmail resetea emailVerified a false → el usuario debe re-verificar
     setUser(prev => prev ? { ...prev, correo: newEmail, emailVerified: false } as FirebaseUserWithData : null);
     try {
-      await addDoc(collection(db, 'notificacionesEmail'), {
+      const ref = await addDoc(collection(db, 'notificacionesEmail'), {
         tipo: 'email_changed',
         nuevoCorreo: newEmail,
         nombre: user?.nombre || 'Usuario',
         uid: auth.currentUser.uid,
         fecha: new Date().toISOString(),
       });
+      // Post-write trigger v2 onNotificacionEmail → fire-and-forget (1 reintento, no bloquea)
+      fireAndForget('onNotificacionEmail', { notificacionId: ref.id });
     } catch (e) {
       console.error('Error encolando notificación email:', e);
     }
@@ -294,12 +301,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await reauthenticate(currentPassword);
     await updatePassword(auth.currentUser, newPassword);
     try {
-      await addDoc(collection(db, 'notificacionesEmail'), {
+      const ref = await addDoc(collection(db, 'notificacionesEmail'), {
         tipo: 'password_changed',
         nombre: user?.nombre || 'Usuario',
         uid: auth.currentUser.uid,
         fecha: new Date().toISOString(),
       });
+      // Post-write trigger v2 onNotificacionEmail → fire-and-forget (1 reintento, no bloquea)
+      fireAndForget('onNotificacionEmail', { notificacionId: ref.id });
     } catch (e) {
       console.error('Error encolando notificación email:', e);
     }

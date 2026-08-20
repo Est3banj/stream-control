@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
 import { collection, query, where, onSnapshot, updateDoc, doc, increment, addDoc, serverTimestamp, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { callFunction } from '../lib/apiClient';
 import { useAuth } from '../contexts/AuthContext';
 import useClientes from '../hooks/useClientes';
 import useTokens, { generarToken, revocarToken } from '../hooks/useTokens';
@@ -366,14 +366,11 @@ export default function GestionClientes() {
     if (!confirmarLiberar) return;
     setLiberando(true);
     try {
-      const liberarFn = getFunctions();
-      const desasignar = httpsCallable(liberarFn, 'desasignarPerfil');
-      const result = await desasignar({
+      const data = await callFunction<object, { success: boolean }>('desasignarPerfil', {
         clienteId: confirmarLiberar.id,
         cuentaId: confirmarLiberar.cuentaId,
         perfilNombre: confirmarLiberar.perfilAsignado,
       });
-      const data = result.data as { success: boolean };
       if (data.success) {
         toast.success(`Perfil de ${confirmarLiberar.nombre} liberado correctamente`);
         setConfirmarLiberar(null);

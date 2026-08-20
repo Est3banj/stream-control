@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { collection, doc, setDoc, updateDoc, onSnapshot, Timestamp, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, sendPasswordResetEmail, signOut as signOutAuth } from 'firebase/auth';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { callFunction } from '../lib/apiClient';
 import { auth, db, secondaryAuth } from '../firebase';
 import { useMoneda } from '../hooks/useMoneda';
 import { UserPlus, Users, Shield, UserCheck, UserX, Mail, MailCheck, Eye, EyeOff, Package, X } from 'lucide-react';
@@ -54,10 +54,7 @@ export default function Usuarios() {
   useEffect(() => {
     (async () => {
       try {
-        const functions = getFunctions();
-        const fn = httpsCallable(functions, 'listarVerificados');
-        const result = await fn();
-        const data = result.data as { verificados: Record<string, boolean> };
+        const data = await callFunction<Record<string, never>, { verificados: Record<string, boolean> }>('listarVerificados');
         setVerificados(data.verificados || {});
       } catch {
         // Si falla, no mostrar el badge

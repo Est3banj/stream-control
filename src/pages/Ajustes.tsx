@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { callFunction } from '../lib/apiClient';
 import { User, Mail, Lock, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { MONEDAS } from '../types/usuario';
@@ -138,9 +138,7 @@ export default function Ajustes() {
     }
     setRecuperandoPass(true);
     try {
-      const functions = getFunctions();
-      const enviarRecuperacion = httpsCallable(functions, 'enviarCorreoRecuperacion');
-      await enviarRecuperacion({ email: user.email, nombre: user.nombre });
+      await callFunction('enviarCorreoRecuperacion', { email: user.email, nombre: user.nombre });
       toast.success('Te enviamos un enlace para restablecer tu contraseña');
       setModal(null);
     } catch (err: unknown) {

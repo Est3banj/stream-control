@@ -13,7 +13,7 @@ import {
   type QuerySnapshot,
   type DocumentData,
 } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { callFunction } from '../lib/apiClient';
 import type { Cuenta, CreateCuentaInput, UpdateCuentaInput } from '../types/cuenta';
 
 let sharedUid: string | null = null;
@@ -95,9 +95,7 @@ export async function crearCuenta(data: CreateCuentaInput, contrasena?: string):
   // Guardar credenciales via Cloud Function (solo Admin SDK escribe en cuentas_secretos)
   if (contrasena) {
     try {
-      const functions = getFunctions();
-      const guardar = httpsCallable(functions, 'guardarCredenciales');
-      await guardar({
+      await callFunction('guardarCredenciales', {
         cuentaId: cuentaRef.id,
         correo: data.correoCuenta,
         contrasena,

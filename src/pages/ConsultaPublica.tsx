@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { callFunction } from '../lib/apiClient';
 import { AlertCircle, Loader2, Search, RefreshCw, WifiOff, Timer, MessageCircle } from 'lucide-react';
 import CasoSelector from '../components/CasoSelector';
 import CodeResult from '../components/CodeResult';
@@ -69,10 +69,7 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
 
     const validate = async () => {
       try {
-        const functions = getFunctions();
-        const validar = httpsCallable(functions, 'validarToken');
-        const result = await validar({ token });
-        const data = result.data as Record<string, unknown>;
+        const data = await callFunction<{ token: string }, Record<string, unknown>>('validarToken', { token });
 
         if (cancelled) return;
 
@@ -111,10 +108,7 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
     resetIdleTimer();
 
     try {
-      const functions = getFunctions();
-      const consultar = httpsCallable(functions, 'consultarCodigo');
-      const result = await consultar({ token, caso: selectedCaso });
-      const data = result.data as Record<string, unknown>;
+      const data = await callFunction<{ token: string; caso: string }, Record<string, unknown>>('consultarCodigo', { token, caso: selectedCaso });
 
       if (data.encontrado) {
         setCodeResult({

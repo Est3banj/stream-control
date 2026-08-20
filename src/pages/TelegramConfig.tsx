@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { doc, setDoc, collection, Timestamp, query, where, getDocs, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { callFunction } from '../lib/apiClient';
 import { useAuth } from '../contexts/AuthContext';
 import { MessageCircle, Link2, Unlink, Copy, Check, RefreshCw, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -133,10 +133,7 @@ function TelegramConfigContent({ user }: { user: ReturnType<typeof useAuth>['use
     setDesvinculando(true);
 
     try {
-      const functions = getFunctions();
-      const fn = httpsCallable(functions, 'desvincularTelegram');
-      const result = await fn();
-      const data = result.data as { success: boolean; alreadyUnlinked?: boolean };
+      const data = await callFunction<Record<string, never>, { success: boolean; alreadyUnlinked?: boolean }>('desvincularTelegram');
 
       setVinculado(false);
 
