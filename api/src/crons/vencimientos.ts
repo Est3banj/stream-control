@@ -7,7 +7,7 @@
  * NO puede usar la ruta HTTP: supera el límite de runtime de Vercel Hobby.
  */
 
-import * as admin from 'firebase-admin';
+import admin from 'firebase-admin'; // default import: el namespace `import *` NO expone firestore/apps en ESM (runtime)
 import { APP_URL } from '../config.js';
 import { limpiarPerfilesVencidos } from '../desasignar.js';
 import { getDb } from '../firebase.js';

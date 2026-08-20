@@ -5,7 +5,7 @@
  */
 
 import { getDb } from './firebase.js';
-import * as admin from 'firebase-admin';
+import admin from 'firebase-admin'; // default import: el namespace `import *` NO expone firestore/apps en ESM (runtime)
 
 const db = getDb();
 

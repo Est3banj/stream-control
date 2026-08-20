@@ -3,7 +3,7 @@
  * Lógica del bot y verifyWebhook INTACTAS.
  */
 
-import * as admin from 'firebase-admin';
+import admin from 'firebase-admin'; // default import: el namespace `import *` NO expone firestore/apps en ESM (runtime)
 import * as crypto from 'crypto';
 import { APP_URL, TELEGRAM_TOKEN, TELEGRAM_WEBHOOK_SECRET } from './config.js';
 import { getDb } from './firebase.js';
