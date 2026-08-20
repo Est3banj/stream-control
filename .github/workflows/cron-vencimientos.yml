@@ -1,0 +1,41 @@
+name: Cron Vencimientos
+
+on:
+  schedule:
+    # 10:00 y 13:00 UTC → 5:00 y 8:00 America/Bogota
+    - cron: '0 10,13 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  vencimientos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+
+      - name: Instalar dependencias
+        working-directory: api
+        run: npm ci
+
+      - name: Compilar el runner
+        working-directory: api
+        run: |
+          npm run build
+          ls -la dist/scripts/cron-vencimientos.js
+
+      - name: Ejecutar cron de vencimientos
+        working-directory: api
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_WEBHOOK_SECRET: ${{ secrets.TELEGRAM_WEBHOOK_SECRET }}
+        run: npm run cron:vencimientos
