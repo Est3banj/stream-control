@@ -185,7 +185,7 @@ export function createFirestoreFake() {
               id,
               ref,
               exists: true,
-              data: () => store.get(col, id),
+              data: () => store.get(col, id) as DocData,
             };
           });
           const empty = docs.length === 0;

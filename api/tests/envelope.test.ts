@@ -6,7 +6,7 @@
  */
 
 import request from 'supertest';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { mockFirebaseModule } from './helpers/setupFirebase.js';
 import { mockFirebaseAdmin } from './helpers/firebaseAdminMock.js';
 import { createApp } from '../src/app.js';
