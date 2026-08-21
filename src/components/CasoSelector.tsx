@@ -11,9 +11,11 @@ export const CASE_OPTIONS = [
   { value: 'accmax', label: 'Max - código acceso' },
 ];
 
-export const CASE_LABELS: Record<string, string> = Object.fromEntries(
-  CASE_OPTIONS.map(o => [o.value, o.label])
-);
+export const CASE_LABELS: Record<string, string> = {
+  ...Object.fromEntries(CASE_OPTIONS.map(o => [o.value, o.label])),
+  link: 'Enlace temporal',
+  numerico: 'Código de verificación',
+};
 
 interface CasoSelectorProps {
   casos: string[];

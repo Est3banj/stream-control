@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, Check, Clock, Mail, Tag, ExternalLink, AlertTriangle } from 'lucide-react';
+import { Copy, Check, Clock, Mail, Tag, ExternalLink, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import { CASE_LABELS } from './CasoSelector';
 import { maskEmail } from '../constants';
 
@@ -13,6 +13,7 @@ interface CodeResultProps {
 
 export default function CodeResult({ code, email, fecha, tipo, expiraEn }: CodeResultProps) {
   const [copied, setCopied] = useState(false);
+  const [showFullEmail, setShowFullEmail] = useState(false);
   const isLink = tipo === 'link' || code.startsWith('http');
 
   const handleCopy = async () => {
@@ -23,7 +24,7 @@ export default function CodeResult({ code, email, fecha, tipo, expiraEn }: CodeR
     } catch {}
   };
 
-  // ── VISTA PARA LINK (Netflix "Estoy de viaje") ──
+  // VISTA PARA LINK
   if (isLink) {
     return (
       <div className="space-y-6 animate-fade-in">
@@ -45,7 +46,7 @@ export default function CodeResult({ code, email, fecha, tipo, expiraEn }: CodeR
           {expiraEn && (
             <p className="text-amber-400 text-xs mt-2 flex items-center justify-center gap-1">
               <AlertTriangle size={14} />
-              ⚠️ Este enlace vence en {expiraEn} minutos
+              Este enlace vence en {expiraEn} minutos
             </p>
           )}
         </div>
@@ -76,7 +77,14 @@ export default function CodeResult({ code, email, fecha, tipo, expiraEn }: CodeR
         <div className="space-y-3 bg-white/5 rounded-xl p-4 border border-white/10">
           <div className="flex items-center gap-3 text-sm">
             <Mail size={16} className="text-gray-500 shrink-0" />
-            <span className="text-gray-300">{maskEmail(email)}</span>
+            <span className="text-gray-300">{showFullEmail ? email : maskEmail(email)}</span>
+            <button
+              onClick={() => setShowFullEmail(!showFullEmail)}
+              className="ml-auto text-gray-500 hover:text-gray-300 transition-colors"
+              title={showFullEmail ? 'Ocultar correo' : 'Ver correo completo'}
+            >
+              {showFullEmail ? <EyeOff size={14} /> : <Eye size={14} />}
+            </button>
           </div>
           <div className="flex items-center gap-3 text-sm">
             <Clock size={16} className="text-gray-500 shrink-0" />
@@ -99,7 +107,7 @@ export default function CodeResult({ code, email, fecha, tipo, expiraEn }: CodeR
     );
   }
 
-  // ── VISTA PARA CÓDIGO NUMÉRICO (inicio sesión, hogar, etc.) ──
+  // VISTA PARA CODIGO NUMERICO
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="text-center">
@@ -129,7 +137,14 @@ export default function CodeResult({ code, email, fecha, tipo, expiraEn }: CodeR
       <div className="space-y-3 bg-white/5 rounded-xl p-4 border border-white/10">
         <div className="flex items-center gap-3 text-sm">
           <Mail size={16} className="text-gray-500 shrink-0" />
-          <span className="text-gray-300">{maskEmail(email)}</span>
+          <span className="text-gray-300">{showFullEmail ? email : maskEmail(email)}</span>
+          <button
+            onClick={() => setShowFullEmail(!showFullEmail)}
+            className="ml-auto text-gray-500 hover:text-gray-300 transition-colors"
+            title={showFullEmail ? 'Ocultar correo' : 'Ver correo completo'}
+          >
+            {showFullEmail ? <EyeOff size={14} /> : <Eye size={14} />}
+          </button>
         </div>
         <div className="flex items-center gap-3 text-sm">
           <Clock size={16} className="text-gray-500 shrink-0" />

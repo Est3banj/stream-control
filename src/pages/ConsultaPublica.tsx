@@ -1,14 +1,16 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { callFunction } from '../lib/apiClient';
-import { AlertCircle, Loader2, Search, RefreshCw, WifiOff, Timer, MessageCircle } from 'lucide-react';
+import {
+  AlertCircle, Loader2, RefreshCw, WifiOff, Timer, MessageCircle, Shield, ClipboardList, CheckCircle2,
+} from 'lucide-react';
 import CasoSelector from '../components/CasoSelector';
 import CodeResult from '../components/CodeResult';
 import { useAdminConfig, sanitizarWhatsApp } from '../hooks/useAdminConfig';
 
 type PageState = 'validating' | 'invalid' | 'ready' | 'consulting' | 'result' | 'error';
 
-const SESSION_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+const SESSION_TIMEOUT_MS = 5 * 60 * 1000;
 
 function isNetworkError(err: unknown): boolean {
   const msg = err instanceof Error ? err.message.toLowerCase() : '';
@@ -24,14 +26,18 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
   const token = propToken || paramToken;
   const { config } = useAdminConfig();
   const whatsappNumber = config.whatsapp ? sanitizarWhatsApp(config.whatsapp) : '';
+
   const [state, setState] = useState<PageState>('validating');
-  const [proveedor, setProveedor] = useState('');
-  const [casos, setCasos] = useState<string[]>([]);
-  const [selectedCaso, setSelectedCaso] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [codeResult, setCodeResult] = useState<{ codigo: string; email: string; fecha: string; tipo: string; expiraEn?: number } | null>(null);
   const [notFoundMsg, setNotFoundMsg] = useState('');
   const [sessionWarning, setSessionWarning] = useState(false);
+
+  const [email, setEmail] = useState('');
+  const [proveedor, setProveedor] = useState('');
+  const [casos, setCasos] = useState<string[]>([]);
+  const [selectedCaso, setSelectedCaso] = useState('');
+
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const resetIdleTimer = useCallback(() => {
@@ -74,6 +80,7 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
         if (cancelled) return;
 
         if (data.valido) {
+          setEmail((data.email as string) || '');
           setProveedor((data.proveedor as string) || '');
           setCasos((data.casos as string[]) || []);
           setSelectedCaso('');
@@ -98,6 +105,14 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
 
     return () => { cancelled = true; };
   }, [token]);
+
+  const handleLimpiar = useCallback(() => {
+    setSelectedCaso('');
+    setCodeResult(null);
+    setNotFoundMsg('');
+    setErrorMsg('');
+    setState('ready');
+  }, []);
 
   const consultarCodigoHandler = useCallback(async () => {
     if (!selectedCaso || !token) return;
@@ -143,19 +158,20 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
 
       <div className="relative w-full max-w-lg">
         <div className="bg-white/[0.04] backdrop-blur-2xl rounded-3xl border border-white/[0.08] p-8 sm:p-10 shadow-2xl">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#ffc62a]/10 mb-4">
-              <Search className="text-[#ffc62a]" size={28} />
+
+          {/* HEADER */}
+          <div className="flex items-center gap-3 mb-6">
+            <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-[#ffc62a]/10">
+              <Shield className="text-[#ffc62a]" size={22} />
             </div>
-            <h1 className="text-2xl font-bold text-white">
+            <h1 className="text-xl font-bold text-white">
               {state === 'validating' && 'Validando...'}
               {state === 'invalid' && 'Token inválido'}
-              {(state === 'ready' || state === 'consulting' || state === 'result' || state === 'error') && (
-                <>Bienvenido{proveedor ? `, servicio ${proveedor}` : ''}</>
-              )}
+              {(state === 'ready' || state === 'consulting' || state === 'result' || state === 'error') && 'Buscar información'}
             </h1>
           </div>
 
+          {/* VALIDATING */}
           {state === 'validating' && (
             <div className="flex flex-col items-center py-8">
               <Loader2 className="animate-spin text-[#ffc62a] mb-4" size={36} />
@@ -163,6 +179,7 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
             </div>
           )}
 
+          {/* INVALID */}
           {state === 'invalid' && (
             <div className="space-y-4">
               <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 text-center">
@@ -193,8 +210,29 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
             </div>
           )}
 
+          {/* READY — Formulario */}
           {state === 'ready' && (
-            <div className="space-y-6">
+            <div className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-1.5">Token</label>
+                <input
+                  type="text"
+                  readOnly
+                  value={token || ''}
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-200 font-mono text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-1.5">Correo</label>
+                <input
+                  type="text"
+                  readOnly
+                  value={email || '—'}
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-200 text-sm"
+                />
+              </div>
+
               {casos.length > 0 && (
                 <CasoSelector
                   casos={casos}
@@ -203,22 +241,44 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
                 />
               )}
 
+              <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <ClipboardList size={16} className="text-[#ffc62a]" />
+                  <span className="text-sm font-semibold text-[#ffc62a] uppercase tracking-wider">Pasos a seguir</span>
+                </div>
+                <ol className="space-y-2 text-sm text-gray-400 list-decimal list-inside">
+                  <li>Ingresá el token que te fue asignado.</li>
+                  <li>Seleccioná el tipo de código que necesitás.</li>
+                  <li>Hacé clic en <strong className="text-gray-300">Consultar</strong> y esperá unos segundos.</li>
+                </ol>
+              </div>
+
               {notFoundMsg && (
                 <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 text-center">
                   <p className="text-amber-300 text-sm">{notFoundMsg}</p>
                 </div>
               )}
 
-              <button
-                onClick={consultarCodigoHandler}
-                disabled={!selectedCaso}
-                className="w-full py-4 rounded-xl font-semibold text-base transition-all disabled:opacity-30 disabled:cursor-not-allowed bg-[#ffc62a] text-black hover:bg-[#ffd84a] active:scale-[0.98]"
-              >
-                Consultar código
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={consultarCodigoHandler}
+                  disabled={!selectedCaso}
+                  className="flex-1 py-3 rounded-xl font-semibold text-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed bg-[#ffc62a] text-black hover:bg-[#ffd84a] active:scale-[0.98] flex items-center justify-center gap-2"
+                >
+                  <CheckCircle2 size={18} />
+                  Consultar
+                </button>
+                <button
+                  onClick={handleLimpiar}
+                  className="px-5 py-3 rounded-xl font-medium text-sm transition-all bg-white/10 text-white hover:bg-white/20 border border-white/10"
+                >
+                  Limpiar
+                </button>
+              </div>
             </div>
           )}
 
+          {/* CONSULTING */}
           {state === 'consulting' && (
             <div className="flex flex-col items-center py-8">
               <Loader2 className="animate-spin text-[#ffc62a] mb-4" size={36} />
@@ -227,6 +287,7 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
             </div>
           )}
 
+          {/* RESULT */}
           {state === 'result' && codeResult && (
             <div className="space-y-6">
               <CodeResult
@@ -237,12 +298,7 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
                 expiraEn={codeResult.expiraEn}
               />
               <button
-                onClick={() => {
-                  setState('ready');
-                  setCodeResult(null);
-                  setSelectedCaso('');
-                  setNotFoundMsg('');
-                }}
+                onClick={handleLimpiar}
                 className="w-full py-3 rounded-xl font-medium transition-all bg-white/10 text-white hover:bg-white/20 border border-white/10"
               >
                 Consultar otro código
@@ -250,6 +306,7 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
             </div>
           )}
 
+          {/* ERROR */}
           {state === 'error' && (
             <div className="space-y-4">
               <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 text-center">
@@ -274,6 +331,7 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
             </div>
           )}
 
+          {/* Session warning */}
           {sessionWarning && state === 'ready' && (
             <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex items-center gap-3">
               <Timer size={20} className="text-amber-400 shrink-0" />
@@ -289,7 +347,7 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
         </p>
       </div>
 
-      {/* 🔷 Botón flotante de soporte por WhatsApp */}
+      {/* Botón flotante de soporte por WhatsApp */}
       {whatsappNumber && (
         <a
           href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Hola, necesito ayuda con el servicio de streaming.')}`}
