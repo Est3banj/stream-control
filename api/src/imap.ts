@@ -4,7 +4,7 @@
 
 import { ImapFlow } from 'imapflow';
 import { simpleParser } from 'mailparser';
-import { CODE_PATTERNS, LINK_PATTERNS, URL_PATTERNS, GENERIC_CODE } from './regex.js';
+import { extractCode } from './extractor.js';
 
 export interface IMAPConfig {
   correo: string;
@@ -48,10 +48,8 @@ const SUBJECT_KEYWORDS: Record<string, RegExp> = {
 const CONNECTION_TIMEOUT = 10_000;
 
 /**
- * Extrae el valor del email según el caso:
- * - viajenet → busca un LINK (Netflix manda "Obtener código" con href)
- * - hogarnet → busca código numérico primero, link como fallback
- * - resto → busca código numérico
+ * Extrae el valor del email usando el extractor puro (extractor.ts).
+ * Resuelve: entidades HTML, trailing punctuation, subdominios, href protocol-relative.
  */
 async function extractFromBody(
   parsed: any,
@@ -60,57 +58,10 @@ async function extractFromBody(
   const textBody = parsed.text || '';
   const htmlBody = parsed.html || '';
 
-  // ── "Estoy de viaje" → Netflix manda un LINK, no código numérico ──
-  if (caso === 'viajenet') {
-    // 1. Buscar link del botón "Obtener código" en el HTML
-    const linkMatch = htmlBody.match(LINK_PATTERNS.viajenet);
-    if (linkMatch?.[1]) {
-      const href = linkMatch[1];
-      return { codigo: href.startsWith('http') ? href : `https://www.netflix.com${href}`, tipo: 'link' };
-    }
-    // 2. Fallback: URL directa en texto plano
-    const urlMatch = textBody.match(URL_PATTERNS.viajenet);
-    if (urlMatch) {
-      return { codigo: urlMatch[0], tipo: 'link' };
-    }
-    return null;
-  }
+  const result = extractCode(textBody, caso, htmlBody);
+  if (!result) return null;
 
-  // ── "Código Hogar" → puede ser código numérico o link ──
-  if (caso === 'hogarnet') {
-    // 1. Intentar código numérico primero
-    const codigoMatch = textBody.match(CODE_PATTERNS.hogarnet);
-    if (codigoMatch?.[1]) return { codigo: codigoMatch[1], tipo: 'numerico' };
-    // 2. También buscar en HTML
-    if (htmlBody) {
-      const htmlCodigoMatch = htmlBody.match(CODE_PATTERNS.hogarnet);
-      if (htmlCodigoMatch?.[1]) return { codigo: htmlCodigoMatch[1], tipo: 'numerico' };
-    }
-    // 3. Fallback a link genérico que contenga netflix en el HTML
-    const linkMatch = htmlBody.match(/<a[^>]*href="([^"]*)"[^>]*>/i);
-    if (linkMatch?.[1]) {
-      const href = linkMatch[1];
-      if (href.includes('netflix.com') || href.includes('account.netflix.com')) {
-        return { codigo: href.startsWith('http') ? href : `https://www.netflix.com${href}`, tipo: 'link' };
-      }
-    }
-    return null;
-  }
-
-  // ── Casos default: extraer código numérico con el patrón específico ──
-  const pattern = CODE_PATTERNS[caso];
-  const bodyToSearch = textBody || htmlBody;
-
-  if (pattern) {
-    const match = bodyToSearch.match(pattern);
-    if (match?.[1]) return { codigo: match[1], tipo: 'numerico' };
-  }
-
-  // Fallback genérico
-  const fallback = bodyToSearch.match(GENERIC_CODE);
-  if (fallback?.[1]) return { codigo: fallback[1], tipo: 'numerico' };
-
-  return null;
+  return { codigo: result.codigo, tipo: result.tipo };
 }
 
 export async function buscarCodigoVerificacion(

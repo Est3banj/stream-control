@@ -254,7 +254,8 @@ export async function consultarCodigo(req: AuthedReq): Promise<unknown> {
     codigo: result.codigo,
     email: result.correo,
     fecha: result.fecha,
-    tipo: caso,
+    tipo: result.tipo,  // 'numerico' | 'link' — propagado del extractor
+    expiraEn: result.expiraEn,  // minutos (15 para links, undefined para numéricos)
   };
 }
 
@@ -286,7 +287,7 @@ async function consultarCodigoIMAP(
   servicio: string,
   caso: string,
   errorMsgs?: { notFound?: string; auth?: string }
-): Promise<{ codigo: string; correo: string; fecha: string; tipo: string } | null> {
+): Promise<{ codigo: string; correo: string; fecha: string; tipo: string; expiraEn?: number } | null> {
   const secretosDoc = await db.collection('cuentas_secretos').doc(cuentaId).get();
   if (!secretosDoc.exists) {
     throw new APIError('not-found', errorMsgs?.notFound || 'Credenciales de cuenta no encontradas');
@@ -307,7 +308,8 @@ async function consultarCodigoIMAP(
       codigo: result.codigo,
       correo: imapConfig.correo,
       fecha: result.fecha,
-      tipo: caso,
+      tipo: result.tipo,  // 'numerico' | 'link' — ya no se hardcodea el nombre del caso
+      expiraEn: result.expiraEn,  // minutos (15 para links, undefined para numéricos)
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error desconocido';
@@ -452,7 +454,8 @@ export async function consultarCodigoDirecto(req: AuthedReq): Promise<unknown> {
     codigo: result.codigo,
     email: result.correo,
     fecha: result.fecha,
-    tipo: caso,
+    tipo: result.tipo,  // 'numerico' | 'link' — propagado del extractor
+    expiraEn: result.expiraEn,  // minutos (15 para links, undefined para numéricos)
   };
 }
 
