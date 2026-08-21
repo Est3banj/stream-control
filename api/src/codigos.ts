@@ -134,6 +134,7 @@ export async function validarToken(req: AuthedReq): Promise<unknown> {
 
   const cuentaDoc = await db.collection('cuentas').doc(tokenData.cuentaId as string).get();
   const proveedor = cuentaDoc.exists ? (cuentaDoc.data()!.proveedor as string) : '';
+  const correoCuenta = cuentaDoc.exists ? (cuentaDoc.data()!.correoCuenta as string) : '';
 
   const casosDisponibles = getCasosPorProveedor(proveedor).filter(c => c !== 'resetnet');
 
@@ -141,6 +142,7 @@ export async function validarToken(req: AuthedReq): Promise<unknown> {
     valido: true,
     cuentaId: tokenData.cuentaId,
     proveedor,
+    email: correoCuenta,
     perfiles: [tokenData.perfilNombre],
     expiraEn: tokenData.expiraEn,
     casos: casosDisponibles,

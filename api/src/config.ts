@@ -7,11 +7,15 @@
  * Allowlist de orígenes legítimos (match EXACTO, sin comodines):
  * Firebase Hosting sirve la SPA en los 3 dominios canónicos del proyecto
  * (custom, web.app y firebaseapp.com) — verificado HTTP 200 en los tres.
+ * En desarrollo (NODE_ENV !== 'production') se agregan localhost para el proxy de Vite.
  */
 export const ALLOWED_ORIGINS: string[] = [
   'https://streamcontrol.pro',
   'https://streamcontrol-10837.web.app',
   'https://streamcontrol-10837.firebaseapp.com',
+  ...(process.env.NODE_ENV !== 'production'
+    ? ['http://localhost:5173', 'http://localhost:3001']
+    : []),
 ];
 
 export const DEFAULT_APP_URL = 'https://streamcontrol-10837.firebaseapp.com';
