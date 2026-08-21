@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { callFunction } from '../lib/apiClient';
 import {
-  AlertCircle, Loader2, RefreshCw, WifiOff, Timer, MessageCircle, Shield, ClipboardList, CheckCircle2,
+  AlertCircle, Loader2, RefreshCw, WifiOff, Timer, MessageCircle, ClipboardList, CheckCircle2,
 } from 'lucide-react';
 import CasoSelector from '../components/CasoSelector';
 import CodeResult from '../components/CodeResult';
@@ -161,9 +161,7 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
 
           {/* HEADER */}
           <div className="flex items-center gap-3 mb-6">
-            <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-[#ffc62a]/10">
-              <Shield className="text-[#ffc62a]" size={22} />
-            </div>
+            <img src="/stream.webp" alt="StreamControl" className="w-10 h-10 rounded-xl" />
             <h1 className="text-xl font-bold text-white">
               {state === 'validating' && 'Validando...'}
               {state === 'invalid' && 'Token inválido'}

@@ -229,13 +229,13 @@ function extractUrlFromText(text: string): string | null {
 // ── Extracción de código numérico ────────────────────────────────────────
 
 const CODE_PATTERNS: Record<string, RegExp> = {
-  hogarnet: /(?:\b(?:c[oó]digo|code|verification)\b).*?(\b\d{4,8}\b)/i,
-  resetnet: /(?:\b(?:c[oó]digo|code|reset|restablecer)\b).*?(\b\d{4,8}\b)/i,
-  ininet:   /(?:\b(?:c[oó]digo|code|inicio sesi[oó]n|sign in)\b).*?(\b\d{4,6}\b)/i,
-  wincode:  /(?:\b(?:c[oó]digo|code)\b).*?(\b\d{4,8}\b)/i,
-  cgptcode: /(?:\b(?:verification code|c[oó]digo)\b).*?(\b\d{4,8}\b)/i,
-  univer1:  /(?:\b(?:c[oó]digo|code)\b).*?(\b\w{4,8}\b)/i,
-  accmax:   /(?:\b(?:c[oó]digo|code|acceso)\b).*?(\b\w{4,8}\b)/i,
+  hogarnet: /(?:\b(?:c[oó]digo|code|verification)\b)[\s\S]*?(\b\d{4,8}\b)/i,
+  resetnet: /(?:\b(?:c[oó]digo|code|reset|restablecer)\b)[\s\S]*?(\b\d{4,8}\b)/i,
+  ininet:   /(?:\b(?:c[oó]digo|code|inicio sesi[oó]n|sign in)\b)[\s\S]*?(\b\d{4,6}\b)/i,
+  wincode:  /(?:\b(?:c[oó]digo|code)\b)[\s\S]*?(\b\d{4,8}\b)/i,
+  cgptcode: /(?:\b(?:verification code|c[oó]digo)\b)[\s\S]*?(\b\d{4,8}\b)/i,
+  univer1:  /(?:\b(?:c[oó]digo|code)\b)[\s\S]*?(\b\w{4,8}\b)/i,
+  accmax:   /(?:\b(?:c[oó]digo|code|acceso)\b)[\s\S]*?(\b\w{4,8}\b)/i,
 };
 
 const GENERIC_CODE = /(\b\d{4,8}\b)/;

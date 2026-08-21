@@ -35,7 +35,7 @@ interface TicketModalProps {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────
 
-const APP_URL = 'https://streamcontrol-10837.web.app';
+const APP_URL = window.location.origin;
 
 function calcularDiasRestantes(fechaVencimiento: string): number {
   const hoy = new Date();

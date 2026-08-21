@@ -191,6 +191,21 @@ describe('extractCode — códigos numéricos', () => {
     expect(result!.codigo).toBe('456789');
   });
 
+  it('extrae código de Netflix con saltos de línea (BUG: .+? no cruzaba newlines)', () => {
+    const text = `Ingresa este código para iniciar sesión
+
+Ingresa este código para iniciar sesión
+
+6214
+
+Ingresa este código en tu dispositivo para iniciar sesión
+en Netflix. El código vence en 15 minutos.`;
+    const result = extractCode(text, 'ininet');
+    expect(result).not.toBeNull();
+    expect(result!.tipo).toBe('numerico');
+    expect(result!.codigo).toBe('6214');
+  });
+
   it('extrae código genérico sin caso específico', () => {
     const text = 'Verification code: 123456';
     const result = extractCode(text, 'desconocido');

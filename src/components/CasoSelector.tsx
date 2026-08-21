@@ -29,24 +29,18 @@ export default function CasoSelector({ casos, selected, onSelect }: CasoSelector
   return (
     <div className="space-y-3">
       <label className="block text-sm font-medium text-gray-300">
-        Seleccioná el tipo de código
+        Selecciona un caso
       </label>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <select
+        value={selected}
+        onChange={(e) => onSelect(e.target.value)}
+        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-200 text-sm appearance-none cursor-pointer focus:outline-none focus:border-[#ffc62a]/50 transition-colors"
+      >
+        <option value="" disabled>Selecciona un caso</option>
         {filtered.map(({ value, label }) => (
-          <button
-            key={value}
-            type="button"
-            onClick={() => onSelect(value)}
-            className={`p-4 rounded-xl text-left transition-all border ${
-              selected === value
-                ? 'border-[#ffc62a] bg-[#ffc62a]/10 text-[#ffc62a]'
-                : 'border-white/10 bg-white/5 text-gray-300 hover:bg-white/10 hover:border-white/20'
-            }`}
-          >
-            <span className="text-sm font-medium leading-tight">{label}</span>
-          </button>
+          <option key={value} value={value}>{label}</option>
         ))}
-      </div>
+      </select>
     </div>
   );
 }

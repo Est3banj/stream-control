@@ -3,9 +3,25 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+/** Rewrite /r/** → /app/index.html (mirrors Firebase Hosting rewrite for local dev) */
+function rRewrite() {
+  return {
+    name: 'r-rewrite',
+    configureServer(server: any) {
+      server.middlewares.use((req: any, _res: any, next: any) => {
+        if (req.url?.startsWith('/r/')) {
+          req.url = '/app/index.html';
+        }
+        next();
+      });
+    },
+  };
+}
+
 export default defineConfig({
   base: '/app/',
   plugins: [
+    rRewrite(),
     react(),
     VitePWA({
       registerType: 'autoUpdate',

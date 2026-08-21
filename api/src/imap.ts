@@ -58,9 +58,21 @@ async function extractFromBody(
   const textBody = parsed.text || '';
   const htmlBody = parsed.html || '';
 
-  const result = extractCode(textBody, caso, htmlBody);
-  if (!result) return null;
+  console.log(`[imap] extractBody caso="${caso}" textLen=${textBody.length} htmlLen=${htmlBody.length}`);
+  if (textBody.length > 0) {
+    console.log(`[imap] text preview: "${textBody.substring(0, 300)}"`);
+  }
+  if (htmlBody.length > 0) {
+    console.log(`[imap] html preview: "${htmlBody.substring(0, 500)}"`);
+  }
 
+  const result = extractCode(textBody, caso, htmlBody);
+  if (!result) {
+    console.log(`[imap] extractCode returned null — no se pudo extraer código`);
+    return null;
+  }
+
+  console.log(`[imap] extractCode OK: tipo=${result.tipo} codigo=${result.codigo}`);
   return { codigo: result.codigo, tipo: result.tipo };
 }
 
@@ -131,12 +143,19 @@ export async function buscarCodigoVerificacion(
         }
 
         const body = parsed.text || parsed.html || '';
-        if (!body) continue;
+        if (!body) {
+          console.log(`[imap] Email sin body, saltando`);
+          continue;
+        }
 
         // Usar la nueva función que soporta links y códigos
         const result = await extractFromBody(parsed, caso);
-        if (!result) continue;
+        if (!result) {
+          console.log(`[imap] extractCode devolvió null para asunto: "${asunto}"`);
+          continue;
+        }
 
+        console.log(`[imap] ✅ Código extraído: tipo=${result.tipo}, código=${result.codigo.substring(0, 20)}...`);
         return {
           codigo: result.codigo,
           tipo: result.tipo,
