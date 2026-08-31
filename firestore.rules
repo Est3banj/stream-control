@@ -22,25 +22,21 @@ service cloud.firestore {
       return request.auth.token.email;
     }
     
-    // Verificar si el usuario es administrador
+    // Verificar si el usuario es administrador (Token Custom Claim o rol en doc usuarios)
     function isAdmin() {
       return isAuthenticated() && (
-        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin'
+        (request.auth.token.role == 'admin') ||
+        (request.auth.token.admin == true) ||
+        (
+          exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin'
+        )
       );
     }
     
     // ============================================
     // COLECCIÓN: usuarios
     // ============================================
-    // Análisis del código:
-    // - Lectura: getDoc en AuthContext y Login (propio usuario)
-    // - Lectura: onSnapshot en Usuarios.jsx (todos los usuarios, solo admin)
-    // - Escritura: setDoc en Usuarios.jsx (crear usuario, solo admin)
-    // - Actualización: updateDoc en Usuarios.jsx (solo campo 'estado', solo admin)
-    // - Campos: nombre, correo, rol, estado, activoHasta, createdAt
-    // - El ID del documento es el UID del usuario de Firebase Auth
-    
     match /usuarios/{userId} {
       // Lectura: Usuario puede leer su propio documento, admin puede leer todos
       allow read: if isAuthenticated() && (
@@ -49,18 +45,9 @@ service cloud.firestore {
       );
       
       // Creación: Admin puede crear cualquier usuario, o el usuario se auto-registra
-      // El userId es el UID generado por Firebase Auth
       allow create: if isAuthenticated() && (
         // Admin puede crear usuarios con cualquier rol
-        (isAdmin() &&
-          request.resource.data.keys().hasAll(['nombre', 'correo', 'rol', 'estado']) &&
-          request.resource.data.rol is string &&
-          request.resource.data.rol in ['admin', 'usuario'] &&
-          request.resource.data.estado is string &&
-          request.resource.data.estado in ['activo', 'inactivo'] &&
-          request.resource.data.nombre is string &&
-          request.resource.data.correo is string
-        ) ||
+        isAdmin() ||
         // Auto-registro: el usuario crea su propio perfil (solo como 'usuario')
         (userId == getUserId() &&
           request.resource.data.rol == 'usuario' &&
@@ -70,21 +57,10 @@ service cloud.firestore {
         )
       );
       
-      // Actualización: Admin actualiza estado/plan/moneda/tasa, usuario actualiza su propio nombre/correo/moneda/tasa
+      // Actualización: Admin puede actualizar cualquier campo;
+      // usuario actualiza su propio nombre, correo, moneda y tasa
       allow update: if isAuthenticated() && (
-        // Admin puede actualizar estado, plan, moneda y tasa de cualquier usuario
-        (isAdmin() &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado', 'plan', 'moneda', 'tasa']) &&
-          (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['estado']) || 
-            (request.resource.data.estado is string && request.resource.data.estado in ['activo', 'inactivo'])) &&
-          (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan']) || 
-            request.resource.data.plan is string) &&
-          (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['tasa']) || 
-            request.resource.data.tasa is number) &&
-          (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['moneda']) || 
-            request.resource.data.moneda is string)
-        ) ||
-        // El usuario puede actualizar su propio nombre, correo, moneda y tasa
+        isAdmin() ||
         (userId == getUserId() &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre', 'correo', 'moneda', 'tasa']) &&
           request.resource.data.nombre is string &&
@@ -92,23 +68,13 @@ service cloud.firestore {
         )
       );
 
-      // Eliminación: No permitida (no hay deleteDoc en el código)
-      allow delete: if false;
+      // Eliminación: Solo admin
+      allow delete: if isAdmin();
     }
     
     // ============================================
     // COLECCIÓN: ventas
     // ============================================
-    // Análisis del código:
-    // - Lectura: onSnapshot en Dashboard, Reportes, GestionClientes
-    //   - Admin: sin filtro (ve todas)
-    //   - Usuario: filtrado por propietarioId == user.uid
-    // - Escritura: addDoc en VentasForm.jsx (todos los usuarios autenticados)
-    // - No hay actualizaciones ni eliminaciones
-    // - Campos: nombre, telefono, correo, plataforma, pantallas, precioVenta, costoServicio,
-    //   fechaInicio, diasServicio, utilidad, fechaRegistro, fechaRegistroSistema,
-    //   propietarioId, usuarioEmail, fechaVencimiento
-    
     match /ventas/{ventaId} {
       // Lectura: Usuario puede leer sus propias ventas, admin puede leer todas
       allow read: if isAuthenticated() && (
@@ -116,69 +82,63 @@ service cloud.firestore {
         resource.data.propietarioId == getUserId()
       );
       
-      // Creación: Cualquier usuario autenticado puede crear ventas
-      allow create: if isAuthenticated() &&
-        request.resource.data.propietarioId == getUserId() &&
-        request.resource.data.usuarioEmail == getUserEmail() &&
-        request.resource.data.nombre is string &&
-        request.resource.data.telefono is string &&
-        request.resource.data.plataforma is string &&
-        request.resource.data.pantallas is number &&
-        request.resource.data.pantallas >= 1 &&
-        request.resource.data.precioVenta is number &&
-        request.resource.data.precioVenta >= 0 &&
-        request.resource.data.costoServicio is number &&
-        request.resource.data.costoServicio >= 0 &&
-        request.resource.data.utilidad is number &&
-        request.resource.data.fechaInicio is string &&
-        request.resource.data.diasServicio is number &&
-        request.resource.data.diasServicio >= 1 &&
-        request.resource.data.fechaVencimiento is string &&
-        (request.resource.data.correo == null || request.resource.data.correo is string);
-      // Actualización: No permitida
-      allow update: if false;
-      
-      // Eliminación: No permitida
-      allow delete: if false;
+      // Creación: Cualquier usuario autenticado puede crear ventas propias, o admin
+      allow create: if isAuthenticated() && (
+        isAdmin() ||
+        (
+          request.resource.data.propietarioId == getUserId() &&
+          request.resource.data.usuarioEmail == getUserEmail() &&
+          request.resource.data.nombre is string &&
+          request.resource.data.telefono is string &&
+          request.resource.data.plataforma is string &&
+          request.resource.data.pantallas is number &&
+          request.resource.data.pantallas >= 1 &&
+          request.resource.data.precioVenta is number &&
+          request.resource.data.precioVenta >= 0 &&
+          request.resource.data.costoServicio is number &&
+          request.resource.data.costoServicio >= 0 &&
+          request.resource.data.utilidad is number &&
+          request.resource.data.fechaInicio is string &&
+          request.resource.data.diasServicio is number &&
+          request.resource.data.diasServicio >= 1 &&
+          request.resource.data.fechaVencimiento is string &&
+          (request.resource.data.correo == null || request.resource.data.correo is string)
+        )
+      );
+
+      // Actualización / Eliminación: Solo admin
+      allow update, delete: if isAdmin();
     }
     
     // ============================================
     // COLECCIÓN: clientes
     // ============================================
-    // Análisis del código:
-    // - Lectura: getDoc en VentasForm.jsx (autocompletar), onSnapshot en GestionClientes, ClientesActivos, ClientesInactivos
-    //   - Admin: sin filtro o email == 'admin@streamcontrol.com'
-    //   - Usuario: filtrado por propietarioId == user.uid
-    // - Escritura: setDoc en VentasForm.jsx (crear/actualizar cliente)
-    //   - ID del documento: `${user.uid}_${venta.nombre}`
-    // - No hay eliminaciones explícitas
-    // - Campos: nombre, telefono, correo, estado, plataforma, propietarioId, usuarioEmail, fechaVencimiento
-    
     match /clientes/{clienteId} {
       // Lectura: Usuario puede leer sus propios clientes, admin puede leer todos
-      // Si el documento no existe, resource es null y la regla debe permitirlo
       allow read: if isAuthenticated() && (
         isAdmin() || 
         (resource != null && resource.data.propietarioId == getUserId())
       );
       
-      // Creación: setDoc desde VentasForm.jsx - requiere todos los campos
-      allow create: if isAuthenticated() &&
-        clienteId.matches('^' + getUserId() + '_.+') &&
-        request.resource.data.propietarioId == getUserId() &&
-        request.resource.data.usuarioEmail == getUserEmail() &&
-        request.resource.data.nombre is string &&
-        request.resource.data.telefono is string &&
-        request.resource.data.plataforma is string &&
-        request.resource.data.estado == 'activo' &&
-        request.resource.data.fechaVencimiento is string &&
-        (request.resource.data.correo == null || request.resource.data.correo is string);
+      // Creación: Admin o propietario creando con prefijo `${userId}_`
+      allow create: if isAuthenticated() && (
+        isAdmin() ||
+        (
+          clienteId.matches('^' + getUserId() + '_.+') &&
+          request.resource.data.propietarioId == getUserId() &&
+          request.resource.data.usuarioEmail == getUserEmail() &&
+          request.resource.data.nombre is string &&
+          request.resource.data.telefono is string &&
+          request.resource.data.plataforma is string &&
+          request.resource.data.estado == 'activo' &&
+          request.resource.data.fechaVencimiento is string &&
+          (request.resource.data.correo == null || request.resource.data.correo is string)
+        )
+      );
       
       // Actualización: Admin puede actualizar cualquier cliente, propietario sus propios clientes
       allow update: if isAuthenticated() && (
-        // Admin puede actualizar cualquier cliente (confiado: el admin sabe lo que hace)
         isAdmin() ||
-        // Propietario puede actualizar su propio cliente con validación de campos
         (clienteId.matches('^' + getUserId() + '_.+') &&
           resource.data.propietarioId == getUserId() &&
           (
@@ -216,19 +176,13 @@ service cloud.firestore {
         )
       );
       
-      // Eliminación: No permitida
-      allow delete: if false;
+      // Eliminación: Solo admin
+      allow delete: if isAdmin();
     }
     
     // ============================================
     // COLECCIÓN: movimientos
     // ============================================
-    // Análisis del código:
-    // - Lectura: No se detecta lectura en el código (solo escritura)
-    // - Escritura: addDoc en VentasForm.jsx (crear movimiento de tipo 'Ingreso')
-    // - No hay actualizaciones ni eliminaciones
-    // - Campos: tipo, monto, descripcion, fecha, propietarioId, usuarioEmail
-    
     match /movimientos/{movimientoId} {
       // Lectura: Usuario puede leer sus propios movimientos, admin puede leer todos
       allow read: if isAuthenticated() && (
@@ -236,32 +190,27 @@ service cloud.firestore {
         resource.data.propietarioId == getUserId()
       );
       
-      // Creación: Cualquier usuario autenticado puede crear movimientos
-      allow create: if isAuthenticated() &&
-        request.resource.data.propietarioId == getUserId() &&
-        request.resource.data.usuarioEmail == getUserEmail() &&
-        request.resource.data.tipo in ['Ingreso', 'Egreso'] &&
-        request.resource.data.monto is number &&
-        request.resource.data.monto >= 0 &&
-        request.resource.data.descripcion is string &&
-        (request.resource.data.fecha == null || request.resource.data.fecha is timestamp);
+      // Creación: Cualquier usuario autenticado puede crear movimientos propios, o admin
+      allow create: if isAuthenticated() && (
+        isAdmin() ||
+        (
+          request.resource.data.propietarioId == getUserId() &&
+          request.resource.data.usuarioEmail == getUserEmail() &&
+          request.resource.data.tipo in ['Ingreso', 'Egreso'] &&
+          request.resource.data.monto is number &&
+          request.resource.data.monto >= 0 &&
+          request.resource.data.descripcion is string &&
+          (request.resource.data.fecha == null || request.resource.data.fecha is timestamp)
+        )
+      );
       
-      // Actualización: No permitida
-      allow update: if false;
-      
-      // Eliminación: No permitida
-      allow delete: if false;
+      // Actualización / Eliminación: Solo admin
+      allow update, delete: if isAdmin();
     }
     
     // ============================================
     // COLECCIÓN: codigosVinculacion (Telegram)
     // ============================================
-    // Propósito: Códigos temporales para vincular Telegram con la cuenta
-    // - Creación: Solo el propio usuario puede crear su código
-    // - Lectura: La Cloud Function (admin) lee para validar el código
-    // - El usuario nunca lee códigos de otros
-    // - Expiran a los 15 minutos
-    
     match /codigosVinculacion/{codigo} {
       // Solo admin (Cloud Function) puede leer códigos
       allow read: if isAdmin();
@@ -274,110 +223,63 @@ service cloud.firestore {
       // Solo el admin (Cloud Function) puede marcar como expirado
       allow update: if isAdmin() &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['expirado']);
-      allow delete: if false;
+      allow delete: if isAdmin();
     }
     
     // ============================================
     // COLECCIÓN: vinculaciones (Telegram)
     // ============================================
-    // Propósito: Mapeo chatId de Telegram → Firebase UID
-    // - Solo la Cloud Function (admin) escribe/lee
-    // - Los usuarios pueden leer su propia vinculación
-    
     match /vinculaciones/{chatId} {
-      allow read: if isAuthenticated() && resource.data.uid == getUserId();
-      allow create: if isAdmin(); // Solo la Cloud Function vincula
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow read: if isAuthenticated() && (isAdmin() || resource.data.uid == getUserId());
+      allow write: if isAdmin();
     }
     
     // ============================================
     // COLECCIÓN: planes
     // ============================================
-    // Propósito: Planes de suscripción configurables
-    // - Lectura: Cualquier usuario autenticado puede ver planes
-    // - Creación: Solo admin con validación de campos
-    // - Actualización: Solo admin
-    // - Eliminación: Solo admin
-    // - Campos: nombre, descripcion, precio, duracionDias, features, activo, createdAt
-    
     match /planes/{planId} {
       allow read: if isAuthenticated();
-      allow create: if isAdmin() &&
-        request.resource.data.nombre is string &&
-        request.resource.data.nombre.size() > 0 &&
-        request.resource.data.nombre.size() <= 100 &&
-        request.resource.data.precio is number &&
-        request.resource.data.precio >= 0 &&
-        request.resource.data.duracionDias is number &&
-        request.resource.data.duracionDias >= 1 &&
-        request.resource.data.features is list &&
-        request.resource.data.features.size() <= 20;
-      allow update: if isAdmin() &&
-        request.resource.data.nombre is string &&
-        request.resource.data.nombre.size() > 0 &&
-        request.resource.data.nombre.size() <= 100 &&
-        request.resource.data.precio is number &&
-        request.resource.data.precio >= 0 &&
-        request.resource.data.duracionDias is number &&
-        request.resource.data.duracionDias >= 1 &&
-        request.resource.data.features is list &&
-        request.resource.data.features.size() <= 20;
-      allow delete: if isAdmin();
+      allow write: if isAdmin();
     }
     
     // ============================================
     // COLECCIÓN: suscripciones
     // ============================================
-    // Propósito: Suscripciones de usuarios a planes
-    // - Lectura: Admin puede leer todas, usuario puede leer las propias
-    // - Creación: Solo admin
-    // - Actualización: Solo admin
-    // - Eliminación: No permitida
-    // - Campos: usuarioId, usuarioNombre, planId, planNombre, fechaInicio, fechaFin,
-    //   estado, pagoEstado, monto, notas, createdAt, updatedAt
-    
     match /suscripciones/{suscripcionId} {
-      allow read: if isAuthenticated() && (isAdmin() || resource.data.usuarioId == request.auth.uid);
-      allow create: if isAdmin() &&
-        request.resource.data.usuarioId is string &&
-        request.resource.data.planId is string &&
-        request.resource.data.planNombre is string &&
-        request.resource.data.fechaInicio is timestamp &&
-        request.resource.data.fechaFin is timestamp &&
-        request.resource.data.estado is string &&
-        request.resource.data.estado in ['activa', 'expirada', 'cancelada'] &&
-        request.resource.data.monto is number &&
-        request.resource.data.monto >= 0;
-      allow update: if isAdmin() &&
-        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['usuarioId', 'monto']) &&
-        request.resource.data.planId is string &&
-        request.resource.data.planNombre is string &&
-        request.resource.data.estado is string &&
-        request.resource.data.estado in ['activa', 'expirada', 'cancelada']);
-      allow delete: if false;
+      allow read: if isAuthenticated() && (
+        isAdmin() || 
+        (resource != null && resource.data.usuarioId == getUserId())
+      );
+      allow write: if isAdmin();
     }
     
     // ============================================
+    // COLECCIÓN: anunciosGlobales
+    // ============================================
+    match /anunciosGlobales/{anuncioId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // ============================================
     // COLECCIÓN: config
     // ============================================
-    // Propósito: Configuración general de la aplicación
-    // - Lectura: Cualquier usuario autenticado puede leer (para ver WhatsApp del admin)
-    // - Escritura: Solo admin (AdminPlanes)
-    // - Documentos: general (whatsapp: string)
-    
     match /config/{docId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
     }
     
     // ============================================
+    // COLECCIÓN: configuracion
+    // ============================================
+    match /configuracion/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // ============================================
     // COLECCIÓN: notificacionesEmail
     // ============================================
-    // Propósito: Auditoría de cambios de email/contraseña desde AuthContext
-    // - Creación: Cualquier usuario autenticado puede registrar cambios
-    // - Lectura: Solo admin puede leer el historial
-    
     match /notificacionesEmail/{docId} {
       allow create: if isAuthenticated();
       allow read: if isAdmin();
@@ -390,26 +292,31 @@ service cloud.firestore {
     match /cuentas/{cuentaId} {
       allow read: if isAuthenticated() && (
         isAdmin() ||
-        resource.data.propietarioId == getUserId()
+        resource.data.propietarioId == getUserId() ||
+        (resource.data.usuarioId != null && resource.data.usuarioId == getUserId())
       );
 
-      allow create: if isAuthenticated() &&
-        request.resource.data.propietarioId == getUserId() &&
-        request.resource.data.proveedor is string &&
-        request.resource.data.costo is number &&
-        request.resource.data.tipoVenta is string &&
-        request.resource.data.tipoVenta in ['perfiles', 'completa'] &&
-        request.resource.data.perfiles is list &&
-        (request.resource.data.tipoVenta == 'completa' || request.resource.data.perfiles.size() > 0) &&
-        request.resource.data.estado is string &&
-        request.resource.data.estado in ['disponible', 'asignada', 'expirada'];
+      allow create: if isAuthenticated() && (
+        isAdmin() ||
+        (
+          request.resource.data.propietarioId == getUserId() &&
+          request.resource.data.proveedor is string &&
+          request.resource.data.costo is number &&
+          request.resource.data.tipoVenta is string &&
+          request.resource.data.tipoVenta in ['perfiles', 'completa'] &&
+          request.resource.data.perfiles is list &&
+          (request.resource.data.tipoVenta == 'completa' || request.resource.data.perfiles.size() > 0) &&
+          request.resource.data.estado is string &&
+          request.resource.data.estado in ['disponible', 'asignada', 'expirada']
+        )
+      );
 
       allow update: if isAuthenticated() && (
         isAdmin() ||
         resource.data.propietarioId == getUserId()
       );
 
-      allow delete: if false;
+      allow delete: if isAdmin();
     }
 
     // ============================================
@@ -425,12 +332,10 @@ service cloud.firestore {
     // COLECCIÓN: notificaciones
     // ============================================
     // Solo la cron (Admin SDK) puede escribir notificaciones.
-    // Lectura solo para admins (futuro panel de notificaciones).
+    // Lectura solo para admins (panel de notificaciones).
     match /notificaciones/{notifId} {
       allow read: if isAdmin();
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow write: if false;
     }
 
     // ============================================
@@ -439,11 +344,16 @@ service cloud.firestore {
     match /tokens/{tokenId} {
       // Lectura pública: cualquiera puede leer un token (para validarlo)
       allow read: if true;
-      // Creación: SOLO la Cloud Function (Admin SDK) puede crear tokens
-      allow create: if false;
-      // Actualización: DENEGADA — todas las mutaciones van por Cloud Functions (Admin SDK)
-      allow update: if false;
-      allow delete: if false;
+      // Mutaciones solo por Cloud Functions (Admin SDK)
+      allow write: if false;
+    }
+
+    // ============================================
+    // COLECCIÓN: otpsVerificacion
+    // ============================================
+    // Solo Cloud Functions vía Admin SDK pueden leer/escribir códigos OTP.
+    match /otpsVerificacion/{docId} {
+      allow read, write: if false;
     }
 
     // ============================================
@@ -454,4 +364,3 @@ service cloud.firestore {
     }
   }
 }
-
