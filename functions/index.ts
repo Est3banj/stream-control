@@ -517,9 +517,25 @@ export const enviarCorreoRecuperacion = onCall(
 
     try {
       const appUrl = APP_URL.value();
-      const rawFirebaseLink = await admin.auth().generatePasswordResetLink(email, {
-        url: `${appUrl}/app/reset-password`,
-      });
+      let rawFirebaseLink: string;
+
+      try {
+        rawFirebaseLink = await admin.auth().generatePasswordResetLink(email, {
+          url: `${appUrl}/app/reset-password`,
+        });
+      } catch (linkErr: any) {
+        const code = linkErr?.code || linkErr?.errorInfo?.code;
+        if (
+          code === 'auth/unauthorized-continue-uri' ||
+          code === 'auth/invalid-continue-uri' ||
+          code === 'auth/invalid-dynamic-link-domain'
+        ) {
+          rawFirebaseLink = await admin.auth().generatePasswordResetLink(email);
+        } else {
+          throw linkErr;
+        }
+      }
+
       const parsed = new URL(rawFirebaseLink);
       const oobCode = parsed.searchParams.get('oobCode');
       const apiKey = parsed.searchParams.get('apiKey') || '';
@@ -527,8 +543,15 @@ export const enviarCorreoRecuperacion = onCall(
       const customResetLink = `${appUrl}/app/reset-password?oobCode=${encodeURIComponent(oobCode || '')}${apiKey ? `&apiKey=${encodeURIComponent(apiKey)}` : ''}`;
 
       await sendResetPasswordEmail(email, nombre || 'Usuario', customResetLink);
-      return { success: true };
-    } catch (error) {
+      return { success: true, message: 'Si el correo está registrado, recibirás un enlace de recuperación.' };
+    } catch (error: any) {
+      const code = error?.code || error?.errorInfo?.code;
+      if (code === 'auth/user-not-found') {
+        return { success: true, message: 'Si el correo está registrado, recibirás un enlace de recuperación.' };
+      }
+      if (code === 'auth/invalid-email') {
+        throw new HttpsError('invalid-argument', 'El formato del correo electrónico no es válido');
+      }
       console.error('❌ Error sending recovery email:', error);
       throw new HttpsError('internal', 'Error al enviar el correo de recuperación');
     }

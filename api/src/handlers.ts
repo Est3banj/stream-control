@@ -266,9 +266,32 @@ export async function enviarCorreoRecuperacion(req: AuthedReq): Promise<unknown>
 
   try {
     const appUrl = APP_URL();
-    const rawFirebaseLink = await getAdmin().auth().generatePasswordResetLink(cleanEmail, {
-      url: `${appUrl}/app/reset-password`,
-    });
+    let rawFirebaseLink: string;
+
+    try {
+      rawFirebaseLink = await getAdmin().auth().generatePasswordResetLink(cleanEmail, {
+        url: `${appUrl}/app/reset-password`,
+      });
+    } catch (linkErr: unknown) {
+      const err = linkErr as { code?: string; message?: string; errorInfo?: { code?: string } };
+      const code = err?.code || err?.errorInfo?.code || '';
+
+      if (
+        code === 'auth/unauthorized-continue-uri' ||
+        code === 'auth/invalid-continue-uri' ||
+        code === 'auth/invalid-dynamic-link-domain' ||
+        (typeof err?.message === 'string' && (
+          err.message.includes('auth/unauthorized-continue-uri') ||
+          err.message.includes('auth/invalid-continue-uri') ||
+          err.message.includes('auth/invalid-dynamic-link-domain')
+        ))
+      ) {
+        console.warn(`⚠️ Warning: generatePasswordResetLink failed with ${code || err.message}, retrying without actionCodeSettings`);
+        rawFirebaseLink = await getAdmin().auth().generatePasswordResetLink(cleanEmail);
+      } else {
+        throw linkErr;
+      }
+    }
 
     const parsed = new URL(rawFirebaseLink);
     const oobCode = parsed.searchParams.get('oobCode');
@@ -277,8 +300,31 @@ export async function enviarCorreoRecuperacion(req: AuthedReq): Promise<unknown>
     const customResetLink = `${appUrl}/app/reset-password?oobCode=${encodeURIComponent(oobCode || '')}${apiKey ? `&apiKey=${encodeURIComponent(apiKey)}` : ''}`;
 
     await sendResetPasswordEmail(cleanEmail, (nombre as string) || 'Usuario', customResetLink);
-    return { success: true };
-  } catch (error) {
+    return {
+      success: true,
+      message: 'Si el correo está registrado, recibirás un enlace de recuperación.',
+    };
+  } catch (error: unknown) {
+    const err = error as { code?: string; message?: string; errorInfo?: { code?: string } };
+    const code = err?.code || err?.errorInfo?.code || '';
+
+    // OWASP standard: Do not leak whether the user exists or not via error / 500
+    if (code === 'auth/user-not-found' || (typeof err?.message === 'string' && err.message.includes('auth/user-not-found'))) {
+      console.log(`ℹ️ Password reset requested for non-existent user: ${cleanEmail}`);
+      return {
+        success: true,
+        message: 'Si el correo está registrado, recibirás un enlace de recuperación.',
+      };
+    }
+
+    if (code === 'auth/invalid-email' || (typeof err?.message === 'string' && err.message.includes('auth/invalid-email'))) {
+      throw new APIError('invalid-argument', 'El formato del correo electrónico no es válido');
+    }
+
+    if (error instanceof APIError) {
+      throw error;
+    }
+
     console.error('❌ Error sending recovery email:', error);
     throw new APIError('internal', 'Error al enviar el correo de recuperación');
   }

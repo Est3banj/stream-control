@@ -400,6 +400,7 @@ export async function sendResetPasswordEmail(to: string, userName: string, reset
     console.log('✅ Reset password email sent to', to);
   } catch (error) {
     console.error('❌ Error sending reset password email to', to, error);
+    throw error;
   }
 }
 

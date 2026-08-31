@@ -303,7 +303,10 @@ describe('enviarCorreoRecuperacion / enviarCorreoVerificacion (none + rate-limit
       .send({ data: { email: 'ana@example.com', nombre: 'Ana' } });
 
     expect(res.status).toBe(200);
-    expect(res.body.result).toEqual({ success: true });
+    expect(res.body.result).toEqual({
+      success: true,
+      message: 'Si el correo está registrado, recibirás un enlace de recuperación.',
+    });
     expect(backend.auth.generatePasswordResetLink).toHaveBeenCalledWith(
       'ana@example.com',
       expect.objectContaining({ url: expect.stringContaining('/app/reset-password') })
@@ -325,6 +328,84 @@ describe('enviarCorreoRecuperacion / enviarCorreoVerificacion (none + rate-limit
     expect(call?.html).toContain('https://streamcontrol.pro/app/reset-password?oobCode=fake-oob-code-123');
     expect(call?.html).not.toContain('https://streamcontrol.pro//');
     delete process.env.APP_URL;
+  });
+
+  it('recuperación con email no registrado (auth/user-not-found) → 200 sin filtrar existencia ni crashear (OWASP)', async () => {
+    backend.auth.generatePasswordResetLink.mockRejectedValueOnce({
+      code: 'auth/user-not-found',
+      message: 'There is no user record corresponding to the provided identifier.',
+    });
+
+    const res = await request(app)
+      .post('/api/enviarCorreoRecuperacion')
+      .send({ data: { email: 'no-existe@example.com', nombre: 'Desconocido' } });
+
+    expect(res.status).toBe(200);
+    expect(res.body.result).toEqual({
+      success: true,
+      message: 'Si el correo está registrado, recibirás un enlace de recuperación.',
+    });
+    expect(emailMocks.sendMail).not.toHaveBeenCalled();
+  });
+
+  it('recuperación con error de continue-uri (auth/unauthorized-continue-uri) → fallback a generatePasswordResetLink sin settings', async () => {
+    backend.auth.generatePasswordResetLink
+      .mockRejectedValueOnce({
+        code: 'auth/unauthorized-continue-uri',
+        message: 'Domain not authorized for continue URL',
+      })
+      .mockResolvedValueOnce('https://streamcontrol-10837.firebaseapp.com/__/auth/action?mode=resetPassword&oobCode=fallback-oob-999&apiKey=fallback-api-key-888');
+
+    const res = await request(app)
+      .post('/api/enviarCorreoRecuperacion')
+      .send({ data: { email: 'fallback@example.com', nombre: 'Fallback User' } });
+
+    expect(res.status).toBe(200);
+    expect(res.body.result).toEqual({
+      success: true,
+      message: 'Si el correo está registrado, recibirás un enlace de recuperación.',
+    });
+    expect(backend.auth.generatePasswordResetLink).toHaveBeenCalledTimes(2);
+    // Primera llamada con actionCodeSettings
+    expect(backend.auth.generatePasswordResetLink).toHaveBeenNthCalledWith(
+      1,
+      'fallback@example.com',
+      expect.objectContaining({ url: expect.stringContaining('/app/reset-password') })
+    );
+    // Segunda llamada sin actionCodeSettings (fallback)
+    expect(backend.auth.generatePasswordResetLink).toHaveBeenNthCalledWith(2, 'fallback@example.com');
+
+    expect(emailMocks.sendMail).toHaveBeenCalledTimes(1);
+    const call = emailMocks.sendMail.mock.calls[0]?.[0] as { to?: string; html?: string } | undefined;
+    expect(call?.to).toBe('fallback@example.com');
+    expect(call?.html).toContain('/app/reset-password?oobCode=fallback-oob-999&apiKey=fallback-api-key-888');
+  });
+
+  it('recuperación con email de formato inválido (auth/invalid-email) → 400 invalid-argument', async () => {
+    backend.auth.generatePasswordResetLink.mockRejectedValueOnce({
+      code: 'auth/invalid-email',
+      message: 'The email address is improperly formatted.',
+    });
+
+    const res = await request(app)
+      .post('/api/enviarCorreoRecuperacion')
+      .send({ data: { email: 'formato-invalido', nombre: 'Invalido' } });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('invalid-argument');
+    expect(emailMocks.sendMail).not.toHaveBeenCalled();
+  });
+
+  it('recuperación cuando falla el envío de email → 500 internal', async () => {
+    emailMocks.sendMail.mockRejectedValueOnce(new Error('SMTP connection error'));
+
+    const res = await request(app)
+      .post('/api/enviarCorreoRecuperacion')
+      .send({ data: { email: 'smtp-fail@example.com', nombre: 'Fail User' } });
+
+    expect(res.status).toBe(500);
+    expect(res.body.error.code).toBe('internal');
+    expect(res.body.error.message).toBe('Error al enviar el correo de recuperación');
   });
 
   it('recuperación sin email → 400', async () => {
