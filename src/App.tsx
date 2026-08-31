@@ -22,6 +22,7 @@ const ConsultaCodigos = lazy(() => import('./pages/ConsultaCodigos'));
 const VentasMayoristas = lazy(() => import('./pages/VentasMayoristas'));
 const VerificarEmailLink = lazy(() => import('./pages/VerificarEmailLink'));
 const RegisterPage = lazy(() => import('./pages/Register'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 
 /** Handle public consultation route served via Firebase rewrite /r/** → /app/index.html */
 function PublicConsulta() {
@@ -31,6 +32,17 @@ function PublicConsulta() {
 
 export default function App() {
   const pathname = window.location.pathname;
+
+  // Public password reset link when accessed without /app prefix
+  if (pathname === '/reset-password') {
+    return (
+      <ErrorBoundary>
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-950"><div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin" /></div>}>
+          <ResetPassword />
+        </Suspense>
+      </ErrorBoundary>
+    );
+  }
 
   // Public verification link: /r/verificar-email?token=xxx
   if (pathname === '/r/verificar-email') {
@@ -65,6 +77,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/verificar-email" element={<VerificarEmail />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Rutas privadas */}
           <Route

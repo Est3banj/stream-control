@@ -15,6 +15,11 @@
         "source": "/login",
         "destination": "/app/login",
         "type": 302
+      },
+      {
+        "source": "/reset-password",
+        "destination": "/app/reset-password",
+        "type": 302
       }
     ],
     "rewrites": [

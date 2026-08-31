@@ -39,6 +39,7 @@ const MSG_VALIDAR = 'Demasiadas consultas. Intenta de nuevo en unos minutos.';
 const MSG_RECUPERACION = 'Esperá un minuto antes de solicitar otro correo de recuperación';
 const MSG_VERIFICACION = 'Esperá un minuto antes de reenviar el correo de verificación';
 const MSG_OTP = 'Esperá un minuto antes de solicitar otro código OTP';
+const MSG_PASSWORD_RESETEADO = 'Esperá un momento antes de solicitar otra notificación';
 
 export const FN_REGISTRY: Record<string, RouteDef> = {
   // ── 10 bearer ──
@@ -60,7 +61,7 @@ export const FN_REGISTRY: Record<string, RouteDef> = {
   onNuevoUsuario: { auth: 'bearer', handler: handlers.onNuevoUsuario },
   onNotificacionEmail: { auth: 'bearer', handler: handlers.onNotificacionEmail },
 
-  // ── 7 none ──
+  // ── 8 none ──
   validarToken: {
     auth: 'none',
     handler: codigos.validarToken,
@@ -74,6 +75,13 @@ export const FN_REGISTRY: Record<string, RouteDef> = {
     handler: handlers.enviarCorreoRecuperacion,
     rateLimits: [
       { scope: 'email', key: (req) => sha256(String(dataOf(req).email ?? '')), max: 1, windowMs: 60_000, message: MSG_RECUPERACION },
+    ],
+  },
+  notificarPasswordReseteado: {
+    auth: 'none',
+    handler: handlers.notificarPasswordReseteado,
+    rateLimits: [
+      { scope: 'email', key: (req) => sha256(String(dataOf(req).email ?? '')), max: 3, windowMs: 60_000, message: MSG_PASSWORD_RESETEADO },
     ],
   },
   enviarCorreoVerificacion: {

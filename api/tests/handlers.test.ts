@@ -304,6 +304,10 @@ describe('enviarCorreoRecuperacion / enviarCorreoVerificacion (none + rate-limit
 
     expect(res.status).toBe(200);
     expect(res.body.result).toEqual({ success: true });
+    expect(backend.auth.generatePasswordResetLink).toHaveBeenCalledWith(
+      'ana@example.com',
+      expect.objectContaining({ url: expect.stringContaining('/reset-password') })
+    );
     expect(emailMocks.sendMail).toHaveBeenCalledTimes(1);
     const call = emailMocks.sendMail.mock.calls[0]?.[0] as { to?: string; html?: string } | undefined;
     expect(call?.to).toBe('ana@example.com');
@@ -312,6 +316,42 @@ describe('enviarCorreoRecuperacion / enviarCorreoVerificacion (none + rate-limit
 
   it('recuperación sin email → 400', async () => {
     const res = await request(app).post('/api/enviarCorreoRecuperacion').send({ data: {} });
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('invalid-argument');
+  });
+});
+
+describe('notificarPasswordReseteado (none + rate-limit en registry)', () => {
+  it('envía notificación de contraseña cambiada con nombre provisto', async () => {
+    const res = await request(app)
+      .post('/api/notificarPasswordReseteado')
+      .send({ data: { email: 'carlos@example.com', nombre: 'Carlos' } });
+
+    expect(res.status).toBe(200);
+    expect(res.body.result).toEqual({ success: true });
+    expect(emailMocks.sendMail).toHaveBeenCalledTimes(1);
+    const call = emailMocks.sendMail.mock.calls[0]?.[0] as { to?: string; html?: string; subject?: string } | undefined;
+    expect(call?.to).toBe('carlos@example.com');
+    expect(call?.subject).toContain('Tu contraseña fue cambiada');
+    expect(call?.html).toContain('Carlos');
+  });
+
+  it('busca nombre en Firestore si no se pasa nombre explícito', async () => {
+    backend.seed('usuarios', 'uid-carlos', { nombre: 'Carlos Firestore', correo: 'carlos@example.com' });
+
+    const res = await request(app)
+      .post('/api/notificarPasswordReseteado')
+      .send({ data: { email: 'carlos@example.com' } });
+
+    expect(res.status).toBe(200);
+    expect(res.body.result).toEqual({ success: true });
+    expect(emailMocks.sendMail).toHaveBeenCalledTimes(1);
+    const call = emailMocks.sendMail.mock.calls[0]?.[0] as { to?: string; html?: string } | undefined;
+    expect(call?.html).toContain('Carlos Firestore');
+  });
+
+  it('notificarPasswordReseteado sin email → 400 invalid-argument', async () => {
+    const res = await request(app).post('/api/notificarPasswordReseteado').send({ data: {} });
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe('invalid-argument');
   });

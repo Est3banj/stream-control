@@ -12,6 +12,7 @@ import type { Response } from 'express';
 import { APIError } from './errors.js';
 import { getAdmin, getDb } from './firebase.js';
 import { desasignarPerfil as desasignarPerfilCore } from './desasignar.js';
+import { APP_URL } from './config.js';
 import {
   sendEmailChangedEmail,
   sendPasswordChangedEmail,
@@ -262,8 +263,9 @@ export async function enviarCorreoRecuperacion(req: AuthedReq): Promise<unknown>
   }
 
   try {
+    const appUrl = APP_URL();
     const resetLink = await getAdmin().auth().generatePasswordResetLink(email as string, {
-      url: 'https://streamcontrol-10837.firebaseapp.com',
+      url: `${appUrl}/reset-password`,
     });
 
     await sendResetPasswordEmail(email as string, (nombre as string) || 'Usuario', resetLink);
@@ -271,6 +273,65 @@ export async function enviarCorreoRecuperacion(req: AuthedReq): Promise<unknown>
   } catch (error) {
     console.error('❌ Error sending recovery email:', error);
     throw new APIError('internal', 'Error al enviar el correo de recuperación');
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// notificarPasswordReseteado — none (rate-limit email:sha256 en registry)
+// ─────────────────────────────────────────────────────────────────────────
+
+export async function notificarPasswordReseteado(req: AuthedReq): Promise<unknown> {
+  const { email, nombre } = dataOf(req);
+  if (!email) {
+    throw new APIError('invalid-argument', 'Email es requerido');
+  }
+
+  const cleanEmail = String(email).trim().toLowerCase();
+  let userName = (typeof nombre === 'string' && nombre.trim()) ? nombre.trim() : '';
+
+  if (!userName) {
+    try {
+      const usersSnap = await db
+        .collection('usuarios')
+        .where('correo', '==', cleanEmail)
+        .limit(1)
+        .get();
+
+      if (!usersSnap.empty) {
+        userName = (usersSnap.docs[0].data().nombre as string) || '';
+      } else {
+        const usersSnapEmail = await db
+          .collection('usuarios')
+          .where('email', '==', cleanEmail)
+          .limit(1)
+          .get();
+        if (!usersSnapEmail.empty) {
+          userName = (usersSnapEmail.docs[0].data().nombre as string) || '';
+        }
+      }
+
+      if (!userName) {
+        try {
+          const admin = getAdmin();
+          const userRecord = await admin.auth().getUserByEmail(cleanEmail);
+          if (userRecord?.displayName) {
+            userName = userRecord.displayName;
+          }
+        } catch {
+          // ignore
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️ Error searching user name for password reset notification:', e);
+    }
+  }
+
+  try {
+    await sendPasswordChangedEmail(cleanEmail, userName || 'Usuario');
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Error sending password changed notification email:', error);
+    throw new APIError('internal', 'Error al enviar la notificación de cambio de contraseña');
   }
 }
 
