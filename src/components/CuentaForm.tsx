@@ -15,6 +15,7 @@ interface CuentaFormProps {
 export default function CuentaForm({ initialData, onSubmit, onCancel, loading }: CuentaFormProps) {
   const isEdit = !!initialData;
   const [proveedor, setProveedor] = useState(initialData?.proveedor || '');
+  const [nombreProveedor, setNombreProveedor] = useState(initialData?.nombreProveedor || '');
   const [correoCuenta, setCorreoCuenta] = useState(initialData?.correoCuenta || '');
   const [contrasena, setContrasena] = useState('');
   const [mostrarContrasena, setMostrarContrasena] = useState(false);
@@ -58,7 +59,7 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
     setSubmitting(true);
 
     if (!proveedorActual.trim()) {
-      toast.error('El proveedor es obligatorio');
+      toast.error('La plataforma es obligatoria');
       setSubmitting(false);
       return;
     }
@@ -108,9 +109,11 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
     const fechaVencimiento = fechaVencimientoCal || undefined;
     const fechaInicioVal = fechaInicio || undefined;
     const diasServicioVal = diasServicio ? Number(diasServicio) : undefined;
+    const nombreProveedorVal = nombreProveedor.trim() || undefined;
 
     if (isEdit) {
       await onSubmit({
+        nombreProveedor: nombreProveedorVal,
         costo: Number(costo),
         estado,
         tipoVenta,
@@ -123,6 +126,7 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
       await onSubmit({
         propietarioId: '',
         proveedor: proveedorActual.trim(),
+        nombreProveedor: nombreProveedorVal,
         correoCuenta: correoCuenta.trim(),
         contrasena: contrasena.trim(),
         costo: Number(costo),
@@ -139,10 +143,10 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Proveedor */}
+      {/* Plataforma / Servicio */}
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Proveedor <span className="text-red-500">*</span>
+          Plataforma / Servicio <span className="text-red-500">*</span>
         </label>
         <select
           value={proveedor}
@@ -151,7 +155,7 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
           required
           disabled={isEdit}
         >
-          <option value="">Seleccionar proveedor...</option>
+          <option value="">Seleccionar plataforma...</option>
           {PROVEEDORES.map(p => (
             <option key={p} value={p}>{p}</option>
           ))}
@@ -161,12 +165,26 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
             type="text"
             value={otroProveedor}
             onChange={(e) => setOtroProveedor(e.target.value)}
-            placeholder="Nombre del proveedor"
+            placeholder="Nombre de la plataforma"
             className="w-full mt-2"
             required
             disabled={isEdit}
           />
         )}
+      </div>
+
+      {/* Nombre del Proveedor (Mayorista) */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">
+          Nombre del Proveedor (Mayorista)
+        </label>
+        <input
+          type="text"
+          value={nombreProveedor}
+          onChange={(e) => setNombreProveedor(e.target.value)}
+          placeholder="Ej: Pedro Cuentas, Distribuidor XYZ (opcional)"
+          className="w-full"
+        />
       </div>
 
       {/* Tipo de venta */}

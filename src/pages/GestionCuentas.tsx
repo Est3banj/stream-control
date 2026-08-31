@@ -495,6 +495,9 @@ export default function GestionCuentas() {
                     >
                       <td className="px-4 py-4">
                         <span className="font-semibold text-gray-900">{c.proveedor}</span>
+                        {c.nombreProveedor && (
+                          <div className="text-xs text-indigo-600 font-medium">Mayorista: {c.nombreProveedor}</div>
+                        )}
                         <div className="text-xs text-gray-500 mt-0.5">{c.tipoVenta === 'completa' ? 'Completa' : 'Por perfiles'}</div>
                       </td>
                       <td className="px-4 py-4">

@@ -65,8 +65,11 @@ export default function CuentaDetail({ cuenta }: CuentaDetailProps) {
       {/* Información principal */}
       <div className="grid grid-cols-2 gap-4">
         <div className="p-4 bg-gradient-to-br from-indigo-50 to-violet-50 rounded-xl border border-indigo-100">
-          <p className="text-xs font-medium text-indigo-600 uppercase tracking-wide mb-1">Proveedor</p>
+          <p className="text-xs font-medium text-indigo-600 uppercase tracking-wide mb-1">Plataforma / Servicio</p>
           <p className="text-lg font-bold text-gray-900">{cuenta.proveedor}</p>
+          {cuenta.nombreProveedor && (
+            <p className="text-xs text-indigo-600 mt-1 font-medium">Mayorista: {cuenta.nombreProveedor}</p>
+          )}
         </div>
         <div className="p-4 bg-gradient-to-br from-indigo-50 to-violet-50 rounded-xl border border-indigo-100">
           <p className="text-xs font-medium text-indigo-600 uppercase tracking-wide mb-1">Costo</p>

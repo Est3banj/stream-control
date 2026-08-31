@@ -20,7 +20,8 @@ describe('CuentaForm', () => {
   it('renders form fields', () => {
     render(<CuentaForm onSubmit={mockSubmit} onCancel={mockCancel} />);
 
-    expect(screen.getByText('Proveedor')).toBeTruthy();
+    expect(screen.getByText(/Plataforma \/ Servicio/i)).toBeTruthy();
+    expect(screen.getByText(/Nombre del Proveedor \(Mayorista\)/i)).toBeTruthy();
     expect(screen.getByText('Correo de la cuenta')).toBeTruthy();
     expect(screen.getByText('Contraseña')).toBeTruthy();
     expect(screen.getByText('Costo de la cuenta')).toBeTruthy();
