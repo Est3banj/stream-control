@@ -131,7 +131,50 @@ describe('Register Component', () => {
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('Este correo ya está registrado. Iniciá sesión con tu contraseña.');
+      expect(toast.error).toHaveBeenCalledWith(
+        'Este correo ya está registrado. Podés iniciar sesión directamente o recuperar tu contraseña.'
+      );
+    });
+  });
+
+  it('handles other Firebase error codes in registration', async () => {
+    mockRegister.mockRejectedValueOnce({ code: 'auth/weak-password' });
+
+    render(
+      <MemoryRouter>
+        <Register />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('Juan Pérez'), { target: { value: 'Carlos Ruiz' } });
+    fireEvent.change(screen.getByPlaceholderText('juan@ejemplo.com'), { target: { value: 'nuevo@ejemplo.com' } });
+    fireEvent.change(screen.getByPlaceholderText('Mínimo 6 caracteres'), { target: { value: '123456' } });
+
+    const submitBtn = screen.getByRole('button', { name: /Crear cuenta gratis/i });
+    fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        'La contraseña es muy débil. Usá al menos 6 caracteres combinando letras y números.'
+      );
+    });
+
+    mockRegister.mockRejectedValueOnce({ code: 'auth/network-request-failed' });
+    fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        'Error de conexión. Verificá tu conexión a internet e intentá nuevamente.'
+      );
+    });
+
+    mockRegister.mockRejectedValueOnce({ code: 'auth/too-many-requests' });
+    fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        'Demasiados intentos fallidos. Por favor, esperá unos minutos antes de intentar de nuevo.'
+      );
     });
   });
 

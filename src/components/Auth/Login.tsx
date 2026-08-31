@@ -45,10 +45,69 @@ export default function Login({ initialModo = 'login' }: LoginProps) {
   const [showPassword, setShowPassword] = useState(false);
 
   // Password Recovery state
+  const STORAGE_KEY_RECOVERY_COOLDOWN = 'sc_recovery_cooldown_until';
   const [mostrarRecuperacion, setMostrarRecuperacion] = useState(false);
   const [emailRecuperacion, setEmailRecuperacion] = useState('');
   const [enviado, setEnviado] = useState(false);
   const [recuperando, setRecuperando] = useState(false);
+  const [recoveryCooldown, setRecoveryCooldown] = useState<number>(() => {
+    try {
+      const stored = sessionStorage.getItem(STORAGE_KEY_RECOVERY_COOLDOWN);
+      if (stored) {
+        const diff = Math.ceil((parseInt(stored, 10) - Date.now()) / 1000);
+        return diff > 0 ? diff : 0;
+      }
+    } catch {
+      // Ignorar errores de sessionStorage
+    }
+    return 0;
+  });
+
+  const startRecoveryCooldown = (seconds = 60) => {
+    try {
+      const until = Date.now() + seconds * 1000;
+      sessionStorage.setItem(STORAGE_KEY_RECOVERY_COOLDOWN, String(until));
+    } catch {
+      // Ignorar
+    }
+    setRecoveryCooldown(seconds);
+  };
+
+  useEffect(() => {
+    if (recoveryCooldown <= 0) return;
+
+    const intervalId = setInterval(() => {
+      try {
+        const stored = sessionStorage.getItem(STORAGE_KEY_RECOVERY_COOLDOWN);
+        if (stored) {
+          const diff = Math.ceil((parseInt(stored, 10) - Date.now()) / 1000);
+          if (diff <= 0) {
+            sessionStorage.removeItem(STORAGE_KEY_RECOVERY_COOLDOWN);
+            setRecoveryCooldown(0);
+          } else {
+            setRecoveryCooldown(diff);
+          }
+          return;
+        }
+      } catch {
+        // Fallback
+      }
+
+      setRecoveryCooldown((prev) => {
+        if (prev <= 1) {
+          try {
+            sessionStorage.removeItem(STORAGE_KEY_RECOVERY_COOLDOWN);
+          } catch {
+            // Ignorar
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [recoveryCooldown]);
 
   // Redirigir al dashboard si ya está autenticado y verificado
   useEffect(() => {
@@ -97,6 +156,14 @@ export default function Login({ initialModo = 'login' }: LoginProps) {
         err.code === 'auth/user-not-found'
       ) {
         toast.error('Correo o contraseña incorrectos.');
+      } else if (err.code === 'auth/invalid-email') {
+        toast.error('El formato del correo electrónico no es válido.');
+      } else if (err.code === 'auth/user-disabled') {
+        toast.error('Tu cuenta fue deshabilitada. Contactá al administrador.');
+      } else if (err.code === 'auth/network-request-failed') {
+        toast.error('Error de conexión. Verificá tu conexión a internet e intentá nuevamente.');
+      } else if (err.code === 'auth/too-many-requests') {
+        toast.error('Demasiados intentos fallidos. Por favor, esperá unos minutos o restablecé tu contraseña.');
       } else {
         toast.error(err.message || 'Error al iniciar sesión. Inténtelo nuevamente.');
       }
@@ -108,6 +175,11 @@ export default function Login({ initialModo = 'login' }: LoginProps) {
   const handleRecuperar = async (e: React.FormEvent) => {
     e.preventDefault();
     if (recuperando) return;
+    if (recoveryCooldown > 0) {
+      toast.error(`Por favor, esperá ${recoveryCooldown} segundos antes de solicitar otro enlace.`);
+      return;
+    }
+
     const emailTrimmed = emailRecuperacion.trim().toLowerCase();
 
     if (!emailTrimmed) {
@@ -118,21 +190,30 @@ export default function Login({ initialModo = 'login' }: LoginProps) {
     setRecuperando(true);
     try {
       await callFunction('enviarCorreoRecuperacion', { email: emailTrimmed });
+      startRecoveryCooldown(60);
       setEnviado(true);
     } catch (err: unknown) {
       const error = err as { code?: string; message?: string; status?: number };
       const is429 =
         error.code === 'functions/resource-exhausted' ||
         error.code === 'resource-exhausted' ||
+        error.code === 'rate-limit-exceeded' ||
+        error.code === 'auth/too-many-requests' ||
         error.status === 429 ||
         error.message?.includes('429') ||
         error.message?.includes('Demasiadas') ||
+        error.message?.includes('Too Many Requests') ||
         error.message?.includes('minuto') ||
         error.message?.includes('resource-exhausted') ||
         error.message?.includes('Resource exhausted');
 
       if (is429) {
-        toast.error('Ya se envió un enlace recientemente a este correo. Por favor, revisá tu bandeja o esperá un minuto.');
+        startRecoveryCooldown(60);
+        toast.error('Ya te enviamos un enlace de recuperación recientemente. Por favor, esperá un minuto antes de solicitar otro.');
+      } else if (error.code === 'auth/invalid-email' || error.code === 'functions/invalid-argument') {
+        toast.error('El formato del correo electrónico no es válido.');
+      } else if (error.code === 'auth/network-request-failed' || error.code === 'functions/unavailable') {
+        toast.error('Error de conexión. Verificá tu internet e intentá nuevamente.');
       } else {
         toast.error(error.message || 'Error al enviar el correo de recuperación');
       }
@@ -149,21 +230,26 @@ export default function Login({ initialModo = 'login' }: LoginProps) {
     setRecuperando(true);
     try {
       await callFunction('enviarCorreoRecuperacion', { email: emailTrimmed });
+      startRecoveryCooldown(60);
       toast.success('Enlace de recuperación reenviado');
     } catch (err: unknown) {
       const error = err as { code?: string; message?: string; status?: number };
       const is429 =
         error.code === 'functions/resource-exhausted' ||
         error.code === 'resource-exhausted' ||
+        error.code === 'rate-limit-exceeded' ||
+        error.code === 'auth/too-many-requests' ||
         error.status === 429 ||
         error.message?.includes('429') ||
         error.message?.includes('Demasiadas') ||
+        error.message?.includes('Too Many Requests') ||
         error.message?.includes('minuto') ||
         error.message?.includes('resource-exhausted') ||
         error.message?.includes('Resource exhausted');
 
       if (is429) {
-        toast.error('Ya se envió un enlace recientemente a este correo. Por favor, revisá tu bandeja o esperá un minuto.');
+        startRecoveryCooldown(60);
+        toast.error('Ya te enviamos un enlace de recuperación recientemente. Por favor, esperá un minuto antes de solicitar otro.');
       } else {
         toast.error(error.message || 'Error al enviar el correo de recuperación');
       }
@@ -259,7 +345,7 @@ export default function Login({ initialModo = 'login' }: LoginProps) {
 
                 <button
                   type="submit"
-                  disabled={recuperando}
+                  disabled={recuperando || recoveryCooldown > 0}
                   className="w-full flex items-center justify-center gap-2 py-3.5 px-5 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 hover:from-indigo-500 hover:to-violet-500 border border-indigo-400/30 text-white font-semibold text-sm shadow-lg shadow-indigo-600/30 transition-all duration-200 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {recuperando ? (
@@ -267,6 +353,8 @@ export default function Login({ initialModo = 'login' }: LoginProps) {
                       <Loader2 className="w-4 h-4 animate-spin" />
                       <span>Enviando instrucciones...</span>
                     </>
+                  ) : recoveryCooldown > 0 ? (
+                    <span>Reintentar en {recoveryCooldown}s</span>
                   ) : (
                     <>
                       <span>Enviar enlace de recuperación</span>

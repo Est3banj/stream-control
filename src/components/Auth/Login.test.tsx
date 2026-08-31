@@ -46,6 +46,7 @@ vi.mock('react-hot-toast', () => ({
 describe('Login and Auth Container Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionStorage.clear();
     mockUser = null;
     mockLoading = false;
   });
@@ -215,9 +216,13 @@ describe('Login and Auth Container Component', () => {
         email: 'rate-limited@ejemplo.com',
       });
       expect(toast.error).toHaveBeenCalledWith(
-        'Ya se envió un enlace recientemente a este correo. Por favor, revisá tu bandeja o esperá un minuto.'
+        'Ya te enviamos un enlace de recuperación recientemente. Por favor, esperá un minuto antes de solicitar otro.'
       );
     });
+
+    // Cooldown should be active and button disabled with cooldown text
+    expect(sendBtn).toBeDisabled();
+    expect(screen.getByText(/Reintentar en \d+s/)).toBeInTheDocument();
   });
 
   it('disables submit button and shows loading state while recovery is in flight', async () => {

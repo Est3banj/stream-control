@@ -82,11 +82,17 @@ export const Register: React.FC<RegisterProps> = ({ onSuccess }) => {
       console.error('Error al registrar usuario:', error);
       const err = error as { code?: string; message?: string };
       if (err.code === 'auth/email-already-in-use') {
-        toast.error('Este correo ya está registrado. Iniciá sesión con tu contraseña.');
+        toast.error('Este correo ya está registrado. Podés iniciar sesión directamente o recuperar tu contraseña.');
       } else if (err.code === 'auth/weak-password') {
         toast.error('La contraseña es muy débil. Usá al menos 6 caracteres combinando letras y números.');
       } else if (err.code === 'auth/invalid-email') {
         toast.error('El formato del correo electrónico no es válido.');
+      } else if (err.code === 'auth/network-request-failed') {
+        toast.error('Error de conexión. Verificá tu conexión a internet e intentá nuevamente.');
+      } else if (err.code === 'auth/too-many-requests') {
+        toast.error('Demasiados intentos fallidos. Por favor, esperá unos minutos antes de intentar de nuevo.');
+      } else if (err.code === 'auth/operation-not-allowed') {
+        toast.error('El registro con correo y contraseña no está habilitado.');
       } else {
         toast.error(err.message || 'Error al crear la cuenta. Inténtelo nuevamente.');
       }
@@ -103,8 +109,24 @@ export const Register: React.FC<RegisterProps> = ({ onSuccess }) => {
       nav('/');
     } catch (error: unknown) {
       const err = error as { code?: string; message?: string };
-      if (err.code === 'auth/popup-closed-by-user') {
+      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
         // Usuario cerró ventana emergente
+        return;
+      }
+      if (err.code === 'auth/popup-blocked') {
+        toast.error('La ventana emergente fue bloqueada por el navegador. Permití las ventanas emergentes para continuar.');
+        return;
+      }
+      if (err.code === 'auth/account-exists-with-different-credential') {
+        toast.error('Ya existe una cuenta con este correo vinculada a otro método de inicio de sesión.');
+        return;
+      }
+      if (err.code === 'auth/network-request-failed') {
+        toast.error('Error de conexión. Verificá tu conexión a internet e intentá nuevamente.');
+        return;
+      }
+      if (err.code === 'auth/too-many-requests') {
+        toast.error('Demasiadas solicitudes. Esperá un momento e intentá nuevamente.');
         return;
       }
       toast.error(err.message || 'Error al registrarte con Google');
