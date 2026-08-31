@@ -264,11 +264,17 @@ export async function enviarCorreoRecuperacion(req: AuthedReq): Promise<unknown>
 
   try {
     const appUrl = APP_URL();
-    const resetLink = await getAdmin().auth().generatePasswordResetLink(email as string, {
+    const rawFirebaseLink = await getAdmin().auth().generatePasswordResetLink(email as string, {
       url: `${appUrl}/reset-password`,
     });
 
-    await sendResetPasswordEmail(email as string, (nombre as string) || 'Usuario', resetLink);
+    const parsed = new URL(rawFirebaseLink);
+    const oobCode = parsed.searchParams.get('oobCode');
+    const apiKey = parsed.searchParams.get('apiKey') || '';
+    // Direct link to our own custom page
+    const customResetLink = `${appUrl}/reset-password?oobCode=${encodeURIComponent(oobCode || '')}${apiKey ? `&apiKey=${encodeURIComponent(apiKey)}` : ''}`;
+
+    await sendResetPasswordEmail(email as string, (nombre as string) || 'Usuario', customResetLink);
     return { success: true };
   } catch (error) {
     console.error('❌ Error sending recovery email:', error);

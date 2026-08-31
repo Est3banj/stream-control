@@ -297,7 +297,7 @@ describe('desvincularTelegram (bearer)', () => {
 });
 
 describe('enviarCorreoRecuperacion / enviarCorreoVerificacion (none + rate-limit 1/60s en registry)', () => {
-  it('recuperación → 200 y envía con link de reset', async () => {
+  it('recuperación → 200 y envía con link de reset directo a /reset-password', async () => {
     const res = await request(app)
       .post('/api/enviarCorreoRecuperacion')
       .send({ data: { email: 'ana@example.com', nombre: 'Ana' } });
@@ -311,7 +311,7 @@ describe('enviarCorreoRecuperacion / enviarCorreoVerificacion (none + rate-limit
     expect(emailMocks.sendMail).toHaveBeenCalledTimes(1);
     const call = emailMocks.sendMail.mock.calls[0]?.[0] as { to?: string; html?: string } | undefined;
     expect(call?.to).toBe('ana@example.com');
-    expect(call?.html).toContain('https://reset.example/link');
+    expect(call?.html).toContain('/reset-password?oobCode=fake-oob-code-123&apiKey=fake-api-key-456');
   });
 
   it('recuperación sin email → 400', async () => {

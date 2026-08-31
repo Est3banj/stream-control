@@ -57,7 +57,7 @@ function makeAuthFake(): AuthFake {
       }
       return { ...decoded };
     }),
-    generatePasswordResetLink: vi.fn(async () => 'https://reset.example/link'),
+    generatePasswordResetLink: vi.fn(async () => 'https://streamcontrol-10837.firebaseapp.com/__/auth/action?mode=resetPassword&oobCode=fake-oob-code-123&apiKey=fake-api-key-456'),
     generateEmailVerificationLink: vi.fn(async () => 'https://verify.example/link'),
     listUsers: vi.fn(async (_max: number, _pageToken?: string) => ({
       users: [...users],

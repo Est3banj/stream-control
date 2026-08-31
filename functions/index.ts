@@ -516,11 +516,17 @@ export const enviarCorreoRecuperacion = onCall(
     recoveryRateLimit.set(email, ahora);
 
     try {
-      const resetLink = await admin.auth().generatePasswordResetLink(email, {
-        url: 'https://streamcontrol-10837.firebaseapp.com',
+      const appUrl = APP_URL.value();
+      const rawFirebaseLink = await admin.auth().generatePasswordResetLink(email, {
+        url: `${appUrl}/reset-password`,
       });
+      const parsed = new URL(rawFirebaseLink);
+      const oobCode = parsed.searchParams.get('oobCode');
+      const apiKey = parsed.searchParams.get('apiKey') || '';
+      // Direct link to our own custom page
+      const customResetLink = `${appUrl}/reset-password?oobCode=${encodeURIComponent(oobCode || '')}${apiKey ? `&apiKey=${encodeURIComponent(apiKey)}` : ''}`;
 
-      await sendResetPasswordEmail(email, nombre || 'Usuario', resetLink);
+      await sendResetPasswordEmail(email, nombre || 'Usuario', customResetLink);
       return { success: true };
     } catch (error) {
       console.error('❌ Error sending recovery email:', error);
