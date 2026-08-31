@@ -17,7 +17,7 @@ export const CambiarEmailModal: React.FC<CambiarEmailModalProps> = ({
   onSuccess,
   currentEmail = '',
 }) => {
-  const { updateUserEmail, sendVerificationEmail } = useAuth();
+  const { updateUserEmail, enviarCodigoOTP, sendVerificationEmail } = useAuth();
   const [newEmail, setNewEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -53,14 +53,18 @@ export const CambiarEmailModal: React.FC<CambiarEmailModalProps> = ({
     setLoading(true);
     try {
       await updateUserEmail(emailTrimmed, password);
-      // Reenviar email de verificación al nuevo correo
+      // Reenviar código OTP de verificación al nuevo correo
       try {
-        await sendVerificationEmail();
+        if (enviarCodigoOTP) {
+          await enviarCodigoOTP(emailTrimmed);
+        } else {
+          await sendVerificationEmail();
+        }
       } catch (sendErr) {
-        console.warn('Error reenviando verificación:', sendErr);
+        console.warn('Error reenviando código OTP:', sendErr);
       }
 
-      toast.success('Correo actualizado. Te enviamos un nuevo enlace.');
+      toast.success('Correo actualizado. Te enviamos un nuevo código.');
       onSuccess(emailTrimmed);
       onClose();
     } catch (err: unknown) {
