@@ -692,3 +692,213 @@ export async function enviarComunicadoMasivo(req: AuthedReq): Promise<unknown> {
     fallidosEmails: fallidos > 0 ? fallidosEmails : undefined,
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// Helper: batchDeleteRefs
+// ─────────────────────────────────────────────────────────────────────────
+
+async function batchDeleteRefs(refs: Array<{ delete(): Promise<unknown> } | any>): Promise<void> {
+  const CHUNK_SIZE = 400;
+  for (let i = 0; i < refs.length; i += CHUNK_SIZE) {
+    const chunk = refs.slice(i, i + CHUNK_SIZE);
+    const batch = db.batch();
+    chunk.forEach((ref) => batch.delete(ref));
+    await batch.commit();
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// eliminarUsuarioAdmin — admin (eliminación de Auth + Firestore + Cascada)
+// ─────────────────────────────────────────────────────────────────────────
+
+export async function eliminarUsuarioAdmin(req: AuthedReq): Promise<unknown> {
+  if (!req.auth) {
+    throw new APIError('unauthenticated', 'Debes iniciar sesión');
+  }
+
+  const { uid, cascadeTenantData = false } = dataOf(req) as {
+    uid?: string;
+    cascadeTenantData?: boolean;
+  };
+
+  if (!uid || typeof uid !== 'string' || !uid.trim()) {
+    throw new APIError('invalid-argument', 'El UID del usuario es requerido');
+  }
+
+  const targetUid = uid.trim();
+
+  // Impedir que el administrador elimine su propia cuenta
+  if (req.auth.uid === targetUid) {
+    throw new APIError('failed-precondition', 'No podés eliminar tu propia cuenta de administrador');
+  }
+
+  // 1. Eliminar de Firebase Auth (tolerar auth/user-not-found si ya se eliminó en consola)
+  let authDeleted = false;
+  try {
+    const auth = getAdmin().auth();
+    await auth.deleteUser(targetUid);
+    authDeleted = true;
+  } catch (err: unknown) {
+    const code = (err as { code?: string })?.code;
+    const message = (err as Error)?.message || '';
+    if (
+      code === 'auth/user-not-found' ||
+      message.includes('user-not-found') ||
+      message.includes('not found') ||
+      message.includes('No user record found')
+    ) {
+      authDeleted = false;
+    } else {
+      console.error(`❌ Error eliminando usuario ${targetUid} de Firebase Auth:`, err);
+      throw new APIError('internal', 'Error al eliminar usuario de Firebase Auth');
+    }
+  }
+
+  // 2. Eliminar de Firestore usuarios/{uid}
+  const userRef = db.collection('usuarios').doc(targetUid);
+  await userRef.delete();
+  const firestoreUserDeleted = true;
+
+  // 3. Eliminar suscripciones asociadas (usuarioId == targetUid o propietarioId == targetUid)
+  const [subsUsuarioSnap, subsPropSnap] = await Promise.all([
+    db.collection('suscripciones').where('usuarioId', '==', targetUid).get(),
+    db.collection('suscripciones').where('propietarioId', '==', targetUid).get(),
+  ]);
+
+  const subDocRefs = new Map<string, any>();
+  subsUsuarioSnap.docs.forEach((d) => subDocRefs.set(d.id, d.ref));
+  subsPropSnap.docs.forEach((d) => subDocRefs.set(d.id, d.ref));
+
+  if (subDocRefs.size > 0) {
+    await batchDeleteRefs(Array.from(subDocRefs.values()));
+  }
+  const suscripcionesEliminadas = subDocRefs.size;
+
+  // 4. Si cascadeTenantData === true, eliminar recursos vinculados al tenant
+  let recursosCascadaEliminados = 0;
+  if (cascadeTenantData === true) {
+    const cascadeCollections = [
+      'clientes',
+      'cuentas',
+      'ventas',
+      'movimientos',
+      'notificaciones',
+      'codigosVinculacion',
+      'vinculaciones',
+    ];
+
+    const cascadeRefs = new Map<string, any>();
+    for (const col of cascadeCollections) {
+      const [byProp, byUser] = await Promise.all([
+        db.collection(col).where('propietarioId', '==', targetUid).get(),
+        db.collection(col).where('usuarioId', '==', targetUid).get(),
+      ]);
+      byProp.docs.forEach((d) => cascadeRefs.set(`${col}/${d.id}`, d.ref));
+      byUser.docs.forEach((d) => cascadeRefs.set(`${col}/${d.id}`, d.ref));
+    }
+
+    if (cascadeRefs.size > 0) {
+      await batchDeleteRefs(Array.from(cascadeRefs.values()));
+    }
+    recursosCascadaEliminados = cascadeRefs.size;
+  }
+
+  return {
+    success: true,
+    uid: targetUid,
+    authDeleted,
+    firestoreUserDeleted,
+    suscripcionesEliminadas,
+    recursosCascadaEliminados,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// sincronizarUsuariosAuth — admin (auditoría y purga de huérfanos Auth <-> Firestore)
+// ─────────────────────────────────────────────────────────────────────────
+
+export async function sincronizarUsuariosAuth(req: AuthedReq): Promise<unknown> {
+  if (!req.auth) {
+    throw new APIError('unauthenticated', 'Debes iniciar sesión');
+  }
+
+  const { accion } = dataOf(req) as { accion?: 'auditar' | 'purgar_huerfanos' };
+
+  // 1. Obtener todos los usuarios de Firebase Auth
+  const authUsers: Array<{ uid: string; email: string; nombre: string }> = [];
+  const authUidSet = new Set<string>();
+  const auth = getAdmin().auth();
+
+  const listAll = async (nextPageToken?: string) => {
+    const result = await auth.listUsers(1000, nextPageToken);
+    result.users.forEach((u) => {
+      authUidSet.add(u.uid);
+      authUsers.push({
+        uid: u.uid,
+        email: u.email || '',
+        nombre: u.displayName || 'Usuario',
+      });
+    });
+    if (result.pageToken) {
+      await listAll(result.pageToken);
+    }
+  };
+  await listAll();
+
+  // 2. Obtener todos los usuarios de Firestore
+  const usersSnap = await db.collection('usuarios').get();
+  const firestoreUsers: Array<{ uid: string; email: string; nombre: string; rol?: string }> = [];
+  const firestoreUidSet = new Set<string>();
+
+  usersSnap.docs.forEach((d) => {
+    const data = d.data();
+    firestoreUidSet.add(d.id);
+    firestoreUsers.push({
+      uid: d.id,
+      email: (data.correo || data.email || '') as string,
+      nombre: (data.nombre || 'Usuario') as string,
+      rol: data.rol as string | undefined,
+    });
+  });
+
+  // 3. Detectar huérfanos
+  const huerfanosFirestore = firestoreUsers.filter((u) => !authUidSet.has(u.uid));
+  const huerfanosAuth = authUsers.filter((u) => !firestoreUidSet.has(u.uid));
+
+  // 4. Purgar si la acción solicitada es purgar_huerfanos
+  let purgados = {
+    usuariosFirestore: 0,
+    suscripciones: 0,
+  };
+
+  if (accion === 'purgar_huerfanos' && huerfanosFirestore.length > 0) {
+    const refsToDelete: any[] = [];
+
+    for (const huerfano of huerfanosFirestore) {
+      refsToDelete.push(db.collection('usuarios').doc(huerfano.uid));
+
+      const [subsUsuario, subsProp] = await Promise.all([
+        db.collection('suscripciones').where('usuarioId', '==', huerfano.uid).get(),
+        db.collection('suscripciones').where('propietarioId', '==', huerfano.uid).get(),
+      ]);
+
+      const subMap = new Map<string, any>();
+      subsUsuario.docs.forEach((d) => subMap.set(d.id, d.ref));
+      subsProp.docs.forEach((d) => subMap.set(d.id, d.ref));
+      subMap.forEach((ref) => refsToDelete.push(ref));
+      purgados.suscripciones += subMap.size;
+    }
+
+    purgados.usuariosFirestore = huerfanosFirestore.length;
+    await batchDeleteRefs(refsToDelete);
+  }
+
+  return {
+    success: true,
+    totalAuth: authUsers.length,
+    totalFirestore: firestoreUsers.length,
+    huerfanosFirestore,
+    huerfanosAuth,
+    purgados,
+  };
+}

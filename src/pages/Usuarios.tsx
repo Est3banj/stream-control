@@ -48,6 +48,10 @@ import {
   CheckCircle2,
   AlertCircle,
   ExternalLink,
+  RefreshCw,
+  Trash2,
+  Database,
+  AlertTriangle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -58,6 +62,25 @@ interface UsuarioFormState {
   rol: 'admin' | 'usuario';
   estado: 'activo' | 'inactivo';
   activoHasta: string;
+}
+
+interface OrphanUser {
+  uid: string;
+  email: string;
+  nombre: string;
+  rol?: string;
+}
+
+interface SyncAuthResult {
+  success: boolean;
+  totalAuth: number;
+  totalFirestore: number;
+  huerfanosFirestore: OrphanUser[];
+  huerfanosAuth: OrphanUser[];
+  purgados?: {
+    usuariosFirestore: number;
+    suscripciones: number;
+  };
 }
 
 export default function Usuarios() {
@@ -95,6 +118,13 @@ export default function Usuarios() {
   } | null>(null);
   const [nuevoPlanId, setNuevoPlanId] = useState('');
   const [guardandoPlan, setGuardandoPlan] = useState(false);
+
+  // Sync with Auth modal state
+  const [showSyncModal, setShowSyncModal] = useState(false);
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [purging, setPurging] = useState(false);
+  const [syncResult, setSyncResult] = useState<SyncAuthResult | null>(null);
+  const [activeSyncTab, setActiveSyncTab] = useState<'firestore' | 'auth'>('firestore');
 
   const [form, setForm] = useState<UsuarioFormState>({
     nombre: '',
@@ -342,6 +372,52 @@ export default function Usuarios() {
     }
   };
 
+  const abrirModalSincronizar = async () => {
+    setShowSyncModal(true);
+    setSyncLoading(true);
+    try {
+      const data = await callFunction<{ accion: string }, SyncAuthResult>(
+        'sincronizarUsuariosAuth',
+        { accion: 'auditar' }
+      );
+      setSyncResult(data);
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error('Error auditando sincronización:', error);
+      toast.error(error.message || 'Error al auditar usuarios con Firebase Auth');
+    } finally {
+      setSyncLoading(false);
+    }
+  };
+
+  const handlePurgarHuerfanos = async () => {
+    if (!syncResult || syncResult.huerfanosFirestore.length === 0) return;
+    setPurging(true);
+    try {
+      const data = await callFunction<{ accion: string }, SyncAuthResult>(
+        'sincronizarUsuariosAuth',
+        { accion: 'purgar_huerfanos' }
+      );
+      toast.success(
+        `Purga completada: ${data.purgados?.usuariosFirestore ?? 0} usuarios huérfanos y ${data.purgados?.suscripciones ?? 0} suscripciones eliminadas`
+      );
+      setSyncResult(data);
+      try {
+        const verifData = await callFunction<
+          Record<string, never>,
+          { verificados: Record<string, boolean> }
+        >('listarVerificados');
+        setVerificados(verifData.verificados || {});
+      } catch {}
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error('Error purgando huérfanos:', error);
+      toast.error(error.message || 'Error al purgar usuarios huérfanos');
+    } finally {
+      setPurging(false);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-fade-in text-slate-100">
       {/* Header & CRM Title */}
@@ -363,6 +439,14 @@ export default function Usuarios() {
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={abrirModalSincronizar}
+            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 hover:text-cyan-200 border border-slate-700/80 text-xs sm:text-sm font-semibold shadow-lg shadow-cyan-950/30 transition-all hover:scale-105 active:scale-95"
+          >
+            <RefreshCw size={16} className={syncLoading ? 'animate-spin' : ''} />
+            <span>⚡ Sincronizar con Auth</span>
+          </button>
+
           <button
             onClick={() => setShowCreateSection(!showCreateSection)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold shadow-lg shadow-indigo-950/50 transition-all hover:scale-105 active:scale-95"
@@ -814,6 +898,9 @@ export default function Usuarios() {
             setSelectedUserForDrawer(null);
             abrirCambiarPlan(u);
           }}
+          onUserUpdated={() => {
+            setSelectedUserForDrawer(null);
+          }}
         />
       )}
 
@@ -877,6 +964,258 @@ export default function Usuarios() {
                   className="btn-primary flex-1 text-sm shadow-lg shadow-indigo-950/50"
                 >
                   {guardandoPlan ? 'Guardando...' : 'Confirmar Cambio'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Sincronización con Auth y Purga de Huérfanos */}
+      {showSyncModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="bg-slate-900 border border-indigo-500/30 rounded-2xl shadow-2xl max-w-2xl w-full p-6 text-slate-100 animate-scale-in max-h-[90vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                  <RefreshCw size={20} className={syncLoading ? 'animate-spin' : ''} />
+                </div>
+                <div>
+                  <h2 className="text-lg sm:text-xl font-bold text-white">
+                    Sincronización Auth ↔ Firestore
+                  </h2>
+                  <p className="text-slate-400 text-xs mt-0.5">
+                    Auditoría de integridad, detección de discrepancias y purga de huérfanos
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowSyncModal(false)}
+                className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
+              {syncLoading ? (
+                <div className="py-12 flex flex-col items-center justify-center space-y-3 text-slate-400">
+                  <RefreshCw size={32} className="animate-spin text-cyan-400" />
+                  <p className="text-sm font-medium">Auditando cuentas de Firebase Auth y Firestore...</p>
+                </div>
+              ) : syncResult ? (
+                <>
+                  {/* Summary Metric Cards Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-3 text-center space-y-1">
+                      <div className="flex items-center justify-center text-indigo-400 mb-1">
+                        <Shield size={18} />
+                      </div>
+                      <p className="text-2xl font-black text-white">{syncResult.totalAuth}</p>
+                      <p className="text-[11px] font-medium text-slate-400">Firebase Auth</p>
+                    </div>
+
+                    <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-3 text-center space-y-1">
+                      <div className="flex items-center justify-center text-cyan-400 mb-1">
+                        <Database size={18} />
+                      </div>
+                      <p className="text-2xl font-black text-white">{syncResult.totalFirestore}</p>
+                      <p className="text-[11px] font-medium text-slate-400">Firestore Docs</p>
+                    </div>
+
+                    <div
+                      className={`border rounded-xl p-3 text-center space-y-1 ${
+                        syncResult.huerfanosFirestore.length > 0
+                          ? 'bg-rose-950/30 border-rose-800/60 text-rose-300'
+                          : 'bg-slate-950/70 border-slate-800 text-slate-400'
+                      }`}
+                    >
+                      <div className="flex items-center justify-center text-rose-400 mb-1">
+                        <UserX size={18} />
+                      </div>
+                      <p
+                        className={`text-2xl font-black ${
+                          syncResult.huerfanosFirestore.length > 0 ? 'text-rose-400' : 'text-slate-300'
+                        }`}
+                      >
+                        {syncResult.huerfanosFirestore.length}
+                      </p>
+                      <p className="text-[11px] font-medium">Huérfanos Firestore</p>
+                    </div>
+
+                    <div
+                      className={`border rounded-xl p-3 text-center space-y-1 ${
+                        syncResult.huerfanosAuth.length > 0
+                          ? 'bg-amber-950/30 border-amber-800/60 text-amber-300'
+                          : 'bg-slate-950/70 border-slate-800 text-slate-400'
+                      }`}
+                    >
+                      <div className="flex items-center justify-center text-amber-400 mb-1">
+                        <AlertCircle size={18} />
+                      </div>
+                      <p
+                        className={`text-2xl font-black ${
+                          syncResult.huerfanosAuth.length > 0 ? 'text-amber-400' : 'text-slate-300'
+                        }`}
+                      >
+                        {syncResult.huerfanosAuth.length}
+                      </p>
+                      <p className="text-[11px] font-medium">Huérfanos Auth</p>
+                    </div>
+                  </div>
+
+                  {/* Synchronized State or Tabs */}
+                  {syncResult.huerfanosFirestore.length === 0 && syncResult.huerfanosAuth.length === 0 ? (
+                    <div className="bg-emerald-950/30 border border-emerald-800/60 rounded-2xl p-6 flex items-center gap-4 text-emerald-300">
+                      <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
+                        <CheckCircle2 size={28} className="text-emerald-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-white text-base">¡Base de datos 100% Sincronizada!</h4>
+                        <p className="text-xs text-emerald-300/80 mt-1">
+                          No se encontraron discrepancias ni registros huérfanos entre Firebase Auth y la colección de Firestore.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {/* Tabs */}
+                      <div className="flex border-b border-slate-800 gap-2">
+                        <button
+                          onClick={() => setActiveSyncTab('firestore')}
+                          className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors flex items-center gap-2 ${
+                            activeSyncTab === 'firestore'
+                              ? 'border-rose-500 text-rose-400'
+                              : 'border-transparent text-slate-400 hover:text-slate-200'
+                          }`}
+                        >
+                          <UserX size={15} />
+                          <span>Huérfanos en Firestore ({syncResult.huerfanosFirestore.length})</span>
+                        </button>
+                        <button
+                          onClick={() => setActiveSyncTab('auth')}
+                          className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors flex items-center gap-2 ${
+                            activeSyncTab === 'auth'
+                              ? 'border-amber-500 text-amber-400'
+                              : 'border-transparent text-slate-400 hover:text-slate-200'
+                          }`}
+                        >
+                          <AlertCircle size={15} />
+                          <span>Huérfanos en Auth ({syncResult.huerfanosAuth.length})</span>
+                        </button>
+                      </div>
+
+                      {/* Tab Content */}
+                      {activeSyncTab === 'firestore' ? (
+                        <div className="space-y-2.5">
+                          <p className="text-xs text-slate-400">
+                            Documentos en <code className="text-indigo-300">usuarios</code> cuyo UID ya no existe en Firebase Auth. Pueden eliminarse de forma segura con sus suscripciones.
+                          </p>
+
+                          {syncResult.huerfanosFirestore.length === 0 ? (
+                            <div className="p-4 rounded-xl bg-slate-950/40 text-center text-xs text-slate-500">
+                              No hay huérfanos en Firestore.
+                            </div>
+                          ) : (
+                            <div className="max-h-56 overflow-y-auto space-y-2">
+                              {syncResult.huerfanosFirestore.map((h) => (
+                                <div
+                                  key={h.uid}
+                                  className="flex items-center justify-between p-3 rounded-xl bg-slate-950/80 border border-rose-950/60"
+                                >
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-xs font-bold text-slate-200 truncate">{h.nombre || 'Sin nombre'}</p>
+                                    <p className="text-[11px] text-cyan-300/80 truncate">{h.email || 'Sin email'}</p>
+                                    <p className="text-[10px] text-slate-500 font-mono truncate">UID: {h.uid}</p>
+                                  </div>
+                                  <span className="ml-2 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-950/80 text-rose-300 border border-rose-800/60">
+                                    Sin Auth
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="space-y-2.5">
+                          <p className="text-xs text-slate-400">
+                            Cuentas registradas en Firebase Auth que no tienen un documento asociado en la colección <code className="text-indigo-300">usuarios</code>.
+                          </p>
+
+                          {syncResult.huerfanosAuth.length === 0 ? (
+                            <div className="p-4 rounded-xl bg-slate-950/40 text-center text-xs text-slate-500">
+                              No hay huérfanos en Firebase Auth.
+                            </div>
+                          ) : (
+                            <div className="max-h-56 overflow-y-auto space-y-2">
+                              {syncResult.huerfanosAuth.map((h) => (
+                                <div
+                                  key={h.uid}
+                                  className="flex items-center justify-between p-3 rounded-xl bg-slate-950/80 border border-amber-950/60"
+                                >
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-xs font-bold text-slate-200 truncate">{h.nombre || 'Usuario Auth'}</p>
+                                    <p className="text-[11px] text-cyan-300/80 truncate">{h.email || 'Sin email'}</p>
+                                    <p className="text-[10px] text-slate-500 font-mono truncate">UID: {h.uid}</p>
+                                  </div>
+                                  <span className="ml-2 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-950/80 text-amber-300 border border-amber-800/60">
+                                    Sin Doc
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : null}
+            </div>
+
+            {/* Modal Footer Actions */}
+            <div className="flex items-center justify-between pt-4 border-t border-slate-800 gap-3">
+              <button
+                type="button"
+                onClick={abrirModalSincronizar}
+                disabled={syncLoading || purging}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+              >
+                <RefreshCw size={14} className={syncLoading ? 'animate-spin' : ''} />
+                <span>Re-auditar</span>
+              </button>
+
+              <div className="flex items-center gap-2">
+                {syncResult && syncResult.huerfanosFirestore.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handlePurgarHuerfanos}
+                    disabled={purging || syncLoading}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-950/50 transition-all disabled:opacity-50"
+                  >
+                    {purging ? (
+                      <>
+                        <RefreshCw size={14} className="animate-spin" />
+                        <span>Purgando...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 size={14} />
+                        <span>Purgar {syncResult.huerfanosFirestore.length} Usuarios Huérfanos</span>
+                      </>
+                    )}
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setShowSyncModal(false)}
+                  disabled={purging}
+                  className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+                >
+                  Cerrar
                 </button>
               </div>
             </div>

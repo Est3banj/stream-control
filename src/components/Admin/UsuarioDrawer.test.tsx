@@ -162,4 +162,48 @@ describe('UsuarioDrawer', () => {
       expect(screen.getByText('Acciones de Soporte Rápido')).toBeInTheDocument();
     });
   });
+
+  it('renders Danger Zone and allows deleting user with confirmation modal', async () => {
+    const { callFunction } = await import('../../lib/apiClient');
+    const onUserUpdatedMock = vi.fn();
+    const onCloseMock = vi.fn();
+
+    render(
+      <UsuarioDrawer
+        usuario={mockUsuario}
+        isOpen={true}
+        onClose={onCloseMock}
+        suscripcionActiva={mockSuscripcion}
+        planes={[]}
+        isVerificado={true}
+        onUserUpdated={onUserUpdatedMock}
+      />
+    );
+
+    expect(screen.getByText('Zona de Peligro')).toBeInTheDocument();
+    const btnEliminar = screen.getByRole('button', { name: /eliminar usuario definitivamente/i });
+    fireEvent.click(btnEliminar);
+
+    // Modal opens
+    expect(screen.getByText(/esta acción no se puede deshacer/i)).toBeInTheDocument();
+    expect(screen.getByText(/eliminación en cascada de datos de negocio/i)).toBeInTheDocument();
+
+    // Check cascade checkbox
+    const cascadeCheckbox = screen.getByRole('checkbox');
+    fireEvent.click(cascadeCheckbox);
+    expect(cascadeCheckbox).toBeChecked();
+
+    // Click confirm
+    const btnConfirm = screen.getByRole('button', { name: /confirmar eliminación/i });
+    fireEvent.click(btnConfirm);
+
+    await waitFor(() => {
+      expect(callFunction).toHaveBeenCalledWith('eliminarUsuarioAdmin', {
+        uid: 'user-tenant-1',
+        cascadeTenantData: true,
+      });
+      expect(onCloseMock).toHaveBeenCalled();
+      expect(onUserUpdatedMock).toHaveBeenCalled();
+    });
+  });
 });

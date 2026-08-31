@@ -115,9 +115,11 @@ export const FN_REGISTRY: Record<string, RouteDef> = {
   },
   telegramWebhook: { auth: 'none', raw: true, handler: handlers.telegramWebhook },
 
-  // ── 2 admin ──
+  // ── 4 admin ──
   listarVerificados: { auth: 'admin', handler: handlers.listarVerificados },
   enviarComunicadoMasivo: { auth: 'admin', handler: handlers.enviarComunicadoMasivo },
+  eliminarUsuarioAdmin: { auth: 'admin', handler: handlers.eliminarUsuarioAdmin },
+  sincronizarUsuariosAuth: { auth: 'admin', handler: handlers.sincronizarUsuariosAuth },
 
   // ── 1 cron ──
   cleanupNoVerificados: { auth: 'cron', handler: handlers.cleanupNoVerificados },

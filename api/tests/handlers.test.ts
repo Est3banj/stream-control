@@ -768,3 +768,250 @@ describe('enviarComunicadoMasivo (admin)', () => {
     expect(emailMocks.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'vence@example.com' }));
   });
 });
+
+describe('eliminarUsuarioAdmin (admin)', () => {
+  beforeEach(() => {
+    backend.auth.setToken('tk-admin', { uid: 'admin-1', role: 'admin' });
+    backend.auth.setToken('tk-user', { uid: 'user-normal', role: 'user' });
+  });
+
+  it('401 si no hay token de autenticación', async () => {
+    const res = await request(app)
+      .post('/api/eliminarUsuarioAdmin')
+      .send({ data: { uid: 'user-1' } });
+
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe('unauthenticated');
+  });
+
+  it('403 si el usuario no es admin', async () => {
+    const res = await request(app)
+      .post('/api/eliminarUsuarioAdmin')
+      .set('Authorization', 'Bearer tk-user')
+      .send({ data: { uid: 'user-1' } });
+
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe('permission-denied');
+  });
+
+  it('400 si falta el UID a eliminar', async () => {
+    const res = await request(app)
+      .post('/api/eliminarUsuarioAdmin')
+      .set('Authorization', 'Bearer tk-admin')
+      .send({ data: {} });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('invalid-argument');
+  });
+
+  it('impide la auto-eliminación del administrador', async () => {
+    const res = await request(app)
+      .post('/api/eliminarUsuarioAdmin')
+      .set('Authorization', 'Bearer tk-admin')
+      .send({ data: { uid: 'admin-1' } });
+
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe('failed-precondition');
+    expect(res.body.error.message).toContain('No podés eliminar tu propia cuenta');
+  });
+
+  it('elimina usuario de Auth, Firestore usuarios y suscripciones asociadas', async () => {
+    backend.seed('usuarios', 'target-user', { nombre: 'Target', correo: 'target@example.com' });
+    backend.seed('suscripciones', 'sub-1', { usuarioId: 'target-user', planNombre: 'Pro' });
+    backend.seed('suscripciones', 'sub-2', { propietarioId: 'target-user', planNombre: 'Starter' });
+    backend.seed('suscripciones', 'sub-otro', { usuarioId: 'otro-user', planNombre: 'Pro' });
+
+    const res = await request(app)
+      .post('/api/eliminarUsuarioAdmin')
+      .set('Authorization', 'Bearer tk-admin')
+      .send({ data: { uid: 'target-user', cascadeTenantData: false } });
+
+    expect(res.status).toBe(200);
+    expect(res.body.result).toEqual({
+      success: true,
+      uid: 'target-user',
+      authDeleted: true,
+      firestoreUserDeleted: true,
+      suscripcionesEliminadas: 2,
+      recursosCascadaEliminados: 0,
+    });
+
+    expect(backend.auth.deleteUser).toHaveBeenCalledWith('target-user');
+    expect(backend.getData('usuarios', 'target-user')).toBeUndefined();
+    expect(backend.getData('suscripciones', 'sub-1')).toBeUndefined();
+    expect(backend.getData('suscripciones', 'sub-2')).toBeUndefined();
+    expect(backend.getData('suscripciones', 'sub-otro')).toBeDefined();
+  });
+
+  it('tolera auth/user-not-found y elimina doc de Firestore y suscripciones', async () => {
+    backend.seed('usuarios', 'ghost-user', { nombre: 'Fantasma', correo: 'fantasma@example.com' });
+    backend.seed('suscripciones', 'sub-ghost', { usuarioId: 'ghost-user' });
+
+    backend.auth.deleteUser.mockRejectedValueOnce({
+      code: 'auth/user-not-found',
+      message: 'There is no user record corresponding to the provided identifier.',
+    });
+
+    const res = await request(app)
+      .post('/api/eliminarUsuarioAdmin')
+      .set('Authorization', 'Bearer tk-admin')
+      .send({ data: { uid: 'ghost-user' } });
+
+    expect(res.status).toBe(200);
+    expect(res.body.result.authDeleted).toBe(false);
+    expect(res.body.result.firestoreUserDeleted).toBe(true);
+    expect(res.body.result.suscripcionesEliminadas).toBe(1);
+    expect(backend.getData('usuarios', 'ghost-user')).toBeUndefined();
+    expect(backend.getData('suscripciones', 'sub-ghost')).toBeUndefined();
+  });
+
+  it('elimina recursos en cascada cuando cascadeTenantData=true', async () => {
+    backend.seed('usuarios', 'tenant-user', { nombre: 'Tenant Master', correo: 'tenant@example.com' });
+    backend.seed('suscripciones', 'sub-t1', { usuarioId: 'tenant-user' });
+    backend.seed('clientes', 'cli-1', { propietarioId: 'tenant-user', nombre: 'Cliente 1' });
+    backend.seed('cuentas', 'cta-1', { usuarioId: 'tenant-user', servicio: 'Netflix' });
+    backend.seed('ventas', 'ven-1', { propietarioId: 'tenant-user', monto: 1000 });
+    backend.seed('movimientos', 'mov-1', { propietarioId: 'tenant-user', tipo: 'ingreso' });
+    backend.seed('notificaciones', 'not-1', { usuarioId: 'tenant-user', mensaje: 'Hola' });
+    backend.seed('codigosVinculacion', 'cod-1', { propietarioId: 'tenant-user', codigo: 'ABC' });
+    backend.seed('vinculaciones', 'vin-1', { propietarioId: 'tenant-user', chatId: '123' });
+
+    // Resource from another tenant that should NOT be deleted
+    backend.seed('clientes', 'cli-otro', { propietarioId: 'otro-tenant', nombre: 'Cliente Otro' });
+
+    const res = await request(app)
+      .post('/api/eliminarUsuarioAdmin')
+      .set('Authorization', 'Bearer tk-admin')
+      .send({ data: { uid: 'tenant-user', cascadeTenantData: true } });
+
+    expect(res.status).toBe(200);
+    expect(res.body.result.recursosCascadaEliminados).toBe(7);
+    expect(res.body.result.suscripcionesEliminadas).toBe(1);
+
+    expect(backend.getData('usuarios', 'tenant-user')).toBeUndefined();
+    expect(backend.getData('clientes', 'cli-1')).toBeUndefined();
+    expect(backend.getData('cuentas', 'cta-1')).toBeUndefined();
+    expect(backend.getData('ventas', 'ven-1')).toBeUndefined();
+    expect(backend.getData('movimientos', 'mov-1')).toBeUndefined();
+    expect(backend.getData('notificaciones', 'not-1')).toBeUndefined();
+    expect(backend.getData('codigosVinculacion', 'cod-1')).toBeUndefined();
+    expect(backend.getData('vinculaciones', 'vin-1')).toBeUndefined();
+    expect(backend.getData('clientes', 'cli-otro')).toBeDefined();
+  });
+});
+
+describe('sincronizarUsuariosAuth (admin)', () => {
+  beforeEach(() => {
+    backend.auth.setToken('tk-admin', { uid: 'admin-1', role: 'admin' });
+    backend.auth.setToken('tk-user', { uid: 'user-normal', role: 'user' });
+  });
+
+  it('401 si no hay token de autenticación', async () => {
+    const res = await request(app)
+      .post('/api/sincronizarUsuariosAuth')
+      .send({ data: { accion: 'auditar' } });
+
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe('unauthenticated');
+  });
+
+  it('403 si el usuario no es admin', async () => {
+    const res = await request(app)
+      .post('/api/sincronizarUsuariosAuth')
+      .set('Authorization', 'Bearer tk-user')
+      .send({ data: { accion: 'auditar' } });
+
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe('permission-denied');
+  });
+
+  it('modo auditar: detecta huérfanos de Firestore y huérfanos de Auth', async () => {
+    // Auth users: auth-only-1, common-1
+    backend.auth.addAuthUser({
+      uid: 'auth-only-1',
+      email: 'authonly@example.com',
+      emailVerified: true,
+      providerData: [{ providerId: 'password' }],
+      metadata: { creationTime: '2026-01-01T00:00:00Z' },
+    } as any);
+    backend.auth.addAuthUser({
+      uid: 'common-1',
+      email: 'common@example.com',
+      emailVerified: true,
+      providerData: [{ providerId: 'google.com' }],
+      metadata: { creationTime: '2026-01-01T00:00:00Z' },
+    } as any);
+
+    // Firestore users: firestore-only-1, common-1
+    backend.seed('usuarios', 'firestore-only-1', {
+      nombre: 'Huerfano Firestore',
+      correo: 'huerfano@example.com',
+    });
+    backend.seed('usuarios', 'common-1', {
+      nombre: 'Usuario Comun',
+      correo: 'common@example.com',
+    });
+
+    const res = await request(app)
+      .post('/api/sincronizarUsuariosAuth')
+      .set('Authorization', 'Bearer tk-admin')
+      .send({ data: { accion: 'auditar' } });
+
+    expect(res.status).toBe(200);
+    expect(res.body.result.totalAuth).toBe(2);
+    expect(res.body.result.totalFirestore).toBe(2);
+    expect(res.body.result.huerfanosFirestore).toEqual([
+      expect.objectContaining({ uid: 'firestore-only-1', email: 'huerfano@example.com' }),
+    ]);
+    expect(res.body.result.huerfanosAuth).toEqual([
+      expect.objectContaining({ uid: 'auth-only-1', email: 'authonly@example.com' }),
+    ]);
+    expect(res.body.result.purgados.usuariosFirestore).toBe(0);
+    expect(backend.getData('usuarios', 'firestore-only-1')).toBeDefined();
+  });
+
+  it('modo purgar_huerfanos: elimina documentos huérfanos de Firestore y sus suscripciones', async () => {
+    // Auth user: common-1
+    backend.auth.addAuthUser({
+      uid: 'common-1',
+      email: 'common@example.com',
+      emailVerified: true,
+      providerData: [{ providerId: 'password' }],
+      metadata: { creationTime: '2026-01-01T00:00:00Z' },
+    } as any);
+
+    // Firestore users: huerfano-1, common-1
+    backend.seed('usuarios', 'huerfano-1', {
+      nombre: 'Huerfano 1',
+      correo: 'huerfano1@example.com',
+    });
+    backend.seed('usuarios', 'common-1', {
+      nombre: 'Comun',
+      correo: 'common@example.com',
+    });
+    backend.seed('suscripciones', 'sub-huerfano', {
+      usuarioId: 'huerfano-1',
+      planNombre: 'Pro',
+    });
+    backend.seed('suscripciones', 'sub-comun', {
+      usuarioId: 'common-1',
+      planNombre: 'Starter',
+    });
+
+    const res = await request(app)
+      .post('/api/sincronizarUsuariosAuth')
+      .set('Authorization', 'Bearer tk-admin')
+      .send({ data: { accion: 'purgar_huerfanos' } });
+
+    expect(res.status).toBe(200);
+    expect(res.body.result.purgados).toEqual({
+      usuariosFirestore: 1,
+      suscripciones: 1,
+    });
+
+    expect(backend.getData('usuarios', 'huerfano-1')).toBeUndefined();
+    expect(backend.getData('suscripciones', 'sub-huerfano')).toBeUndefined();
+    expect(backend.getData('usuarios', 'common-1')).toBeDefined();
+    expect(backend.getData('suscripciones', 'sub-comun')).toBeDefined();
+  });
+});

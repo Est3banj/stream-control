@@ -5,6 +5,7 @@
  * cuando los clientes están próximos a vencer (1, 2 o 3 días)
  */
 
+import * as functionsV1 from 'firebase-functions/v1';
 import { onRequest, onCall, HttpsError } from 'firebase-functions/v2/https';
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
@@ -679,3 +680,44 @@ export const cleanupNoVerificados = onSchedule(
     await listAll();
     console.log(`cleanupNoVerificados: ${eliminados} eliminados, ${candidatos} candidatos`);
   });
+
+/**
+ * Trigger que se ejecuta automáticamente cuando un usuario es eliminado de Firebase Auth.
+ * Elimina automáticamente el documento usuarios/{uid} y las suscripciones asociadas.
+ */
+export const onUsuarioEliminado = functionsV1.auth.user().onDelete(async (userRecord: functionsV1.auth.UserRecord) => {
+  const uid = userRecord.uid;
+  console.log(`🗑️ onUsuarioEliminado: procesando usuario ${uid} (${userRecord.email || 'sin email'})...`);
+
+  try {
+    // 1. Eliminar documento usuarios/{uid}
+    const userDocRef = db.collection('usuarios').doc(uid);
+    await userDocRef.delete();
+    console.log(`✅ Documento usuarios/${uid} eliminado`);
+
+    // 2. Eliminar suscripciones asociadas
+    const [subsUsuarioSnap, subsPropSnap] = await Promise.all([
+      db.collection('suscripciones').where('usuarioId', '==', uid).get(),
+      db.collection('suscripciones').where('propietarioId', '==', uid).get(),
+    ]);
+
+    const subDocsMap = new Map<string, FirebaseFirestore.DocumentReference>();
+    subsUsuarioSnap.docs.forEach((d) => subDocsMap.set(d.id, d.ref));
+    subsPropSnap.docs.forEach((d) => subDocsMap.set(d.id, d.ref));
+
+    if (subDocsMap.size > 0) {
+      const refs = Array.from(subDocsMap.values());
+      const CHUNK_SIZE = 400;
+      for (let i = 0; i < refs.length; i += CHUNK_SIZE) {
+        const chunk = refs.slice(i, i + CHUNK_SIZE);
+        const batch = db.batch();
+        chunk.forEach((ref) => batch.delete(ref));
+        await batch.commit();
+      }
+      console.log(`✅ ${subDocsMap.size} suscripciones asociadas a ${uid} eliminadas`);
+    }
+  } catch (error) {
+    console.error(`❌ Error en trigger onUsuarioEliminado para ${uid}:`, error);
+  }
+});
+

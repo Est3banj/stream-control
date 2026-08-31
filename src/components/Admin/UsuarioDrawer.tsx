@@ -41,6 +41,7 @@ import {
   Activity,
   AlertTriangle,
   RefreshCw,
+  Trash2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -84,6 +85,33 @@ export default function UsuarioDrawer({
   });
 
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [cascadeTenantData, setCascadeTenantData] = useState(false);
+  const [deletingUser, setDeletingUser] = useState(false);
+
+  const handleEliminarUsuario = async () => {
+    if (!usuario?.id) return;
+    setDeletingUser(true);
+    try {
+      const res = await callFunction<
+        { uid: string; cascadeTenantData: boolean },
+        { success: boolean; suscripcionesEliminadas?: number; recursosCascadaEliminados?: number }
+      >('eliminarUsuarioAdmin', { uid: usuario.id, cascadeTenantData });
+
+      if (res?.success) {
+        toast.success(`Usuario ${usuario.nombre} eliminado definitivamente`);
+        setShowDeleteModal(false);
+        setCascadeTenantData(false);
+        onClose();
+        onUserUpdated?.();
+      }
+    } catch (error: any) {
+      console.error('Error eliminando usuario:', error);
+      toast.error(error.message || 'Error al eliminar el usuario');
+    } finally {
+      setDeletingUser(false);
+    }
+  };
 
   // Fetch telemetry on demand when drawer opens
   useEffect(() => {
@@ -653,9 +681,102 @@ export default function UsuarioDrawer({
                 )}
               </button>
             </div>
+
+            {/* Zona de Peligro: Eliminación Definitiva */}
+            <div className="pt-3 border-t border-rose-950/70 space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-rose-400 uppercase tracking-wider">
+                <AlertTriangle size={14} className="text-rose-400" />
+                <span>Zona de Peligro</span>
+              </div>
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                disabled={Boolean(actionLoading)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-bold bg-rose-950/50 hover:bg-rose-900/80 text-rose-300 border border-rose-700/60 shadow-lg shadow-rose-950/30 transition-all hover:scale-[1.01] active:scale-[0.99]"
+              >
+                <Trash2 size={16} className="text-rose-400" />
+                <span>Eliminar Usuario Definitivamente</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Modal de Confirmación de Eliminación Definitiva */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-slate-900 border border-rose-800/80 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-scale-in text-slate-100">
+            <div className="flex items-center gap-3 text-rose-400">
+              <div className="w-10 h-10 rounded-xl bg-rose-950/80 border border-rose-700/60 flex items-center justify-center">
+                <Trash2 size={22} className="text-rose-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-100">Eliminar Usuario Definitivamente</h3>
+                <p className="text-xs text-rose-300">Esta acción no se puede deshacer</p>
+              </div>
+            </div>
+
+            <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-3.5 space-y-2 text-xs text-slate-300">
+              <p>
+                Estás por eliminar a <strong className="text-slate-100">{usuario.nombre}</strong> (<span className="text-cyan-300">{usuario.correo || usuario.email}</span>).
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-slate-400">
+                <li>Eliminará la cuenta de Firebase Auth.</li>
+                <li>Eliminará el perfil de Firestore (<code className="text-indigo-300">usuarios/{usuario.id}</code>).</li>
+                <li>Eliminará todas las suscripciones asociadas.</li>
+              </ul>
+            </div>
+
+            <label className="flex items-start gap-3 p-3 bg-rose-950/20 border border-rose-900/40 rounded-xl cursor-pointer hover:bg-rose-950/30 transition-colors">
+              <input
+                type="checkbox"
+                checked={cascadeTenantData}
+                onChange={(e) => setCascadeTenantData(e.target.checked)}
+                className="mt-0.5 rounded border-rose-700 bg-slate-900 text-rose-600 focus:ring-rose-500 focus:ring-offset-slate-900"
+              />
+              <div className="text-xs space-y-0.5">
+                <span className="font-semibold text-rose-200">
+                  Eliminación en cascada de datos de negocio
+                </span>
+                <p className="text-rose-300/70 text-[11px]">
+                  Elimina también clientes, cuentas, ventas, movimientos, vinculaciones y notificaciones de este tenant.
+                </p>
+              </div>
+            </label>
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setCascadeTenantData(false);
+                }}
+                disabled={deletingUser}
+                className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleEliminarUsuario}
+                disabled={deletingUser}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-950/50 transition-all disabled:opacity-50"
+              >
+                {deletingUser ? (
+                  <>
+                    <RefreshCw size={14} className="animate-spin" />
+                    <span>Eliminando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={14} />
+                    <span>Confirmar Eliminación</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
