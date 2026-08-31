@@ -102,4 +102,46 @@ describe('VentasMayoristas', () => {
     expect(screen.getByText('Perfil 2')).toBeTruthy();
     expect(screen.getByText('Nombre del revendedor / sub-distribuidor')).toBeTruthy();
   });
+
+  it('header button switches from activas to nueva tab', () => {
+    render(<VentasMayoristas />);
+
+    // Switch to activas tab
+    fireEvent.click(screen.getByText(/Ventas Mayoristas Activas/i));
+    expect(screen.getByText('Revendedor Uno')).toBeTruthy();
+
+    // Click header button "Registrar Venta Mayorista"
+    const headerBtn = screen.getByRole('button', { name: /Registrar Venta Mayorista/i });
+    fireEvent.click(headerBtn);
+
+    // Should switch back to nueva tab
+    expect(screen.getByText(/Seleccionar cuenta/i)).toBeTruthy();
+  });
+
+  it('header button triggers submission when form is filled', async () => {
+    const { callFunction } = await import('../lib/apiClient');
+    render(<VentasMayoristas />);
+
+    // Select account
+    const selectCuenta = screen.getByRole('combobox');
+    fireEvent.change(selectCuenta, { target: { value: 'cuenta-1' } });
+
+    // Select profile
+    const checkbox = screen.getAllByRole('checkbox')[0];
+    fireEvent.click(checkbox);
+
+    // Enter revendedor name
+    const nombreInput = screen.getByPlaceholderText(/Ej: Distribuidor Express/i);
+    fireEvent.change(nombreInput, { target: { value: 'Revendedor Pro' } });
+
+    // Click header button to submit
+    const headerBtn = screen.getAllByRole('button', { name: /Registrar Venta Mayorista/i })[0];
+    fireEvent.click(headerBtn);
+
+    expect(callFunction).toHaveBeenCalledWith('generarTokenSubdistribuidor', expect.objectContaining({
+      cuentaId: 'cuenta-1',
+      clienteNombre: 'Revendedor Pro',
+      cantidad: 1,
+    }));
+  });
 });

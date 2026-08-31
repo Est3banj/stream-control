@@ -30,6 +30,36 @@ export default function VentasMayoristas() {
   const [nombreSub, setNombreSub] = useState('');
   const [perfilesSeleccionados, setPerfilesSeleccionados] = useState<number[]>([]);
   const [generando, setGenerando] = useState(false);
+  const selectCuentaRef = React.useRef<HTMLSelectElement>(null);
+  const formRef = React.useRef<HTMLDivElement>(null);
+
+  const handleHeaderButtonClick = () => {
+    if (tab === 'activas') {
+      setTab('nueva');
+      setLinkGenerado('');
+      setTimeout(() => {
+        selectCuentaRef.current?.focus();
+        formRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 50);
+      return;
+    }
+
+    if (linkGenerado) {
+      setLinkGenerado('');
+      setCuentaId('');
+      setNombreSub('');
+      setPerfilesSeleccionados([]);
+      setCantidad(1);
+      setTotalRecibido(0);
+      setTimeout(() => {
+        selectCuentaRef.current?.focus();
+        formRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 50);
+      return;
+    }
+
+    handleGenerarLink();
+  };
 
   const cuentasConIMAP = useMemo(() =>
     cuentas.filter(c => c.estado !== 'expirada'),
@@ -63,6 +93,7 @@ export default function VentasMayoristas() {
   const handleGenerarLink = async () => {
     if (!cuentaId) {
       toast.error('Seleccioná una cuenta');
+      selectCuentaRef.current?.focus();
       return;
     }
     if (!nombreSub.trim()) {
@@ -141,14 +172,21 @@ export default function VentasMayoristas() {
         </div>
         <button
           type="button"
-          onClick={() => {
-            setTab('nueva');
-            setLinkGenerado('');
-          }}
-          className="btn-primary inline-flex items-center gap-2 self-start sm:self-auto"
+          onClick={handleHeaderButtonClick}
+          disabled={generando}
+          className="btn-primary inline-flex items-center gap-2 self-start sm:self-auto disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <PlusCircle size={18} />
-          Registrar Venta Mayorista
+          {generando ? (
+            <>
+              <Loader2 size={18} className="animate-spin" />
+              Generando venta...
+            </>
+          ) : (
+            <>
+              <PlusCircle size={18} />
+              Registrar Venta Mayorista
+            </>
+          )}
         </button>
       </div>
 
@@ -213,12 +251,13 @@ export default function VentasMayoristas() {
 
       {/* Contenido Pestaña 1: Nueva Venta Mayorista */}
       {tab === 'nueva' && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
+        <div ref={formRef} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Seleccionar cuenta <span className="text-red-500">*</span>
             </label>
             <select
+              ref={selectCuentaRef}
               value={cuentaId}
               onChange={e => {
                 setCuentaId(e.target.value);
