@@ -325,6 +325,27 @@ describe('enviarCorreoRecuperacion / enviarCorreoVerificacion (none + rate-limit
     const html = (emailMocks.sendMail.mock.calls[0]?.[0] as { html?: string } | undefined)?.html ?? '';
     expect(html).toContain('/r/verificar-email?token=');
   });
+
+  it('verificación en dev mode (sin SMTP_USER / SMTP_PASS) → 200 con graceful fallback sin llamar sendMail', async () => {
+    delete process.env.SMTP_USER;
+    delete process.env.SMTP_PASS;
+
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    const res = await request(app)
+      .post('/api/enviarCorreoVerificacion')
+      .send({ data: { email: 'dev@example.com' } });
+
+    expect(res.status).toBe(200);
+    expect(res.body.result).toEqual({ success: true });
+    expect(emailMocks.sendMail).not.toHaveBeenCalled();
+
+    const loggedOutput = consoleSpy.mock.calls.map(call => call.join(' ')).join('\n');
+    expect(loggedOutput).toContain('🔗 [DEV MODE] Link de verificación para dev@example.com:');
+    expect(loggedOutput).toContain('/r/verificar-email?token=');
+
+    consoleSpy.mockRestore();
+  });
 });
 
 describe('listarVerificados (admin)', () => {

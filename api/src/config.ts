@@ -45,11 +45,11 @@ export function TELEGRAM_WEBHOOK_SECRET(): string {
 }
 
 export function SMTP_USER(): string {
-  return requireEnv('SMTP_USER');
+  return process.env.SMTP_USER || '';
 }
 
 export function SMTP_PASS(): string {
-  return requireEnv('SMTP_PASS');
+  return process.env.SMTP_PASS || '';
 }
 
 export function APP_URL(): string {

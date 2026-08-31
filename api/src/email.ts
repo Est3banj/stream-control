@@ -336,9 +336,20 @@ function buildVerificationHtml(userName: string, verifyLink: string): string {
 }
 
 export async function sendVerificationEmail(to: string, userName: string, verifyLink: string): Promise<void> {
+  const user = SMTP_USER();
+  const pass = SMTP_PASS();
+
+  if (!user || !pass) {
+    console.log('\n========================================');
+    console.log('🔗 [DEV MODE] Link de verificación para ' + to + ':');
+    console.log(verifyLink);
+    console.log('========================================\n');
+    return;
+  }
+
   try {
     await getTransporter().sendMail({
-      from: `"StreamControl" <${SMTP_USER()}>`,
+      from: `"StreamControl" <${user}>`,
       to,
       subject: `StreamControl — Confirmá tu correo electrónico`,
       html: buildVerificationHtml(userName, verifyLink),
