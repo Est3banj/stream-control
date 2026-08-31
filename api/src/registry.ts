@@ -74,21 +74,21 @@ export const FN_REGISTRY: Record<string, RouteDef> = {
     auth: 'none',
     handler: handlers.enviarCorreoRecuperacion,
     rateLimits: [
-      { scope: 'email', key: (req) => sha256(String(dataOf(req).email ?? '')), max: 1, windowMs: 60_000, message: MSG_RECUPERACION },
+      { scope: 'email', key: (req) => sha256(String(dataOf(req).email ?? '').trim().toLowerCase()), max: 3, windowMs: 60_000, message: MSG_RECUPERACION },
     ],
   },
   notificarPasswordReseteado: {
     auth: 'none',
     handler: handlers.notificarPasswordReseteado,
     rateLimits: [
-      { scope: 'email', key: (req) => sha256(String(dataOf(req).email ?? '')), max: 3, windowMs: 60_000, message: MSG_PASSWORD_RESETEADO },
+      { scope: 'email', key: (req) => sha256(String(dataOf(req).email ?? '').trim().toLowerCase()), max: 3, windowMs: 60_000, message: MSG_PASSWORD_RESETEADO },
     ],
   },
   enviarCorreoVerificacion: {
     auth: 'none',
     handler: emailVerification.generarTokenVerificacion,
     rateLimits: [
-      { scope: 'email', key: (req) => sha256(String(dataOf(req).email ?? '')), max: 1, windowMs: 60_000, message: MSG_VERIFICACION },
+      { scope: 'email', key: (req) => sha256(String(dataOf(req).email ?? '').trim().toLowerCase()), max: 1, windowMs: 60_000, message: MSG_VERIFICACION },
     ],
   },
   verificarEmailToken: {
@@ -99,7 +99,7 @@ export const FN_REGISTRY: Record<string, RouteDef> = {
     auth: 'none',
     handler: otpVerification.enviarCodigoOTP,
     rateLimits: [
-      { scope: 'email', key: (req) => sha256(String(dataOf(req).email ?? '')), max: 1, windowMs: 60_000, message: MSG_OTP },
+      { scope: 'email', key: (req) => sha256(String(dataOf(req).email ?? '').trim().toLowerCase()), max: 1, windowMs: 60_000, message: MSG_OTP },
     ],
   },
   verificarCodigoOTP: {

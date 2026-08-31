@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import AuthLayout from './AuthLayout';
 import Register from './Register';
+import CooldownButton from './CooldownButton';
 
 type Modo = 'login' | 'register';
 
@@ -106,6 +107,7 @@ export default function Login({ initialModo = 'login' }: LoginProps) {
 
   const handleRecuperar = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (recuperando) return;
     const emailTrimmed = emailRecuperacion.trim().toLowerCase();
 
     if (!emailTrimmed) {
@@ -118,12 +120,54 @@ export default function Login({ initialModo = 'login' }: LoginProps) {
       await callFunction('enviarCorreoRecuperacion', { email: emailTrimmed });
       setEnviado(true);
     } catch (err: unknown) {
-      const error = err as { code?: string; message?: string };
-      if (error.code === 'functions/resource-exhausted') {
-        toast.error('Esperá un minuto antes de solicitar otro correo');
+      const error = err as { code?: string; message?: string; status?: number };
+      const is429 =
+        error.code === 'functions/resource-exhausted' ||
+        error.code === 'resource-exhausted' ||
+        error.status === 429 ||
+        error.message?.includes('429') ||
+        error.message?.includes('Demasiadas') ||
+        error.message?.includes('minuto') ||
+        error.message?.includes('resource-exhausted') ||
+        error.message?.includes('Resource exhausted');
+
+      if (is429) {
+        toast.error('Ya se envió un enlace recientemente a este correo. Por favor, revisá tu bandeja o esperá un minuto.');
       } else {
         toast.error(error.message || 'Error al enviar el correo de recuperación');
       }
+    } finally {
+      setRecuperando(false);
+    }
+  };
+
+  const handleReenviarRecuperacion = async () => {
+    if (recuperando) return;
+    const emailTrimmed = emailRecuperacion.trim().toLowerCase();
+    if (!emailTrimmed) return;
+
+    setRecuperando(true);
+    try {
+      await callFunction('enviarCorreoRecuperacion', { email: emailTrimmed });
+      toast.success('Enlace de recuperación reenviado');
+    } catch (err: unknown) {
+      const error = err as { code?: string; message?: string; status?: number };
+      const is429 =
+        error.code === 'functions/resource-exhausted' ||
+        error.code === 'resource-exhausted' ||
+        error.status === 429 ||
+        error.message?.includes('429') ||
+        error.message?.includes('Demasiadas') ||
+        error.message?.includes('minuto') ||
+        error.message?.includes('resource-exhausted') ||
+        error.message?.includes('Resource exhausted');
+
+      if (is429) {
+        toast.error('Ya se envió un enlace recientemente a este correo. Por favor, revisá tu bandeja o esperá un minuto.');
+      } else {
+        toast.error(error.message || 'Error al enviar el correo de recuperación');
+      }
+      throw err;
     } finally {
       setRecuperando(false);
     }
@@ -235,7 +279,8 @@ export default function Login({ initialModo = 'login' }: LoginProps) {
                   <button
                     type="button"
                     onClick={cerrarRecuperacion}
-                    className="text-xs text-slate-400 hover:text-white transition-colors"
+                    disabled={recuperando}
+                    className="text-xs text-slate-400 hover:text-white transition-colors disabled:opacity-50"
                   >
                     Volver al inicio de sesión
                   </button>
@@ -267,13 +312,25 @@ export default function Login({ initialModo = 'login' }: LoginProps) {
                   </p>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={cerrarRecuperacion}
-                  className="w-full py-3 px-5 rounded-2xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-white font-medium text-sm transition-all"
-                >
-                  Volver al inicio de sesión
-                </button>
+                <div className="w-full flex flex-col gap-2.5 mt-2">
+                  <CooldownButton
+                    onClick={handleReenviarRecuperacion}
+                    durationSeconds={60}
+                    loading={recuperando}
+                    label="Reenviar enlace"
+                    autoStart={true}
+                    storageKey="sc_recovery_cooldown_until"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={cerrarRecuperacion}
+                    disabled={recuperando}
+                    className="w-full py-3 px-5 rounded-2xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-white font-medium text-sm transition-all disabled:opacity-50"
+                  >
+                    Volver al inicio de sesión
+                  </button>
+                </div>
               </div>
             )}
           </motion.div>

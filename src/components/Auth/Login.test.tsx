@@ -186,4 +186,71 @@ describe('Login and Auth Container Component', () => {
 
     expect(screen.getByPlaceholderText('usuario@ejemplo.com')).toBeInTheDocument();
   });
+
+  it('handles 429 rate limit error gracefully when requesting recovery email', async () => {
+    mockCallFunction.mockRejectedValueOnce({
+      code: 'functions/resource-exhausted',
+      message: 'Resource exhausted',
+    });
+
+    render(
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>
+    );
+
+    const forgotBtn = screen.getByRole('button', { name: /¿Olvidaste tu contraseña\?/i });
+    fireEvent.click(forgotBtn);
+
+    const emailInput = await screen.findByPlaceholderText('tu@correo.com');
+    fireEvent.change(emailInput, {
+      target: { value: 'rate-limited@ejemplo.com' },
+    });
+
+    const sendBtn = screen.getByRole('button', { name: /Enviar enlace de recuperación/i });
+    fireEvent.click(sendBtn);
+
+    await waitFor(() => {
+      expect(mockCallFunction).toHaveBeenCalledWith('enviarCorreoRecuperacion', {
+        email: 'rate-limited@ejemplo.com',
+      });
+      expect(toast.error).toHaveBeenCalledWith(
+        'Ya se envió un enlace recientemente a este correo. Por favor, revisá tu bandeja o esperá un minuto.'
+      );
+    });
+  });
+
+  it('disables submit button and shows loading state while recovery is in flight', async () => {
+    let resolveCall: (value: unknown) => void = () => {};
+    const pendingPromise = new Promise((resolve) => {
+      resolveCall = resolve;
+    });
+    mockCallFunction.mockReturnValueOnce(pendingPromise);
+
+    render(
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>
+    );
+
+    const forgotBtn = screen.getByRole('button', { name: /¿Olvidaste tu contraseña\?/i });
+    fireEvent.click(forgotBtn);
+
+    const emailInput = await screen.findByPlaceholderText('tu@correo.com');
+    fireEvent.change(emailInput, {
+      target: { value: 'slow@ejemplo.com' },
+    });
+
+    const sendBtn = screen.getByRole('button', { name: /Enviar enlace de recuperación/i });
+    fireEvent.click(sendBtn);
+
+    // Button should be disabled and showing loading text
+    expect(sendBtn).toBeDisabled();
+    expect(screen.getByText('Enviando instrucciones...')).toBeInTheDocument();
+
+    resolveCall({ success: true });
+    await waitFor(() => {
+      expect(screen.getByText('Correo de recuperación enviado')).toBeInTheDocument();
+    });
+  });
 });

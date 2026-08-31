@@ -262,9 +262,11 @@ export async function enviarCorreoRecuperacion(req: AuthedReq): Promise<unknown>
     throw new APIError('invalid-argument', 'Email es requerido');
   }
 
+  const cleanEmail = String(email).trim().toLowerCase();
+
   try {
     const appUrl = APP_URL();
-    const rawFirebaseLink = await getAdmin().auth().generatePasswordResetLink(email as string, {
+    const rawFirebaseLink = await getAdmin().auth().generatePasswordResetLink(cleanEmail, {
       url: `${appUrl}/app/reset-password`,
     });
 
@@ -274,7 +276,7 @@ export async function enviarCorreoRecuperacion(req: AuthedReq): Promise<unknown>
     // Direct link to our own custom page in the SPA namespace
     const customResetLink = `${appUrl}/app/reset-password?oobCode=${encodeURIComponent(oobCode || '')}${apiKey ? `&apiKey=${encodeURIComponent(apiKey)}` : ''}`;
 
-    await sendResetPasswordEmail(email as string, (nombre as string) || 'Usuario', customResetLink);
+    await sendResetPasswordEmail(cleanEmail, (nombre as string) || 'Usuario', customResetLink);
     return { success: true };
   } catch (error) {
     console.error('❌ Error sending recovery email:', error);

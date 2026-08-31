@@ -49,18 +49,21 @@ describe('checkAndIncrement (unit, Firestore transaccional)', () => {
 });
 
 describe('rate-limit wiring en registry', () => {
-  it('enviarCorreoRecuperacion: mismo email → 2da llamada 429', async () => {
-    const first = await request(app)
-      .post('/api/enviarCorreoRecuperacion')
-      .send({ data: { email: 'mismo@example.com' } });
-    expect(first.status).toBe(200);
+  it('enviarCorreoRecuperacion: hasta 3 llamadas por email (case-insensitive) → 4ta llamada 429', async () => {
+    for (let i = 0; i < 3; i++) {
+      const email = i === 1 ? 'Mismo@Example.COM' : 'mismo@example.com';
+      const res = await request(app)
+        .post('/api/enviarCorreoRecuperacion')
+        .send({ data: { email } });
+      expect(res.status).toBe(200);
+    }
 
-    const second = await request(app)
+    const fourth = await request(app)
       .post('/api/enviarCorreoRecuperacion')
-      .send({ data: { email: 'mismo@example.com' } });
-    expect(second.status).toBe(429);
-    expect(second.body.error.code).toBe('resource-exhausted');
-    expect(second.body.error.message).toContain('Esperá un minuto');
+      .send({ data: { email: '  mismo@example.com  ' } });
+    expect(fourth.status).toBe(429);
+    expect(fourth.body.error.code).toBe('resource-exhausted');
+    expect(fourth.body.error.message).toContain('Esperá un minuto');
   });
 
   it('validarToken: >30 consultas al mismo token en 60s → 429', async () => {
