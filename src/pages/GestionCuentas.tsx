@@ -14,7 +14,7 @@ import FeatureBlocked from '../components/FeatureBlocked';
 import Paginador from '../components/Paginador';
 import DropdownMenu from '../components/DropdownMenu';
 import toast from 'react-hot-toast';
-import { Search, Eye, Edit, EyeOff, Users, CheckCircle, AlertCircle, AlertTriangle, Film, X, Download, Key, Link, Check, RefreshCw, Copy } from 'lucide-react';
+import { Search, Eye, Edit, EyeOff, Users, CheckCircle, AlertCircle, AlertTriangle, Film, X, Download, Key, Link, Check, RefreshCw, Copy, Ticket } from 'lucide-react';
 import type { Cuenta, CreateCuentaInput } from '../types/cuenta';
 import { ESTADO_BADGES, maskEmail } from '../constants';
 
@@ -42,6 +42,8 @@ export default function GestionCuentas() {
   const [mostrarIMAP, setMostrarIMAP] = useState(false);
   const [mostrarDatosCuenta, setMostrarDatosCuenta] = useState(false);
   const [datosCuenta, setDatosCuenta] = useState<{ proveedor: string; correoCuenta: string; correo: string; contrasena: string; perfiles: Array<{ nombre: string; pin?: string; estado: string }> } | null>(null);
+  const [cuentaTicket, setCuentaTicket] = useState<Cuenta | null>(null);
+  const [copiadoTicket, setCopiadoTicket] = useState(false);
   const [mostrarAsignar, setMostrarAsignar] = useState(false);
   const [cuentaAsignando, setCuentaAsignando] = useState<Cuenta | null>(null);
   const [perfilIdxAsignando, setPerfilIdxAsignando] = useState<number>(0);
@@ -120,7 +122,7 @@ export default function GestionCuentas() {
     setMostrarRenovar(true);
   };
 
-  const handleCopiarDatos = async (cuenta: Cuenta) => {
+  const handleGenerarTicket = async (cuenta: Cuenta) => {
     try {
       const data = await callFunction<{ cuentaId: string }, {
         proveedor: string;
@@ -130,10 +132,49 @@ export default function GestionCuentas() {
         perfiles: Array<{ nombre: string; pin?: string; estado: string }>;
       }>('obtenerCredencialesCuenta', { cuentaId: cuenta.id });
       setDatosCuenta(data);
+      setCuentaTicket(cuenta);
       setMostrarDatosCuenta(true);
     } catch (err: unknown) {
       const error = err as { message?: string };
       toast.error(error.message || 'Error al obtener datos de la cuenta');
+    }
+  };
+
+  const generarTextoTicket = (): string => {
+    if (!datosCuenta) return '';
+    const lineas: string[] = [
+      `📋 *Datos de la Cuenta - ${datosCuenta.proveedor}*`,
+      `📧 Correo: ${datosCuenta.correo || datosCuenta.correoCuenta}`,
+    ];
+    if (datosCuenta.contrasena && datosCuenta.contrasena.trim()) {
+      lineas.push(`🔑 Contraseña: ${datosCuenta.contrasena.trim()}`);
+    }
+    if (datosCuenta.perfiles && datosCuenta.perfiles.length > 0) {
+      lineas.push('👤 Perfiles:');
+      datosCuenta.perfiles.forEach((p: { nombre: string; pin?: string; estado: string }) => {
+        const pinStr = p.pin && p.pin.trim() ? ` (PIN: ${p.pin.trim()})` : '';
+        lineas.push(`  - ${p.nombre.trim()}${pinStr}`);
+      });
+    }
+    if (cuentaTicket?.fechaVencimiento) {
+      const dias = cuentaTicket.diasRestantes;
+      const diasStr = dias !== null && dias !== undefined ? (dias > 0 ? ` (${dias} días)` : ' (Vencido)') : '';
+      lineas.push(`⏳ Vencimiento: ${cuentaTicket.fechaVencimiento}${diasStr}`);
+    }
+    lineas.push('━━━━━━━━━━━━━━━━━━━━━━');
+    lineas.push('Generado por StreamControl');
+    return lineas.join('\n');
+  };
+
+  const copiarTicket = async () => {
+    try {
+      const texto = generarTextoTicket();
+      await navigator.clipboard.writeText(texto);
+      setCopiadoTicket(true);
+      toast.success('Ticket copiado al portapapeles');
+      setTimeout(() => setCopiadoTicket(false), 2000);
+    } catch {
+      toast.error('No se pudo copiar el ticket');
     }
   };
 
@@ -597,9 +638,9 @@ export default function GestionCuentas() {
                               },
                             },
                             {
-                              label: 'Copiar datos',
-                              icon: <Copy size={16} />,
-                              onClick: () => handleCopiarDatos(c),
+                              label: 'Generar ticket',
+                              icon: <Ticket size={16} />,
+                              onClick: () => handleGenerarTicket(c),
                             },
                             {
                               label: c.estado === 'expirada' ? 'Reactivar cuenta' : 'Desactivar cuenta',
@@ -761,22 +802,22 @@ export default function GestionCuentas() {
         </div>
       )}
 
-      {/* Modal: Datos de la cuenta */}
+      {/* Modal: Ticket de la cuenta */}
       {mostrarDatosCuenta && datosCuenta && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="card max-w-lg w-full animate-scale-in">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
-                  <Copy size={20} className="text-indigo-600" />
+                  <Ticket size={20} className="text-indigo-600" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">{datosCuenta.proveedor}</h2>
-                  <p className="text-sm text-gray-500">Datos de la cuenta</p>
+                  <h2 className="text-xl font-bold text-gray-900">Ticket de la Cuenta</h2>
+                  <p className="text-sm text-gray-500">{datosCuenta.proveedor}</p>
                 </div>
               </div>
               <button
-                onClick={() => { setMostrarDatosCuenta(false); setDatosCuenta(null); }}
+                onClick={() => { setMostrarDatosCuenta(false); setDatosCuenta(null); setCuentaTicket(null); }}
                 className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 <X size={24} className="text-gray-600" />
@@ -791,8 +832,16 @@ export default function GestionCuentas() {
                 </div>
                 {datosCuenta.contrasena && (
                   <div>
-                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Contrasena</span>
+                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Contraseña</span>
                     <p className="text-sm font-medium text-gray-900 mt-0.5 select-all font-mono">{datosCuenta.contrasena}</p>
+                  </div>
+                )}
+                {cuentaTicket?.fechaVencimiento && (
+                  <div>
+                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Vencimiento</span>
+                    <p className="text-sm font-medium text-gray-900 mt-0.5">
+                      {cuentaTicket.fechaVencimiento} {cuentaTicket.diasRestantes !== null && cuentaTicket.diasRestantes !== undefined ? `(${cuentaTicket.diasRestantes > 0 ? `${cuentaTicket.diasRestantes} días` : 'Vencido'})` : ''}
+                    </p>
                   </div>
                 )}
               </div>
@@ -819,23 +868,11 @@ export default function GestionCuentas() {
               )}
 
               <button
-                onClick={async () => {
-                  let texto = `${datosCuenta.proveedor}\n`;
-                  texto += `Correo: ${datosCuenta.correo || datosCuenta.correoCuenta}\n`;
-                  if (datosCuenta.contrasena) texto += `Contrasena: ${datosCuenta.contrasena}\n`;
-                  if (datosCuenta.perfiles?.length) {
-                    texto += `\nPerfiles:\n`;
-                    datosCuenta.perfiles.forEach((p: { nombre: string; pin?: string; estado: string }) => {
-                      texto += `  ${p.nombre}${p.pin ? ` - PIN: ${p.pin}` : ''} [${p.estado}]\n`;
-                    });
-                  }
-                  await navigator.clipboard.writeText(texto.trim());
-                  toast.success('Datos copiados al portapapeles');
-                }}
+                onClick={copiarTicket}
                 className="btn-primary w-full flex items-center justify-center gap-2"
               >
-                <Copy size={18} />
-                Copiar datos
+                {copiadoTicket ? <Check size={18} /> : <Ticket size={18} />}
+                {copiadoTicket ? '¡Ticket copiado!' : 'Copiar ticket'}
               </button>
             </div>
           </div>
