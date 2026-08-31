@@ -56,7 +56,7 @@ describe('CuentaForm', () => {
     let perfilInputs = screen.getAllByPlaceholderText('Nombre del perfil');
     expect(perfilInputs).toHaveLength(2);
 
-    const removeBtn = document.querySelector('button.p-2.rounded-lg.text-red-500');
+    const removeBtn = document.querySelector('button.text-rose-400') || document.querySelector('button.text-red-500');
     if (removeBtn) fireEvent.click(removeBtn);
 
     await waitFor(() => {

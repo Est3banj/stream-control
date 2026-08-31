@@ -31,14 +31,14 @@ export default function DropdownMenu({ actions }: DropdownMenuProps) {
     <div ref={ref} className="relative inline-block">
       <button
         onClick={() => setOpen(!open)}
-        className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+        className="p-2 rounded-lg bg-slate-800/80 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
         title="Acciones"
       >
         <MoreVertical size={18} />
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 min-w-[200px] bg-white rounded-xl shadow-lg border border-gray-200 py-1 animate-scale-in origin-top-right">
+        <div className="absolute right-0 top-full mt-1 z-50 min-w-[200px] bg-slate-900 rounded-xl shadow-2xl border border-slate-800 py-1.5 animate-scale-in origin-top-right">
           {actions
             .filter(a => a !== null)
             .map((action, idx) => (
@@ -53,8 +53,8 @@ export default function DropdownMenu({ actions }: DropdownMenuProps) {
                 disabled={action.disabled}
                 className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
                   action.variant === 'danger'
-                    ? 'text-red-600 hover:bg-red-50'
-                    : 'text-gray-700 hover:bg-gray-50'
+                    ? 'text-rose-400 hover:bg-rose-950/40 hover:text-rose-300'
+                    : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100'
                 } ${action.disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
               >
                 {action.icon && (

@@ -163,15 +163,15 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 text-slate-100">
       {modo === 'existente' && (
         <>
           <div className="flex items-center gap-2">
             <div className="flex-1">
               {loading ? (
-                <div className="h-9 bg-gray-200 rounded-lg animate-pulse" />
+                <div className="h-9 bg-slate-800 rounded-lg animate-pulse" />
               ) : cuentasDisponibles.length === 0 ? (
-                <p className="text-xs text-gray-500 italic">
+                <p className="text-xs text-slate-500 italic">
                   No hay cuentas disponibles para este proveedor
                 </p>
               ) : (
@@ -181,7 +181,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
                     setCuentaSeleccionadaId(e.target.value);
                     setPerfilSeleccionado('');
                   }}
-                  className="w-full"
+                  className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
                 >
                   <option value="">Seleccioná una cuenta...</option>
                   {cuentasDisponibles.map(c => (
@@ -199,23 +199,23 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
             <button
               type="button"
               onClick={() => cambiarModo('nueva')}
-              className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors flex-shrink-0"
+              className="p-1.5 rounded-lg bg-indigo-950/60 text-indigo-400 border border-indigo-800/40 hover:bg-indigo-900 transition-colors flex-shrink-0"
               title="Registrar nueva cuenta"
             >
               <Plus size={16} />
             </button>
             {cuentaSeleccionadaId && (
-              <Check size={15} className="text-green-500 flex-shrink-0" />
+              <Check size={15} className="text-emerald-400 flex-shrink-0" />
             )}
           </div>
 
           {cuentaSeleccionada && perfilesDisponibles.length > 0 && (
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Seleccionar perfil</label>
+              <label className="block text-xs font-medium text-slate-400 mb-1">Seleccionar perfil</label>
               <select
                 value={perfilSeleccionado}
                 onChange={e => setPerfilSeleccionado(e.target.value)}
-                className="w-full"
+                className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
               >
                 <option value="">Seleccioná un perfil...</option>
                 {perfilesDisponibles.map(p => (
@@ -228,14 +228,14 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
           )}
 
           {(cuentaSeleccionada && (perfilSeleccionado || cuentaSeleccionada.tipoVenta === 'completa')) && (
-            <div className="bg-indigo-50 rounded-lg px-3 py-2 border border-indigo-100">
-              <p className="text-xs text-indigo-700">
+            <div className="bg-indigo-950/40 rounded-lg px-3 py-2 border border-indigo-800/40">
+              <p className="text-xs text-indigo-300">
                 <span className="font-medium">
                   {cuentaSeleccionada.tipoVenta === 'completa' ? 'Costo total:' : 'Costo por perfil:'}
                 </span>{' '}
                 {formatear(calcularCostoPorPerfil(cuentaSeleccionada))}
               </p>
-              <p className="text-xs text-indigo-500 mt-0.5">
+              <p className="text-xs text-indigo-400/80 mt-0.5">
                 {cuentaSeleccionada.tipoVenta === 'completa'
                   ? 'Cuenta completa — costo total'
                   : `${(Array.isArray(cuentaSeleccionada.perfiles) ? cuentaSeleccionada.perfiles : []).length} perfiles — costo prorrateado`
@@ -247,13 +247,13 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
       )}
 
       {modo === 'nueva' && (
-        <div className="space-y-3 bg-gray-50 rounded-lg p-3 border border-gray-200">
+        <div className="space-y-3 bg-slate-950/60 rounded-lg p-3 border border-slate-800">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-gray-700">Registrar nueva cuenta de {proveedor}</p>
+            <p className="text-xs font-medium text-slate-300">Registrar nueva cuenta de {proveedor}</p>
             <button
               type="button"
               onClick={() => cambiarModo('existente')}
-              className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+              className="text-xs text-indigo-400 hover:text-indigo-300 font-medium"
             >
               Cancelar
             </button>
@@ -261,34 +261,34 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Correo de la cuenta *</label>
+              <label className="block text-xs font-medium text-slate-400 mb-1">Correo de la cuenta *</label>
               <input
                 type="email"
                 value={nuevaCorreo}
                 onChange={e => setNuevaCorreo(e.target.value)}
                 placeholder="cuenta@email.com"
-                className="w-full"
+                className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Contraseña</label>
+              <label className="block text-xs font-medium text-slate-400 mb-1">Contraseña</label>
               <input
                 type="password"
                 value={nuevaContrasena}
                 onChange={e => setNuevaContrasena(e.target.value)}
                 placeholder="Opcional"
-                className="w-full"
+                className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Costo total *</label>
+              <label className="block text-xs font-medium text-slate-400 mb-1">Costo total *</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">$</span>
                 <input
                   type="number"
                   value={nuevaCosto}
                   onChange={e => setNuevaCosto(Number(e.target.value))}
-                  className="w-full pl-7"
+                  className="w-full pl-7 bg-slate-900/80 border border-slate-700/80 text-slate-100"
                   min="0"
                   step="0.01"
                 />
@@ -298,11 +298,11 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
 
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-medium text-gray-500">Perfiles</label>
+              <label className="block text-xs font-medium text-slate-400">Perfiles</label>
               <button
                 type="button"
                 onClick={agregarPerfilForm}
-                className="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"
+                className="text-xs text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1"
               >
                 <Plus size={14} />
                 Agregar perfil
@@ -317,7 +317,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
                       value={p.nombre}
                       onChange={e => actualizarPerfilForm(idx, 'nombre', e.target.value)}
                       placeholder={`Perfil ${idx + 1}`}
-                      className="w-full"
+                      className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
                     />
                   </div>
                   <div className="flex-1">
@@ -326,7 +326,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
                       value={p.pin}
                       onChange={e => actualizarPerfilForm(idx, 'pin', e.target.value)}
                       placeholder="PIN (opcional)"
-                      className="w-full"
+                      className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
                       maxLength={10}
                     />
                   </div>
@@ -334,7 +334,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
                     <button
                       type="button"
                       onClick={() => eliminarPerfilForm(idx)}
-                      className="p-1.5 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-950/40 transition-colors"
                     >
                       <X size={14} />
                     </button>
@@ -348,7 +348,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
             type="button"
             onClick={guardarCuentaNueva}
             disabled={submitting}
-            className="w-full py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold text-xs hover:from-indigo-700 hover:to-indigo-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+            className="w-full py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold text-xs hover:from-indigo-500 hover:to-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 shadow-md shadow-indigo-950/50"
           >
             {submitting ? (
               <>

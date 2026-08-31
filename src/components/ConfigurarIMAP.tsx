@@ -72,26 +72,26 @@ export default function ConfigurarIMAP({ cuenta, onClose, onSuccess }: Configura
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="flex items-center gap-3 p-4 bg-amber-50 rounded-xl border border-amber-200">
-        <Shield size={20} className="text-amber-600 shrink-0" />
-        <p className="text-sm text-amber-800">
+    <form onSubmit={handleSubmit} className="space-y-6 text-slate-100">
+      <div className="flex items-center gap-3 p-4 bg-amber-950/30 rounded-xl border border-amber-800/40">
+        <Shield size={20} className="text-amber-400 shrink-0" />
+        <p className="text-sm text-amber-300">
           Las credenciales se guardan de forma segura y solo son accesibles
           por el sistema para la consulta automática de códigos de verificación.
         </p>
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Correo de la cuenta <span className="text-red-500">*</span>
+        <label className="block text-sm font-semibold text-slate-300 mb-2">
+          Correo de la cuenta <span className="text-rose-400">*</span>
         </label>
         <div className="relative">
-          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
           <input
             type="email"
             value={correo}
             onChange={(e) => setCorreo(e.target.value)}
-            className="w-full pl-10"
+            className="w-full pl-10 bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
             placeholder="netflix@ejemplo.com"
             required
           />
@@ -99,16 +99,16 @@ export default function ConfigurarIMAP({ cuenta, onClose, onSuccess }: Configura
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Contraseña <span className="text-red-500">*</span>
+        <label className="block text-sm font-semibold text-slate-300 mb-2">
+          Contraseña <span className="text-rose-400">*</span>
         </label>
         <div className="relative">
-          <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
           <input
             type="password"
             value={contrasena}
             onChange={(e) => setContrasena(e.target.value)}
-            className="w-full pl-10"
+            className="w-full pl-10 bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
             placeholder="Contraseña de la cuenta"
             required
           />
@@ -116,13 +116,13 @@ export default function ConfigurarIMAP({ cuenta, onClose, onSuccess }: Configura
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <label className="block text-sm font-semibold text-slate-300 mb-2">
           Proveedor de correo
         </label>
         <select
           value={proveedorIMAP}
           onChange={(e) => handleProveedorChange(e.target.value)}
-          className="w-full"
+          className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
         >
           {PROVEEDORES_IMAP.map(p => (
             <option key={p.value} value={p.value}>{p.label}</option>
@@ -132,30 +132,30 @@ export default function ConfigurarIMAP({ cuenta, onClose, onSuccess }: Configura
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Host IMAP <span className="text-red-500">*</span>
+          <label className="block text-sm font-semibold text-slate-300 mb-2">
+            Host IMAP <span className="text-rose-400">*</span>
           </label>
           <div className="relative">
-            <Server className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <Server className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
             <input
               type="text"
               value={imapHost}
               onChange={(e) => setImapHost(e.target.value)}
-              className="w-full pl-10"
+              className="w-full pl-10 bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
               placeholder="imap.gmail.com"
               required
             />
           </div>
         </div>
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold text-slate-300 mb-2">
             Puerto
           </label>
           <input
             type="number"
             value={imapPort}
             onChange={(e) => setImapPort(e.target.value)}
-            className="w-full"
+            className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
             min="1"
             max="65535"
             placeholder="993"
@@ -163,7 +163,7 @@ export default function ConfigurarIMAP({ cuenta, onClose, onSuccess }: Configura
         </div>
       </div>
 
-      <div className="flex gap-3 pt-4 border-t border-gray-100">
+      <div className="flex gap-3 pt-4 border-t border-slate-800">
         <button type="button" onClick={onClose} className="btn-secondary flex-1" disabled={guardando}>
           Cancelar
         </button>

@@ -223,56 +223,56 @@ export default function Usuarios() {
     suscripciones.find(s => s.usuarioId === uid && s.estado === 'activa');
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in text-slate-100">
       {/* Header */}
       <div className="mb-6">
         <div>
-          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
             Gestión de Usuarios
           </h1>
-          <p className="text-gray-600">Administra los usuarios del sistema</p>
+          <p className="text-slate-400">Administra los usuarios del sistema</p>
         </div>
       </div>
 
       {/* Formulario de creación */}
-      <div className="card">
-        <div className="flex items-center gap-2 mb-6">
-          <UserPlus className="text-indigo-600" size={24} />
-          <h2 className="text-xl font-bold text-gray-900">Crear Nuevo Usuario</h2>
+      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-xl p-6">
+        <div className="flex items-center gap-2 mb-6 pb-3 border-b border-slate-800">
+          <UserPlus className="text-indigo-400" size={24} />
+          <h2 className="text-xl font-bold text-white">Crear Nuevo Usuario</h2>
         </div>
 
         <form onSubmit={handleCrearUsuario} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre *</label>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">Nombre *</label>
               <input
                 name="nombre"
                 placeholder="Nombre completo"
                 value={form.nombre}
                 onChange={handleChange}
-                className="w-full"
+                className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Correo *</label>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">Correo *</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
                 <input
                   name="correo"
                   type="email"
                   placeholder="correo@ejemplo.com"
                   value={form.correo}
                   onChange={handleChange}
-                  className="w-full pl-10"
+                  className="w-full pl-10 bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
                   required
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Contraseña</label>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">Contraseña</label>
               <div className="relative">
                 <input
                   name="password"
@@ -280,12 +280,12 @@ export default function Usuarios() {
                   placeholder="Opcional (se generará automática)"
                   value={form.password}
                   onChange={handleChange}
-                  className="w-full pr-10"
+                  className="w-full pr-10 bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
                   tabIndex={-1}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -294,29 +294,29 @@ export default function Usuarios() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Rol</label>
-              <select name="rol" value={form.rol} onChange={handleChange} className="w-full">
+              <label className="block text-sm font-semibold text-slate-300 mb-2">Rol</label>
+              <select name="rol" value={form.rol} onChange={handleChange} className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100">
                 <option value="usuario">Usuario</option>
                 <option value="admin">Administrador</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Estado</label>
-              <select name="estado" value={form.estado} onChange={handleChange} className="w-full">
+              <label className="block text-sm font-semibold text-slate-300 mb-2">Estado</label>
+              <select name="estado" value={form.estado} onChange={handleChange} className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100">
                 <option value="activo">Activo</option>
                 <option value="inactivo">Inactivo</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Activo hasta</label>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">Activo hasta</label>
               <input
                 name="activoHasta"
                 type="date"
                 value={form.activoHasta}
                 onChange={handleChange}
-                className="w-full"
+                className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
               />
             </div>
           </div>
@@ -324,7 +324,7 @@ export default function Usuarios() {
           <button
             type="submit"
             disabled={loading}
-            className="btn-primary w-full py-3 flex items-center justify-center gap-2"
+            className="btn-primary w-full py-3 flex items-center justify-center gap-2 shadow-lg shadow-indigo-950/50"
           >
             <UserPlus size={20} />
             {loading ? 'Creando...' : 'Crear Usuario'}
@@ -333,24 +333,24 @@ export default function Usuarios() {
       </div>
 
       {/* Lista de usuarios */}
-      <div className="card overflow-hidden p-0">
-        <div className="p-6 border-b border-gray-200">
+      <div className="bg-slate-900/80 rounded-2xl shadow-xl border border-slate-800 overflow-hidden text-slate-100">
+        <div className="p-6 border-b border-slate-800">
           <div className="flex items-center gap-2">
-            <Users className="text-indigo-600" size={24} />
-            <h2 className="text-xl font-bold text-gray-900">Usuarios Registrados</h2>
+            <Users className="text-indigo-400" size={24} />
+            <h2 className="text-xl font-bold text-white">Usuarios Registrados</h2>
           </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white">
-                <th className="px-4 py-4 text-left text-sm font-semibold">Nombre</th>
-                <th className="px-4 py-4 text-left text-sm font-semibold">Correo</th>
-                <th className="px-4 py-4 text-left text-sm font-semibold">Rol</th>
-                <th className="px-4 py-4 text-center text-sm font-semibold">Correo</th>
-                <th className="px-4 py-4 text-center text-sm font-semibold">Plan Actual</th>
-                <th className="px-4 py-4 text-center text-sm font-semibold">Estado</th>
-                <th className="px-4 py-4 text-center text-sm font-semibold">Acciones</th>
+              <tr className="bg-slate-900 border-b border-slate-800 text-slate-300 uppercase tracking-wider text-xs">
+                <th className="px-4 py-4 text-left font-semibold">Nombre</th>
+                <th className="px-4 py-4 text-left font-semibold">Correo</th>
+                <th className="px-4 py-4 text-left font-semibold">Rol</th>
+                <th className="px-4 py-4 text-center font-semibold">Correo</th>
+                <th className="px-4 py-4 text-center font-semibold">Plan Actual</th>
+                <th className="px-4 py-4 text-center font-semibold">Estado</th>
+                <th className="px-4 py-4 text-center font-semibold">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -358,14 +358,14 @@ export default function Usuarios() {
                 usuarios.map(u => (
                   <tr
                     key={u.id}
-                    className="border-b border-gray-100 hover:bg-indigo-50/30 transition-colors"
+                    className="border-b border-slate-800/60 hover:bg-slate-800/40 transition-colors"
                   >
-                    <td className="px-4 py-4 font-medium text-gray-900">{u.nombre}</td>
-                    <td className="px-4 py-4 text-gray-700">{u.correo}</td>
+                    <td className="px-4 py-4 font-medium text-white">{u.nombre}</td>
+                    <td className="px-4 py-4 text-slate-300 font-mono text-sm">{u.correo}</td>
                     <td className="px-4 py-4">
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${u.rol === 'admin'
-                          ? 'bg-purple-100 text-purple-700'
-                          : 'bg-blue-100 text-blue-700'
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium border ${u.rol === 'admin'
+                          ? 'bg-purple-950/50 text-purple-300 border-purple-800/40'
+                          : 'bg-indigo-950/50 text-indigo-300 border-indigo-800/40'
                         }`}>
                         <Shield size={14} className="inline mr-1" />
                         {u.rol === 'admin' ? 'Administrador' : 'Usuario'}
@@ -373,14 +373,14 @@ export default function Usuarios() {
                     </td>
                     <td className="px-4 py-4 text-center">
                       {verificados[u.id] === undefined ? (
-                        <span className="text-gray-300 text-sm">—</span>
+                        <span className="text-slate-500 text-sm">—</span>
                       ) : verificados[u.id] ? (
-                        <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-medium">
+                        <span className="px-3 py-1 rounded-full bg-emerald-950/50 text-emerald-400 border border-emerald-800/40 text-xs font-medium">
                           <MailCheck size={14} className="inline mr-1" />
                           Verificado
                         </span>
                       ) : (
-                        <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-sm font-medium">
+                        <span className="px-3 py-1 rounded-full bg-amber-950/50 text-amber-400 border border-amber-800/40 text-xs font-medium">
                           <Mail size={14} className="inline mr-1" />
                           Sin verificar
                         </span>
@@ -390,19 +390,19 @@ export default function Usuarios() {
                       {(() => {
                         const s = getSuscripcionActiva(u.id);
                         return s ? (
-                          <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-sm font-medium">
+                          <span className="px-3 py-1 rounded-full bg-indigo-950/50 text-cyan-300 border border-indigo-800/40 text-xs font-medium">
                             <Package size={14} className="inline mr-1" />
                             {s.planNombre}
                           </span>
                         ) : (
-                          <span className="text-gray-400 text-sm">—</span>
+                          <span className="text-slate-500 text-sm">—</span>
                         );
                       })()}
                     </td>
                     <td className="px-4 py-4 text-center">
-                      <span className={`px-3 py-1 rounded-full text-sm font-semibold ${u.estado === 'activo'
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-red-100 text-red-700'
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${u.estado === 'activo'
+                          ? 'bg-emerald-950/50 text-emerald-400 border-emerald-800/40'
+                          : 'bg-rose-950/50 text-rose-400 border-rose-800/40'
                         }`}>
                         {u.estado === 'activo' ? (
                           <>
@@ -421,19 +421,19 @@ export default function Usuarios() {
                       <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => abrirCambiarPlan(u.id, u.nombre)}
-                          className="px-3 py-2 rounded-lg bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-colors text-sm font-medium"
+                          className="px-3 py-1.5 rounded-lg bg-indigo-950/60 text-indigo-300 hover:bg-indigo-900 border border-indigo-800/40 transition-colors text-xs font-medium"
                           title="Cambiar plan"
                         >
-                          <Package size={16} className="inline mr-1" />
+                          <Package size={14} className="inline mr-1" />
                           Plan
                         </button>
                         <button
                           onClick={() => toggleEstado(u.id, u.estado)}
                           disabled={togglingId === u.id || guardandoPlan}
-                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                             u.estado === 'activo'
-                              ? 'bg-orange-100 text-orange-600 hover:bg-orange-200'
-                              : 'bg-green-100 text-green-600 hover:bg-green-200'
+                              ? 'bg-rose-950/40 text-rose-400 border-rose-800/40 hover:bg-rose-900/50'
+                              : 'bg-emerald-950/40 text-emerald-400 border-emerald-800/40 hover:bg-emerald-900/50'
                           }`}
                         >
                           {togglingId === u.id ? 'Procesando...' : (u.estado === 'activo' ? 'Desactivar' : 'Activar')}
@@ -444,8 +444,8 @@ export default function Usuarios() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="text-center py-12 text-gray-500">
-                    <Users size={48} className="mx-auto mb-3 text-gray-300" />
+                  <td colSpan={7} className="text-center py-12 text-slate-500">
+                    <Users size={48} className="mx-auto mb-3 text-slate-700" />
                     <p className="font-medium">No hay usuarios registrados</p>
                   </td>
                 </tr>
@@ -457,30 +457,30 @@ export default function Usuarios() {
 
       {/* Modal: Cambiar plan */}
       {planModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="card max-w-md w-full animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6 text-slate-100 animate-scale-in">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Cambiar plan</h2>
-                <p className="text-gray-600 mt-1 text-sm">{planModal.usuarioNombre}</p>
+                <h2 className="text-xl font-bold text-white">Cambiar plan</h2>
+                <p className="text-slate-400 mt-1 text-sm">{planModal.usuarioNombre}</p>
               </div>
-              <button onClick={() => setPlanModal(null)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                <X size={20} className="text-gray-600" />
+              <button onClick={() => setPlanModal(null)} className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors">
+                <X size={20} />
               </button>
             </div>
 
             <div className="space-y-4">
-              <div className="bg-gray-50 rounded-xl px-4 py-3">
-                <span className="text-sm text-gray-500">Plan actual:</span>
-                <p className="font-semibold text-gray-900 mt-0.5">{planModal.planActual}</p>
+              <div className="bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3">
+                <span className="text-xs text-slate-400 uppercase tracking-wide">Plan actual:</span>
+                <p className="font-semibold text-cyan-300 mt-0.5">{planModal.planActual}</p>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Nuevo plan</label>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">Nuevo plan</label>
                 <select
                   value={nuevoPlanId}
                   onChange={(e) => setNuevoPlanId(e.target.value)}
-                  className="w-full"
+                  className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
                 >
                   <option value="">Seleccionar plan...</option>
                   {planes.filter(p => p.activo).map(p => (

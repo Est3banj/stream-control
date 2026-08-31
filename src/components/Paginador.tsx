@@ -37,12 +37,12 @@ export default function Paginador({ currentPage, totalItems, itemsPerPage, onPag
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
       <div className="flex items-center gap-3">
-        <p className="text-sm text-gray-500">
-          Mostrando <span className="font-medium text-gray-700">{startItem}</span>
-          <span className="text-gray-400">–</span>
-          <span className="font-medium text-gray-700">{endItem}</span>{' '}
-          <span className="text-gray-400">de</span>{' '}
-          <span className="font-medium text-gray-700">{totalItems}</span>{' '}
+        <p className="text-sm text-slate-400">
+          Mostrando <span className="font-medium text-slate-200">{startItem}</span>
+          <span className="text-slate-500">–</span>
+          <span className="font-medium text-slate-200">{endItem}</span>{' '}
+          <span className="text-slate-500">de</span>{' '}
+          <span className="font-medium text-slate-200">{totalItems}</span>{' '}
           registros
         </p>
 
@@ -52,12 +52,12 @@ export default function Paginador({ currentPage, totalItems, itemsPerPage, onPag
             onChange={(e) => {
               onItemsPerPageChange(Number(e.target.value));
             }}
-            className="w-auto text-sm px-2 py-1 rounded-lg border border-gray-200 bg-white text-gray-700 cursor-pointer"
+            className="w-auto text-sm px-2.5 py-1 rounded-lg border border-slate-800 bg-slate-900 text-slate-200 cursor-pointer focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
             aria-label="Registros por página"
           >
-            <option value={10}>10 / pág</option>
-            <option value={20}>20 / pág</option>
-            <option value={50}>50 / pág</option>
+            <option value={10} className="bg-slate-900 text-slate-200">10 / pág</option>
+            <option value={20} className="bg-slate-900 text-slate-200">20 / pág</option>
+            <option value={50} className="bg-slate-900 text-slate-200">50 / pág</option>
           </select>
         )}
       </div>
@@ -66,7 +66,7 @@ export default function Paginador({ currentPage, totalItems, itemsPerPage, onPag
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-gray-200 disabled:hover:text-gray-500 transition-all"
+          className="p-2 rounded-lg border border-slate-800 bg-slate-900/80 text-slate-400 hover:text-slate-100 hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
           aria-label="Página anterior"
         >
           <ChevronLeft size={18} />
@@ -78,8 +78,8 @@ export default function Paginador({ currentPage, totalItems, itemsPerPage, onPag
             onClick={() => onPageChange(page)}
             className={`w-9 h-9 rounded-lg text-sm font-medium transition-all ${
               page === currentPage
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'text-gray-600 hover:bg-indigo-50 border border-gray-200 hover:border-indigo-200'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-950/50 font-semibold'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-slate-800 bg-slate-900/40'
             }`}
             aria-label={`Ir a página ${page}`}
             aria-current={page === currentPage ? 'page' : undefined}
@@ -91,7 +91,7 @@ export default function Paginador({ currentPage, totalItems, itemsPerPage, onPag
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-gray-200 disabled:hover:text-gray-500 transition-all"
+          className="p-2 rounded-lg border border-slate-800 bg-slate-900/80 text-slate-400 hover:text-slate-100 hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
           aria-label="Página siguiente"
         >
           <ChevronRight size={18} />

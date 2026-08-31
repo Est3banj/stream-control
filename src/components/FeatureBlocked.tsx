@@ -30,26 +30,26 @@ export default function FeatureBlocked({ feature, description, plan }: FeatureBl
   }, [show]);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 text-center">
-      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-indigo-100 flex items-center justify-center">
-        <Lock size={32} className="text-indigo-600" />
+    <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-10 text-center text-slate-100 shadow-xl backdrop-blur-xl">
+      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-indigo-950/60 border border-indigo-800/40 flex items-center justify-center">
+        <Lock size={32} className="text-indigo-400" />
       </div>
-      <h3 className="text-xl font-bold text-gray-900 mb-2">{feature}</h3>
-      <p className="text-gray-500 text-sm mb-4 max-w-md mx-auto">{description}</p>
-      <div className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white text-sm font-semibold shadow-lg">
+      <h3 className="text-xl font-bold text-white mb-2">{feature}</h3>
+      <p className="text-slate-400 text-sm mb-4 max-w-md mx-auto">{description}</p>
+      <div className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 text-white text-sm font-semibold shadow-lg shadow-amber-950/40">
         <Sparkles size={16} />
         Disponible en {plan}
       </div>
       <div className="mt-6">
         <button
           onClick={show}
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold shadow-lg hover:from-indigo-700 hover:to-violet-700 transition-all hover:scale-105"
+          className="inline-flex items-center gap-2 btn-primary hover:scale-105"
         >
           <TrendingUp size={20} />
           Actualizar plan
         </button>
       </div>
-      <p className="text-gray-400 text-xs mt-4">
+      <p className="text-slate-500 text-xs mt-4">
         Actualizá tu plan para acceder a esta funcionalidad.
       </p>
     </div>

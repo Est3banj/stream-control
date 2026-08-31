@@ -20,9 +20,9 @@ function formatDate(ts: Timestamp): string {
 
 function estadoBadge(estado: string) {
   const styles: Record<string, string> = {
-    activa: 'bg-green-100 text-green-700',
-    expirada: 'bg-gray-100 text-gray-700',
-    cancelada: 'bg-red-100 text-red-700',
+    activa: 'bg-emerald-950/50 text-emerald-400 border border-emerald-800/40',
+    expirada: 'bg-slate-800 text-slate-400 border border-slate-700',
+    cancelada: 'bg-rose-950/50 text-rose-400 border border-rose-800/40',
   };
   const icons: Record<string, React.ReactNode> = {
     activa: <CheckCircle size={14} className="inline mr-1" />,
@@ -30,7 +30,7 @@ function estadoBadge(estado: string) {
     cancelada: <XCircle size={14} className="inline mr-1" />,
   };
   return (
-    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${styles[estado] || 'bg-gray-100 text-gray-700'}`}>
+    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${styles[estado] || 'bg-slate-800 text-slate-400'}`}>
       {icons[estado]}
       {estado === 'activa' ? 'Activa' : estado === 'expirada' ? 'Expirada' : 'Cancelada'}
     </span>
@@ -39,9 +39,9 @@ function estadoBadge(estado: string) {
 
 function pagoBadge(pagoEstado: string) {
   const styles: Record<string, string> = {
-    pagado: 'bg-green-100 text-green-700',
-    pendiente: 'bg-yellow-100 text-yellow-700',
-    vencido: 'bg-red-100 text-red-700',
+    pagado: 'bg-emerald-950/50 text-emerald-400 border border-emerald-800/40',
+    pendiente: 'bg-amber-950/50 text-amber-400 border border-amber-800/40',
+    vencido: 'bg-rose-950/50 text-rose-400 border border-rose-800/40',
   };
   const icons: Record<string, React.ReactNode> = {
     pagado: <CheckCircle size={14} className="inline mr-1" />,
@@ -49,7 +49,7 @@ function pagoBadge(pagoEstado: string) {
     vencido: <XCircle size={14} className="inline mr-1" />,
   };
   return (
-    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${styles[pagoEstado] || 'bg-gray-100 text-gray-700'}`}>
+    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${styles[pagoEstado] || 'bg-slate-800 text-slate-400'}`}>
       {icons[pagoEstado]}
       {pagoEstado === 'pagado' ? 'Pagado' : pagoEstado === 'pendiente' ? 'Pendiente' : 'Vencido'}
     </span>
@@ -59,39 +59,39 @@ function pagoBadge(pagoEstado: string) {
 export default function SuscripcionCard({ suscripcion, onMarcarPagada, cargandoId }: SuscripcionCardProps) {
   const { formatear } = useMoneda();
   return (
-    <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100">
+    <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800 text-slate-100">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-        <div className="flex-1 space-y-2">
+        <div className="flex-1 space-y-3">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-semibold text-gray-900 text-lg">{suscripcion.planNombre}</h3>
+            <h3 className="font-bold text-white text-lg">{suscripcion.planNombre}</h3>
             {estadoBadge(suscripcion.estado)}
           </div>
 
-          <p className="text-sm text-gray-700 font-medium">
-            Usuario: <span className="text-gray-900">{suscripcion.usuarioNombre}</span>
+          <p className="text-sm text-slate-300 font-medium">
+            Usuario: <span className="text-white font-semibold">{suscripcion.usuarioNombre}</span>
           </p>
 
-          <div className="flex items-center gap-4 text-sm text-gray-600 flex-wrap">
-            <span className="flex items-center gap-1">
+          <div className="flex items-center gap-4 text-sm text-slate-400 flex-wrap">
+            <span className="flex items-center gap-1.5">
               <Calendar size={14} className="text-indigo-400" />
               Inicio: {formatDate(suscripcion.fechaInicio)}
             </span>
-            <span className="flex items-center gap-1">
-              <Calendar size={14} className="text-red-400" />
+            <span className="flex items-center gap-1.5">
+              <Calendar size={14} className="text-rose-400" />
               Fin: {formatDate(suscripcion.fechaFin)}
             </span>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
             {pagoBadge(suscripcion.pagoEstado)}
-            <span className="flex items-center gap-1 text-sm font-semibold text-gray-900">
-              <DollarSign size={14} className="text-green-500" />
+            <span className="flex items-center gap-1 text-sm font-semibold text-emerald-400">
+              <DollarSign size={14} className="text-emerald-400" />
               {formatear(suscripcion.monto)}
             </span>
           </div>
 
           {suscripcion.notas && (
-            <p className="text-xs text-gray-500 italic bg-white/50 rounded-lg p-2">
+            <p className="text-xs text-slate-400 italic bg-slate-900 border border-slate-800 rounded-lg p-2.5">
               {suscripcion.notas}
             </p>
           )}
@@ -101,7 +101,7 @@ export default function SuscripcionCard({ suscripcion, onMarcarPagada, cargandoI
           <button
             onClick={() => onMarcarPagada(suscripcion.id)}
             disabled={cargandoId === suscripcion.id}
-            className="btn-primary text-sm py-2 px-4 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-primary text-sm py-2 px-4 whitespace-nowrap shadow-lg shadow-indigo-950/50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {cargandoId === suscripcion.id ? 'Procesando...' : 'Marcar como pagada'}
           </button>

@@ -116,12 +116,12 @@ export default function VentasMayoristas() {
 
   if (!permisos.puedeGenerarTokens) {
     return (
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-6 animate-fade-in text-slate-100">
         <div className="mb-6">
-          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-indigo-700">
+          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
             Ventas Mayoristas
           </h1>
-          <p className="text-gray-600">Gestión de accesos y links para revendedores</p>
+          <p className="text-slate-400">Gestión de accesos y links para revendedores</p>
         </div>
         <FeatureBlocked
           feature="Ventas Mayoristas"
@@ -133,54 +133,54 @@ export default function VentasMayoristas() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in text-slate-100">
       <div className="mb-6">
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
           Ventas Mayoristas
         </h1>
-        <p className="text-gray-600">Generá links de consulta y administrá accesos para revendedores</p>
+        <p className="text-slate-400">Generá links de consulta y administrá accesos para revendedores</p>
       </div>
 
       {/* Métricas rápidas */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="card p-5 bg-white border border-gray-100 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+        <div className="card p-5 flex items-center gap-4 cursor-default">
+          <div className="w-12 h-12 rounded-2xl bg-indigo-950/60 border border-indigo-800/40 flex items-center justify-center text-indigo-400">
             <Users size={24} />
           </div>
           <div>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Total Links</p>
-            <p className="text-2xl font-bold text-gray-900">{totalLinks}</p>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Total Links</p>
+            <p className="text-2xl font-bold text-white">{totalLinks}</p>
           </div>
         </div>
-        <div className="card p-5 bg-white border border-gray-100 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-green-50 flex items-center justify-center text-green-600">
+        <div className="card p-5 flex items-center gap-4 cursor-default">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-950/60 border border-emerald-800/40 flex items-center justify-center text-emerald-400">
             <Check size={24} />
           </div>
           <div>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Activos</p>
-            <p className="text-2xl font-bold text-green-600">{linksActivos}</p>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Activos</p>
+            <p className="text-2xl font-bold text-emerald-400">{linksActivos}</p>
           </div>
         </div>
-        <div className="card p-5 bg-white border border-gray-100 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center text-red-600">
+        <div className="card p-5 flex items-center gap-4 cursor-default">
+          <div className="w-12 h-12 rounded-2xl bg-rose-950/60 border border-rose-800/40 flex items-center justify-center text-rose-400">
             <ShieldAlert size={24} />
           </div>
           <div>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Vencidos / Revocados</p>
-            <p className="text-2xl font-bold text-red-600">{linksVencidos}</p>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Vencidos / Revocados</p>
+            <p className="text-2xl font-bold text-rose-400">{linksVencidos}</p>
           </div>
         </div>
       </div>
 
       {/* Pestañas */}
-      <div className="flex gap-3 border-b border-gray-200 pb-2">
+      <div className="flex gap-3 border-b border-slate-800 pb-2">
         <button
           type="button"
           onClick={() => setTab('nueva')}
           className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${
             tab === 'nueva'
-              ? 'bg-indigo-600 text-white shadow-md'
-              : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-950/50'
+              : 'bg-slate-900/80 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
           }`}
         >
           <PlusCircle size={18} />
@@ -191,8 +191,8 @@ export default function VentasMayoristas() {
           onClick={() => setTab('activas')}
           className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${
             tab === 'activas'
-              ? 'bg-indigo-600 text-white shadow-md'
-              : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-950/50'
+              : 'bg-slate-900/80 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
           }`}
         >
           <List size={18} />
@@ -202,10 +202,10 @@ export default function VentasMayoristas() {
 
       {/* Contenido Pestaña 1: Nueva Venta Mayorista */}
       {tab === 'nueva' && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
+        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-xl p-6 space-y-6 text-slate-100">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Seleccionar cuenta <span className="text-red-500">*</span>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">
+              Seleccionar cuenta <span className="text-rose-400">*</span>
             </label>
             <select
               ref={selectCuentaRef}
@@ -216,7 +216,7 @@ export default function VentasMayoristas() {
                 setCantidad(0);
                 setLinkGenerado('');
               }}
-              className="w-full"
+              className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
             >
               <option value="">Seleccioná una cuenta...</option>
               {cuentasConIMAP.map(c => {
@@ -232,13 +232,13 @@ export default function VentasMayoristas() {
           </div>
 
           {cuentaSeleccionada && (
-            <div className="flex items-center gap-3 p-3 bg-indigo-50 rounded-xl border border-indigo-100">
-              <Monitor size={18} className="text-indigo-500" />
+            <div className="flex items-center gap-3 p-4 bg-slate-950/60 rounded-xl border border-slate-800">
+              <Monitor size={18} className="text-indigo-400" />
               <div className="flex-1">
-                <p className="text-sm font-semibold text-indigo-900">{cuentaSeleccionada.proveedor}</p>
-                <p className="text-xs text-indigo-600">{cuentaSeleccionada.correoCuenta}</p>
+                <p className="text-sm font-semibold text-white">{cuentaSeleccionada.proveedor}</p>
+                <p className="text-xs text-slate-400">{cuentaSeleccionada.correoCuenta}</p>
               </div>
-              <span className="text-sm font-bold text-indigo-700">{formatear(cuentaSeleccionada.costo || 0)}</span>
+              <span className="text-sm font-bold text-cyan-300">{formatear(cuentaSeleccionada.costo || 0)}</span>
             </div>
           )}
 
@@ -248,15 +248,15 @@ export default function VentasMayoristas() {
             const disponibles = perfiles.filter(p => p.estado === 'disponible');
             if (disponibles.length === 0) {
               return (
-                <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
-                  <p className="text-sm text-amber-700 font-medium">No hay perfiles disponibles en esta cuenta</p>
+                <div className="p-4 bg-amber-950/30 rounded-xl border border-amber-800/40">
+                  <p className="text-sm text-amber-300 font-medium">No hay perfiles disponibles en esta cuenta</p>
                 </div>
               );
             }
             return (
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Perfiles a vender ({disponibles.length} disponibles) <span className="text-red-500">*</span>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                  Perfiles a vender ({disponibles.length} disponibles) <span className="text-rose-400">*</span>
                 </label>
                 <div className="space-y-2 max-h-56 overflow-y-auto p-1">
                   {disponibles.map(p => {
@@ -267,8 +267,8 @@ export default function VentasMayoristas() {
                         key={idx}
                         className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
                           selected
-                            ? 'border-indigo-500 bg-indigo-50 text-indigo-900'
-                            : 'border-gray-200 hover:border-gray-300'
+                            ? 'border-indigo-500 bg-indigo-950/40 text-white'
+                            : 'border-slate-800 bg-slate-950/40 hover:border-slate-700 text-slate-300'
                         }`}
                       >
                         <input
@@ -283,10 +283,10 @@ export default function VentasMayoristas() {
                               return next;
                             });
                           }}
-                          className="w-4 h-4 text-indigo-600 rounded"
+                          className="w-4 h-4 text-indigo-600 rounded bg-slate-900 border-slate-700"
                         />
                         <span className="text-sm font-medium">{p.nombre}</span>
-                        {p.pin && <span className="text-xs text-gray-400">PIN: {p.pin}</span>}
+                        {p.pin && <span className="text-xs text-slate-400">PIN: {p.pin}</span>}
                       </label>
                     );
                   })}
@@ -303,7 +303,7 @@ export default function VentasMayoristas() {
                       setCantidad(todos.length);
                     }
                   }}
-                  className="mt-2 text-xs text-indigo-600 hover:text-indigo-800 font-semibold"
+                  className="mt-2 text-xs text-indigo-400 hover:text-indigo-300 font-semibold"
                 >
                   {perfilesSeleccionados.length === disponibles.length
                     ? 'Deseleccionar todos'
@@ -318,45 +318,45 @@ export default function VentasMayoristas() {
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Nombre del revendedor / sub-distribuidor <span className="text-red-500">*</span>
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">
+                    Nombre del revendedor / sub-distribuidor <span className="text-rose-400">*</span>
                   </label>
                   <input
                     type="text"
                     value={nombreSub}
                     onChange={e => setNombreSub(e.target.value)}
-                    className="w-full"
+                    className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
                     placeholder="Ej: Distribuidor Express, Juan Pérez"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">
                     Cantidad de perfiles
                   </label>
                   <input
                     type="number"
                     value={cantidad}
-                    className="w-full bg-gray-50 font-semibold"
+                    className="w-full bg-slate-950/60 border border-slate-800 text-slate-100 font-semibold"
                     readOnly
                     min="1"
                   />
-                  <p className="text-xs text-gray-400 mt-1">Calculado automáticamente según los perfiles seleccionados</p>
+                  <p className="text-xs text-slate-400 mt-1">Calculado automáticamente según los perfiles seleccionados</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">
                     Total recibido $
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium">$</span>
                     <input
                       type="number"
                       value={totalRecibido}
                       onChange={e => setTotalRecibido(Number(e.target.value))}
-                      className="w-full pl-7"
+                      className="w-full pl-7 bg-slate-900/80 border border-slate-700/80 text-slate-100"
                       min="0"
                       step="100"
                       placeholder="0"
@@ -364,17 +364,17 @@ export default function VentasMayoristas() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Costo total</label>
-                  <div className="flex items-center h-[42px] px-4 bg-gray-50 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600">
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">Costo total</label>
+                  <div className="flex items-center h-[42px] px-4 bg-slate-950/60 rounded-xl border border-slate-800 text-sm font-semibold text-slate-300">
                     {formatear(totalCosto)}
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Utilidad proyectada</label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">Utilidad proyectada</label>
                   <div className={`flex items-center h-[42px] px-4 rounded-xl border text-sm font-bold ${
                     utilidad >= 0
-                      ? 'bg-green-50 border-green-200 text-green-700'
-                      : 'bg-red-50 border-red-200 text-red-700'
+                      ? 'bg-emerald-950/40 border-emerald-800/40 text-emerald-400'
+                      : 'bg-rose-950/40 border-rose-800/40 text-rose-400'
                   }`}>
                     {formatear(utilidad)}
                   </div>
@@ -382,14 +382,14 @@ export default function VentasMayoristas() {
               </div>
 
               {totalRecibido > 0 && cantidad > 0 && (
-                <p className="text-xs text-gray-500 text-right font-medium">
-                  {formatear(totalRecibido)} ÷ {cantidad} = <span className="text-indigo-600 font-bold">{formatear(precioPorPerfil)}</span> x perfil
+                <p className="text-xs text-slate-400 text-right font-medium">
+                  {formatear(totalRecibido)} ÷ {cantidad} = <span className="text-cyan-300 font-bold">{formatear(precioPorPerfil)}</span> x perfil
                 </p>
               )}
 
               {/* Duración */}
               <div>
-                <h2 className="text-sm font-semibold text-gray-700 mb-3">Duración del acceso</h2>
+                <h2 className="text-sm font-semibold text-slate-300 mb-3">Duración del acceso</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
                   {[7, 15, 30, 60].map(d => (
                     <button
@@ -398,8 +398,8 @@ export default function VentasMayoristas() {
                       onClick={() => setDiasAcceso(d)}
                       className={`p-3 rounded-xl text-center transition-all border text-sm font-semibold ${
                         diasAcceso === d
-                          ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm'
-                          : 'border-gray-200 bg-white text-gray-600 hover:border-indigo-300'
+                          ? 'border-indigo-500 bg-indigo-950/50 text-white shadow-sm'
+                          : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700'
                       }`}
                     >
                       {d} días
@@ -408,16 +408,16 @@ export default function VentasMayoristas() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600 font-medium">Personalizado:</span>
+                  <span className="text-sm text-slate-300 font-medium">Personalizado:</span>
                   <input
                     type="number"
                     value={diasAcceso}
                     onChange={e => setDiasAcceso(Number(e.target.value))}
                     min="1"
                     max="365"
-                    className="w-24 text-sm"
+                    className="w-24 text-sm bg-slate-900/80 border border-slate-700/80 text-slate-100"
                   />
-                  <span className="text-sm text-gray-500">días</span>
+                  <span className="text-sm text-slate-400">días</span>
                 </div>
               </div>
 
@@ -426,7 +426,7 @@ export default function VentasMayoristas() {
                 type="button"
                 onClick={handleGenerarLink}
                 disabled={generando || perfilesSeleccionados.length === 0}
-                className="w-full py-3.5 rounded-xl font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg hover:from-indigo-700 hover:to-violet-700 flex items-center justify-center gap-2"
+                className="btn-primary w-full py-3.5 rounded-xl font-semibold shadow-lg shadow-indigo-950/50 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {generando ? (
                   <>
@@ -444,14 +444,14 @@ export default function VentasMayoristas() {
               {/* Resultado del link */}
               {linkGenerado && (
                 <div className="mt-6 space-y-3 animate-fade-in">
-                  <div className="bg-indigo-50 rounded-2xl p-5 border border-indigo-100 space-y-2">
+                  <div className="bg-indigo-950/40 rounded-2xl p-5 border border-indigo-800/40 space-y-2">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-bold text-indigo-900">Link de consulta generado</p>
-                      <span className="inline-flex items-center gap-1.5 text-xs text-indigo-600 font-medium">
+                      <p className="text-sm font-bold text-indigo-300">Link de consulta generado</p>
+                      <span className="inline-flex items-center gap-1.5 text-xs text-indigo-400 font-medium">
                         <Calendar size={14} /> Expira: {linkExpira}
                       </span>
                     </div>
-                    <code className="block bg-white rounded-xl px-4 py-3 text-sm text-indigo-600 border border-indigo-200 break-all font-mono select-all">
+                    <code className="block bg-slate-950/80 rounded-xl px-4 py-3 text-sm text-cyan-300 border border-slate-800 break-all font-mono select-all">
                       {linkGenerado}
                     </code>
                   </div>
@@ -472,28 +472,28 @@ export default function VentasMayoristas() {
 
       {/* Contenido Pestaña 2: Ventas Mayoristas Activas */}
       {tab === 'activas' && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100">
-            <h2 className="text-lg font-bold text-gray-900">Links para revendedores y sub-distribuidores</h2>
+        <div className="bg-slate-900/80 rounded-2xl shadow-xl border border-slate-800 overflow-hidden text-slate-100">
+          <div className="px-6 py-4 border-b border-slate-800">
+            <h2 className="text-lg font-bold text-white">Links para revendedores y sub-distribuidores</h2>
           </div>
 
           {tokensMayoristas.length === 0 ? (
             <div className="p-12 text-center">
-              <Users size={48} className="mx-auto mb-3 text-gray-300" />
-              <p className="font-semibold text-gray-700">No hay links generados para mayoristas</p>
-              <p className="text-sm text-gray-400 mt-1">Podés registrar una nueva venta mayorista desde la pestaña superior</p>
+              <Users size={48} className="mx-auto mb-3 text-slate-700" />
+              <p className="font-semibold text-slate-300">No hay links generados para mayoristas</p>
+              <p className="text-sm text-slate-500 mt-1">Podés registrar una nueva venta mayorista desde la pestaña superior</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-gray-50 border-b border-gray-100">
-                    <th className="px-6 py-3.5 text-left font-semibold text-gray-600">Revendedor</th>
-                    <th className="px-6 py-3.5 text-left font-semibold text-gray-600">Plataforma</th>
-                    <th className="px-6 py-3.5 text-center font-semibold text-gray-600">Estado</th>
-                    <th className="px-6 py-3.5 text-right font-semibold text-gray-600">Expira</th>
-                    <th className="px-6 py-3.5 text-center font-semibold text-gray-600">Token ID</th>
-                    <th className="px-6 py-3.5 text-center font-semibold text-gray-600">Acciones</th>
+                  <tr className="bg-slate-900 border-b border-slate-800 text-slate-300 uppercase tracking-wider text-xs">
+                    <th className="px-6 py-3.5 text-left font-semibold">Revendedor</th>
+                    <th className="px-6 py-3.5 text-left font-semibold">Plataforma</th>
+                    <th className="px-6 py-3.5 text-center font-semibold">Estado</th>
+                    <th className="px-6 py-3.5 text-right font-semibold">Expira</th>
+                    <th className="px-6 py-3.5 text-center font-semibold">Token ID</th>
+                    <th className="px-6 py-3.5 text-center font-semibold">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -504,29 +504,29 @@ export default function VentasMayoristas() {
                       : '—';
 
                     return (
-                      <tr key={token.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                      <tr key={token.id} className="border-b border-slate-800/60 hover:bg-slate-800/40 transition-colors">
                         <td className="px-6 py-4">
-                          <span className="font-semibold text-gray-900">{token.clienteNombre || 'Sub-distribuidor'}</span>
+                          <span className="font-semibold text-white">{token.clienteNombre || 'Sub-distribuidor'}</span>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="text-gray-700">{proveedor}</span>
+                          <span className="text-slate-300">{proveedor}</span>
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${
+                          <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold border ${
                             expirado
-                              ? 'bg-red-100 text-red-600'
+                              ? 'bg-rose-950/50 text-rose-400 border-rose-800/40'
                               : token.activo
-                                ? 'bg-green-100 text-green-600'
-                                : 'bg-gray-100 text-gray-500'
+                                ? 'bg-emerald-950/50 text-emerald-400 border-emerald-800/40'
+                                : 'bg-slate-800 text-slate-400 border-slate-700'
                           }`}>
                             {expirado ? 'Vencido' : token.activo ? 'Activo' : 'Revocado'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-right text-gray-600">
+                        <td className="px-6 py-4 text-right text-slate-400">
                           {new Date(token.expiraEn).toLocaleDateString('es-CO')}
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <code className="text-xs text-gray-500 font-mono bg-gray-100 px-2 py-0.5 rounded">{token.id.slice(0, 8)}</code>
+                          <code className="text-xs text-indigo-400 font-mono bg-indigo-950/50 px-2 py-0.5 rounded border border-indigo-800/40">{token.id.slice(0, 8)}</code>
                         </td>
                         <td className="px-6 py-4">
                           <DropdownMenu

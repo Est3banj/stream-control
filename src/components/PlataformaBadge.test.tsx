@@ -27,7 +27,7 @@ describe('PlataformaBadge', () => {
       render(<PlataformaBadge plataforma="Netflix" />);
       const badge = screen.getByText('Netflix');
       expect(badge).toBeTruthy();
-      expect(badge.className).toContain('text-red-600');
+      expect(badge.className).toContain('text-red-400');
     });
 
     it('renders individual badges for combos', () => {
@@ -36,8 +36,8 @@ describe('PlataformaBadge', () => {
       const spotify = screen.getByText('Spotify');
       expect(netflix).toBeTruthy();
       expect(spotify).toBeTruthy();
-      expect(netflix.className).toContain('text-red-600');
-      expect(spotify.className).toContain('text-emerald-600');
+      expect(netflix.className).toContain('text-red-400');
+      expect(spotify.className).toContain('text-emerald-400');
     });
 
     it('renders fallback for empty platform', () => {
@@ -48,7 +48,7 @@ describe('PlataformaBadge', () => {
     it('renders default style for unknown platform', () => {
       render(<PlataformaBadge plataforma="ServicioDesconocido" />);
       const badge = screen.getByText('ServicioDesconocido');
-      expect(badge.className).toContain('text-slate-700');
+      expect(badge.className).toContain('text-slate-300');
     });
   });
 });

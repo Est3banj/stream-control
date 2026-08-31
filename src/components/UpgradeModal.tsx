@@ -194,11 +194,11 @@ export default function UpgradeModal({ user, onClose }: UpgradeModalProps) {
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-6 sm:pt-12 overflow-y-auto bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-6 sm:pt-12 overflow-y-auto bg-black/75 backdrop-blur-md"
       onClick={handleOverlayClick}
     >
       <div
-        className="w-full max-w-6xl animate-scale-in relative bg-white rounded-2xl shadow-2xl p-6 sm:p-10"
+        className="w-full max-w-6xl animate-scale-in relative bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 sm:p-10 text-slate-100"
         role="dialog"
         aria-modal="true"
         aria-labelledby="upgrade-modal-title"
@@ -206,36 +206,36 @@ export default function UpgradeModal({ user, onClose }: UpgradeModalProps) {
         <button
           ref={closeButtonRef}
           onClick={handleClose}
-          className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100 transition-colors z-10"
+          className="absolute top-4 right-4 p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors z-10"
           aria-label="Cerrar"
         >
-          <X size={24} className="text-gray-600" />
+          <X size={24} />
         </button>
 
         {/* Header */}
         <div className="text-center mb-6 max-w-2xl mx-auto">
           <h2
             id="upgrade-modal-title"
-            className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight"
+            className="text-2xl sm:text-3xl font-extrabold text-white leading-tight"
           >
             Cambia a un plan superior para disfrutar de un acceso ampliado a StreamControl
           </h2>
-          <p className="text-sm text-gray-500 mt-3">
+          <p className="text-sm text-slate-400 mt-3">
             Cancela cuando quieras. Al suscribirte, aceptas los términos y condiciones del servicio.
           </p>
         </div>
 
         {/* Toggle de período */}
         <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
-          <div className="inline-flex items-center bg-gray-100 rounded-xl p-1">
+          <div className="inline-flex items-center bg-slate-950 border border-slate-800 rounded-xl p-1">
             {PERIODOS.map((p) => (
               <button
                 key={p}
                 onClick={() => setPeriodo(p)}
                 className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${
                   periodo === p
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-950/50'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 {PERIODOS_LABELS[p]}
@@ -245,7 +245,7 @@ export default function UpgradeModal({ user, onClose }: UpgradeModalProps) {
 
           {periodo !== 'mensual' && (
             <>
-              <span className="text-xs sm:text-sm text-green-700 font-semibold whitespace-nowrap">
+              <span className="text-xs sm:text-sm text-emerald-400 font-semibold whitespace-nowrap">
                 {(() => {
                   const meses = PERIODOS_MESES[periodo];
                   const precioPlanPeriodo = findPlanForPeriod(planes, currentFamilia, periodo)?.precio ?? 0;
@@ -257,7 +257,7 @@ export default function UpgradeModal({ user, onClose }: UpgradeModalProps) {
                     : '';
                 })()}
               </span>
-              <span className="px-2.5 py-0.5 bg-blue-600 text-white text-[10px] font-bold rounded-full uppercase tracking-wide">
+              <span className="px-2.5 py-0.5 bg-indigo-600 text-white text-[10px] font-bold rounded-full uppercase tracking-wide">
                 Recomendado
               </span>
             </>
@@ -271,16 +271,16 @@ export default function UpgradeModal({ user, onClose }: UpgradeModalProps) {
               key={plan.familia}
               className={`rounded-2xl border-2 p-6 relative flex flex-col ${
                 plan.esActual
-                  ? 'border-gray-200'
+                  ? 'bg-slate-900/90 border-slate-800'
                   : plan.esRecomendado
-                    ? 'border-blue-500 shadow-lg shadow-blue-100'
-                    : 'border-gray-200'
+                    ? 'bg-gradient-to-b from-indigo-950/40 to-slate-900/90 border-indigo-500 shadow-xl shadow-indigo-950/50'
+                    : 'bg-slate-900/90 border-slate-800'
               }`}
             >
               {/* Badge RECOMENDADO (solo en mensual, en otros períodos se muestra arriba) */}
               {plan.esRecomendado && !plan.esActual && periodo === 'mensual' && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="px-4 py-1 bg-blue-600 text-white text-xs font-bold rounded-full uppercase tracking-wide shadow-md">
+                  <span className="px-4 py-1 bg-indigo-600 text-white text-xs font-bold rounded-full uppercase tracking-wide shadow-md shadow-indigo-950/50">
                     Recomendado
                   </span>
                 </div>
@@ -288,22 +288,22 @@ export default function UpgradeModal({ user, onClose }: UpgradeModalProps) {
 
               {/* Plan name */}
               <div className={`mb-4 ${plan.esRecomendado && !plan.esActual && periodo === 'mensual' ? 'mt-2' : ''}`}>
-                <h3 className="text-xl font-bold text-gray-900">{plan.label}</h3>
+                <h3 className="text-xl font-bold text-white">{plan.label}</h3>
               </div>
 
               {/* Pricing */}
               <div className="mb-4">
                 {plan.formatoOrig && (
-                  <div className="text-sm text-gray-400 line-through font-medium">
+                  <div className="text-sm text-slate-500 line-through font-medium">
                     {plan.formatoOrig}
                   </div>
                 )}
                 <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-extrabold text-gray-900">
+                  <span className="text-3xl font-extrabold text-white">
                     {plan.precioDisplay}
                   </span>
                   {plan.descuento > 0 && (
-                    <span className="px-2 py-0.5 bg-red-100 text-red-600 text-xs font-bold rounded-full">
+                    <span className="px-2 py-0.5 bg-rose-950/60 text-rose-400 border border-rose-800/50 text-xs font-bold rounded-full">
                       -{plan.descuento}%
                     </span>
                   )}
@@ -312,7 +312,7 @@ export default function UpgradeModal({ user, onClose }: UpgradeModalProps) {
 
               {/* CTA or current-plan badge */}
               {plan.esActual ? (
-                <span className="block w-full py-2.5 px-6 rounded-xl bg-gray-100 text-gray-500 font-semibold text-center text-sm mb-4">
+                <span className="block w-full py-2.5 px-6 rounded-xl bg-slate-800 text-slate-400 font-semibold text-center text-sm mb-4 border border-slate-700/50">
                   Tu plan actual
                 </span>
               ) : (
@@ -321,15 +321,15 @@ export default function UpgradeModal({ user, onClose }: UpgradeModalProps) {
                     href={plan.ctaHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`block w-full py-3 px-6 rounded-xl text-white font-bold text-center shadow-lg hover:shadow-xl transition-all mb-1 ${
+                    className={`block w-full py-3 px-6 rounded-xl text-white font-bold text-center shadow-lg transition-all mb-1 ${
                       plan.esRecomendado
-                        ? 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700'
-                        : 'bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900'
+                        ? 'btn-primary'
+                        : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
                     }`}
                   >
                     Elegir {plan.label}
                   </a>
-                  <p className="text-xs text-gray-500 mb-4 text-center">
+                  <p className="text-xs text-slate-500 mb-4 text-center">
                     {whatsappNumber
                       ? 'Te contactaremos por WhatsApp'
                       : 'Te contactaremos por correo'}
@@ -338,25 +338,25 @@ export default function UpgradeModal({ user, onClose }: UpgradeModalProps) {
               )}
 
               {/* Features */}
-              <ul className="space-y-3 flex-1 border-t border-gray-100 pt-4">
+              <ul className="space-y-3 flex-1 border-t border-slate-800 pt-4">
                 {ALL_FEATURE_KEYS.map((key) => {
                   const val = plan.features[key];
                   return (
                     <li key={key} className="flex items-start gap-2 text-sm">
                       {key === 'clienteLimit' ? (
-                        <span className="text-gray-700 font-medium">
-                          <Check size={18} className="text-green-500 mt-0.5 shrink-0 inline mr-1" />
-                          <span className="text-gray-500">{FEATURE_LABELS[key]}:</span>{' '}
+                        <span className="text-slate-200 font-medium">
+                          <Check size={18} className="text-emerald-400 mt-0.5 shrink-0 inline mr-1" />
+                          <span className="text-slate-400">{FEATURE_LABELS[key]}:</span>{' '}
                           {val === Infinity ? 'Ilimitado' : `${val} clientes`}
                         </span>
                       ) : (
                         <>
                           {val ? (
-                            <Check size={18} className="text-green-500 mt-0.5 shrink-0" />
+                            <Check size={18} className="text-emerald-400 mt-0.5 shrink-0" />
                           ) : (
-                            <span className="w-[18px] inline-block text-gray-300 mt-0.5 shrink-0 text-center">—</span>
+                            <span className="w-[18px] inline-block text-slate-600 mt-0.5 shrink-0 text-center">—</span>
                           )}
-                          <span className={val ? 'text-gray-700' : 'text-gray-400'}>
+                          <span className={val ? 'text-slate-200' : 'text-slate-500'}>
                             {FEATURE_LABELS[key]}
                           </span>
                         </>
@@ -370,10 +370,10 @@ export default function UpgradeModal({ user, onClose }: UpgradeModalProps) {
         </div>
 
         {/* Expandable: tabla comparativa completa */}
-        <div className="mt-8 border-t border-gray-200 pt-4">
+        <div className="mt-8 border-t border-slate-800 pt-4">
           <button
             onClick={() => setShowAllFeatures(!showAllFeatures)}
-            className="flex items-center justify-center gap-2 w-full text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+            className="flex items-center justify-center gap-2 w-full text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors"
           >
             {showAllFeatures ? 'Ocultar' : 'Mostrar'} todas las ventajas
             <svg
@@ -390,10 +390,10 @@ export default function UpgradeModal({ user, onClose }: UpgradeModalProps) {
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="py-2 pr-4 text-left font-semibold text-gray-700">Característica</th>
+                  <tr className="border-b border-slate-800">
+                    <th className="py-2.5 pr-4 text-left font-semibold text-slate-300">Característica</th>
                     {ALL_FAMILIAS.map((f) => (
-                      <th key={f} className="py-2 px-3 text-center font-semibold text-gray-600">
+                      <th key={f} className="py-2.5 px-3 text-center font-semibold text-slate-300">
                         {PLAN_LABELS[f] || f}
                       </th>
                     ))}
@@ -404,8 +404,8 @@ export default function UpgradeModal({ user, onClose }: UpgradeModalProps) {
                     const valores = ALL_FAMILIAS.map((f) => PLAN_FEATURES[f][key]);
                     const hayDiff = new Set(valores.map((v) => String(v))).size > 1;
                     return (
-                      <tr key={key} className={`border-b border-gray-100 ${hayDiff ? 'bg-blue-50/50' : ''}`}>
-                        <td className="py-2.5 pr-4 text-gray-700 font-medium whitespace-nowrap">
+                      <tr key={key} className={`border-b border-slate-800/60 ${hayDiff ? 'bg-indigo-950/30' : ''}`}>
+                        <td className="py-2.5 pr-4 text-slate-300 font-medium whitespace-nowrap">
                           {FEATURE_LABELS[key]}
                         </td>
                         {ALL_FAMILIAS.map((f, idx) => {
@@ -415,7 +415,7 @@ export default function UpgradeModal({ user, onClose }: UpgradeModalProps) {
                             <td
                               key={f}
                               className={`py-2.5 px-3 text-center ${
-                                hayDiff && idx >= 1 ? 'font-semibold text-green-700' : 'text-gray-600'
+                                hayDiff && idx >= 1 ? 'font-semibold text-emerald-400' : 'text-slate-400'
                               }`}
                             >
                               {display}
@@ -432,10 +432,10 @@ export default function UpgradeModal({ user, onClose }: UpgradeModalProps) {
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-6 pt-4 border-t border-gray-100">
+        <div className="text-center mt-6 pt-4 border-t border-slate-800">
           <button
             onClick={handleClose}
-            className="text-sm text-gray-400 hover:text-gray-600 transition-colors font-medium"
+            className="text-sm text-slate-500 hover:text-slate-300 transition-colors font-medium"
           >
             Ahora no
           </button>

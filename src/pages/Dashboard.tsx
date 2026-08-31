@@ -12,7 +12,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { Venta } from '../types/venta';
 
-const COLORS = ['#4F46E5', '#3B82F6', '#06B6D4', '#8B5CF6', '#EC4899'];
+const COLORS = ['#6366F1', '#38BDF8', '#A855F7', '#34D399', '#F43F5E'];
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -143,8 +143,8 @@ export default function Dashboard() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
-          <p className="text-gray-600 font-medium">Cargando datos...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mb-4"></div>
+          <p className="text-slate-400 font-medium">Cargando datos...</p>
         </div>
       </div>
     );
@@ -152,12 +152,12 @@ export default function Dashboard() {
 
   if (!permisos.puedeVerDashboardEjecutivo) {
     return (
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-6 animate-fade-in text-slate-100">
         <div className="mb-6">
-          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
             Dashboard
           </h1>
-          <p className="text-gray-600">Panel ejecutivo con métricas y reportes</p>
+          <p className="text-slate-400">Panel ejecutivo con métricas y reportes</p>
         </div>
         <FeatureBlocked
           feature="Dashboard Ejecutivo"
@@ -169,19 +169,19 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in text-slate-100">
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
-          <AlertCircle className="text-red-500 shrink-0" size={20} />
-          <p className="text-sm text-red-700">{error}</p>
+        <div className="bg-rose-950/40 border border-rose-800/60 rounded-xl p-4 flex items-center gap-3 text-rose-300">
+          <AlertCircle className="text-rose-400 shrink-0" size={20} />
+          <p className="text-sm">{error}</p>
         </div>
       )}
       {/* Título */}
       <div className="mb-8">
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
           {isAdmin ? 'Panel de Administración' : 'Dashboard'}
         </h1>
-        <p className="text-gray-600">
+        <p className="text-slate-400">
           {isAdmin ? 'Métricas globales de la plataforma' : 'Resumen de tus ventas y métricas principales'}
         </p>
       </div>
@@ -192,56 +192,56 @@ export default function Dashboard() {
           {/* Usuarios Registrados */}
           <div className="card cursor-default">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-indigo-950/50">
                 <Users className="text-white" size={28} />
               </div>
-              <Users className="text-blue-400" size={24} />
+              <Users className="text-indigo-400" size={24} />
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Usuarios Registrados</p>
-              <p className="text-3xl font-bold text-gray-900">{usuariosCount.toLocaleString()}</p>
+              <p className="text-sm font-medium text-slate-400 uppercase tracking-wide">Usuarios Registrados</p>
+              <p className="text-3xl font-bold text-white">{usuariosCount.toLocaleString()}</p>
             </div>
           </div>
 
           {/* Suscripciones Activas */}
           <div className="card cursor-default">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-950/50">
                 <CreditCard className="text-white" size={28} />
               </div>
               <CreditCard className="text-amber-400" size={24} />
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Suscripciones Activas</p>
-              <p className="text-3xl font-bold text-gray-900">{activeSuscripciones.toLocaleString()}</p>
+              <p className="text-sm font-medium text-slate-400 uppercase tracking-wide">Suscripciones Activas</p>
+              <p className="text-3xl font-bold text-white">{activeSuscripciones.toLocaleString()}</p>
             </div>
           </div>
 
           {/* Ingresos Totales */}
           <div className="card cursor-default">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-950/50">
                 <DollarSign className="text-white" size={28} />
               </div>
               <DollarSign className="text-indigo-400" size={24} />
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Ingresos Totales</p>
-              <p className="text-3xl font-bold text-gray-900">{formatear(totalIngresos)}</p>
+              <p className="text-sm font-medium text-slate-400 uppercase tracking-wide">Ingresos Totales</p>
+              <p className="text-3xl font-bold text-white">{formatear(totalIngresos)}</p>
             </div>
           </div>
 
           {/* Ingresos Este Mes */}
           <div className="card cursor-default">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center shadow-lg">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-950/50">
                 <TrendingUp className="text-white" size={28} />
               </div>
-              <TrendingUp className="text-green-400" size={24} />
+              <TrendingUp className="text-emerald-400" size={24} />
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Ingresos Este Mes</p>
-              <p className="text-3xl font-bold text-gray-900">{formatear(ingresosEsteMes)}</p>
+              <p className="text-sm font-medium text-slate-400 uppercase tracking-wide">Ingresos Este Mes</p>
+              <p className="text-3xl font-bold text-white">{formatear(ingresosEsteMes)}</p>
             </div>
           </div>
         </div>
@@ -250,44 +250,44 @@ export default function Dashboard() {
           {/* Ingresos */}
           <div className="card cursor-default">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-indigo-950/50">
                 <DollarSign className="text-white" size={28} />
               </div>
-              <TrendingUp className="text-green-500" size={24} />
+              <TrendingUp className="text-emerald-400" size={24} />
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Ingresos</p>
-              <p className="text-3xl font-bold text-gray-900">{formatear(totales.ingresos)}</p>
+              <p className="text-sm font-medium text-slate-400 uppercase tracking-wide">Ingresos</p>
+              <p className="text-3xl font-bold text-white">{formatear(totales.ingresos)}</p>
             </div>
           </div>
 
           {/* Egresos */}
           <div className="card cursor-default">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-pink-500 to-red-600 flex items-center justify-center shadow-lg">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center shadow-lg shadow-rose-950/50">
                 <DollarSign className="text-white" size={28} />
               </div>
-              <TrendingDown className="text-red-500" size={24} />
+              <TrendingDown className="text-rose-400" size={24} />
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Egresos</p>
-              <p className="text-3xl font-bold text-gray-900">{formatear(totales.egresos)}</p>
+              <p className="text-sm font-medium text-slate-400 uppercase tracking-wide">Egresos</p>
+              <p className="text-3xl font-bold text-white">{formatear(totales.egresos)}</p>
             </div>
           </div>
 
           {/* Utilidad */}
           <div className="card cursor-default">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center shadow-lg">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-950/50">
                 <TrendingUp className="text-white" size={28} />
               </div>
-              <div className={`text-2xl font-bold ${totales.utilidad >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+              <div className={`text-2xl font-bold ${totales.utilidad >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                 {totales.utilidad >= 0 ? '\u2191' : '\u2193'}
               </div>
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Utilidad</p>
-              <p className={`text-3xl font-bold ${totales.utilidad >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <p className="text-sm font-medium text-slate-400 uppercase tracking-wide">Utilidad</p>
+              <p className={`text-3xl font-bold ${totales.utilidad >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                 {formatear(totales.utilidad)}
               </p>
             </div>
@@ -302,24 +302,33 @@ export default function Dashboard() {
             {/* Gráfico de barras - Top Clientes */}
             <div className="card">
               <div className="flex items-center gap-2 mb-6">
-                <Users className="text-indigo-600" size={24} />
-                <h2 className="text-xl font-bold text-gray-900">{barChartTitle}</h2>
+                <Users className="text-indigo-400" size={24} />
+                <h2 className="text-xl font-bold text-white">{barChartTitle}</h2>
               </div>
               {barChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={barChartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.6} />
+                    <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 12 }} stroke="#475569" />
+                    <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} stroke="#475569" />
                     <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#0f172a',
+                        borderColor: '#334155',
+                        borderRadius: '0.75rem',
+                        color: '#f8fafc',
+                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
+                      }}
+                      itemStyle={{ color: '#818cf8', fontWeight: 600 }}
+                      labelStyle={{ color: '#e2e8f0', fontWeight: 700, marginBottom: '0.25rem' }}
                       formatter={(value: any) => [formatear(value), 'Ventas']}
                       labelFormatter={(label: any, payload: any) => payload?.[0]?.payload?.fullName || label}
                     />
-                    <Bar dataKey="ventas" fill="#4F46E5" radius={[8, 8, 0, 0]} />
+                    <Bar dataKey="ventas" fill="#6366f1" radius={[8, 8, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="flex items-center justify-center h-[300px] text-gray-500">
+                <div className="flex items-center justify-center h-[300px] text-slate-500">
                   <p>No hay datos disponibles</p>
                 </div>
               )}
@@ -328,8 +337,8 @@ export default function Dashboard() {
             {/* Gráfico de pie - Top Plataformas */}
             <div className="card">
               <div className="flex items-center gap-2 mb-6">
-                <Tv className="text-purple-600" size={24} />
-                <h2 className="text-xl font-bold text-gray-900">Top 5 Plataformas</h2>
+                <Tv className="text-indigo-400" size={24} />
+                <h2 className="text-xl font-bold text-white">Top 5 Plataformas</h2>
               </div>
               {plataformasChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
@@ -348,11 +357,21 @@ export default function Dashboard() {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: any) => [`${value} pantallas`, 'Cantidad']} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#0f172a',
+                        borderColor: '#334155',
+                        borderRadius: '0.75rem',
+                        color: '#f8fafc',
+                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
+                      }}
+                      itemStyle={{ color: '#818cf8', fontWeight: 600 }}
+                      formatter={(value: any) => [`${value} pantallas`, 'Cantidad']}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="flex items-center justify-center h-[300px] text-gray-500">
+                <div className="flex items-center justify-center h-[300px] text-slate-500">
                   <p>No hay datos disponibles</p>
                 </div>
               )}
@@ -364,30 +383,30 @@ export default function Dashboard() {
             {/* Tabla de clientes */}
             <div className="card overflow-hidden">
               <div className="flex items-center gap-2 mb-4">
-                <Users className="text-indigo-600" size={20} />
-                <h3 className="text-lg font-semibold text-gray-900">Clientes Destacados</h3>
+                <Users className="text-indigo-400" size={20} />
+                <h3 className="text-lg font-semibold text-white">Clientes Destacados</h3>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white">
-                      <th className="px-4 py-3 text-left text-sm font-semibold rounded-tl-xl">Cliente</th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold rounded-tr-xl">Ventas</th>
+                    <tr className="bg-slate-900 border-b border-slate-800 text-slate-300 uppercase tracking-wider text-xs">
+                      <th className="px-4 py-3 text-left font-semibold rounded-tl-xl">Cliente</th>
+                      <th className="px-4 py-3 text-right font-semibold rounded-tr-xl">Ventas</th>
                     </tr>
                   </thead>
                   <tbody>
                     {topClientes.length === 0 ? (
                       <tr>
-                        <td colSpan={2} className="text-center py-8 text-gray-500">No hay datos</td>
+                        <td colSpan={2} className="text-center py-8 text-slate-500">No hay datos</td>
                       </tr>
                     ) : (
-                      topClientes.map((cliente, index) => (
+                      topClientes.map((cliente) => (
                         <tr
                           key={cliente.nombre}
-                          className="border-b border-gray-100 hover:bg-indigo-50/50 transition-colors"
+                          className="border-b border-slate-800/60 hover:bg-slate-800/40 transition-colors"
                         >
-                          <td className="px-4 py-3 font-medium text-gray-700">{cliente.nombre}</td>
-                          <td className="px-4 py-3 text-right font-semibold text-indigo-600">
+                          <td className="px-4 py-3 font-medium text-slate-200">{cliente.nombre}</td>
+                          <td className="px-4 py-3 text-right font-semibold text-indigo-400">
                             {formatear(cliente.ventas)}
                           </td>
                         </tr>
@@ -401,30 +420,30 @@ export default function Dashboard() {
             {/* Tabla de plataformas */}
             <div className="card overflow-hidden">
               <div className="flex items-center gap-2 mb-4">
-                <Tv className="text-purple-600" size={20} />
-                <h3 className="text-lg font-semibold text-gray-900">Plataformas Populares</h3>
+                <Tv className="text-indigo-400" size={20} />
+                <h3 className="text-lg font-semibold text-white">Plataformas Populares</h3>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white">
-                      <th className="px-4 py-3 text-left text-sm font-semibold rounded-tl-xl">Plataforma</th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold rounded-tr-xl">Pantallas</th>
+                    <tr className="bg-slate-900 border-b border-slate-800 text-slate-300 uppercase tracking-wider text-xs">
+                      <th className="px-4 py-3 text-left font-semibold rounded-tl-xl">Plataforma</th>
+                      <th className="px-4 py-3 text-right font-semibold rounded-tr-xl">Pantallas</th>
                     </tr>
                   </thead>
                   <tbody>
                     {topPlataformas.length === 0 ? (
                       <tr>
-                        <td colSpan={2} className="text-center py-8 text-gray-500">No hay datos</td>
+                        <td colSpan={2} className="text-center py-8 text-slate-500">No hay datos</td>
                       </tr>
                     ) : (
-                      topPlataformas.map((plataforma, index) => (
+                      topPlataformas.map((plataforma) => (
                         <tr
                           key={plataforma.plataforma}
-                          className="border-b border-gray-100 hover:bg-purple-50/50 transition-colors"
+                          className="border-b border-slate-800/60 hover:bg-slate-800/40 transition-colors"
                         >
-                          <td className="px-4 py-3 font-medium text-gray-700">{plataforma.plataforma}</td>
-                          <td className="px-4 py-3 text-right font-semibold text-purple-600">
+                          <td className="px-4 py-3 font-medium text-slate-200">{plataforma.plataforma}</td>
+                          <td className="px-4 py-3 text-right font-semibold text-cyan-400">
                             {plataforma.pantallas.toLocaleString()}
                           </td>
                         </tr>

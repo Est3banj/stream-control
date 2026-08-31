@@ -141,47 +141,47 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="card max-w-2xl w-full animate-scale-in max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full p-6 text-slate-100 animate-scale-in max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6 pb-3 border-b border-slate-800">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-2xl font-bold text-white">
               {isEdit ? 'Editar Plan' : 'Crear Plan'}
             </h2>
-            <p className="text-gray-600 mt-1">
+            <p className="text-slate-400 mt-1 text-sm">
               {isEdit ? 'Actualiza la información del plan' : 'Define un nuevo plan de suscripción'}
             </p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-            <X size={24} className="text-gray-600" />
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors">
+            <X size={24} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Nombre <span className="text-red-500">*</span>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">
+              Nombre <span className="text-rose-400">*</span>
             </label>
             <input
               type="text"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               placeholder="Ej: Premium"
-              className="w-full"
+              className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
               maxLength={100}
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Descripción <span className="text-red-500">*</span>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">
+              Descripción <span className="text-rose-400">*</span>
             </label>
             <textarea
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
               placeholder="Describe el plan..."
-              className="w-full"
+              className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
               rows={3}
               maxLength={500}
               required
@@ -189,19 +189,19 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
           </div>
 
           <div className="space-y-3">
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label className="block text-sm font-semibold text-slate-300 mb-1">
               Precios por período
             </label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Mensual *</label>
+                <label className="block text-xs text-slate-400 mb-1">Mensual *</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium">$</span>
                   <input
                     type="number"
                     value={precio}
                     onChange={(e) => setPrecio(e.target.value)}
-                    className="w-full pl-7"
+                    className="w-full pl-7 bg-slate-900/80 border border-slate-700/80 text-slate-100"
                     min="0"
                     step="0.01"
                     required
@@ -218,14 +218,14 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
                 const sugerido = Number(precio) * meses;
                 return (
                   <div key={key}>
-                    <label className="block text-xs text-gray-500 mb-1">{label}</label>
+                    <label className="block text-xs text-slate-400 mb-1">{label}</label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">{simbolo}</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium">{simbolo}</span>
                       <input
                         type="number"
                         value={val}
                         onChange={(e) => setter(e.target.value)}
-                        className="w-full pl-7"
+                        className="w-full pl-7 bg-slate-900/80 border border-slate-700/80 text-slate-100"
                         min="0"
                         step="0.01"
                         placeholder={sugerido > 0 ? `~${formatearDesdeBase(sugerido)}` : ''}
@@ -235,22 +235,22 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
                 );
               })}
             </div>
-            <p className="text-xs text-gray-400 flex items-center gap-1">
-              <Info size={12} />
+            <p className="text-xs text-slate-400 flex items-center gap-1">
+              <Info size={12} className="text-indigo-400 shrink-0" />
               Dejá vacío para usar el valor sugerido. El precio mensual es obligatorio.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Duración (días) <span className="text-red-500">*</span>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">
+                Duración (días) <span className="text-rose-400">*</span>
               </label>
               <input
                 type="number"
                 value={duracionDias}
                 onChange={(e) => setDuracionDias(e.target.value)}
-                className="w-full"
+                className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
                 min="1"
                 step="1"
                 required
@@ -259,7 +259,7 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-slate-300 mb-2">
               Características
             </label>
             <div className="space-y-2">
@@ -273,13 +273,13 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
                       updated[index] = e.target.value;
                       setFeatures(updated);
                     }}
-                    className="flex-1"
+                    className="flex-1 bg-slate-900/80 border border-slate-700/80 text-slate-100"
                     maxLength={200}
                   />
                   <button
                     type="button"
                     onClick={() => removeFeature(index)}
-                    className="p-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
+                    className="p-2 rounded-lg bg-rose-950/40 text-rose-400 border border-rose-800/40 hover:bg-rose-900/60 transition-colors"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -292,7 +292,7 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
                   onChange={(e) => setNewFeature(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Agregar característica..."
-                  className="flex-1"
+                  className="flex-1 bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
                   maxLength={200}
                   disabled={features.length >= 20}
                 />
@@ -300,21 +300,21 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
                   type="button"
                   onClick={addFeature}
                   disabled={features.length >= 20}
-                  className="p-2 rounded-lg bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-2 rounded-lg bg-indigo-950/50 text-indigo-400 border border-indigo-800/40 hover:bg-indigo-900/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Plus size={16} />
                 </button>
               </div>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-slate-400">
                 {features.length}/20 características
               </p>
             </div>
           </div>
 
-          <div className="flex items-center justify-between bg-gray-50 rounded-xl px-5 py-4">
+          <div className="flex items-center justify-between bg-slate-950/60 border border-slate-800 rounded-xl px-5 py-4">
             <div>
-              <p className="font-medium text-gray-700">Plan activo</p>
-              <p className="text-sm text-gray-400">Los planes inactivos no aparecen en los selectores</p>
+              <p className="font-medium text-slate-200">Plan activo</p>
+              <p className="text-xs text-slate-400">Los planes inactivos no aparecen en los selectores</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -324,7 +324,7 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
                 className="sr-only peer"
                 aria-label="Plan activo"
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-indigo-500 peer-checked:to-indigo-600"></div>
+              <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-700 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-indigo-600 peer-checked:to-indigo-500"></div>
             </label>
           </div>
 
@@ -332,7 +332,7 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
             <button type="button" onClick={onClose} className="btn-secondary flex-1">
               Cancelar
             </button>
-            <button type="submit" disabled={submitting} className="btn-primary flex-1">
+            <button type="submit" disabled={submitting} className="btn-primary flex-1 shadow-lg shadow-indigo-950/50">
               {submitting ? 'Guardando...' : isEdit ? 'Guardar Cambios' : 'Crear Plan'}
             </button>
           </div>

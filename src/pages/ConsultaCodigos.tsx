@@ -67,12 +67,12 @@ export default function ConsultaCodigos() {
 
   if (!permisos.puedeGenerarTokens) {
     return (
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-6 animate-fade-in text-slate-100">
         <div className="mb-6">
-          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-indigo-700">
+          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
             Consulta de Códigos
           </h1>
-          <p className="text-gray-600">Consultá códigos de verificación al instante</p>
+          <p className="text-slate-400">Consultá códigos de verificación al instante</p>
         </div>
         <FeatureBlocked
           feature="Consulta de Códigos"
@@ -84,18 +84,18 @@ export default function ConsultaCodigos() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in text-slate-100">
       <div className="mb-6">
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-indigo-700">
+        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
           Consulta de Códigos
         </h1>
-        <p className="text-gray-600">Consultá códigos de verificación al instante</p>
+        <p className="text-slate-400">Consultá códigos de verificación al instante</p>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
+      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-xl p-6 space-y-6 text-slate-100">
         {/* Selector de cuenta */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Seleccionar cuenta</label>
+          <label className="block text-sm font-semibold text-slate-300 mb-2">Seleccionar cuenta</label>
           <select
             value={cuentaId}
             onChange={e => {
@@ -103,7 +103,7 @@ export default function ConsultaCodigos() {
               setSelectedCaso('');
               setEstado('idle');
             }}
-            className="w-full"
+            className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
           >
             <option value="">Seleccioná una cuenta...</option>
             {cuentasConIMAP.map(c => (
@@ -115,17 +115,17 @@ export default function ConsultaCodigos() {
         </div>
 
         {cuentaId && (
-          <div className="flex items-center gap-3 p-3 bg-indigo-50 rounded-xl border border-indigo-100">
-            <Monitor size={18} className="text-indigo-500" />
-            <span className="text-sm font-semibold text-indigo-900">{cuentaSeleccionada?.proveedor}</span>
-            <span className="text-xs text-indigo-500">—</span>
-            <span className="text-sm text-indigo-700">{cuentaSeleccionada?.correoCuenta}</span>
+          <div className="flex items-center gap-3 p-4 bg-slate-950/60 rounded-xl border border-slate-800">
+            <Monitor size={18} className="text-indigo-400" />
+            <span className="text-sm font-semibold text-white">{cuentaSeleccionada?.proveedor}</span>
+            <span className="text-xs text-slate-500">—</span>
+            <span className="text-sm text-slate-300 font-mono">{cuentaSeleccionada?.correoCuenta}</span>
           </div>
         )}
 
         {cuentaId && (
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Tipo de código</h2>
+            <h2 className="text-lg font-semibold text-white mb-4">Tipo de código</h2>
 
             {casosDisponibles.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
@@ -136,8 +136,8 @@ export default function ConsultaCodigos() {
                     onClick={() => setSelectedCaso(caso.value)}
                     className={`p-3 rounded-xl text-left transition-all border text-sm ${
                       selectedCaso === caso.value
-                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-semibold'
-                        : 'border-gray-200 bg-white text-gray-700 hover:border-indigo-300'
+                        ? 'border-indigo-500 bg-indigo-950/50 text-cyan-300 font-semibold shadow-md shadow-indigo-950/50'
+                        : 'border-slate-800 bg-slate-950/40 text-slate-300 hover:border-slate-700'
                     }`}
                   >
                     {caso.label}
@@ -145,7 +145,7 @@ export default function ConsultaCodigos() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-500 italic mb-6">
+              <p className="text-sm text-slate-500 italic mb-6">
                 No hay códigos automáticos configurados para este proveedor
               </p>
             )}
@@ -154,7 +154,7 @@ export default function ConsultaCodigos() {
               type="button"
               onClick={consultarCodigo}
               disabled={!selectedCaso || estado === 'consulting'}
-              className="w-full py-3 rounded-xl font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg hover:from-indigo-700 hover:to-indigo-800"
+              className="btn-primary w-full py-3.5 rounded-xl font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-indigo-950/50"
             >
               {estado === 'consulting' ? (
                 <span className="flex items-center justify-center gap-2">
@@ -165,15 +165,15 @@ export default function ConsultaCodigos() {
             </button>
 
             {estado === 'result' && codigo && codigoTipo === 'link' && (
-              <div className="mt-6 bg-gradient-to-r from-indigo-50 to-violet-50 rounded-xl p-6 border border-indigo-100">
+              <div className="mt-6 bg-indigo-950/40 rounded-xl p-6 border border-indigo-800/40">
                 <div className="text-center">
-                  <p className="text-sm text-gray-500 mb-3">Enlace de código temporal</p>
-                  <div className="bg-white rounded-lg p-3 border border-indigo-100 break-all">
+                  <p className="text-sm text-slate-400 mb-3">Enlace de código temporal</p>
+                  <div className="bg-slate-950/80 rounded-lg p-3 border border-slate-800 break-all">
                     <a
                       href={codigo}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-indigo-600 hover:underline text-sm font-mono"
+                      className="text-cyan-300 hover:underline text-sm font-mono"
                     >
                       {codigo}
                     </a>
@@ -184,7 +184,7 @@ export default function ConsultaCodigos() {
                     href={codigo}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors"
+                    className="btn-primary flex-1 inline-flex items-center justify-center gap-2 text-sm"
                   >
                     <ExternalLink size={16} />
                     Abrir enlace
@@ -192,7 +192,7 @@ export default function ConsultaCodigos() {
                   <button
                     type="button"
                     onClick={() => navigator.clipboard.writeText(codigo).then(() => toast.success('Enlace copiado'))}
-                    className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-white text-indigo-600 text-sm font-semibold border border-indigo-200 hover:bg-indigo-50 transition-colors"
+                    className="btn-secondary flex-1 inline-flex items-center justify-center gap-2 text-sm"
                   >
                     <Copy size={16} />
                     Copiar enlace
@@ -202,15 +202,15 @@ export default function ConsultaCodigos() {
             )}
 
             {estado === 'result' && codigo && codigoTipo !== 'link' && (
-              <div className="mt-6 text-center bg-gradient-to-r from-indigo-50 to-violet-50 rounded-xl p-6 border border-indigo-100">
-                <p className="text-sm text-gray-500 mb-2">Código de verificación</p>
-                <p className="text-4xl sm:text-5xl font-bold tracking-widest text-indigo-700 select-all font-mono">
+              <div className="mt-6 text-center bg-indigo-950/40 rounded-xl p-6 border border-indigo-800/40">
+                <p className="text-sm text-slate-400 mb-2">Código de verificación</p>
+                <p className="text-4xl sm:text-5xl font-bold tracking-widest text-cyan-300 select-all font-mono">
                   {codigo}
                 </p>
                 <button
                   type="button"
                   onClick={() => navigator.clipboard.writeText(codigo).then(() => toast.success('Copiado'))}
-                  className="mt-4 inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors"
+                  className="btn-primary mt-4 inline-flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm"
                 >
                   <Copy size={16} />
                   Copiar código
@@ -219,9 +219,9 @@ export default function ConsultaCodigos() {
             )}
 
             {estado === 'error' && (
-              <div className="mt-6 bg-red-50 border border-red-200 rounded-xl p-4 text-center">
-                <AlertCircle className="text-red-500 mx-auto mb-2" size={24} />
-                <p className="text-red-700 text-sm">{errorMsg}</p>
+              <div className="mt-6 bg-rose-950/40 border border-rose-800/60 rounded-xl p-4 text-center">
+                <AlertCircle className="text-rose-400 mx-auto mb-2" size={24} />
+                <p className="text-rose-300 text-sm">{errorMsg}</p>
               </div>
             )}
           </div>

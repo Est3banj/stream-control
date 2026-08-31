@@ -293,12 +293,12 @@ export default function GestionCuentas() {
 
   if (!permisos.puedeGestionarCuentas) {
     return (
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-6 animate-fade-in text-slate-100">
         <div className="mb-6">
-          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-indigo-700">
+          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
             Gestión de Cuentas
           </h1>
-          <p className="text-gray-600">Administrá tus cuentas de streaming</p>
+          <p className="text-slate-400">Administrá tus cuentas de streaming</p>
         </div>
         <FeatureBlocked
           feature="Gestión de Cuentas"
@@ -311,30 +311,30 @@ export default function GestionCuentas() {
 
   if (loading) {
     return (
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-6 animate-fade-in text-slate-100">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <div className="h-10 w-64 bg-gray-200 rounded-lg animate-pulse mb-2" />
-            <div className="h-4 w-48 bg-gray-200 rounded animate-pulse" />
+            <div className="h-10 w-64 bg-slate-800 rounded-lg animate-pulse mb-2" />
+            <div className="h-4 w-48 bg-slate-800 rounded animate-pulse" />
           </div>
-          <div className="h-10 w-36 bg-gray-200 rounded-xl animate-pulse" />
+          <div className="h-10 w-36 bg-slate-800 rounded-xl animate-pulse" />
         </div>
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-slate-900/80 rounded-2xl shadow-xl border border-slate-800 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-indigo-600">
+                <tr className="bg-slate-900 border-b border-slate-800">
                   {['Proveedor', 'Correo', 'Perfiles', 'Costo', 'Estado', 'Acciones'].map(h => (
-                    <th key={h} className="px-4 py-4 text-left text-sm font-semibold text-white">{h}</th>
+                    <th key={h} className="px-4 py-4 text-left text-sm font-semibold text-slate-300">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {[1, 2, 3, 4, 5].map(i => (
-                  <tr key={i} className="border-b border-gray-100">
+                  <tr key={i} className="border-b border-slate-800/60">
                     {[1, 2, 3, 4, 5, 6].map(j => (
                       <td key={j} className="px-4 py-4">
-                        <div className="h-4 bg-gray-200 rounded animate-pulse" style={{ width: j === 3 ? '3rem' : j === 4 ? '5rem' : '7rem' }} />
+                        <div className="h-4 bg-slate-800 rounded animate-pulse" style={{ width: j === 3 ? '3rem' : j === 4 ? '5rem' : '7rem' }} />
                       </td>
                     ))}
                   </tr>
@@ -348,21 +348,21 @@ export default function GestionCuentas() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in text-slate-100">
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
-          <AlertCircle className="text-red-500 shrink-0" size={20} />
-          <p className="text-sm text-red-700">{error}</p>
+        <div className="bg-rose-950/40 border border-rose-800/60 rounded-xl p-4 flex items-center gap-3 text-rose-300">
+          <AlertCircle className="text-rose-400 shrink-0" size={20} />
+          <p className="text-sm">{error}</p>
         </div>
       )}
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-indigo-700">
+          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
             Gestión de Cuentas
           </h1>
-          <p className="text-gray-600">Administrá tus cuentas de streaming</p>
+          <p className="text-slate-400">Administrá tus cuentas de streaming</p>
         </div>
         <button
           onClick={() => setMostrarRegistrar(true)}
@@ -373,13 +373,13 @@ export default function GestionCuentas() {
       </div>
 
       {/* Controles */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-xl p-6 text-slate-100">
         <div className="flex flex-col md:flex-row gap-4 items-center">
           {/* Filtro por proveedor */}
           <select
             value={filtroProveedor}
             onChange={(e) => setFiltroProveedor(e.target.value)}
-            className="w-full md:w-48"
+            className="w-full md:w-48 bg-slate-900/80 border border-slate-700/80 text-slate-100"
           >
             {PROVEEDORES.map(p => (
               <option key={p} value={p}>{p === 'Todos' ? 'Todos los proveedores' : p}</option>
@@ -393,8 +393,8 @@ export default function GestionCuentas() {
                 key={tipo}
                 onClick={() => setFiltroEstado(tipo)}
                 className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${filtroEstado === tipo
-                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg'
-                    : 'bg-white/80 text-gray-700 hover:bg-white'
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-950/50'
+                    : 'bg-slate-900/80 text-slate-300 border border-slate-800 hover:bg-slate-800 hover:text-white'
                   }`}
               >
                 {tipo === 'todas' ? 'Todas' : tipo.charAt(0).toUpperCase() + tipo.slice(1)}
@@ -404,13 +404,13 @@ export default function GestionCuentas() {
 
           {/* Búsqueda */}
           <div className="flex-1 relative max-w-md w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
             <input
               type="text"
               placeholder="Buscar por proveedor o correo..."
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              className="w-full pl-10 pr-4"
+              className="w-full pl-10 pr-4 bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
             />
           </div>
 
@@ -429,62 +429,62 @@ export default function GestionCuentas() {
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="card cursor-default">
           <div className="flex items-center justify-between mb-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-indigo-950/50">
               <Film className="text-white" size={24} />
             </div>
             <Film className="text-indigo-400" size={20} />
           </div>
           <div className="space-y-1">
-            <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Total Cuentas</p>
-            <p className="text-2xl font-bold text-gray-900">{todasLasCuentas.length.toLocaleString()}</p>
+            <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Total Cuentas</p>
+            <p className="text-2xl font-bold text-white">{todasLasCuentas.length.toLocaleString()}</p>
           </div>
         </div>
         <div className="card cursor-default">
           <div className="flex items-center justify-between mb-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center shadow-lg">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-950/50">
               <CheckCircle className="text-white" size={24} />
             </div>
-            <CheckCircle className="text-green-400" size={20} />
+            <CheckCircle className="text-emerald-400" size={20} />
           </div>
           <div className="space-y-1">
-            <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Disponibles</p>
-            <p className="text-2xl font-bold text-gray-900">{cuentasDisponibles.toLocaleString()}</p>
+            <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Disponibles</p>
+            <p className="text-2xl font-bold text-white">{cuentasDisponibles.toLocaleString()}</p>
           </div>
         </div>
         <div className="card cursor-default">
           <div className="flex items-center justify-between mb-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-950/50">
               <Users className="text-white" size={24} />
             </div>
-            <Users className="text-blue-400" size={20} />
+            <Users className="text-indigo-400" size={20} />
           </div>
           <div className="space-y-1">
-            <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Asignadas</p>
-            <p className="text-2xl font-bold text-gray-900">{cuentasAsignadas.toLocaleString()}</p>
+            <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Asignadas</p>
+            <p className="text-2xl font-bold text-white">{cuentasAsignadas.toLocaleString()}</p>
           </div>
         </div>
         <div className="card cursor-default">
           <div className="flex items-center justify-between mb-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-pink-600 flex items-center justify-center shadow-lg">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center shadow-lg shadow-rose-950/50">
               <AlertTriangle className="text-white" size={24} />
             </div>
-            <AlertTriangle className="text-red-400" size={20} />
+            <AlertTriangle className="text-rose-400" size={20} />
           </div>
           <div className="space-y-1">
-            <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Expiradas</p>
-            <p className="text-2xl font-bold text-gray-900">{cuentasExpiradas.toLocaleString()}</p>
+            <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Expiradas</p>
+            <p className="text-2xl font-bold text-white">{cuentasExpiradas.toLocaleString()}</p>
           </div>
         </div>
         <div className="card cursor-default">
           <div className="flex items-center justify-between mb-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-600 flex items-center justify-center shadow-lg">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-950/50">
               <AlertTriangle className="text-white" size={24} />
             </div>
-            <AlertTriangle className="text-yellow-400" size={20} />
+            <AlertTriangle className="text-amber-400" size={20} />
           </div>
           <div className="space-y-1">
-            <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Próximas a vencer</p>
-            <p className="text-2xl font-bold text-gray-900">
+            <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Próximas a vencer</p>
+            <p className="text-2xl font-bold text-white">
               {todasLasCuentas.filter(c => c.fechaVencimiento && c.diasRestantes !== null && c.diasRestantes! > 0 && c.diasRestantes! <= 3).length}
             </p>
           </div>
@@ -493,12 +493,12 @@ export default function GestionCuentas() {
 
       {/* Por proveedor */}
       {Object.keys(resumenProveedores).length > 0 && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4">
           <div className="flex flex-wrap gap-2">
             {Object.entries(resumenProveedores).sort().map(([prov, count]) => (
               <span
                 key={prov}
-                className="px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-700 text-sm font-medium border border-indigo-100"
+                className="px-3 py-1.5 rounded-full bg-indigo-950/50 text-cyan-300 text-sm font-medium border border-indigo-800/40"
               >
                 {prov}: {count}
               </span>
@@ -508,46 +508,46 @@ export default function GestionCuentas() {
       )}
 
       {/* Tabla */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-slate-900/80 rounded-2xl shadow-xl border border-slate-800 overflow-hidden text-slate-100">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-indigo-600 text-white">
-                <th className="px-4 py-4 text-left text-sm font-semibold">Proveedor</th>
-                <th className="px-4 py-4 text-left text-sm font-semibold">Correo</th>
-                <th className="px-4 py-4 text-center text-sm font-semibold">Perfiles</th>
-                <th className="px-4 py-4 text-right text-sm font-semibold">Costo</th>
-                <th className="px-4 py-4 text-center text-sm font-semibold">Estado</th>
-                <th className="px-4 py-4 text-center text-sm font-semibold">IMAP</th>
-                <th className="px-4 py-4 text-center text-sm font-semibold">Días Restantes</th>
-                <th className="px-4 py-4 text-center text-sm font-semibold">Acciones</th>
+              <tr className="bg-slate-900 border-b border-slate-800 text-slate-300 uppercase tracking-wider text-xs">
+                <th className="px-4 py-4 text-left font-semibold">Proveedor</th>
+                <th className="px-4 py-4 text-left font-semibold">Correo</th>
+                <th className="px-4 py-4 text-center font-semibold">Perfiles</th>
+                <th className="px-4 py-4 text-right font-semibold">Costo</th>
+                <th className="px-4 py-4 text-center font-semibold">Estado</th>
+                <th className="px-4 py-4 text-center font-semibold">IMAP</th>
+                <th className="px-4 py-4 text-center font-semibold">Días Restantes</th>
+                <th className="px-4 py-4 text-center font-semibold">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {cuentasFiltradas.length > 0 ? (
                 cuentasPaginadas.map((c: Cuenta) => {
-                  const badge = ESTADO_BADGES[c.estado] || { label: c.estado, class: 'bg-gray-100 text-gray-700' };
+                  const badge = ESTADO_BADGES[c.estado] || { label: c.estado, class: 'bg-slate-800 text-slate-300' };
                   const perfiles = Array.isArray(c.perfiles) ? c.perfiles : [];
                   const perfilesDisp = perfiles.filter(p => p.estado === 'disponible').length;
                   return (
                     <tr
                       key={c.id}
-                      className="border-b border-gray-100 hover:bg-indigo-50/30 transition-colors"
+                      className="border-b border-slate-800/60 hover:bg-slate-800/40 transition-colors"
                     >
                       <td className="px-4 py-4">
-                        <span className="font-semibold text-gray-900">{c.proveedor}</span>
+                        <span className="font-semibold text-white">{c.proveedor}</span>
                         {c.nombreProveedor && (
-                          <div className="text-xs text-indigo-600 font-medium">Mayorista: {c.nombreProveedor}</div>
+                          <div className="text-xs text-indigo-400 font-medium">Mayorista: {c.nombreProveedor}</div>
                         )}
-                        <div className="text-xs text-gray-500 mt-0.5">{c.tipoVenta === 'completa' ? 'Completa' : 'Por perfiles'}</div>
+                        <div className="text-xs text-slate-400 mt-0.5">{c.tipoVenta === 'completa' ? 'Completa' : 'Por perfiles'}</div>
                       </td>
                       <td className="px-4 py-4">
-                        <span className="text-gray-700 text-sm font-mono" title={c.correoCuenta}>
+                        <span className="text-slate-300 text-sm font-mono" title={c.correoCuenta}>
                           {maskEmail(c.correoCuenta)}
                         </span>
                       </td>
                       <td className="px-4 py-4 text-center">
-                        <span className="text-gray-700 font-medium">
+                        <span className="text-slate-200 font-medium">
                           {c.tipoVenta === 'completa' ? (
                             '—'
                           ) : (
@@ -556,20 +556,26 @@ export default function GestionCuentas() {
                         </span>
                       </td>
                       <td className="px-4 py-4 text-right">
-                        <span className="font-semibold text-gray-900">
+                        <span className="font-semibold text-white">
                           {formatear(c.costo)}
                         </span>
                       </td>
                       <td className="px-4 py-4 text-center">
-                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${badge.class}`}>
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+                          c.estado === 'disponible'
+                            ? 'bg-emerald-950/50 text-emerald-400 border-emerald-800/40'
+                            : c.estado === 'asignada'
+                              ? 'bg-indigo-950/50 text-indigo-300 border border-indigo-800/40'
+                              : 'bg-rose-950/50 text-rose-400 border border-rose-800/40'
+                        }`}>
                           {badge.label}
                         </span>
                       </td>
                       <td className="px-4 py-4 text-center">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${
                           c.imapConfigurado
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-gray-100 text-gray-500'
+                            ? 'bg-emerald-950/50 text-emerald-400 border-emerald-800/40'
+                            : 'bg-slate-800 text-slate-500 border border-slate-700'
                         }`}>
                           IMAP
                         </span>
@@ -577,12 +583,12 @@ export default function GestionCuentas() {
                       <td className="px-4 py-4 text-center">
                         {c.fechaVencimiento ? (
                           <span
-                            className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                            className={`inline-block px-3 py-1 rounded-full text-xs font-semibold border ${
                               c.diasRestantes !== null && c.diasRestantes! > 7
-                                ? 'bg-green-100 text-green-700'
+                                ? 'bg-emerald-950/50 text-emerald-400 border-emerald-800/40'
                                 : c.diasRestantes !== null && c.diasRestantes! > 0
-                                  ? 'bg-yellow-100 text-yellow-700'
-                                  : 'bg-red-100 text-red-700'
+                                  ? 'bg-amber-950/50 text-amber-400 border-amber-800/40'
+                                  : 'bg-rose-950/50 text-rose-400 border-rose-800/40'
                             }`}
                           >
                             {c.diasRestantes !== null && c.diasRestantes! > 0
@@ -590,7 +596,7 @@ export default function GestionCuentas() {
                               : 'Vencido'}
                           </span>
                         ) : (
-                          <span className="text-gray-400 text-sm">—</span>
+                          <span className="text-slate-500 text-sm">—</span>
                         )}
                       </td>
                       <td className="px-4 py-4">
@@ -656,8 +662,8 @@ export default function GestionCuentas() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={8} className="text-center py-12 text-gray-500">
-                    <Film size={48} className="mx-auto mb-3 text-gray-300" />
+                  <td colSpan={8} className="text-center py-12 text-slate-500">
+                    <Film size={48} className="mx-auto mb-3 text-slate-700" />
                     <p className="font-medium">No se encontraron cuentas</p>
                   </td>
                 </tr>
@@ -681,18 +687,18 @@ export default function GestionCuentas() {
 
       {/* Modal: Registrar Cuenta */}
       {mostrarRegistrar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="card max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 text-slate-100 animate-scale-in">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Registrar Cuenta</h2>
-                <p className="text-gray-600 mt-1">Agregá una nueva cuenta de streaming</p>
+                <h2 className="text-2xl font-bold text-white">Registrar Cuenta</h2>
+                <p className="text-slate-400 mt-1">Agregá una nueva cuenta de streaming</p>
               </div>
               <button
                 onClick={() => setMostrarRegistrar(false)}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               >
-                <X size={24} className="text-gray-600" />
+                <X size={24} />
               </button>
             </div>
             <CuentaForm
@@ -706,21 +712,21 @@ export default function GestionCuentas() {
 
       {/* Modal: Ver Cuenta */}
       {mostrarVer && cuentaSeleccionada && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="card max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 text-slate-100 animate-scale-in">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">{cuentaSeleccionada.proveedor}</h2>
-                <p className="text-gray-600 mt-1">Detalle de la cuenta</p>
+                <h2 className="text-2xl font-bold text-white">{cuentaSeleccionada.proveedor}</h2>
+                <p className="text-slate-400 mt-1">Detalle de la cuenta</p>
               </div>
               <button
                 onClick={() => {
                   setMostrarVer(false);
                   setCuentaSeleccionada(null);
                 }}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               >
-                <X size={24} className="text-gray-600" />
+                <X size={24} />
               </button>
             </div>
             <CuentaDetail cuenta={cuentaSeleccionada} />
@@ -730,21 +736,21 @@ export default function GestionCuentas() {
 
       {/* Modal: Editar Cuenta */}
       {mostrarEditar && cuentaSeleccionada && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="card max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 text-slate-100 animate-scale-in">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Editar Cuenta</h2>
-                <p className="text-gray-600 mt-1">{cuentaSeleccionada.proveedor} — {maskEmail(cuentaSeleccionada.correoCuenta)}</p>
+                <h2 className="text-2xl font-bold text-white">Editar Cuenta</h2>
+                <p className="text-slate-400 mt-1">{cuentaSeleccionada.proveedor} — {maskEmail(cuentaSeleccionada.correoCuenta)}</p>
               </div>
               <button
                 onClick={() => {
                   setMostrarEditar(false);
                   setCuentaSeleccionada(null);
                 }}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               >
-                <X size={24} className="text-gray-600" />
+                <X size={24} />
               </button>
             </div>
             <CuentaForm
@@ -763,21 +769,21 @@ export default function GestionCuentas() {
 
       {/* Modal: Configurar IMAP */}
       {mostrarIMAP && cuentaSeleccionada && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="card max-w-lg w-full max-h-[90vh] overflow-y-auto animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 text-slate-100 animate-scale-in">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Credenciales IMAP</h2>
-                <p className="text-gray-600 mt-1">{cuentaSeleccionada.proveedor}</p>
+                <h2 className="text-2xl font-bold text-white">Credenciales IMAP</h2>
+                <p className="text-slate-400 mt-1">{cuentaSeleccionada.proveedor}</p>
               </div>
               <button
                 onClick={() => {
                   setMostrarIMAP(false);
                   setCuentaSeleccionada(null);
                 }}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               >
-                <X size={24} className="text-gray-600" />
+                <X size={24} />
               </button>
             </div>
             <ConfigurarIMAP
@@ -804,42 +810,42 @@ export default function GestionCuentas() {
 
       {/* Modal: Ticket de la cuenta */}
       {mostrarDatosCuenta && datosCuenta && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="card max-w-lg w-full animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full p-6 text-slate-100 animate-scale-in">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
-                  <Ticket size={20} className="text-indigo-600" />
+                <div className="w-10 h-10 rounded-xl bg-indigo-950/60 border border-indigo-800/40 flex items-center justify-center">
+                  <Ticket size={20} className="text-indigo-400" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Ticket de la Cuenta</h2>
-                  <p className="text-sm text-gray-500">{datosCuenta.proveedor}</p>
+                  <h2 className="text-xl font-bold text-white">Ticket de la Cuenta</h2>
+                  <p className="text-sm text-slate-400">{datosCuenta.proveedor}</p>
                 </div>
               </div>
               <button
                 onClick={() => { setMostrarDatosCuenta(false); setDatosCuenta(null); setCuentaTicket(null); }}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               >
-                <X size={24} className="text-gray-600" />
+                <X size={24} />
               </button>
             </div>
 
             <div className="space-y-4">
-              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+              <div className="bg-slate-950/70 rounded-xl p-4 border border-slate-800 space-y-3">
                 <div>
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Correo</span>
-                  <p className="text-sm font-medium text-gray-900 mt-0.5 select-all">{datosCuenta.correo || datosCuenta.correoCuenta}</p>
+                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Correo</span>
+                  <p className="text-sm font-medium text-slate-100 mt-0.5 select-all">{datosCuenta.correo || datosCuenta.correoCuenta}</p>
                 </div>
                 {datosCuenta.contrasena && (
                   <div>
-                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Contraseña</span>
-                    <p className="text-sm font-medium text-gray-900 mt-0.5 select-all font-mono">{datosCuenta.contrasena}</p>
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Contraseña</span>
+                    <p className="text-sm font-medium text-amber-400 mt-0.5 select-all font-mono">{datosCuenta.contrasena}</p>
                   </div>
                 )}
                 {cuentaTicket?.fechaVencimiento && (
                   <div>
-                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Vencimiento</span>
-                    <p className="text-sm font-medium text-gray-900 mt-0.5">
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Vencimiento</span>
+                    <p className="text-sm font-medium text-slate-100 mt-0.5">
                       {cuentaTicket.fechaVencimiento} {cuentaTicket.diasRestantes !== null && cuentaTicket.diasRestantes !== undefined ? `(${cuentaTicket.diasRestantes > 0 ? `${cuentaTicket.diasRestantes} días` : 'Vencido'})` : ''}
                     </p>
                   </div>
@@ -848,16 +854,16 @@ export default function GestionCuentas() {
 
               {datosCuenta.perfiles?.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Perfiles</h3>
+                  <h3 className="text-sm font-semibold text-slate-300 mb-2">Perfiles</h3>
                   <div className="space-y-2">
                     {datosCuenta.perfiles.map((p, i) => (
-                      <div key={i} className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-xl">
+                      <div key={i} className="flex items-center justify-between px-4 py-3 bg-slate-950/60 border border-slate-800 rounded-xl">
                         <div>
-                          <p className="text-sm font-medium text-gray-900">{p.nombre}</p>
-                          {p.pin && <p className="text-xs text-gray-500">PIN: {p.pin}</p>}
+                          <p className="text-sm font-medium text-slate-200">{p.nombre}</p>
+                          {p.pin && <p className="text-xs text-slate-400">PIN: {p.pin}</p>}
                         </div>
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                          p.estado === 'disponible' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${
+                          p.estado === 'disponible' ? 'bg-emerald-950/50 text-emerald-400 border-emerald-800/40' : 'bg-amber-950/50 text-amber-400 border-amber-800/40'
                         }`}>
                           {p.estado === 'disponible' ? 'Disponible' : 'Asignado'}
                         </span>
@@ -869,7 +875,7 @@ export default function GestionCuentas() {
 
               <button
                 onClick={copiarTicket}
-                className="btn-primary w-full flex items-center justify-center gap-2"
+                className="btn-primary w-full flex items-center justify-center gap-2 shadow-lg shadow-indigo-950/50"
               >
                 {copiadoTicket ? <Check size={18} /> : <Ticket size={18} />}
                 {copiadoTicket ? '¡Ticket copiado!' : 'Copiar ticket'}
@@ -881,21 +887,21 @@ export default function GestionCuentas() {
 
       {/* Modal: Asignar Perfil a Cliente */}
       {mostrarAsignar && cuentaAsignando && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="card max-w-lg w-full max-h-[90vh] overflow-y-auto animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 text-slate-100 animate-scale-in">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Asignar Perfil</h2>
-                <p className="text-gray-600 mt-1">{cuentaAsignando.proveedor} — {maskEmail(cuentaAsignando.correoCuenta)}</p>
+                <h2 className="text-2xl font-bold text-white">Asignar Perfil</h2>
+                <p className="text-slate-400 mt-1">{cuentaAsignando.proveedor} — {maskEmail(cuentaAsignando.correoCuenta)}</p>
               </div>
               <button
                 onClick={() => {
                   setMostrarAsignar(false);
                   setCuentaAsignando(null);
                 }}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               >
-                <X size={24} className="text-gray-600" />
+                <X size={24} />
               </button>
             </div>
 
@@ -908,11 +914,11 @@ export default function GestionCuentas() {
                   <>
                     {disponibles.length > 1 && (
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Seleccionar perfil</label>
+                        <label className="block text-sm font-semibold text-slate-300 mb-2">Seleccionar perfil</label>
                         <select
                           value={perfilIdxAsignando}
                           onChange={(e) => setPerfilIdxAsignando(Number(e.target.value))}
-                          className="w-full"
+                          className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
                         >
                           {perfilesAsignando.map((p, idx) =>
                             p.estado === 'disponible' ? (
@@ -926,14 +932,14 @@ export default function GestionCuentas() {
                     )}
 
                     {disponibles.length === 1 && (
-                      <div className="p-3 bg-indigo-50 rounded-xl border border-indigo-100">
-                        <p className="text-sm font-semibold text-indigo-900">
+                      <div className="p-3 bg-indigo-950/40 rounded-xl border border-indigo-800/40">
+                        <p className="text-sm font-semibold text-indigo-300">
                           Perfil: {disponibles[0].nombre}
                         </p>
                       </div>
                     )}
                     {disponibles.length === 0 && (
-                      <p className="text-sm text-gray-500 italic">No hay perfiles disponibles</p>
+                      <p className="text-sm text-slate-500 italic">No hay perfiles disponibles</p>
                     )}
                   </>
                 );
@@ -941,15 +947,15 @@ export default function GestionCuentas() {
 
               {/* Buscador de clientes */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Buscar cliente</label>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">Buscar cliente</label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
                   <input
                     type="text"
                     value={busquedaCliente}
                     onChange={(e) => setBusquedaCliente(e.target.value)}
                     placeholder="Escribí el nombre del cliente..."
-                    className="w-full pl-10"
+                    className="w-full pl-10 bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
                     autoFocus
                   />
                 </div>
@@ -960,11 +966,11 @@ export default function GestionCuentas() {
                 {loadingClientes ? (
                   <div className="space-y-3 py-4">
                     {[1, 2, 3].map(i => (
-                      <div key={i} className="h-12 bg-gray-100 rounded-xl animate-pulse" />
+                      <div key={i} className="h-12 bg-slate-800 rounded-xl animate-pulse" />
                     ))}
                   </div>
                 ) : todosLosClientes.length === 0 ? (
-                  <p className="text-sm text-gray-500 italic text-center py-8">
+                  <p className="text-sm text-slate-500 italic text-center py-8">
                     No hay clientes registrados
                   </p>
                 ) : (
@@ -976,21 +982,21 @@ export default function GestionCuentas() {
                         key={cliente.id}
                         onClick={() => handleAsignarPerfil(cliente.nombre)}
                         disabled={guardando}
-                        className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-indigo-50 border border-gray-100 hover:border-indigo-200 transition-all text-left disabled:opacity-50"
+                        className="w-full flex items-center gap-3 p-3 rounded-xl bg-slate-950/40 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 transition-all text-left disabled:opacity-50"
                       >
-                        <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                          <Users size={16} className="text-indigo-600" />
+                        <div className="w-8 h-8 rounded-full bg-indigo-950/60 border border-indigo-800/40 flex items-center justify-center flex-shrink-0">
+                          <Users size={16} className="text-indigo-400" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 truncate">{cliente.nombre}</p>
+                          <p className="text-sm font-semibold text-slate-200 truncate">{cliente.nombre}</p>
                           {cliente.telefono && (
-                            <p className="text-xs text-gray-500">{cliente.telefono}</p>
+                            <p className="text-xs text-slate-400">{cliente.telefono}</p>
                           )}
                         </div>
                         {guardando ? (
-                          <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                          <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
                         ) : (
-                          <Check size={18} className="text-indigo-600 flex-shrink-0" />
+                          <Check size={18} className="text-indigo-400 flex-shrink-0" />
                         )}
                       </button>
                     ))
@@ -1003,53 +1009,53 @@ export default function GestionCuentas() {
 
       {/* Modal: Renovar Cuenta */}
       {mostrarRenovar && cuentaRenovar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="card max-w-md w-full animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6 text-slate-100 animate-scale-in">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Renovar Cuenta</h2>
+              <h2 className="text-2xl font-bold text-white">Renovar Cuenta</h2>
               <button
                 onClick={() => {
                   setMostrarRenovar(false);
                   setCuentaRenovar(null);
                 }}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               >
-                <X size={24} className="text-gray-600" />
+                <X size={24} />
               </button>
             </div>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-slate-300 mb-2">
               {cuentaRenovar.proveedor} — {maskEmail(cuentaRenovar.correoCuenta)}
             </p>
-            <p className="text-xs text-gray-500 mb-6">
-              Solo se actualizaran las fechas y el estado. Los perfiles asignados no se modifican.
+            <p className="text-xs text-slate-400 mb-6">
+              Solo se actualizarán las fechas y el estado. Los perfiles asignados no se modifican.
             </p>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Fecha de inicio</label>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">Fecha de inicio</label>
                 <input
                   type="date"
                   value={renovarFechaInicio}
                   onChange={(e) => setRenovarFechaInicio(e.target.value)}
-                  className="w-full"
+                  className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Dias de servicio</label>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">Días de servicio</label>
                 <input
                   type="number"
                   value={renovarDiasServicio}
                   onChange={(e) => setRenovarDiasServicio(e.target.value)}
-                  className="w-full"
+                  className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
                   min="1"
                   placeholder="Ej: 30"
                   required
                 />
               </div>
               {renovarFechaInicio && renovarDiasServicio && Number(renovarDiasServicio) > 0 && (
-                <div className="flex items-center justify-between px-3 py-2 bg-indigo-50 rounded-lg border border-indigo-100">
-                  <span className="text-sm font-medium text-indigo-600">Nuevo vencimiento</span>
-                  <span className="text-sm font-bold text-indigo-700">
+                <div className="flex items-center justify-between px-3 py-2 bg-indigo-950/40 rounded-lg border border-indigo-800/40">
+                  <span className="text-sm font-medium text-indigo-300">Nuevo vencimiento</span>
+                  <span className="text-sm font-bold text-cyan-300">
                     {(() => {
                       const d = new Date(renovarFechaInicio);
                       d.setDate(d.getDate() + Number(renovarDiasServicio));
@@ -1073,7 +1079,7 @@ export default function GestionCuentas() {
               <button
                 onClick={confirmarRenovarCuenta}
                 disabled={renovando || !renovarFechaInicio || !renovarDiasServicio}
-                className="btn-primary flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:opacity-50"
+                className="btn-primary flex-1 disabled:opacity-50"
               >
                 {renovando ? 'Renovando...' : 'Renovar cuenta'}
               </button>
@@ -1084,15 +1090,15 @@ export default function GestionCuentas() {
 
       {/* Modal: Confirmar acción */}
       {confirmarAccion && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="card max-w-md w-full animate-scale-in text-center">
-            <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="text-red-600" size={32} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in text-center text-slate-100">
+            <div className="w-16 h-16 rounded-full bg-rose-950/60 border border-rose-800/50 flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="text-rose-400" size={32} />
             </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">
+            <h2 className="text-xl font-bold text-white mb-2">
               {confirmarAccion.accion === 'desactivar' ? 'Desactivar cuenta' : 'Reactivar cuenta'}
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-slate-300 mb-6">
               {confirmarAccion.accion === 'desactivar'
                 ? `¿Estás seguro de desactivar la cuenta de ${confirmarAccion.cuenta.proveedor}? Los perfiles asignados dejarán de funcionar.`
                 : `¿Estás seguro de reactivar la cuenta de ${confirmarAccion.cuenta.proveedor}?`
@@ -1110,8 +1116,8 @@ export default function GestionCuentas() {
                 disabled={togglendoEstado}
                 className={`flex-1 py-2.5 rounded-xl font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                   confirmarAccion.accion === 'desactivar'
-                    ? 'bg-red-600 hover:bg-red-700'
-                    : 'bg-green-600 hover:bg-green-700'
+                    ? 'bg-rose-600 hover:bg-rose-500 shadow-lg shadow-rose-950/50'
+                    : 'bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-950/50'
                 }`}
               >
                 {togglendoEstado ? 'Procesando...' : (confirmarAccion.accion === 'desactivar' ? 'Sí, desactivar' : 'Sí, reactivar')}

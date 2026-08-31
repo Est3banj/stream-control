@@ -19,40 +19,40 @@ function getEstiloPlataforma(nombre: string): string {
   const norm = nombre.toLowerCase().trim();
 
   if (norm.includes('netflix')) {
-    return 'bg-red-50 text-red-600 border-red-200';
+    return 'bg-red-950/50 text-red-400 border-red-800/50';
   }
   if (norm.includes('disney')) {
-    return 'bg-blue-50 text-blue-600 border-blue-200';
+    return 'bg-blue-950/50 text-blue-400 border-blue-800/50';
   }
   if (norm.includes('max') || norm.includes('hbo')) {
-    return 'bg-purple-50 text-purple-600 border-purple-200';
+    return 'bg-purple-950/50 text-purple-400 border-purple-800/50';
   }
   if (norm.includes('prime') || norm.includes('amazon')) {
-    return 'bg-sky-50 text-sky-600 border-sky-200';
+    return 'bg-sky-950/50 text-sky-400 border-sky-800/50';
   }
   if (norm.includes('spotify')) {
-    return 'bg-emerald-50 text-emerald-600 border-emerald-200';
+    return 'bg-emerald-950/50 text-emerald-400 border-emerald-800/50';
   }
   if (norm.includes('crunchyroll')) {
-    return 'bg-orange-50 text-orange-600 border-orange-200';
+    return 'bg-orange-950/50 text-orange-400 border-orange-800/50';
   }
   if (norm.includes('chatgpt') || norm.includes('openai')) {
-    return 'bg-teal-50 text-teal-600 border-teal-200';
+    return 'bg-teal-950/50 text-teal-400 border-teal-800/50';
   }
   if (norm.includes('magis') || norm.includes('iptv') || norm.includes('plex')) {
-    return 'bg-indigo-50 text-indigo-600 border-indigo-200';
+    return 'bg-indigo-950/50 text-indigo-400 border-indigo-800/50';
   }
   if (norm.includes('win')) {
-    return 'bg-amber-50 text-amber-600 border-amber-200';
+    return 'bg-amber-950/50 text-amber-400 border-amber-800/50';
   }
   if (norm.includes('canva')) {
-    return 'bg-rose-50 text-rose-600 border-rose-200';
+    return 'bg-rose-950/50 text-rose-400 border-rose-800/50';
   }
   if (norm.includes('paramount') || norm.includes('universal') || norm.includes('vix')) {
-    return 'bg-cyan-50 text-cyan-700 border-cyan-200';
+    return 'bg-cyan-950/50 text-cyan-400 border-cyan-800/50';
   }
 
-  return 'bg-slate-100 text-slate-700 border-slate-200';
+  return 'bg-slate-800 text-slate-300 border-slate-700';
 }
 
 const SIZE_CLASSES = {
@@ -69,7 +69,7 @@ export default function PlataformaBadge({
   const lista = parsePlataformas(plataforma);
 
   if (lista.length === 0) {
-    return <span className="text-gray-400 text-sm">—</span>;
+    return <span className="text-slate-500 text-sm">—</span>;
   }
 
   if (lista.length === 1) {
