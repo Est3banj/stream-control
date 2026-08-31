@@ -44,10 +44,9 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
     if (!proveedor) return [];
     return cuentas.filter(
       c => c.proveedor.toLowerCase() === proveedor.toLowerCase()
-        && c.estado === 'disponible'
-        && (c.tipoVenta === 'completa' || (Array.isArray(c.perfiles) ? c.perfiles : []).some(p => p.estado === 'disponible'))
+        && (c.id === initialCuentaId || (c.estado === 'disponible' && (c.tipoVenta === 'completa' || (Array.isArray(c.perfiles) ? c.perfiles : []).some(p => p.estado === 'disponible'))))
     );
-  }, [cuentas, proveedor]);
+  }, [cuentas, proveedor, initialCuentaId]);
 
   const [modo, setModo] = useState<'existente' | 'nueva'>('existente');
   const [cuentaSeleccionadaId, setCuentaSeleccionadaId] = useState(initialCuentaId || '');
@@ -74,8 +73,10 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
   const perfilesDisponibles = useMemo(() => {
     if (!cuentaSeleccionada) return [];
     if (cuentaSeleccionada.tipoVenta === 'completa') return [];
-    return (Array.isArray(cuentaSeleccionada.perfiles) ? cuentaSeleccionada.perfiles : []).filter(p => p.estado === 'disponible');
-  }, [cuentaSeleccionada]);
+    return (Array.isArray(cuentaSeleccionada.perfiles) ? cuentaSeleccionada.perfiles : []).filter(
+      p => p.estado === 'disponible' || (initialPerfil && p.nombre === initialPerfil)
+    );
+  }, [cuentaSeleccionada, initialPerfil]);
 
   useEffect(() => {
     if (!cuentaSeleccionada) {
@@ -220,7 +221,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
                 <option value="">Seleccioná un perfil...</option>
                 {perfilesDisponibles.map(p => (
                   <option key={p.nombre} value={p.nombre}>
-                    {p.nombre}{p.pin ? ` — PIN: ${p.pin}` : ''}
+                    {p.nombre}{p.pin ? ` — PIN: ${p.pin}` : ''}{initialPerfil && p.nombre === initialPerfil ? ' (Actual)' : ''}
                   </option>
                 ))}
               </select>

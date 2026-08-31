@@ -51,7 +51,11 @@ interface ServicioItem {
 }
 
 interface VentasFormProps {
-  initialData?: Partial<VentaFormState>;
+  initialData?: Partial<VentaFormState> & {
+    cuentaId?: string;
+    perfilNombre?: string;
+    perfil?: string;
+  };
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────
@@ -155,7 +159,15 @@ export default function VentasForm({ initialData }: VentasFormProps) {
   });
 
   useEffect(() => {
-    if (initialData) setVenta(prev => ({ ...prev, ...initialData }));
+    if (initialData) {
+      setVenta(prev => ({ ...prev, ...initialData }));
+      if (initialData.cuentaId) {
+        setCuentaId(initialData.cuentaId);
+      }
+      if (initialData.perfilNombre || initialData.perfil) {
+        setPerfilAsignado(initialData.perfilNombre || initialData.perfil || null);
+      }
+    }
   }, [initialData]);
 
   // Sync perfiles[] con cantidad de pantallas
@@ -1102,6 +1114,8 @@ export default function VentasForm({ initialData }: VentasFormProps) {
                 <div className="sm:col-span-2">
                   <SelectorCuenta
                     proveedor={venta.plataforma}
+                    initialCuentaId={initialData?.cuentaId || cuentaId || undefined}
+                    initialPerfil={initialData?.perfilNombre || initialData?.perfil || perfilAsignado || undefined}
                     onCuentaSelected={handleCuentaSelected}
                   />
                   {cuentaId && venta.perfiles.some(p => p.nombre) && (
