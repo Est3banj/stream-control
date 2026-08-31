@@ -235,4 +235,43 @@ describe('VerificarEmail OTP Flow Component', () => {
       expect(mockNavigate).toHaveBeenCalledWith('/login', { replace: true });
     });
   });
+
+  it('renders celebration screen when ?verified=true query param is present', async () => {
+    render(
+      <MemoryRouter initialEntries={['/verificar-email?verified=true']}>
+        <VerificarEmail />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('¡Tu cuenta está lista!')).toBeInTheDocument();
+  });
+
+  it('calls all hooks consistently without throwing early return violations across re-renders', async () => {
+    const { rerender } = render(
+      <MemoryRouter initialEntries={['/verificar-email']}>
+        <VerificarEmail />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('Verificá tu correo')).toBeInTheDocument();
+
+    // Re-render when user becomes verified
+    mockUser = {
+      uid: 'usr-100',
+      email: 'ana@example.com',
+      correo: 'ana@example.com',
+      nombre: 'Ana Vendedora',
+      emailVerified: true,
+      rol: 'usuario',
+    };
+
+    expect(() => {
+      rerender(
+        <MemoryRouter initialEntries={['/verificar-email']}>
+          <VerificarEmail />
+        </MemoryRouter>
+      );
+    }).not.toThrow();
+  });
 });
+

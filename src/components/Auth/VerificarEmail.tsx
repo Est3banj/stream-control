@@ -39,10 +39,6 @@ export default function VerificarEmail() {
     }
   }, [searchParams, user?.uid]);
 
-  // Guardianes de autenticación y verificación
-  if (!user) return <Navigate to="/login" replace />;
-  if (user.emailVerified || user.rol === 'admin') return <Navigate to="/" replace />;
-
   const handleVerify = useCallback(
     async (codeToVerify?: string) => {
       const code = (codeToVerify ?? otpCode).trim();
@@ -114,6 +110,15 @@ export default function VerificarEmail() {
   const handleSuccessRedirect = () => {
     nav('/', { replace: true });
   };
+
+  // Guardianes de autenticación y verificación (deben ejecutarse después de todos los hooks)
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (step !== 'SUCCESS' && (user.emailVerified || user.rol === 'admin')) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <AuthLayout
