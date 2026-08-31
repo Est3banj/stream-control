@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { ArrowRight, Sparkles } from 'lucide-react';
 
 interface SuccessCelebrationProps {
@@ -9,7 +9,7 @@ interface SuccessCelebrationProps {
   className?: string;
 }
 
-export const pathVariants = {
+export const pathVariants: Variants = {
   hidden: { pathLength: 0, opacity: 0 },
   visible: {
     pathLength: 1,
@@ -22,7 +22,7 @@ export const pathVariants = {
   },
 };
 
-export const circleVariants = {
+export const circleVariants: Variants = {
   hidden: { scale: 0.5, opacity: 0 },
   visible: {
     scale: 1,

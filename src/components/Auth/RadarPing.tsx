@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { Mail, RefreshCw } from 'lucide-react';
 
 interface RadarPingProps {
@@ -7,7 +7,7 @@ interface RadarPingProps {
   className?: string;
 }
 
-export const ringVariants = {
+export const ringVariants: Variants = {
   initial: { scale: 0.8, opacity: 0.8 },
   animate: (custom: number) => ({
     scale: [0.8, 2.2],
