@@ -104,13 +104,13 @@ export const OtpInput: React.FC<OtpInputProps> = ({
             onKeyDown={(e) => handleKeyDown(index, e)}
             onPaste={handlePaste}
             disabled={disabled}
-            className={`w-11 h-14 sm:w-12 sm:h-16 text-center text-xl sm:text-2xl font-mono font-bold rounded-2xl border transition-all duration-200 outline-none shadow-sm
+            className={`w-11 h-14 sm:w-12 sm:h-16 text-center text-xl sm:text-2xl font-mono font-bold rounded-2xl border transition-all duration-200 outline-none shadow-sm caret-cyan-400 [color-scheme:dark]
               ${
                 hasError
-                  ? 'border-red-500 bg-red-500/10 text-red-200 focus:ring-2 focus:ring-red-400/30'
+                  ? 'border-red-500 bg-red-500/10 text-red-200 focus:bg-red-500/20 focus:text-red-100 focus:ring-2 focus:ring-red-400/30'
                   : isFilled
-                  ? 'border-indigo-500/50 bg-slate-950/80 text-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/25'
-                  : 'border-slate-800 bg-slate-950/60 text-white placeholder-slate-600 hover:border-slate-700 focus:border-indigo-400 focus:bg-slate-950/80 focus:ring-2 focus:ring-indigo-500/25'
+                  ? 'border-indigo-500/50 bg-slate-900/80 text-slate-100 focus:bg-slate-900 focus:text-slate-100 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/25'
+                  : 'border-slate-800 bg-slate-900/80 text-slate-100 placeholder:text-slate-500 hover:border-slate-700 focus:border-indigo-400 focus:bg-slate-900 focus:text-slate-100 focus:ring-2 focus:ring-indigo-500/25'
               }
               ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
             `}

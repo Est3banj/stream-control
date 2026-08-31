@@ -201,7 +201,7 @@ export default function Login({ initialModo = 'login' }: LoginProps) {
                       required
                       autoFocus
                       disabled={recuperando}
-                      className="w-full bg-transparent py-3 pr-4 text-sm font-medium text-white placeholder:text-slate-500 focus:outline-none disabled:opacity-50"
+                      className="w-full bg-transparent focus:bg-transparent py-3 pr-4 text-sm font-medium text-slate-100 focus:text-slate-100 caret-cyan-400 placeholder:text-slate-500 focus:outline-none disabled:opacity-50 [color-scheme:dark]"
                     />
                   </div>
                 </div>
@@ -345,7 +345,7 @@ export default function Login({ initialModo = 'login' }: LoginProps) {
                         autoComplete="email"
                         required
                         disabled={loading || googleLoading}
-                        className="w-full bg-transparent py-3 pr-4 text-sm font-medium text-white placeholder:text-slate-500 focus:outline-none disabled:opacity-50"
+                        className="w-full bg-transparent focus:bg-transparent py-3 pr-4 text-sm font-medium text-slate-100 focus:text-slate-100 caret-cyan-400 placeholder:text-slate-500 focus:outline-none disabled:opacity-50 [color-scheme:dark]"
                       />
                     </div>
                   </div>
@@ -374,7 +374,7 @@ export default function Login({ initialModo = 'login' }: LoginProps) {
                         autoComplete="current-password"
                         required
                         disabled={loading || googleLoading}
-                        className="w-full bg-transparent py-3 pr-10 text-sm font-medium text-white placeholder:text-slate-500 focus:outline-none disabled:opacity-50"
+                        className="w-full bg-transparent focus:bg-transparent py-3 pr-10 text-sm font-medium text-slate-100 focus:text-slate-100 caret-cyan-400 placeholder:text-slate-500 focus:outline-none disabled:opacity-50 [color-scheme:dark]"
                       />
                       <button
                         type="button"

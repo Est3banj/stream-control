@@ -68,15 +68,32 @@ body {
   @apply bg-white transform scale-105 shadow-lg;
 }
 
-/* Input styles */
-input, select, textarea {
-  @apply w-full px-4 py-2 rounded-lg border border-gray-200 bg-white/80 text-gray-900 transition-all duration-200;
-  backdrop-filter: blur(8px);
+/* Autocomplete/Autofill dark mode fix */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #0f172a inset !important;
+  -webkit-text-fill-color: #f8fafc !important;
+  caret-color: #38bdf8 !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
-input:focus, select:focus, textarea:focus {
-  @apply outline-none border-indigo-400 bg-white shadow-lg;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+/* Input styles */
+@layer base {
+  input:not([class*="bg-slate"]):not([class*="bg-transparent"]),
+  select:not([class*="bg-slate"]):not([class*="bg-transparent"]),
+  textarea:not([class*="bg-slate"]):not([class*="bg-transparent"]) {
+    @apply w-full px-4 py-2 rounded-lg border border-gray-200 bg-white/80 text-gray-900 transition-all duration-200;
+    backdrop-filter: blur(8px);
+  }
+
+  input:not([class*="bg-slate"]):not([class*="bg-transparent"]):focus,
+  select:not([class*="bg-slate"]):not([class*="bg-transparent"]):focus,
+  textarea:not([class*="bg-slate"]):not([class*="bg-transparent"]):focus {
+    @apply outline-none border-indigo-400 bg-white shadow-lg;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  }
 }
 
 /* Scrollbar personalizado */

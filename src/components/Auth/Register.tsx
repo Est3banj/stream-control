@@ -153,7 +153,7 @@ export const Register: React.FC<RegisterProps> = ({ onSwitchToLogin, onSuccess }
               autoComplete="name"
               required
               disabled={loading || googleLoading}
-              className="w-full bg-transparent py-3 pr-4 text-sm font-medium text-white placeholder:text-slate-500 focus:outline-none disabled:opacity-50"
+              className="w-full bg-transparent focus:bg-transparent py-3 pr-4 text-sm font-medium text-slate-100 focus:text-slate-100 caret-cyan-400 placeholder:text-slate-500 focus:outline-none disabled:opacity-50 [color-scheme:dark]"
             />
           </div>
         </div>
@@ -173,7 +173,7 @@ export const Register: React.FC<RegisterProps> = ({ onSwitchToLogin, onSuccess }
               autoComplete="email"
               required
               disabled={loading || googleLoading}
-              className="w-full bg-transparent py-3 pr-4 text-sm font-medium text-white placeholder:text-slate-500 focus:outline-none disabled:opacity-50"
+              className="w-full bg-transparent focus:bg-transparent py-3 pr-4 text-sm font-medium text-slate-100 focus:text-slate-100 caret-cyan-400 placeholder:text-slate-500 focus:outline-none disabled:opacity-50 [color-scheme:dark]"
             />
           </div>
         </div>
@@ -193,7 +193,7 @@ export const Register: React.FC<RegisterProps> = ({ onSwitchToLogin, onSuccess }
               autoComplete="new-password"
               required
               disabled={loading || googleLoading}
-              className="w-full bg-transparent py-3 pr-10 text-sm font-medium text-white placeholder:text-slate-500 focus:outline-none disabled:opacity-50"
+              className="w-full bg-transparent focus:bg-transparent py-3 pr-10 text-sm font-medium text-slate-100 focus:text-slate-100 caret-cyan-400 placeholder:text-slate-500 focus:outline-none disabled:opacity-50 [color-scheme:dark]"
             />
             <button
               type="button"
@@ -261,10 +261,10 @@ export const Register: React.FC<RegisterProps> = ({ onSwitchToLogin, onSuccess }
                 setTasa(String(sugerida));
               }}
               disabled={loading || googleLoading}
-              className="w-full bg-transparent py-3 pr-8 text-sm font-medium text-white appearance-none focus:outline-none cursor-pointer disabled:opacity-50"
+              className="w-full bg-transparent focus:bg-transparent py-3 pr-8 text-sm font-medium text-slate-100 focus:text-slate-100 appearance-none focus:outline-none cursor-pointer disabled:opacity-50 [color-scheme:dark]"
             >
               {MONEDAS.map((m) => (
-                <option key={m.codigo} value={m.codigo} className="bg-slate-900 text-white">
+                <option key={m.codigo} value={m.codigo} className="bg-slate-900 text-slate-100">
                   {m.codigo} — {m.pais} ({m.simbolo})
                 </option>
               ))}
