@@ -7,6 +7,7 @@ interface AuthLayoutProps {
   badge?: string;
   maxWidth?: string;
   footerText?: string;
+  hideHeader?: boolean;
 }
 
 export const AuthLayout: React.FC<AuthLayoutProps> = ({
@@ -15,6 +16,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
   badge,
   maxWidth = 'max-w-md',
   footerText = '© StreamControl Pro — Plataforma de Gestión de Streaming',
+  hideHeader = false,
 }) => {
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center relative bg-slate-950 text-slate-100 font-sans overflow-hidden px-4 py-8 selection:bg-indigo-500/30 selection:text-indigo-200">
@@ -30,7 +32,8 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
 
       <div className={`relative z-10 w-full ${maxWidth} flex flex-col items-center`}>
         {/* Isotipo & Branding */}
-        <motion.div
+        {!hideHeader && (
+          <motion.div
           initial={{ opacity: 0, y: -15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
@@ -67,6 +70,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
             </p>
           )}
         </motion.div>
+        )}
 
         {/* Tarjeta Glassmorphic SaaS */}
         <motion.div

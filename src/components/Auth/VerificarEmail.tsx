@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { LogOut, Edit3, ShieldCheck, ArrowRight, Loader2, KeyRound, MessageCircle } from 'lucide-react';
+import { LogOut, Edit3, ShieldCheck, ArrowRight, Loader2, MessageCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAdminConfig, getWhatsAppSupportNumber } from '../../hooks/useAdminConfig';
 import type { VerificationStep } from '../../types/authVerification';
@@ -139,14 +139,7 @@ export default function VerificarEmail() {
   }
 
   return (
-    <AuthLayout
-      subtitle={
-        step === 'SUCCESS'
-          ? 'Confirmación de identidad completada'
-          : 'Verificación de seguridad requerida para continuar'
-      }
-      badge="Seguridad"
-    >
+    <AuthLayout hideHeader>
       <AnimatePresence mode="wait">
         {step === 'SUCCESS' ? (
           <SuccessCelebration
@@ -164,23 +157,39 @@ export default function VerificarEmail() {
             transition={{ duration: 0.25 }}
             className="flex flex-col items-center text-center"
           >
-            {/* Isotipo / Badge animado */}
-            <div className="mb-4 w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center shadow-lg shadow-indigo-950/40 text-indigo-400">
-              <KeyRound className="w-7 h-7" />
-            </div>
+            {/* Isotipo & Branding Integrado */}
+            <div className="flex flex-col items-center mb-5 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500/20 via-purple-500/15 to-transparent border border-indigo-500/30 p-2 shadow-xl shadow-indigo-950/50 backdrop-blur-md flex items-center justify-center mb-3">
+                <img
+                  src="/app/stream.webp"
+                  alt="StreamControl Pro"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (!target.src.endsWith('/stream.webp') || target.src.includes('/app/stream.webp')) {
+                      target.src = '/stream.webp';
+                    }
+                  }}
+                  className="w-full h-full object-contain drop-shadow-md"
+                />
+              </div>
 
-            {/* Tag de Código de seguridad */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-3">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Código de seguridad</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-bold tracking-tight text-white bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
+                  StreamControl Pro
+                </span>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 rounded-full">
+                  <ShieldCheck className="w-3 h-3 text-indigo-400" />
+                  Seguridad
+                </span>
+              </div>
             </div>
 
             <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 tracking-tight">
-              Verificá tu correo
+              Verificación de seguridad
             </h2>
 
             <p className="text-slate-400 text-xs sm:text-sm mb-4 leading-relaxed max-w-sm">
-              Ingresá el código de 6 dígitos que enviamos a:
+              Ingresá el código de 6 dígitos enviado a tu correo
             </p>
 
             {/* Badge con el Correo Electrónico y Opción de Cambio */}

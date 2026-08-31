@@ -88,9 +88,11 @@ describe('VerificarEmail OTP Flow Component', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText('Verificá tu correo')).toBeInTheDocument();
+    expect(screen.getByText('Verificación de seguridad')).toBeInTheDocument();
+    expect(screen.getByText('StreamControl Pro')).toBeInTheDocument();
+    expect(screen.getByText('Seguridad')).toBeInTheDocument();
+    expect(screen.getByText('Ingresá el código de 6 dígitos enviado a tu correo')).toBeInTheDocument();
     expect(screen.getByText('ana@example.com')).toBeInTheDocument();
-    expect(screen.getByText(/Código de seguridad/i)).toBeInTheDocument();
     expect(screen.getAllByRole('textbox')).toHaveLength(6);
     expect(screen.getByText('Verificar código')).toBeInTheDocument();
     expect(screen.getByText(/Reenviar código OTP/i)).toBeInTheDocument();
@@ -268,7 +270,7 @@ describe('VerificarEmail OTP Flow Component', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText('Verificá tu correo')).toBeInTheDocument();
+    expect(screen.getByText('Verificación de seguridad')).toBeInTheDocument();
 
     // Re-render when user becomes verified
     mockUser = {
