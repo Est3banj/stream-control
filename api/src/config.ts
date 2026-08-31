@@ -57,7 +57,7 @@ export function RESEND_API_KEY(): string {
 }
 
 export function EMAIL_FROM(): string {
-  return process.env.EMAIL_FROM || 'StreamControl <soporte@streamcontrol.pro>';
+  return process.env.EMAIL_FROM || 'StreamControl Security <security@streamcontrol.pro>';
 }
 
 export function APP_URL(): string {
