@@ -11,6 +11,7 @@ export interface CooldownState {
 
 export interface SyncMessage {
   type: 'EMAIL_VERIFIED';
+  senderId?: string;
   uid?: string;
   timestamp: number;
 }

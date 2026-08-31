@@ -17,6 +17,7 @@ export function useEmailVerificationWatcher({
   const isCheckingRef = useRef(false);
   const onVerifiedRef = useRef(onVerified);
   onVerifiedRef.current = onVerified;
+  const instanceIdRef = useRef(Math.random().toString(36).substring(2, 9));
 
   const checkStatus = useCallback(async (): Promise<boolean> => {
     if (isCheckingRef.current || !enabled) return false;
@@ -31,6 +32,7 @@ export function useEmailVerificationWatcher({
             const channel = new BroadcastChannel('streamcontrol_auth_sync');
             channel.postMessage({
               type: 'EMAIL_VERIFIED',
+              senderId: instanceIdRef.current,
               uid: user?.uid,
               timestamp: Date.now(),
             });
@@ -80,7 +82,10 @@ export function useEmailVerificationWatcher({
       if (typeof BroadcastChannel !== 'undefined') {
         channel = new BroadcastChannel('streamcontrol_auth_sync');
         channel.onmessage = (event) => {
-          if (event.data?.type === 'EMAIL_VERIFIED') {
+          if (
+            event.data?.type === 'EMAIL_VERIFIED' &&
+            event.data?.senderId !== instanceIdRef.current
+          ) {
             void checkStatus();
           }
         };
