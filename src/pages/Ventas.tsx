@@ -42,22 +42,35 @@ export default function Ventas() {
         .then((snapshot) => {
           if (!snapshot.empty) {
             const lastVenta = snapshot.docs[0].data() as Venta;
-            data.perfil = cliente.perfilAsignado || lastVenta.perfil || '';
-            data.perfilNombre = cliente.perfilAsignado || lastVenta.perfil || '';
+            data.perfil = cliente.perfilAsignado || lastVenta.perfilNombre || lastVenta.perfil || '';
+            data.perfilNombre = cliente.perfilAsignado || lastVenta.perfilNombre || lastVenta.perfil || '';
             data.cuentaId = cliente.cuentaId || lastVenta.cuentaId || '';
-            data.pinPerfil = lastVenta.pinPerfil || '';
+            data.pinPerfil = lastVenta.perfilPin || lastVenta.pinPerfil || '';
             data.pantallas = lastVenta.pantallas || 1;
             data.precioVenta = lastVenta.precioVenta || 0;
-            data.costoServicio = lastVenta.costoServicio || 0;
+            data.costoServicio = lastVenta.costoPorPerfil || lastVenta.costoServicio || 0;
+            if (lastVenta.perfiles && lastVenta.perfiles.length > 0) {
+              data.perfiles = lastVenta.perfiles;
+            } else if (data.perfilNombre) {
+              data.perfiles = [{ nombre: data.perfilNombre as string, pin: (data.pinPerfil as string) || '' }];
+            }
+          } else if (cliente.perfilAsignado) {
+            data.perfiles = [{ nombre: cliente.perfilAsignado, pin: '' }];
           }
           setInitialData(data);
           setLoading(false);
         })
         .catch(() => {
+          if (cliente.perfilAsignado && !data.perfiles) {
+            data.perfiles = [{ nombre: cliente.perfilAsignado, pin: '' }];
+          }
           setInitialData(data);
           setLoading(false);
         });
     } else {
+      if (cliente.perfilAsignado && !data.perfiles) {
+        data.perfiles = [{ nombre: cliente.perfilAsignado, pin: '' }];
+      }
       setInitialData(data);
       setLoading(false);
     }

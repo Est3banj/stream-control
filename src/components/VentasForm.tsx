@@ -303,20 +303,24 @@ export default function VentasForm({ initialData }: VentasFormProps) {
     };
     cargarContrasena();
 
+    const pinParaPerfil = newPerfilPin || (newPerfilNombre ? cuenta.perfiles?.find(p => p.nombre === newPerfilNombre)?.pin || '' : '');
+
     setVenta(prev => ({
       ...prev,
       correo: cuenta.correoCuenta || prev.correo,
       costoServicio: newCostoPorPerfil || prev.costoServicio,
       perfiles: cuenta.tipoVenta !== 'completa'
-        ? prev.perfiles.map((_, i) => {
-            const disp = (cuenta.perfiles || []).filter(p => p.estado === 'disponible');
-            return disp[i] ? { nombre: disp[i].nombre, pin: disp[i].pin } : { nombre: '', pin: '' };
-          })
+        ? (newPerfilNombre
+            ? [{ nombre: newPerfilNombre, pin: pinParaPerfil }, ...prev.perfiles.slice(1)]
+            : prev.perfiles.map((_, i) => {
+                const disp = (cuenta.perfiles || []).filter(p => p.estado === 'disponible');
+                return disp[i] ? { nombre: disp[i].nombre, pin: disp[i].pin } : { nombre: '', pin: '' };
+              }))
         : prev.perfiles,
     }));
 
     setPerfilAsignado(newPerfilNombre);
-    setPerfilPinSeleccionado(newPerfilPin);
+    setPerfilPinSeleccionado(pinParaPerfil || null);
   };
 
   // ─── Handlers (multi) ───
@@ -388,19 +392,22 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       })();
 
       const disp = (cuenta.perfiles || []).filter(p => p.estado === 'disponible');
+      const pinParaPerfil = newPerfilPin || (newPerfilNombre ? cuenta.perfiles?.find(p => p.nombre === newPerfilNombre)?.pin || '' : '');
 
       return {
         ...s,
         cuentaId: newCuentaId,
         perfilNombre: newPerfilNombre,
-        perfilPin: newPerfilPin,
+        perfilPin: pinParaPerfil || null,
         correo: cuenta.correoCuenta || s.correo,
         costoServicio: newCostoPorPerfil || s.costoServicio,
         costoPorPerfil: newCostoPorPerfil,
         perfiles: cuenta.tipoVenta !== 'completa'
-          ? s.perfiles.map((_, i) =>
-              disp[i] ? { nombre: disp[i].nombre, pin: disp[i].pin } : { nombre: '', pin: '' }
-            )
+          ? (newPerfilNombre
+              ? [{ nombre: newPerfilNombre, pin: pinParaPerfil }, ...s.perfiles.slice(1)]
+              : s.perfiles.map((_, i) =>
+                  disp[i] ? { nombre: disp[i].nombre, pin: disp[i].pin } : { nombre: '', pin: '' }
+                ))
           : s.perfiles,
       };
     }));

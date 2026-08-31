@@ -27,11 +27,10 @@ function maskEmail(email: string): string {
   return `${maskedLocal}@${maskedDomain}.${parts.slice(1).join('.')}`;
 }
 
-function calcularCostoPorPerfil(cuenta: Cuenta): number {
+export function calcularCostoPorPerfil(cuenta: Cuenta): number {
   if (cuenta.tipoVenta === 'completa') return cuenta.costo;
   const perfiles = Array.isArray(cuenta.perfiles) ? cuenta.perfiles : [];
-  const perfilesDisponibles = perfiles.filter(p => p.estado === 'disponible').length;
-  return perfilesDisponibles > 0 ? cuenta.costo / perfiles.length : cuenta.costo;
+  return perfiles.length > 0 ? Math.round((cuenta.costo / perfiles.length) * 100) / 100 : cuenta.costo;
 }
 
 export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCuentaId, initialPerfil }: SelectorCuentaProps) {
