@@ -104,7 +104,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center mb-8">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center p-1.5 shadow-inner">
-                <img src="/stream.webp" alt="StreamControl" className="w-full h-full object-contain drop-shadow-lg" />
+                <img 
+                  src="/app/stream.webp" 
+                  alt="StreamControl" 
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (!target.src.endsWith('/stream.webp') || target.src.includes('/app/stream.webp')) {
+                      target.src = '/stream.webp';
+                    }
+                  }}
+                  className="w-full h-full object-contain drop-shadow-lg" 
+                />
               </div>
               <div className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-violet-200 to-white tracking-wide">
                 StreamControl <span className="font-extrabold">Pro</span>
@@ -190,7 +200,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           {/* Logo/Título - Solo móvil */}
           <div className="lg:hidden flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-indigo-100 flex items-center justify-center p-1">
-              <img src="/stream.webp" alt="" className="w-full h-full object-contain" />
+              <img 
+                src="/app/stream.webp" 
+                alt="" 
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.src.endsWith('/stream.webp') || target.src.includes('/app/stream.webp')) {
+                    target.src = '/stream.webp';
+                  }
+                }}
+                className="w-full h-full object-contain" 
+              />
             </div>
             <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
               StreamControl Pro

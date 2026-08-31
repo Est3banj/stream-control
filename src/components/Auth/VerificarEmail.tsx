@@ -29,7 +29,7 @@ export default function VerificarEmail() {
 
   // Si vino con ?verified=true (ej. desde el enlace público /r/verificar-email)
   useEffect(() => {
-    if (searchParams.get('verified') === 'true') {
+    if (searchParams.get('verified') === 'true' && user?.uid) {
       refreshUser()
         .then((verificado) => {
           if (verificado) {
@@ -42,11 +42,11 @@ export default function VerificarEmail() {
           // Ignorar error y dejar que el watcher continúe
         });
     }
-  }, [searchParams, refreshUser]);
+  }, [searchParams, refreshUser, user?.uid]);
 
   // Hook reactivo con smart polling (3.5s), focus triggers y BroadcastChannel
   const { checkStatus, isChecking } = useEmailVerificationWatcher({
-    enabled: step === 'AWAITING' || step === 'CHECKING_MANUAL',
+    enabled: (step === 'AWAITING' || step === 'CHECKING_MANUAL') && Boolean(user?.uid),
     pollingIntervalMs: 3500,
     onVerified: () => {
       setStep('SUCCESS');

@@ -3,7 +3,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useEmailVerificationWatcher } from './useEmailVerificationWatcher';
 
 const mockRefreshUser = vi.fn();
-const mockUser = { uid: 'usr-123', email: 'test@streamcontrol.com', nombre: 'Test User' };
+let mockUser: { uid: string; email: string; nombre: string } | null = {
+  uid: 'usr-123',
+  email: 'test@streamcontrol.com',
+  nombre: 'Test User',
+};
 
 vi.mock('../contexts/AuthContext', () => ({
   useAuth: () => ({
@@ -16,6 +20,7 @@ describe('useEmailVerificationWatcher', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.clearAllMocks();
+    mockUser = { uid: 'usr-123', email: 'test@streamcontrol.com', nombre: 'Test User' };
   });
 
   afterEach(() => {
@@ -147,6 +152,47 @@ describe('useEmailVerificationWatcher', () => {
 
     expect(status).toBe(false);
     expect(onVerified).not.toHaveBeenCalled();
+  });
+
+  it('does not poll or register listeners when user is null', async () => {
+    mockUser = null;
+    const onVerified = vi.fn();
+
+    renderHook(() =>
+      useEmailVerificationWatcher({
+        pollingIntervalMs: 2000,
+        onVerified,
+        enabled: true,
+      })
+    );
+
+    await act(async () => {
+      vi.advanceTimersByTime(4000);
+    });
+
+    expect(mockRefreshUser).not.toHaveBeenCalled();
+    expect(onVerified).not.toHaveBeenCalled();
+  });
+
+  it('checkStatus returns false immediately when user is null', async () => {
+    mockUser = null;
+    const onVerified = vi.fn();
+
+    const { result } = renderHook(() =>
+      useEmailVerificationWatcher({
+        pollingIntervalMs: 2000,
+        onVerified,
+        enabled: true,
+      })
+    );
+
+    let status = true;
+    await act(async () => {
+      status = await result.current.checkStatus();
+    });
+
+    expect(status).toBe(false);
+    expect(mockRefreshUser).not.toHaveBeenCalled();
   });
 
   it('cleans up interval and listeners on unmount', () => {

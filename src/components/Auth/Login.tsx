@@ -167,8 +167,14 @@ export default function Login(){
         <div className="flex justify-center mb-6">
           <div className="w-32 h-32 md:w-36 md:h-36 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center p-3 shadow-lg">
             <img 
-              src="/stream.webp" 
+              src="/app/stream.webp" 
               alt="StreamControl Pro"
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (!target.src.endsWith('/stream.webp') || target.src.includes('/app/stream.webp')) {
+                  target.src = '/stream.webp';
+                }
+              }}
               className="w-full h-full object-contain drop-shadow-2xl animate-fadeInUp"
               style={{ animationDelay: '0.1s', animationFillMode: 'both' }}
             />

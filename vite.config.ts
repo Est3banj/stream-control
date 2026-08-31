@@ -3,14 +3,20 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-/** Rewrite /r/** → /app/index.html (mirrors Firebase Hosting rewrite for local dev) */
-function rRewrite() {
+/** Rewrite /r/** and root assets → /app/ (mirrors Firebase Hosting rewrite for local dev) */
+function devRewrites() {
   return {
-    name: 'r-rewrite',
+    name: 'dev-rewrites',
     configureServer(server: any) {
       server.middlewares.use((req: any, _res: any, next: any) => {
         if (req.url?.startsWith('/r/')) {
           req.url = '/app/index.html';
+        } else if (req.url === '/stream.webp') {
+          req.url = '/app/stream.webp';
+        } else if (req.url === '/favicon.ico') {
+          req.url = '/app/favicon.ico';
+        } else if (req.url?.startsWith('/captura_stream/')) {
+          req.url = `/app${req.url}`;
         }
         next();
       });
@@ -21,7 +27,7 @@ function rRewrite() {
 export default defineConfig({
   base: '/app/',
   plugins: [
-    rRewrite(),
+    devRewrites(),
     react(),
     VitePWA({
       registerType: 'autoUpdate',

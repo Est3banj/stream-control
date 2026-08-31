@@ -161,7 +161,17 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
 
           {/* HEADER */}
           <div className="flex items-center gap-3 mb-6">
-            <img src="/stream.webp" alt="StreamControl" className="w-10 h-10 rounded-xl" />
+            <img 
+              src="/app/stream.webp" 
+              alt="StreamControl" 
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (!target.src.endsWith('/stream.webp') || target.src.includes('/app/stream.webp')) {
+                  target.src = '/stream.webp';
+                }
+              }}
+              className="w-10 h-10 rounded-xl" 
+            />
             <h1 className="text-xl font-bold text-white">
               {state === 'validating' && 'Validando...'}
               {state === 'invalid' && 'Token inválido'}

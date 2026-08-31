@@ -168,14 +168,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   /**
    * Recarga el usuario de Firebase Auth y devuelve si ya verificó el correo.
+   * Protegido contra llamadas en estados no autenticados o con tokens stale/inválidos (400 Identity Toolkit).
    */
   const refreshUser = async (): Promise<boolean> => {
     const current = auth.currentUser;
-    if (!current) return false;
+    if (!current || !current.uid) return false;
+
     try {
-      await current.reload();
-    } catch (err) {
-      console.warn('Error al recargar Firebase Auth user:', err);
+      if (typeof current.reload === 'function') {
+        await current.reload();
+      }
+    } catch (err: unknown) {
+      const error = err as { code?: string; message?: string };
+      if (
+        error?.code === 'auth/user-not-found' ||
+        error?.code === 'auth/user-token-expired' ||
+        error?.code === 'auth/invalid-user-token' ||
+        error?.code === 'auth/network-request-failed' ||
+        error?.message?.includes('INVALID_ID_TOKEN') ||
+        error?.message?.includes('TOKEN_EXPIRED')
+      ) {
+        console.info('refreshUser: sesión no lista o token no válido (' + (error.code || error.message || 'unknown') + ')');
+        return false;
+      }
+      console.warn('refreshUser: advertencia al recargar Firebase Auth user:', err);
     }
 
     let isVerified = auth.currentUser?.emailVerified ?? false;

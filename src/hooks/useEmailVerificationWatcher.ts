@@ -20,7 +20,9 @@ export function useEmailVerificationWatcher({
   const instanceIdRef = useRef(Math.random().toString(36).substring(2, 9));
 
   const checkStatus = useCallback(async (): Promise<boolean> => {
-    if (isCheckingRef.current || !enabled) return false;
+    // Protección estricta: sólo consultar si está habilitado y hay sesión activa válida en el contexto
+    if (isCheckingRef.current || !enabled || !user?.uid) return false;
+
     try {
       isCheckingRef.current = true;
       setIsChecking(true);
@@ -55,7 +57,8 @@ export function useEmailVerificationWatcher({
   }, [refreshUser, enabled, user?.uid]);
 
   useEffect(() => {
-    if (!enabled) return;
+    // Si no está habilitado o no hay usuario autenticado, no registrar polling ni listeners
+    if (!enabled || !user?.uid) return;
 
     // 1. Sondeo periódico suave (Heartbeat)
     const intervalId = setInterval(() => {
@@ -66,6 +69,7 @@ export function useEmailVerificationWatcher({
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     const handleActivity = () => {
       if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      if (!user?.uid) return;
       if (debounceTimer) clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
         void checkStatus();
@@ -108,7 +112,7 @@ export function useEmailVerificationWatcher({
         }
       }
     };
-  }, [checkStatus, enabled, pollingIntervalMs]);
+  }, [checkStatus, enabled, pollingIntervalMs, user?.uid]);
 
   return { checkStatus, isChecking };
 }
