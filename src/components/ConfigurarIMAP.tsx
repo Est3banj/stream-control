@@ -82,16 +82,16 @@ export default function ConfigurarIMAP({ cuenta, onClose, onSuccess }: Configura
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-slate-300 mb-2">
+        <label className="block text-xs font-medium text-slate-300 mb-1.5">
           Correo de la cuenta <span className="text-rose-400">*</span>
         </label>
         <div className="relative">
-          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+          <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={18} />
           <input
             type="email"
             value={correo}
             onChange={(e) => setCorreo(e.target.value)}
-            className="w-full pl-10 bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
+            className="w-full h-11 pl-10 pr-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150 font-mono"
             placeholder="netflix@ejemplo.com"
             required
           />
@@ -99,16 +99,16 @@ export default function ConfigurarIMAP({ cuenta, onClose, onSuccess }: Configura
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-slate-300 mb-2">
+        <label className="block text-xs font-medium text-slate-300 mb-1.5">
           Contraseña <span className="text-rose-400">*</span>
         </label>
         <div className="relative">
-          <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+          <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={18} />
           <input
             type="password"
             value={contrasena}
             onChange={(e) => setContrasena(e.target.value)}
-            className="w-full pl-10 bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
+            className="w-full h-11 pl-10 pr-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150 font-mono"
             placeholder="Contraseña de la cuenta"
             required
           />
@@ -116,13 +116,13 @@ export default function ConfigurarIMAP({ cuenta, onClose, onSuccess }: Configura
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-slate-300 mb-2">
+        <label className="block text-xs font-medium text-slate-300 mb-1.5">
           Proveedor de correo
         </label>
         <select
           value={proveedorIMAP}
           onChange={(e) => handleProveedorChange(e.target.value)}
-          className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
+          className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 transition-all duration-150 appearance-none cursor-pointer"
         >
           {PROVEEDORES_IMAP.map(p => (
             <option key={p.value} value={p.value}>{p.label}</option>
@@ -132,30 +132,30 @@ export default function ConfigurarIMAP({ cuenta, onClose, onSuccess }: Configura
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-semibold text-slate-300 mb-2">
+          <label className="block text-xs font-medium text-slate-300 mb-1.5">
             Host IMAP <span className="text-rose-400">*</span>
           </label>
           <div className="relative">
-            <Server className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+            <Server className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={18} />
             <input
               type="text"
               value={imapHost}
               onChange={(e) => setImapHost(e.target.value)}
-              className="w-full pl-10 bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
+              className="w-full h-11 pl-10 pr-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150 font-mono"
               placeholder="imap.gmail.com"
               required
             />
           </div>
         </div>
         <div>
-          <label className="block text-sm font-semibold text-slate-300 mb-2">
+          <label className="block text-xs font-medium text-slate-300 mb-1.5">
             Puerto
           </label>
           <input
             type="number"
             value={imapPort}
             onChange={(e) => setImapPort(e.target.value)}
-            className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
+            className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 transition-all duration-150"
             min="1"
             max="65535"
             placeholder="993"

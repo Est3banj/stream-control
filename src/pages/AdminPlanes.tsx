@@ -139,7 +139,7 @@ export default function AdminPlanes() {
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
           <div className="flex-1 w-full">
-            <label htmlFor="whatsapp-admin" className="block text-sm font-medium text-slate-300 mb-1">
+            <label htmlFor="whatsapp-admin" className="block text-xs font-medium text-slate-300 mb-1.5">
               WhatsApp del Administrador
             </label>
             <input
@@ -148,7 +148,7 @@ export default function AdminPlanes() {
               value={whatsapp}
               onChange={(e) => setWhatsapp(e.target.value)}
               placeholder="Ej: +57 324 7349128"
-              className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
+              className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150"
             />
             <p className="text-xs text-slate-400 mt-1">
               Este número se usará en el botón "Actualizar plan" para que los clientes te contacten por WhatsApp.

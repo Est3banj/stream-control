@@ -331,13 +331,13 @@ export default function AdminSuscripciones() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">
                   Usuario <span className="text-rose-400">*</span>
                 </label>
                 <select
                   value={createForm.usuarioId}
                   onChange={(e) => setCreateForm({ ...createForm, usuarioId: e.target.value })}
-                  className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
+                  className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 transition-all duration-150 appearance-none cursor-pointer"
                 >
                   <option value="">Seleccionar usuario...</option>
                   {usuarios.map(u => (
@@ -347,13 +347,13 @@ export default function AdminSuscripciones() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">
                   Plan <span className="text-rose-400">*</span>
                 </label>
                 <select
                   value={createForm.planId}
                   onChange={(e) => setCreateForm({ ...createForm, planId: e.target.value })}
-                  className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
+                  className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 transition-all duration-150 appearance-none cursor-pointer"
                 >
                   <option value="">Seleccionar plan...</option>
                   {planes.filter(p => p.activo).map(p => (
@@ -365,14 +365,14 @@ export default function AdminSuscripciones() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">
                   Fecha de inicio <span className="text-rose-400">*</span>
                 </label>
                 <input
                   type="date"
                   value={createForm.fechaInicio}
                   onChange={(e) => setCreateForm({ ...createForm, fechaInicio: e.target.value })}
-                  className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
+                  className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 transition-all duration-150"
                   required
                 />
               </div>

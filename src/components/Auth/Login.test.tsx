@@ -79,7 +79,7 @@ describe('Login and Auth Container Component', () => {
     expect(screen.getByText('StreamControl Pro')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Iniciar sesión' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Crear cuenta' })).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('usuario@ejemplo.com')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('tu.correo@ejemplo.com')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('••••••••')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Entrar al panel/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /¿Olvidaste tu contraseña\?/i })).toBeInTheDocument();
@@ -108,7 +108,7 @@ describe('Login and Auth Container Component', () => {
       </MemoryRouter>
     );
 
-    fireEvent.change(screen.getByPlaceholderText('usuario@ejemplo.com'), {
+    fireEvent.change(screen.getByPlaceholderText('tu.correo@ejemplo.com'), {
       target: { value: 'test@streamcontrol.com' },
     });
     fireEvent.change(screen.getByPlaceholderText('••••••••'), {
@@ -136,7 +136,7 @@ describe('Login and Auth Container Component', () => {
       </MemoryRouter>
     );
 
-    fireEvent.change(screen.getByPlaceholderText('usuario@ejemplo.com'), {
+    fireEvent.change(screen.getByPlaceholderText('tu.correo@ejemplo.com'), {
       target: { value: 'test@streamcontrol.com' },
     });
     fireEvent.change(screen.getByPlaceholderText('••••••••'), {
@@ -185,7 +185,7 @@ describe('Login and Auth Container Component', () => {
     const backBtn = screen.getByRole('button', { name: /Volver al inicio de sesión/i });
     fireEvent.click(backBtn);
 
-    expect(screen.getByPlaceholderText('usuario@ejemplo.com')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('tu.correo@ejemplo.com')).toBeInTheDocument();
   });
 
   it('handles 429 rate limit error gracefully when requesting recovery email', async () => {

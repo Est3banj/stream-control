@@ -440,13 +440,13 @@ export default function GestionClientes() {
 
           {/* Búsqueda */}
           <div className="flex-1 relative max-w-md w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={18} />
             <input
               type="text"
               placeholder="Buscar cliente, plataforma o teléfono..."
               value={busqueda}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBusqueda(e.target.value)}
-              className="w-full pl-10 pr-4 bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              className="w-full h-11 pl-10 pr-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150"
             />
           </div>
 
@@ -766,20 +766,20 @@ export default function GestionClientes() {
 
             <form onSubmit={guardarEdicion} className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">
                   Nombre del cliente <span className="text-rose-400">*</span>
                 </label>
                 <input
                   type="text"
                   value={formEditar.nombre}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEditar({ ...formEditar, nombre: e.target.value })}
-                  className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
+                  className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">
                   Teléfono o usuario <span className="text-rose-400">*</span>
                 </label>
                 <input
@@ -787,32 +787,33 @@ export default function GestionClientes() {
                   value={formEditar.telefono}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEditar({ ...formEditar, telefono: e.target.value })}
                   placeholder="+573104567890 o @usuario"
-                  className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
+                  className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">
                   Correo electrónico
                 </label>
                 <input
                   type="email"
                   value={formEditar.correo}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEditar({ ...formEditar, correo: e.target.value })}
-                  className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
+                  placeholder="cliente@ejemplo.com"
+                  className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">
                   Plataforma <span className="text-rose-400">*</span>
                 </label>
                 <input
                   type="text"
                   value={formEditar.plataforma}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEditar({ ...formEditar, plataforma: e.target.value })}
-                  className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
+                  className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150"
                   required
                 />
               </div>
@@ -1077,16 +1078,16 @@ export default function GestionClientes() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">
                   Monto a cobrar <span className="text-rose-400">*</span>
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">$</span>
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-mono text-sm pointer-events-none">$</span>
                   <input
                     type="number"
                     value={montoPago}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMontoPago(e.target.value)}
-                    className="w-full pl-8 bg-slate-900/80 border border-slate-700/80 text-slate-100"
+                    className="w-full h-11 pl-8 pr-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150"
                     min="0.01"
                     max={clienteCobrar.saldoPendiente}
                     step="0.01"

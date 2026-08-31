@@ -73,31 +73,23 @@ input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px #0f172a inset !important;
+  -webkit-box-shadow: 0 0 0 1000px #090d16 inset !important;
   -webkit-text-fill-color: #f8fafc !important;
-  caret-color: #38bdf8 !important;
+  caret-color: #22d3ee !important;
   transition: background-color 5000s ease-in-out 0s;
 }
 
-/* Input styles */
+/* SaaS Elite Inputs - Base styles */
 @layer base {
-  input:not([type="checkbox"]):not([type="radio"]),
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
   select,
   textarea {
-    @apply rounded-xl;
-  }
-
-  input:not([class*="bg-slate"]):not([class*="bg-transparent"]):not([type="checkbox"]):not([type="radio"]),
-  select:not([class*="bg-slate"]):not([class*="bg-transparent"]),
-  textarea:not([class*="bg-slate"]):not([class*="bg-transparent"]) {
-    @apply w-full px-4 py-2 border border-slate-700/80 bg-slate-900/80 text-slate-100 placeholder-slate-500 transition-all duration-200;
+    @apply min-h-[44px] h-11 px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-900/60 text-sm font-normal text-slate-100 leading-normal placeholder:text-slate-500/70 placeholder:font-normal hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 caret-cyan-400 transition-all duration-150;
     backdrop-filter: blur(8px);
   }
 
-  input:not([class*="bg-slate"]):not([class*="bg-transparent"]):not([type="checkbox"]):not([type="radio"]):focus,
-  select:not([class*="bg-slate"]):not([class*="bg-transparent"]):focus,
-  textarea:not([class*="bg-slate"]):not([class*="bg-transparent"]):focus {
-    @apply outline-none border-indigo-500 ring-2 ring-indigo-500/20 bg-slate-900;
+  textarea {
+    @apply min-h-[88px] h-auto py-3;
   }
 }
 

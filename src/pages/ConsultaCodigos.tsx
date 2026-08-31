@@ -95,7 +95,7 @@ export default function ConsultaCodigos() {
       <div className="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-xl p-6 space-y-6 text-slate-100">
         {/* Selector de cuenta */}
         <div>
-          <label className="block text-sm font-semibold text-slate-300 mb-2">Seleccionar cuenta</label>
+          <label className="block text-xs font-medium text-slate-300 mb-1.5">Seleccionar cuenta</label>
           <select
             value={cuentaId}
             onChange={e => {
@@ -103,7 +103,7 @@ export default function ConsultaCodigos() {
               setSelectedCaso('');
               setEstado('idle');
             }}
-            className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
+            className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 transition-all duration-150 appearance-none cursor-pointer"
           >
             <option value="">Seleccioná una cuenta...</option>
             {cuentasConIMAP.map(c => (

@@ -159,7 +159,7 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">
+            <label className="block text-xs font-medium text-slate-300 mb-1.5">
               Nombre <span className="text-rose-400">*</span>
             </label>
             <input
@@ -167,21 +167,21 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               placeholder="Ej: Premium"
-              className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
+              className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150"
               maxLength={100}
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">
+            <label className="block text-xs font-medium text-slate-300 mb-1.5">
               Descripción <span className="text-rose-400">*</span>
             </label>
             <textarea
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
               placeholder="Describe el plan..."
-              className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
+              className="w-full min-h-[88px] h-auto px-4 py-3 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150"
               rows={3}
               maxLength={500}
               required
@@ -189,19 +189,19 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
           </div>
 
           <div className="space-y-3">
-            <label className="block text-sm font-semibold text-slate-300 mb-1">
+            <label className="block text-xs font-medium text-slate-300 mb-1">
               Precios por período
             </label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div>
                 <label className="block text-xs text-slate-400 mb-1">Mensual *</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium">$</span>
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-mono text-sm pointer-events-none">$</span>
                   <input
                     type="number"
                     value={precio}
                     onChange={(e) => setPrecio(e.target.value)}
-                    className="w-full pl-7 bg-slate-900/80 border border-slate-700/80 text-slate-100"
+                    className="w-full h-11 pl-7 pr-3 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 caret-cyan-400 transition-all duration-150"
                     min="0"
                     step="0.01"
                     required
@@ -220,12 +220,12 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
                   <div key={key}>
                     <label className="block text-xs text-slate-400 mb-1">{label}</label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium">{simbolo}</span>
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-mono text-sm pointer-events-none">{simbolo}</span>
                       <input
                         type="number"
                         value={val}
                         onChange={(e) => setter(e.target.value)}
-                        className="w-full pl-7 bg-slate-900/80 border border-slate-700/80 text-slate-100"
+                        className="w-full h-11 pl-7 pr-3 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150"
                         min="0"
                         step="0.01"
                         placeholder={sugerido > 0 ? `~${formatearDesdeBase(sugerido)}` : ''}
@@ -243,14 +243,14 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">
                 Duración (días) <span className="text-rose-400">*</span>
               </label>
               <input
                 type="number"
                 value={duracionDias}
                 onChange={(e) => setDuracionDias(e.target.value)}
-                className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
+                className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 caret-cyan-400 transition-all duration-150"
                 min="1"
                 step="1"
                 required
@@ -259,7 +259,7 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">
+            <label className="block text-xs font-medium text-slate-300 mb-1.5">
               Características
             </label>
             <div className="space-y-2">
@@ -273,13 +273,13 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
                       updated[index] = e.target.value;
                       setFeatures(updated);
                     }}
-                    className="flex-1 bg-slate-900/80 border border-slate-700/80 text-slate-100"
+                    className="flex-1 h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 caret-cyan-400 transition-all duration-150"
                     maxLength={200}
                   />
                   <button
                     type="button"
                     onClick={() => removeFeature(index)}
-                    className="p-2 rounded-xl bg-rose-950/40 text-rose-400 border border-rose-800/40 hover:bg-rose-900/60 transition-colors"
+                    className="p-2.5 rounded-xl bg-rose-950/40 text-rose-400 border border-rose-800/40 hover:bg-rose-900/60 transition-colors"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -292,7 +292,7 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
                   onChange={(e) => setNewFeature(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Agregar característica..."
-                  className="flex-1 bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
+                  className="flex-1 h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150"
                   maxLength={200}
                   disabled={features.length >= 20}
                 />
@@ -300,7 +300,7 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
                   type="button"
                   onClick={addFeature}
                   disabled={features.length >= 20}
-                  className="p-2 rounded-xl bg-indigo-950/50 text-indigo-400 border border-indigo-800/40 hover:bg-indigo-900/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-2.5 rounded-xl bg-indigo-950/50 text-indigo-400 border border-indigo-800/40 hover:bg-indigo-900/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Plus size={16} />
                 </button>

@@ -161,11 +161,11 @@ export const Register: React.FC<RegisterProps> = ({ onSuccess }) => {
       <form onSubmit={handleSubmit} className="flex flex-col gap-3.5" noValidate>
         {/* Campo Nombre */}
         <div>
-          <label className="block text-xs font-medium text-slate-300 mb-1.5 ml-1">
+          <label className="block text-xs font-medium text-slate-300 mb-1.5">
             Nombre completo
           </label>
-          <div className="relative flex items-center bg-slate-950/70 border border-slate-800 rounded-2xl transition-all duration-200 focus-within:border-indigo-500/80 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:bg-slate-950/90">
-            <User className="w-4 h-4 text-slate-500 ml-3.5 mr-2 flex-shrink-0" />
+          <div className="relative">
+            <User className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none flex-shrink-0" />
             <input
               type="text"
               value={nombre}
@@ -174,18 +174,18 @@ export const Register: React.FC<RegisterProps> = ({ onSuccess }) => {
               autoComplete="name"
               required
               disabled={loading || googleLoading}
-              className="w-full bg-transparent focus:bg-transparent py-3 pr-4 text-sm font-medium text-slate-100 focus:text-slate-100 caret-cyan-400 placeholder:text-slate-500 focus:outline-none disabled:opacity-50 [color-scheme:dark]"
+              className="w-full h-11 pl-10 pr-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150 disabled:opacity-50 [color-scheme:dark]"
             />
           </div>
         </div>
 
         {/* Campo Correo */}
         <div>
-          <label className="block text-xs font-medium text-slate-300 mb-1.5 ml-1">
+          <label className="block text-xs font-medium text-slate-300 mb-1.5">
             Correo electrónico
           </label>
-          <div className="relative flex items-center bg-slate-950/70 border border-slate-800 rounded-2xl transition-all duration-200 focus-within:border-indigo-500/80 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:bg-slate-950/90">
-            <Mail className="w-4 h-4 text-slate-500 ml-3.5 mr-2 flex-shrink-0" />
+          <div className="relative">
+            <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none flex-shrink-0" />
             <input
               type="email"
               value={email}
@@ -194,18 +194,18 @@ export const Register: React.FC<RegisterProps> = ({ onSuccess }) => {
               autoComplete="email"
               required
               disabled={loading || googleLoading}
-              className="w-full bg-transparent focus:bg-transparent py-3 pr-4 text-sm font-medium text-slate-100 focus:text-slate-100 caret-cyan-400 placeholder:text-slate-500 focus:outline-none disabled:opacity-50 [color-scheme:dark]"
+              className="w-full h-11 pl-10 pr-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150 disabled:opacity-50 [color-scheme:dark]"
             />
           </div>
         </div>
 
         {/* Campo Contraseña */}
         <div>
-          <label className="block text-xs font-medium text-slate-300 mb-1.5 ml-1">
+          <label className="block text-xs font-medium text-slate-300 mb-1.5">
             Contraseña
           </label>
-          <div className="relative flex items-center bg-slate-950/70 border border-slate-800 rounded-2xl transition-all duration-200 focus-within:border-indigo-500/80 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:bg-slate-950/90">
-            <Lock className="w-4 h-4 text-slate-500 ml-3.5 mr-2 flex-shrink-0" />
+          <div className="relative">
+            <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none flex-shrink-0" />
             <input
               type={showPassword ? 'text' : 'password'}
               value={password}
@@ -214,14 +214,14 @@ export const Register: React.FC<RegisterProps> = ({ onSuccess }) => {
               autoComplete="new-password"
               required
               disabled={loading || googleLoading}
-              className="w-full bg-transparent focus:bg-transparent py-3 pr-10 text-sm font-medium text-slate-100 focus:text-slate-100 caret-cyan-400 placeholder:text-slate-500 focus:outline-none disabled:opacity-50 [color-scheme:dark]"
+              className="w-full h-11 pl-10 pr-10 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150 disabled:opacity-50 [color-scheme:dark]"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               tabIndex={-1}
               aria-label={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
-              className="absolute right-3 text-slate-400 hover:text-slate-200 p-1 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 p-1 transition-colors"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -270,8 +270,8 @@ export const Register: React.FC<RegisterProps> = ({ onSuccess }) => {
               </span>
             )}
           </div>
-          <div className="relative flex items-center bg-slate-950/70 border border-slate-800 rounded-2xl transition-all duration-200 focus-within:border-indigo-500/80 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:bg-slate-950/90">
-            <Coins className="w-4 h-4 text-slate-500 ml-3.5 mr-2 flex-shrink-0" />
+          <div className="relative">
+            <Coins className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none flex-shrink-0" />
             <select
               value={moneda}
               onChange={(e) => {
@@ -282,7 +282,7 @@ export const Register: React.FC<RegisterProps> = ({ onSuccess }) => {
                 setTasa(String(sugerida));
               }}
               disabled={loading || googleLoading}
-              className="w-full bg-transparent focus:bg-transparent py-3 pr-8 text-sm font-medium text-slate-100 focus:text-slate-100 appearance-none focus:outline-none cursor-pointer disabled:opacity-50 [color-scheme:dark]"
+              className="w-full h-11 pl-10 pr-8 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 transition-all duration-150 appearance-none cursor-pointer disabled:opacity-50 [color-scheme:dark]"
             >
               {MONEDAS.map((m) => (
                 <option key={m.codigo} value={m.codigo} className="bg-slate-900 text-slate-100">

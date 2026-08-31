@@ -244,35 +244,35 @@ export default function Usuarios() {
         <form onSubmit={handleCrearUsuario} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Nombre *</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">Nombre *</label>
               <input
                 name="nombre"
                 placeholder="Nombre completo"
                 value={form.nombre}
                 onChange={handleChange}
-                className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
+                className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Correo *</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">Correo *</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={18} />
                 <input
                   name="correo"
                   type="email"
                   placeholder="correo@ejemplo.com"
                   value={form.correo}
                   onChange={handleChange}
-                  className="w-full pl-10 bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
+                  className="w-full h-11 pl-10 pr-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150 font-mono"
                   required
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Contraseña</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">Contraseña</label>
               <div className="relative">
                 <input
                   name="password"
@@ -280,12 +280,12 @@ export default function Usuarios() {
                   placeholder="Opcional (se generará automática)"
                   value={form.password}
                   onChange={handleChange}
-                  className="w-full pr-10 bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
+                  className="w-full h-11 pl-4 pr-10 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150 font-mono"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors p-1"
                   tabIndex={-1}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -294,29 +294,29 @@ export default function Usuarios() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Rol</label>
-              <select name="rol" value={form.rol} onChange={handleChange} className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100">
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">Rol</label>
+              <select name="rol" value={form.rol} onChange={handleChange} className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 transition-all duration-150 appearance-none cursor-pointer">
                 <option value="usuario">Usuario</option>
                 <option value="admin">Administrador</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Estado</label>
-              <select name="estado" value={form.estado} onChange={handleChange} className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100">
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">Estado</label>
+              <select name="estado" value={form.estado} onChange={handleChange} className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 transition-all duration-150 appearance-none cursor-pointer">
                 <option value="activo">Activo</option>
                 <option value="inactivo">Inactivo</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Activo hasta</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">Activo hasta</label>
               <input
                 name="activoHasta"
                 type="date"
                 value={form.activoHasta}
                 onChange={handleChange}
-                className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
+                className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 transition-all duration-150"
               />
             </div>
           </div>

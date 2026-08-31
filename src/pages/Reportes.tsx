@@ -206,43 +206,43 @@ export default function Reportes() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">
-              <Calendar size={16} className="inline mr-1" />
+            <label className="block text-xs font-medium text-slate-300 mb-1.5">
+              <Calendar size={14} className="inline mr-1 text-slate-400" />
               Desde
             </label>
             <input
               type="date"
               value={fechaInicio}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFechaInicio(e.target.value)}
-              className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
+              className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 transition-all duration-150"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">
-              <Calendar size={16} className="inline mr-1" />
+            <label className="block text-xs font-medium text-slate-300 mb-1.5">
+              <Calendar size={14} className="inline mr-1 text-slate-400" />
               Hasta
             </label>
             <input
               type="date"
               value={fechaFin}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFechaFin(e.target.value)}
-              className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
+              className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 transition-all duration-150"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">
+            <label className="block text-xs font-medium text-slate-300 mb-1.5">
               Buscar
             </label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={18} />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                 placeholder="Cliente o Plataforma"
-                className="w-full pl-10 bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
+                className="w-full h-11 pl-10 pr-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150"
               />
             </div>
           </div>

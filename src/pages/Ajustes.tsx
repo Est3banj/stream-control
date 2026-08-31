@@ -166,13 +166,13 @@ export default function Ajustes() {
         </div>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">Nombre completo</label>
+            <label className="block text-xs font-medium text-slate-300 mb-1.5">Nombre completo</label>
             <input
               type="text"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               placeholder="Tu nombre"
-              className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
+              className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150"
             />
           </div>
           <button
@@ -193,11 +193,11 @@ export default function Ajustes() {
         </div>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">Moneda predeterminada</label>
+            <label className="block text-xs font-medium text-slate-300 mb-1.5">Moneda predeterminada</label>
             <select
               value={moneda}
               onChange={(e) => setMoneda(e.target.value)}
-              className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
+              className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 transition-all duration-150 appearance-none cursor-pointer"
             >
               {MONEDAS.map(m => (
                 <option key={m.codigo} value={m.codigo}>
@@ -292,13 +292,13 @@ export default function Ajustes() {
             <div className="space-y-4">
               {/* Contraseña actual (ambos modales) */}
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">Contraseña actual</label>
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">Contraseña actual</label>
                 <input
                   type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="Ingresá tu contraseña actual"
-                  className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
+                  className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150 font-mono"
                 />
                 {modal === 'password' && (
                   <button
@@ -314,35 +314,35 @@ export default function Ajustes() {
 
               {modal === 'email' ? (
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-2">Nuevo correo</label>
+                  <label className="block text-xs font-medium text-slate-300 mb-1.5">Nuevo correo</label>
                   <input
                     type="email"
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
                     placeholder="nuevo@correo.com"
-                    className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
+                    className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150 font-mono"
                   />
                 </div>
               ) : (
                 <>
                   <div>
-                    <label className="block text-sm font-semibold text-slate-300 mb-2">Nueva contraseña</label>
+                    <label className="block text-xs font-medium text-slate-300 mb-1.5">Nueva contraseña</label>
                     <input
                       type="password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="Mínimo 6 caracteres"
-                      className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
+                      className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150 font-mono"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-slate-300 mb-2">Confirmar nueva contraseña</label>
+                    <label className="block text-xs font-medium text-slate-300 mb-1.5">Confirmar nueva contraseña</label>
                     <input
                       type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Repetí la nueva contraseña"
-                      className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
+                      className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150 font-mono"
                     />
                   </div>
                 </>

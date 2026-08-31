@@ -181,7 +181,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
                     setCuentaSeleccionadaId(e.target.value);
                     setPerfilSeleccionado('');
                   }}
-                  className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
+                  className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 transition-all duration-150 appearance-none cursor-pointer"
                 >
                   <option value="">Seleccioná una cuenta...</option>
                   {cuentasDisponibles.map(c => (
@@ -199,7 +199,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
             <button
               type="button"
               onClick={() => cambiarModo('nueva')}
-              className="p-1.5 rounded-xl bg-indigo-950/60 text-indigo-400 border border-indigo-800/40 hover:bg-indigo-900 transition-colors flex-shrink-0"
+              className="p-2.5 rounded-xl bg-indigo-950/60 text-indigo-400 border border-indigo-800/40 hover:bg-indigo-900 transition-colors flex-shrink-0"
               title="Registrar nueva cuenta"
             >
               <Plus size={16} />
@@ -211,11 +211,11 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
 
           {cuentaSeleccionada && perfilesDisponibles.length > 0 && (
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">Seleccionar perfil</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">Seleccionar perfil</label>
               <select
                 value={perfilSeleccionado}
                 onChange={e => setPerfilSeleccionado(e.target.value)}
-                className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
+                className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 transition-all duration-150 appearance-none cursor-pointer"
               >
                 <option value="">Seleccioná un perfil...</option>
                 {perfilesDisponibles.map(p => (
@@ -261,34 +261,34 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">Correo de la cuenta *</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">Correo de la cuenta *</label>
               <input
                 type="email"
                 value={nuevaCorreo}
                 onChange={e => setNuevaCorreo(e.target.value)}
                 placeholder="cuenta@email.com"
-                className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
+                className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150 font-mono"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">Contraseña</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">Contraseña</label>
               <input
                 type="password"
                 value={nuevaContrasena}
                 onChange={e => setNuevaContrasena(e.target.value)}
                 placeholder="Opcional"
-                className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
+                className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150 font-mono"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">Costo total *</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">Costo total *</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">$</span>
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-mono text-sm pointer-events-none">$</span>
                 <input
                   type="number"
                   value={nuevaCosto}
                   onChange={e => setNuevaCosto(Number(e.target.value))}
-                  className="w-full pl-7 bg-slate-900/80 border border-slate-700/80 text-slate-100"
+                  className="w-full h-11 pl-7 pr-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 caret-cyan-400 transition-all duration-150"
                   min="0"
                   step="0.01"
                 />
@@ -298,7 +298,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
 
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-medium text-slate-400">Perfiles</label>
+              <label className="block text-xs font-medium text-slate-300">Perfiles</label>
               <button
                 type="button"
                 onClick={agregarPerfilForm}
@@ -317,7 +317,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
                       value={p.nombre}
                       onChange={e => actualizarPerfilForm(idx, 'nombre', e.target.value)}
                       placeholder={`Perfil ${idx + 1}`}
-                      className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
+                      className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150"
                     />
                   </div>
                   <div className="flex-1">
@@ -326,7 +326,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
                       value={p.pin}
                       onChange={e => actualizarPerfilForm(idx, 'pin', e.target.value)}
                       placeholder="PIN (opcional)"
-                      className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
+                      className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150 font-mono"
                       maxLength={10}
                     />
                   </div>

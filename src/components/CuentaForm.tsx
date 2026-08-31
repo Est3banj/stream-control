@@ -145,13 +145,13 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
     <form onSubmit={handleSubmit} className="space-y-6 text-slate-100">
       {/* Plataforma / Servicio */}
       <div>
-        <label className="block text-sm font-semibold text-slate-300 mb-2">
+        <label className="block text-xs font-medium text-slate-300 mb-1.5">
           Plataforma / Servicio <span className="text-rose-400">*</span>
         </label>
         <select
           value={proveedor}
           onChange={(e) => setProveedor(e.target.value)}
-          className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
+          className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 transition-all duration-150 appearance-none cursor-pointer"
           required
           disabled={isEdit}
         >
@@ -166,7 +166,7 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
             value={otroProveedor}
             onChange={(e) => setOtroProveedor(e.target.value)}
             placeholder="Nombre de la plataforma"
-            className="w-full mt-2 bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
+            className="w-full mt-2 h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150"
             required
             disabled={isEdit}
           />
@@ -175,7 +175,7 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
 
       {/* Nombre del Proveedor (Mayorista) */}
       <div>
-        <label className="block text-sm font-semibold text-slate-300 mb-2">
+        <label className="block text-xs font-medium text-slate-300 mb-1.5">
           Nombre del Proveedor (Mayorista)
         </label>
         <input
@@ -183,13 +183,13 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
           value={nombreProveedor}
           onChange={(e) => setNombreProveedor(e.target.value)}
           placeholder="Ej: Pedro Cuentas, Distribuidor XYZ (opcional)"
-          className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
+          className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150"
         />
       </div>
 
       {/* Tipo de venta */}
       <div>
-        <label className="block text-sm font-semibold text-slate-300 mb-3">
+        <label className="block text-xs font-medium text-slate-300 mb-2">
           Tipo de venta <span className="text-rose-400">*</span>
         </label>
         <div className="grid grid-cols-2 gap-3">
@@ -198,8 +198,8 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
             onClick={() => setTipoVenta('perfiles')}
             className={`p-4 rounded-xl border text-left transition-all ${
               tipoVenta === 'perfiles'
-                ? 'border-indigo-500 bg-indigo-950/40 shadow-lg shadow-indigo-950/40'
-                : 'border-slate-800 bg-slate-900/80 hover:border-slate-700'
+                ? 'border-cyan-500/60 bg-indigo-950/40 shadow-lg shadow-indigo-950/40'
+                : 'border-slate-800 bg-slate-900/60 hover:border-slate-700'
             }`}
           >
             <p className="font-semibold text-white">Por perfiles</p>
@@ -210,8 +210,8 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
             onClick={() => setTipoVenta('completa')}
             className={`p-4 rounded-xl border text-left transition-all ${
               tipoVenta === 'completa'
-                ? 'border-indigo-500 bg-indigo-950/40 shadow-lg shadow-indigo-950/40'
-                : 'border-slate-800 bg-slate-900/80 hover:border-slate-700'
+                ? 'border-cyan-500/60 bg-indigo-950/40 shadow-lg shadow-indigo-950/40'
+                : 'border-slate-800 bg-slate-900/60 hover:border-slate-700'
             }`}
           >
             <p className="font-semibold text-white">Completa</p>
@@ -223,22 +223,22 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
       {/* Credenciales — solo en creación */}
       {!isEdit && (
         <div className="space-y-4 p-4 bg-slate-950/60 rounded-xl border border-slate-800">
-          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">Credenciales</h3>
+          <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wide">Credenciales</h3>
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">
+            <label className="block text-xs font-medium text-slate-300 mb-1.5">
               Correo de la cuenta <span className="text-rose-400">*</span>
             </label>
             <input
               type="email"
               value={correoCuenta}
               onChange={(e) => setCorreoCuenta(e.target.value)}
-              className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
+              className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150 font-mono"
               placeholder="netflix@ejemplo.com"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">
+            <label className="block text-xs font-medium text-slate-300 mb-1.5">
               Contraseña <span className="text-rose-400">*</span>
             </label>
             <div className="relative">
@@ -246,17 +246,17 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
                 type={mostrarContrasena ? 'text' : 'password'}
                 value={contrasena}
                 onChange={(e) => setContrasena(e.target.value)}
-                className="w-full pr-12 bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
+                className="w-full h-11 pl-4 pr-12 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150 font-mono"
                 placeholder="Contraseña de la cuenta"
                 required
               />
               <button
                 type="button"
                 onClick={() => setMostrarContrasena(!mostrarContrasena)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors p-1"
                 tabIndex={-1}
               >
-                {mostrarContrasena ? <EyeOff size={20} /> : <Eye size={20} />}
+                {mostrarContrasena ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
           </div>
@@ -265,16 +265,16 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
 
       {/* Costo */}
       <div>
-        <label className="block text-sm font-semibold text-slate-300 mb-2">
+        <label className="block text-xs font-medium text-slate-300 mb-1.5">
           Costo de la cuenta <span className="text-rose-400">*</span>
         </label>
         <div className="relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">$</span>
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-mono text-sm pointer-events-none">$</span>
           <input
             type="number"
             value={costo}
             onChange={(e) => setCosto(e.target.value)}
-            className="w-full pl-8 bg-slate-900/80 border border-slate-700/80 text-slate-100"
+            className="w-full h-11 pl-8 pr-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150"
             min="0"
             step="100"
             placeholder="0"
@@ -287,29 +287,29 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
       <div className="space-y-4 p-4 bg-slate-950/60 rounded-xl border border-slate-800">
         <div className="flex items-center gap-2">
           <Calendar size={18} className="text-indigo-400" />
-          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">Período del Servicio</h3>
+          <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wide">Período del Servicio</h3>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">
+            <label className="block text-xs font-medium text-slate-300 mb-1.5">
               Fecha de inicio
             </label>
             <input
               type="date"
               value={fechaInicio}
               onChange={(e) => setFechaInicio(e.target.value)}
-              className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
+              className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 transition-all duration-150"
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">
+            <label className="block text-xs font-medium text-slate-300 mb-1.5">
               Duración (días)
             </label>
             <input
               type="number"
               value={diasServicio}
               onChange={(e) => setDiasServicio(e.target.value)}
-              className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
+              className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150"
               min="1"
               placeholder="Ej: 30"
             />
@@ -317,8 +317,8 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
         </div>
         {fechaVencimientoCal && (
           <div className="flex items-center justify-between px-3 py-2 bg-indigo-950/40 rounded-xl border border-indigo-800/40">
-            <span className="text-sm font-medium text-indigo-300">Fecha de vencimiento</span>
-            <span className="text-sm font-bold text-cyan-300">{fechaVencimientoCal}</span>
+            <span className="text-xs font-medium text-indigo-300">Fecha de vencimiento</span>
+            <span className="text-xs font-bold text-cyan-300">{fechaVencimientoCal}</span>
           </div>
         )}
       </div>
@@ -326,13 +326,13 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
       {/* Perfiles */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <label className="block text-sm font-semibold text-slate-300">Perfiles</label>
+          <label className="block text-xs font-medium text-slate-300">Perfiles</label>
           <button
             type="button"
             onClick={agregarPerfil}
-            className="text-sm text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1"
+            className="text-xs text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1"
           >
-            <Plus size={16} />
+            <Plus size={14} />
             Agregar perfil
           </button>
         </div>
@@ -344,25 +344,25 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
                 value={perfil.nombre}
                 onChange={(e) => actualizarPerfil(idx, 'nombre', e.target.value)}
                 placeholder="Nombre del perfil"
-                className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
+                className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150"
               />
             </div>
-            <div className="w-24">
+            <div className="w-28">
               <input
                 type="text"
                 value={perfil.pin}
                 onChange={(e) => actualizarPerfil(idx, 'pin', e.target.value)}
                 placeholder="PIN"
-                className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
+                className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150 font-mono"
               />
             </div>
             {perfiles.length > 1 && (
               <button
                 type="button"
                 onClick={() => quitarPerfil(idx)}
-                className="p-2 rounded-xl text-rose-400 hover:bg-rose-950/40 transition-colors"
+                className="p-2.5 rounded-xl text-rose-400 hover:bg-rose-950/40 transition-colors border border-transparent hover:border-rose-800/40"
               >
-                <Trash2 size={18} />
+                <Trash2 size={16} />
               </button>
             )}
           </div>
@@ -372,11 +372,11 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
       {/* Estado — solo en edición */}
       {isEdit && (
         <div>
-          <label className="block text-sm font-semibold text-slate-300 mb-2">Estado</label>
+          <label className="block text-xs font-medium text-slate-300 mb-1.5">Estado</label>
           <select
             value={estado}
             onChange={(e) => setEstado(e.target.value as 'disponible' | 'asignada' | 'expirada')}
-            className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
+            className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 transition-all duration-150 appearance-none cursor-pointer"
           >
             <option value="disponible">Disponible</option>
             <option value="asignada">Asignada</option>

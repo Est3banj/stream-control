@@ -204,7 +204,7 @@ export default function VentasMayoristas() {
       {tab === 'nueva' && (
         <div className="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-xl p-6 space-y-6 text-slate-100">
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">
+            <label className="block text-xs font-medium text-slate-300 mb-1.5">
               Seleccionar cuenta <span className="text-rose-400">*</span>
             </label>
             <select
@@ -216,7 +216,7 @@ export default function VentasMayoristas() {
                 setCantidad(0);
                 setLinkGenerado('');
               }}
-              className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
+              className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 transition-all duration-150 appearance-none cursor-pointer"
             >
               <option value="">Seleccioná una cuenta...</option>
               {cuentasConIMAP.map(c => {
@@ -255,7 +255,7 @@ export default function VentasMayoristas() {
             }
             return (
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">
                   Perfiles a vender ({disponibles.length} disponibles) <span className="text-rose-400">*</span>
                 </label>
                 <div className="space-y-2 max-h-56 overflow-y-auto p-1">
@@ -267,7 +267,7 @@ export default function VentasMayoristas() {
                         key={idx}
                         className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
                           selected
-                            ? 'border-indigo-500 bg-indigo-950/40 text-white'
+                            ? 'border-cyan-500/60 bg-indigo-950/40 text-white'
                             : 'border-slate-800 bg-slate-950/40 hover:border-slate-700 text-slate-300'
                         }`}
                       >
@@ -283,10 +283,10 @@ export default function VentasMayoristas() {
                               return next;
                             });
                           }}
-                          className="w-4 h-4 text-indigo-600 rounded bg-slate-900 border-slate-700"
+                          className="w-4 h-4 text-cyan-500 rounded bg-slate-900 border-slate-700"
                         />
                         <span className="text-sm font-medium">{p.nombre}</span>
-                        {p.pin && <span className="text-xs text-slate-400">PIN: {p.pin}</span>}
+                        {p.pin && <span className="text-xs text-slate-400 font-mono">PIN: {p.pin}</span>}
                       </label>
                     );
                   })}
@@ -318,26 +318,26 @@ export default function VentasMayoristas() {
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-2">
+                  <label className="block text-xs font-medium text-slate-300 mb-1.5">
                     Nombre del revendedor / sub-distribuidor <span className="text-rose-400">*</span>
                   </label>
                   <input
                     type="text"
                     value={nombreSub}
                     onChange={e => setNombreSub(e.target.value)}
-                    className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
+                    className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150"
                     placeholder="Ej: Distribuidor Express, Juan Pérez"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-2">
+                  <label className="block text-xs font-medium text-slate-300 mb-1.5">
                     Cantidad de perfiles
                   </label>
                   <input
                     type="number"
                     value={cantidad}
-                    className="w-full bg-slate-950/60 border border-slate-800 text-slate-100 font-semibold"
+                    className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-slate-100 font-semibold"
                     readOnly
                     min="1"
                   />
@@ -347,16 +347,16 @@ export default function VentasMayoristas() {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-2">
+                  <label className="block text-xs font-medium text-slate-300 mb-1.5">
                     Total recibido $
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium">$</span>
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-mono text-sm pointer-events-none">$</span>
                     <input
                       type="number"
                       value={totalRecibido}
                       onChange={e => setTotalRecibido(Number(e.target.value))}
-                      className="w-full pl-7 bg-slate-900/80 border border-slate-700/80 text-slate-100"
+                      className="w-full h-11 pl-7 pr-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 caret-cyan-400 transition-all duration-150"
                       min="0"
                       step="100"
                       placeholder="0"
@@ -364,14 +364,14 @@ export default function VentasMayoristas() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-2">Costo total</label>
-                  <div className="flex items-center h-[42px] px-4 bg-slate-950/60 rounded-xl border border-slate-800 text-sm font-semibold text-slate-300">
+                  <label className="block text-xs font-medium text-slate-300 mb-1.5">Costo total</label>
+                  <div className="flex items-center h-11 px-4 bg-slate-950/60 rounded-xl border border-slate-800 text-sm font-semibold text-slate-300">
                     {formatear(totalCosto)}
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-2">Utilidad proyectada</label>
-                  <div className={`flex items-center h-[42px] px-4 rounded-xl border text-sm font-bold ${
+                  <label className="block text-xs font-medium text-slate-300 mb-1.5">Utilidad proyectada</label>
+                  <div className={`flex items-center h-11 px-4 rounded-xl border text-sm font-bold ${
                     utilidad >= 0
                       ? 'bg-emerald-950/40 border-emerald-800/40 text-emerald-400'
                       : 'bg-rose-950/40 border-rose-800/40 text-rose-400'
@@ -389,7 +389,7 @@ export default function VentasMayoristas() {
 
               {/* Duración */}
               <div>
-                <h2 className="text-sm font-semibold text-slate-300 mb-3">Duración del acceso</h2>
+                <h2 className="text-xs font-medium text-slate-300 mb-2">Duración del acceso</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
                   {[7, 15, 30, 60].map(d => (
                     <button
@@ -408,16 +408,16 @@ export default function VentasMayoristas() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-slate-300 font-medium">Personalizado:</span>
+                  <span className="text-xs text-slate-300 font-medium">Personalizado:</span>
                   <input
                     type="number"
                     value={diasAcceso}
                     onChange={e => setDiasAcceso(Number(e.target.value))}
                     min="1"
                     max="365"
-                    className="w-24 text-sm bg-slate-900/80 border border-slate-700/80 text-slate-100"
+                    className="w-24 h-11 px-3 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 text-center caret-cyan-400 transition-all duration-150"
                   />
-                  <span className="text-sm text-slate-400">días</span>
+                  <span className="text-xs text-slate-400">días</span>
                 </div>
               </div>
 

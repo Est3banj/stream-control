@@ -379,7 +379,7 @@ export default function GestionCuentas() {
           <select
             value={filtroProveedor}
             onChange={(e) => setFiltroProveedor(e.target.value)}
-            className="w-full md:w-48 bg-slate-900/80 border border-slate-700/80 text-slate-100"
+            className="w-full md:w-48 h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100"
           >
             {PROVEEDORES.map(p => (
               <option key={p} value={p}>{p === 'Todos' ? 'Todos los proveedores' : p}</option>
@@ -404,13 +404,13 @@ export default function GestionCuentas() {
 
           {/* Búsqueda */}
           <div className="flex-1 relative max-w-md w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={18} />
             <input
               type="text"
               placeholder="Buscar por proveedor o correo..."
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              className="w-full pl-10 pr-4 bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
+              className="w-full h-11 pl-10 pr-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150"
             />
           </div>
 
@@ -947,15 +947,15 @@ export default function GestionCuentas() {
 
               {/* Buscador de clientes */}
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">Buscar cliente</label>
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">Buscar cliente</label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={18} />
                   <input
                     type="text"
                     value={busquedaCliente}
                     onChange={(e) => setBusquedaCliente(e.target.value)}
                     placeholder="Escribí el nombre del cliente..."
-                    className="w-full pl-10 bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
+                    className="w-full h-11 pl-10 pr-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150"
                     autoFocus
                   />
                 </div>
@@ -1031,22 +1031,22 @@ export default function GestionCuentas() {
             </p>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">Fecha de inicio</label>
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">Fecha de inicio</label>
                 <input
                   type="date"
                   value={renovarFechaInicio}
                   onChange={(e) => setRenovarFechaInicio(e.target.value)}
-                  className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
+                  className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 transition-all duration-150"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">Días de servicio</label>
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">Días de servicio</label>
                 <input
                   type="number"
                   value={renovarDiasServicio}
                   onChange={(e) => setRenovarDiasServicio(e.target.value)}
-                  className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
+                  className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150"
                   min="1"
                   placeholder="Ej: 30"
                   required

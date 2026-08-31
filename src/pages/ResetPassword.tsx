@@ -267,11 +267,11 @@ export default function ResetPassword() {
             <form onSubmit={handleSubmit} className="flex flex-col gap-3.5 w-full text-left" noValidate>
               {/* Nueva Contraseña */}
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5 ml-1">
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">
                   Nueva contraseña
                 </label>
-                <div className="relative flex items-center bg-slate-950/70 border border-slate-800 rounded-2xl transition-all duration-200 focus-within:border-indigo-500/80 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:bg-slate-950/90">
-                  <Lock className="w-4 h-4 text-slate-500 ml-3.5 mr-2 flex-shrink-0" />
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none flex-shrink-0" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={password}
@@ -280,14 +280,14 @@ export default function ResetPassword() {
                     autoComplete="new-password"
                     required
                     disabled={submitting}
-                    className="w-full bg-transparent focus:bg-transparent py-3 pr-10 text-sm font-medium text-slate-100 focus:text-slate-100 caret-cyan-400 placeholder:text-slate-500 focus:outline-none disabled:opacity-50 [color-scheme:dark]"
+                    className="w-full h-11 pl-10 pr-10 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150 disabled:opacity-50 [color-scheme:dark]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     tabIndex={-1}
                     aria-label={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
-                    className="absolute right-3 text-slate-400 hover:text-slate-200 p-1 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 p-1 transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -326,11 +326,11 @@ export default function ResetPassword() {
 
               {/* Confirmar Contraseña */}
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5 ml-1">
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">
                   Confirmar contraseña
                 </label>
-                <div className="relative flex items-center bg-slate-950/70 border border-slate-800 rounded-2xl transition-all duration-200 focus-within:border-indigo-500/80 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:bg-slate-950/90">
-                  <Lock className="w-4 h-4 text-slate-500 ml-3.5 mr-2 flex-shrink-0" />
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none flex-shrink-0" />
                   <input
                     type={showConfirmPassword ? 'text' : 'password'}
                     value={confirmPassword}
@@ -339,14 +339,14 @@ export default function ResetPassword() {
                     autoComplete="new-password"
                     required
                     disabled={submitting}
-                    className="w-full bg-transparent focus:bg-transparent py-3 pr-10 text-sm font-medium text-slate-100 focus:text-slate-100 caret-cyan-400 placeholder:text-slate-500 focus:outline-none disabled:opacity-50 [color-scheme:dark]"
+                    className="w-full h-11 pl-10 pr-10 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150 disabled:opacity-50 [color-scheme:dark]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     tabIndex={-1}
                     aria-label={showConfirmPassword ? 'Ocultar confirmación de contraseña' : 'Ver confirmación de contraseña'}
-                    className="absolute right-3 text-slate-400 hover:text-slate-200 p-1 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 p-1 transition-colors"
                   >
                     {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
