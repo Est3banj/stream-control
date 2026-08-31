@@ -30,6 +30,8 @@ interface AuthContextValue {
   logout: () => Promise<void>;
   loading: boolean;
   sendVerificationEmail: (overrideEmail?: string, overrideNombre?: string) => Promise<void>;
+  enviarCodigoOTP: (overrideEmail?: string, overrideNombre?: string) => Promise<void>;
+  verificarCodigo: (codigo: string, overrideEmail?: string) => Promise<void>;
   refreshUser: () => Promise<boolean>;
   updateProfileData: (data: { nombre?: string; moneda?: string; tasa?: number }) => Promise<void>;
   updateUserEmail: (newEmail: string, currentPassword: string) => Promise<void>;
@@ -167,6 +169,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   /**
+   * Envía el código OTP de 6 dígitos via Cloud Function /api/enviarCodigoOTP.
+   */
+  const enviarCodigoOTP = async (overrideEmail?: string, overrideNombre?: string): Promise<void> => {
+    const email = overrideEmail || auth.currentUser?.email || user?.correo;
+    const nombre = overrideNombre || user?.nombre || 'Usuario';
+    if (!email) throw new Error('No hay correo asociado a la sesión');
+    await callFunction('enviarCodigoOTP', { email, nombre });
+  };
+
+  /**
+   * Valida el código OTP de 6 dígitos via Cloud Function /api/verificarCodigoOTP
+   * y recarga el token y perfil del usuario.
+   */
+  const verificarCodigo = async (codigo: string, overrideEmail?: string): Promise<void> => {
+    const email = overrideEmail || auth.currentUser?.email || user?.correo;
+    if (!email) throw new Error('No hay correo asociado a la sesión');
+    await callFunction('verificarCodigoOTP', { email, codigo });
+
+    // Recargar Firebase Auth y refrescar claims
+    try {
+      if (auth.currentUser?.reload) {
+        await auth.currentUser.reload();
+      }
+      if (auth.currentUser?.getIdToken) {
+        await auth.currentUser.getIdToken(true);
+      }
+    } catch (err) {
+      console.warn('Advertencia al refrescar auth.currentUser tras verificar OTP:', err);
+    }
+
+    // Actualizar estado reactivo local
+    setUser((prev) => (prev ? ({ ...prev, emailVerified: true } as FirebaseUserWithData) : null));
+  };
+
+  /**
    * Recarga el usuario de Firebase Auth y devuelve si ya verificó el correo.
    * Protegido contra llamadas en estados no autenticados o con tokens stale/inválidos (400 Identity Toolkit).
    */
@@ -289,12 +326,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Post-write trigger v2 onNuevoUsuario → fire-and-forget (1 reintento, no bloquea)
       fireAndForget('onNuevoUsuario');
 
-      // Enviar email de verificación con template personalizado (via Cloud Function)
-      // No usar fallback nativo: Firebase limita la generación de links (TOO_MANY_ATTEMPTS)
+      // Enviar código OTP de verificación con template personalizado (via Cloud Function)
       try {
-        await sendVerificationEmail(data.correo, data.nombre);
+        await enviarCodigoOTP(data.correo, data.nombre);
       } catch (err) {
-        console.error('Error al enviar correo de verificación inicial:', err);
+        console.error('Error al enviar código OTP de verificación inicial:', err);
       }
 
       setLoading(false);
@@ -358,7 +394,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, loginWithGoogle, register, logout, loading, sendVerificationEmail, refreshUser, updateProfileData, updateUserEmail, updateUserPassword }}>
+    <AuthContext.Provider value={{ user, login, loginWithGoogle, register, logout, loading, sendVerificationEmail, enviarCodigoOTP, verificarCodigo, refreshUser, updateProfileData, updateUserEmail, updateUserPassword }}>
       {children}
     </AuthContext.Provider>
   );
