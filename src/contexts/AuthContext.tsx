@@ -112,12 +112,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser({
             ...firebaseUser,
             ...userData,
+            correo: (userData.correo as string) || (userData.email as string) || firebaseUser.email || '',
+            email: firebaseUser.email || (userData.email as string) || (userData.correo as string) || '',
             emailVerified: isVerified,
           } as FirebaseUserWithData);
         } catch (err) {
           console.error("Error cargando perfil en onAuthStateChanged:", err);
           setUser({
             ...firebaseUser,
+            correo: firebaseUser.email || '',
+            email: firebaseUser.email || '',
             emailVerified: Boolean(firebaseUser.emailVerified),
           } as FirebaseUserWithData);
         }
@@ -177,7 +181,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       );
 
       if (!isEmailVerified) {
-        setUser({ ...firebaseUser, ...userData, emailVerified: false } as FirebaseUserWithData);
+        setUser({
+          ...firebaseUser,
+          ...userData,
+          correo: (userData.correo as string) || (userData.email as string) || firebaseUser.email || '',
+          email: firebaseUser.email || (userData.email as string) || (userData.correo as string) || '',
+          emailVerified: false,
+        } as FirebaseUserWithData);
         setLoading(false);
         throw new Error("Verificá tu correo antes de continuar. Revisá tu bandeja de entrada.");
       }
@@ -185,6 +195,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser({
         ...firebaseUser,
         ...userData,
+        correo: (userData.correo as string) || (userData.email as string) || firebaseUser.email || '',
+        email: firebaseUser.email || (userData.email as string) || (userData.correo as string) || '',
         emailVerified: true,
       } as FirebaseUserWithData);
       setLoading(false);
@@ -201,7 +213,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * Funciona incluso sin sesión activa, solo necesita el email.
    */
   const sendVerificationEmail = async (overrideEmail?: string, overrideNombre?: string): Promise<void> => {
-    const email = overrideEmail || auth.currentUser?.email || user?.correo;
+    const email = (overrideEmail || auth.currentUser?.email || user?.correo || (user as unknown as { email?: string })?.email || '').trim().toLowerCase();
     const nombre = overrideNombre || user?.nombre || 'Usuario';
     if (!email) throw new Error('No hay correo asociado a la sesión');
     await callFunction('enviarCorreoVerificacion', { email, nombre });
@@ -211,7 +223,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * Envía el código OTP de 6 dígitos via Cloud Function /api/enviarCodigoOTP.
    */
   const enviarCodigoOTP = async (overrideEmail?: string, overrideNombre?: string): Promise<void> => {
-    const email = overrideEmail || auth.currentUser?.email || user?.correo;
+    const email = (overrideEmail || auth.currentUser?.email || user?.correo || (user as unknown as { email?: string })?.email || '').trim().toLowerCase();
     const nombre = overrideNombre || user?.nombre || 'Usuario';
     if (!email) throw new Error('No hay correo asociado a la sesión');
     await callFunction('enviarCodigoOTP', { email, nombre });
@@ -222,9 +234,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * y recarga el token y perfil del usuario.
    */
   const verificarCodigo = async (codigo: string, overrideEmail?: string): Promise<void> => {
-    const email = overrideEmail || auth.currentUser?.email || user?.correo;
+    const email = (overrideEmail || auth.currentUser?.email || user?.correo || (user as unknown as { email?: string })?.email || '').trim().toLowerCase();
     if (!email) throw new Error('No hay correo asociado a la sesión');
-    await callFunction('verificarCodigoOTP', { email, codigo });
+    const uid = auth.currentUser?.uid || user?.uid;
+    await callFunction('verificarCodigoOTP', { email, codigo, uid });
 
     // Recargar Firebase Auth y refrescar claims
     try {
@@ -238,7 +251,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.warn('Advertencia al refrescar auth.currentUser tras verificar OTP:', err);
     }
 
-    // Actualizar estado reactivo local
+    // Actualizar estado reactivo local inmediatamente
     setUser((prev) => (prev ? ({ ...prev, emailVerified: true } as FirebaseUserWithData) : null));
   };
 
@@ -354,8 +367,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const profile = {
         nombre: data.nombre,
         correo: data.correo,
+        email: data.correo,
         rol: 'usuario',
         estado: 'activo',
+        emailVerified: false,
         moneda: data.moneda,
         tasa: data.tasa,
         activoHasta: null,

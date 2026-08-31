@@ -128,10 +128,9 @@ export async function verificarEmailToken(req: AuthedReq): Promise<unknown> {
     const email = tokenData.email as string;
 
     // ───────────────────────────────────────────────────────────────────
-    // FIX: Buscar uid en Firestore por email (no depende de Admin SDK Auth)
-    // Admin SDK no tiene permisos para getUserByEmail, así que consultamos
-    // la colección usuarios directamente.
+    // FIX: Buscar uid en Firestore por correo y email (resiliente a esquemas mixtos)
     // ───────────────────────────────────────────────────────────────────
+    let uid: string | undefined;
     try {
       const usersSnap = await db
         .collection('usuarios')
@@ -140,17 +139,40 @@ export async function verificarEmailToken(req: AuthedReq): Promise<unknown> {
         .get();
 
       if (!usersSnap.empty) {
-        const uid = usersSnap.docs[0].id;
+        uid = usersSnap.docs[0].id;
+      } else {
+        const usersSnapEmail = await db
+          .collection('usuarios')
+          .where('email', '==', email)
+          .limit(1)
+          .get();
+        if (!usersSnapEmail.empty) {
+          uid = usersSnapEmail.docs[0].id;
+        }
+      }
 
-        // Actualizar emailVerified en Firestore usuarios/{uid}
-        await db.collection('usuarios').doc(uid).update({
+      if (!uid) {
+        try {
+          const admin = getAdmin();
+          const userRecord = await admin.auth().getUserByEmail(email);
+          if (userRecord?.uid) uid = userRecord.uid;
+        } catch {
+          // ignore
+        }
+      }
+
+      if (uid) {
+        // Actualizar emailVerified en Firestore usuarios/{uid} con merge: true
+        await db.collection('usuarios').doc(uid).set({
           emailVerified: true,
           verificadoEn: now,
-        });
+          correo: email,
+          email: email,
+        }, { merge: true });
 
         console.log('✅ Firestore usuarios/{uid} updated for', email, '(uid:', uid, ')');
       } else {
-        console.warn('⚠️ No user found in Firestore for email:', email);
+        console.warn('⚠️ No user found in Firestore or Auth for email:', email);
       }
     } catch (fsErr) {
       const msg = fsErr instanceof Error ? fsErr.message : String(fsErr);
@@ -158,15 +180,15 @@ export async function verificarEmailToken(req: AuthedReq): Promise<unknown> {
     }
 
     // Intentar actualizar Firebase Auth (best-effort, puede fallar por permisos)
-    try {
-      const admin = getAdmin();
-      const userRecord = await admin.auth().getUserByEmail(email);
-      await admin.auth().updateUser(userRecord.uid, { emailVerified: true });
-      console.log('✅ Firebase Auth emailVerified updated for', email, '(uid:', userRecord.uid, ')');
-    } catch (authErr) {
-      const msg = authErr instanceof Error ? authErr.message : String(authErr);
-      console.error('⚠️ Error updating Firebase Auth for', email, ':', msg);
-      // No lanzamos error — Firestore ya se actualizó arriba
+    if (uid) {
+      try {
+        const admin = getAdmin();
+        await admin.auth().updateUser(uid, { emailVerified: true });
+        console.log('✅ Firebase Auth emailVerified updated for', email, '(uid:', uid, ')');
+      } catch (authErr) {
+        const msg = authErr instanceof Error ? authErr.message : String(authErr);
+        console.error('⚠️ Error updating Firebase Auth for', email, ':', msg);
+      }
     }
 
     return { success: true };

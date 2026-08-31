@@ -83,7 +83,7 @@ export async function onNuevoUsuario(req: AuthedReq): Promise<unknown> {
 
   const snap = await userRef.get();
   const userData = snap.exists ? snap.data() : null;
-  const correo = userData?.correo as string | undefined;
+  const correo = (userData?.correo || userData?.email) as string | undefined;
   if (!correo) {
     console.log('⏭️ No correo field on new user doc, skipping welcome email');
     return { success: true, skipped: true };

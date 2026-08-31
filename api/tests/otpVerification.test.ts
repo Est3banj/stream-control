@@ -202,6 +202,97 @@ describe('OTP Verification API (enviarCodigoOTP & verificarCodigoOTP)', () => {
       expect(otpDoc?.intentos).toBe(1);
     });
 
+    it('valida código correctamente cuando el usuario en Firestore usa el campo email en vez de correo', async () => {
+      const altEmail = 'schema-email@example.com';
+      const altOtpDocId = hashEmail(altEmail);
+
+      backend.seed('usuarios', 'uid-schema-email', {
+        email: altEmail, // Notice: using 'email' instead of 'correo'
+        nombre: 'Schema User',
+        emailVerified: false,
+      });
+
+      backend.seed('otpsVerificacion', altOtpDocId, {
+        email: altEmail,
+        nombre: 'Schema User',
+        otpHash: hashOtp('654321'),
+        expira: Date.now() + 10 * 60 * 1000,
+        intentos: 0,
+        maxIntentos: 5,
+        creado: Date.now(),
+      });
+
+      const res = await request(app)
+        .post('/api/verificarCodigoOTP')
+        .send({ data: { email: altEmail, codigo: '654321' } });
+
+      expect(res.status).toBe(200);
+      expect(res.body.result).toEqual({
+        success: true,
+        message: 'Email verificado con éxito',
+      });
+
+      const user = backend.getData('usuarios', 'uid-schema-email');
+      expect(user?.emailVerified).toBe(true);
+      expect(user?.correo).toBe(altEmail);
+      expect(user?.email).toBe(altEmail);
+      expect(typeof user?.verificadoEn).toBe('number');
+      expect(backend.auth.updateUser).toHaveBeenCalledWith('uid-schema-email', { emailVerified: true });
+    });
+
+    it('utiliza data.uid provisto directamente por el cliente para actualizar el usuario', async () => {
+      const customEmail = 'custom-uid@example.com';
+      const customDocId = hashEmail(customEmail);
+
+      backend.seed('usuarios', 'uid-explicit-456', {
+        correo: customEmail,
+        nombre: 'Explicit User',
+      });
+
+      backend.seed('otpsVerificacion', customDocId, {
+        email: customEmail,
+        nombre: 'Explicit User',
+        otpHash: hashOtp('112233'),
+        expira: Date.now() + 10 * 60 * 1000,
+        intentos: 0,
+        maxIntentos: 5,
+        creado: Date.now(),
+      });
+
+      const res = await request(app)
+        .post('/api/verificarCodigoOTP')
+        .send({ data: { email: customEmail, codigo: '112233', uid: 'uid-explicit-456' } });
+
+      expect(res.status).toBe(200);
+      const user = backend.getData('usuarios', 'uid-explicit-456');
+      expect(user?.emailVerified).toBe(true);
+    });
+
+    it('falla con 404 y no marca éxito fantasma si el usuario no existe en Firestore ni Auth', async () => {
+      const ghostEmail = 'ghost@example.com';
+      const ghostDocId = hashEmail(ghostEmail);
+
+      backend.seed('otpsVerificacion', ghostDocId, {
+        email: ghostEmail,
+        nombre: 'Ghost User',
+        otpHash: hashOtp('998877'),
+        expira: Date.now() + 10 * 60 * 1000,
+        intentos: 0,
+        maxIntentos: 5,
+        creado: Date.now(),
+      });
+
+      // Simular que getUserByEmail falla
+      backend.auth.getUserByEmail.mockRejectedValueOnce(new Error('User not found in Auth'));
+
+      const res = await request(app)
+        .post('/api/verificarCodigoOTP')
+        .send({ data: { email: ghostEmail, codigo: '998877' } });
+
+      expect(res.status).toBe(404);
+      expect(res.body.error.code).toBe('not-found');
+    });
+
     it('bloquea y elimina documento al alcanzar el límite de 5 intentos', async () => {
       backend.seed('otpsVerificacion', otpDocId, {
         email,

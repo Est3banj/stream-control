@@ -82,13 +82,14 @@ export async function verificarCodigoOTP(req: AuthedReq): Promise<unknown> {
     }
   }
 
-  // Código válido -> actualizar usuario y eliminar OTP
-  let uid = req.auth?.uid;
+  // Código válido -> localizar y actualizar usuario
+  let uid: string | undefined = req.auth?.uid;
 
   if (!uid && typeof data.uid === 'string' && data.uid.trim()) {
     uid = data.uid.trim();
   }
 
+  // 1. Buscar en Firestore por `correo` (lowercase)
   if (!uid) {
     const userSnap = await db.collection('usuarios').where('correo', '==', email).limit(1).get();
     if (!userSnap.empty) {
@@ -96,6 +97,29 @@ export async function verificarCodigoOTP(req: AuthedReq): Promise<unknown> {
     }
   }
 
+  // 2. Buscar en Firestore por `email` (lowercase)
+  if (!uid) {
+    const userSnapEmail = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+    if (!userSnapEmail.empty) {
+      uid = userSnapEmail.docs[0].id;
+    }
+  }
+
+  // 3. Buscar en Firestore con el email original si difiere
+  const rawEmail = String(data.email ?? '').trim();
+  if (!uid && rawEmail && rawEmail !== email) {
+    const snapCorreoRaw = await db.collection('usuarios').where('correo', '==', rawEmail).limit(1).get();
+    if (!snapCorreoRaw.empty) {
+      uid = snapCorreoRaw.docs[0].id;
+    } else {
+      const snapEmailRaw = await db.collection('usuarios').where('email', '==', rawEmail).limit(1).get();
+      if (!snapEmailRaw.empty) {
+        uid = snapEmailRaw.docs[0].id;
+      }
+    }
+  }
+
+  // 4. Fallback Firebase Admin Auth SDK getUserByEmail
   if (!uid) {
     try {
       const admin = getAdmin();
@@ -108,18 +132,37 @@ export async function verificarCodigoOTP(req: AuthedReq): Promise<unknown> {
     }
   }
 
-  if (uid) {
-    await db.collection('usuarios').doc(uid).update({
-      emailVerified: true,
-      verificadoEn: now,
-    });
-
+  if (!uid && rawEmail && rawEmail !== email) {
     try {
       const admin = getAdmin();
-      await admin.auth().updateUser(uid, { emailVerified: true });
-    } catch (authErr) {
-      console.warn('⚠️ Admin Auth updateUser notice (Firestore updated successfully):', authErr);
+      const userRecord = await admin.auth().getUserByEmail(rawEmail);
+      if (userRecord?.uid) {
+        uid = userRecord.uid;
+      }
+    } catch {
+      // ignore
     }
+  }
+
+  if (!uid) {
+    console.error('❌ No se encontró usuario en Firestore ni Auth para el correo:', email);
+    throw new APIError('not-found', 'No se encontró la cuenta de usuario asociada a este correo');
+  }
+
+  // Actualizar documento en Firestore de forma atómica y segura con merge
+  await db.collection('usuarios').doc(uid).set({
+    emailVerified: true,
+    verificadoEn: now,
+    correo: email,
+    email: email,
+  }, { merge: true });
+
+  // Actualizar Firebase Auth Admin SDK (best effort)
+  try {
+    const admin = getAdmin();
+    await admin.auth().updateUser(uid, { emailVerified: true });
+  } catch (authErr) {
+    console.warn('⚠️ Admin Auth updateUser notice (Firestore updated successfully):', authErr);
   }
 
   await otpRef.delete();
