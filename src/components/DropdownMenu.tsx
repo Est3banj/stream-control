@@ -31,7 +31,7 @@ export default function DropdownMenu({ actions }: DropdownMenuProps) {
     <div ref={ref} className="relative inline-block">
       <button
         onClick={() => setOpen(!open)}
-        className="p-2 rounded-lg bg-slate-800/80 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+        className="p-2 rounded-xl bg-slate-800/80 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
         title="Acciones"
       >
         <MoreVertical size={18} />

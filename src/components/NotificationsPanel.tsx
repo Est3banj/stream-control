@@ -101,7 +101,7 @@ export default function NotificationsPanel() {
       {/* Botón de notificaciones */}
       <button
         onClick={() => setMostrarPanel(!mostrarPanel)}
-        className="relative p-2 rounded-lg hover:bg-slate-800/60 transition-colors text-slate-300"
+        className="relative p-2 rounded-xl hover:bg-slate-800/60 transition-colors text-slate-300"
         aria-label="Notificaciones"
       >
         <Bell size={22} className="text-slate-300" />
@@ -128,7 +128,7 @@ export default function NotificationsPanel() {
             </div>
             <button
               onClick={() => setMostrarPanel(false)}
-              className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+              className="p-1 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               aria-label="Cerrar"
             >
               <X size={18} />

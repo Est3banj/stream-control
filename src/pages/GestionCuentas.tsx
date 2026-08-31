@@ -314,7 +314,7 @@ export default function GestionCuentas() {
       <div className="space-y-6 animate-fade-in text-slate-100">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <div className="h-10 w-64 bg-slate-800 rounded-lg animate-pulse mb-2" />
+            <div className="h-10 w-64 bg-slate-800 rounded-xl animate-pulse mb-2" />
             <div className="h-4 w-48 bg-slate-800 rounded animate-pulse" />
           </div>
           <div className="h-10 w-36 bg-slate-800 rounded-xl animate-pulse" />
@@ -696,7 +696,7 @@ export default function GestionCuentas() {
               </div>
               <button
                 onClick={() => setMostrarRegistrar(false)}
-                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+                className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               >
                 <X size={24} />
               </button>
@@ -724,7 +724,7 @@ export default function GestionCuentas() {
                   setMostrarVer(false);
                   setCuentaSeleccionada(null);
                 }}
-                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+                className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               >
                 <X size={24} />
               </button>
@@ -748,7 +748,7 @@ export default function GestionCuentas() {
                   setMostrarEditar(false);
                   setCuentaSeleccionada(null);
                 }}
-                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+                className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               >
                 <X size={24} />
               </button>
@@ -781,7 +781,7 @@ export default function GestionCuentas() {
                   setMostrarIMAP(false);
                   setCuentaSeleccionada(null);
                 }}
-                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+                className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               >
                 <X size={24} />
               </button>
@@ -824,7 +824,7 @@ export default function GestionCuentas() {
               </div>
               <button
                 onClick={() => { setMostrarDatosCuenta(false); setDatosCuenta(null); setCuentaTicket(null); }}
-                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+                className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               >
                 <X size={24} />
               </button>
@@ -899,7 +899,7 @@ export default function GestionCuentas() {
                   setMostrarAsignar(false);
                   setCuentaAsignando(null);
                 }}
-                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+                className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               >
                 <X size={24} />
               </button>
@@ -1018,7 +1018,7 @@ export default function GestionCuentas() {
                   setMostrarRenovar(false);
                   setCuentaRenovar(null);
                 }}
-                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+                className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               >
                 <X size={24} />
               </button>
@@ -1053,7 +1053,7 @@ export default function GestionCuentas() {
                 />
               </div>
               {renovarFechaInicio && renovarDiasServicio && Number(renovarDiasServicio) > 0 && (
-                <div className="flex items-center justify-between px-3 py-2 bg-indigo-950/40 rounded-lg border border-indigo-800/40">
+                <div className="flex items-center justify-between px-3 py-2 bg-indigo-950/40 rounded-xl border border-indigo-800/40">
                   <span className="text-sm font-medium text-indigo-300">Nuevo vencimiento</span>
                   <span className="text-sm font-bold text-cyan-300">
                     {(() => {

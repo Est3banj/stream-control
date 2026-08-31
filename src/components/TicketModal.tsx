@@ -212,7 +212,7 @@ export default function TicketModal({ cliente, onClose }: TicketModalProps) {
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+            className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
             aria-label="Cerrar"
           >
             <X size={18} />

@@ -647,7 +647,7 @@ export default function GestionClientes() {
                             </span>
                             <button
                               onClick={() => setConfirmarRevocar({ tokenId: tokenCliente.id, clienteNombre: c.nombre })}
-                              className="p-1 rounded-lg bg-rose-950/60 text-rose-400 hover:bg-rose-900 border border-rose-800/50 transition-colors"
+                              className="p-1 rounded-xl bg-rose-950/60 text-rose-400 hover:bg-rose-900 border border-rose-800/50 transition-colors"
                               title="Revocar token"
                             >
                               <X size={14} />
@@ -758,7 +758,7 @@ export default function GestionClientes() {
                   setMostrarEditar(false);
                   setClienteEditando(null);
                 }}
-                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+                className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               >
                 <X size={24} />
               </button>
@@ -856,7 +856,7 @@ export default function GestionClientes() {
                   setClienteSeleccionado(null);
                   setHistorialVentas([]);
                 }}
-                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+                className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               >
                 <X size={24} />
               </button>
@@ -943,7 +943,7 @@ export default function GestionClientes() {
                   setMostrarTokenModal(false);
                   setTokenGeneradoURL('');
                 }}
-                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+                className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               >
                 <X size={24} />
               </button>
@@ -953,12 +953,12 @@ export default function GestionClientes() {
               <div className="bg-slate-950/70 rounded-xl p-4 border border-slate-800">
                 <p className="text-sm font-medium text-cyan-300 mb-2">URL de consulta</p>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 bg-slate-900 rounded-lg px-4 py-3 text-sm text-cyan-400 border border-slate-800 break-all font-mono">
+                  <code className="flex-1 bg-slate-900 rounded-xl px-4 py-3 text-sm text-cyan-400 border border-slate-800 break-all font-mono">
                     {tokenGeneradoURL}
                   </code>
                   <button
                     onClick={copiarTokenURL}
-                    className="p-3 rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 transition-colors shrink-0 shadow-md shadow-indigo-950/50"
+                    className="p-3 rounded-xl bg-indigo-600 text-white hover:bg-indigo-500 transition-colors shrink-0 shadow-md shadow-indigo-950/50"
                     title="Copiar link"
                   >
                     <Copy size={18} />
@@ -1060,7 +1060,7 @@ export default function GestionClientes() {
                   setClienteCobrar(null);
                   setMontoPago('');
                 }}
-                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+                className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               >
                 <X size={24} />
               </button>

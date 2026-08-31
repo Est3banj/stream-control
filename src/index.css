@@ -81,10 +81,16 @@ input:-webkit-autofill:active {
 
 /* Input styles */
 @layer base {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    @apply rounded-xl;
+  }
+
   input:not([class*="bg-slate"]):not([class*="bg-transparent"]):not([type="checkbox"]):not([type="radio"]),
   select:not([class*="bg-slate"]):not([class*="bg-transparent"]),
   textarea:not([class*="bg-slate"]):not([class*="bg-transparent"]) {
-    @apply w-full px-4 py-2 rounded-xl border border-slate-700/80 bg-slate-900/80 text-slate-100 placeholder-slate-500 transition-all duration-200;
+    @apply w-full px-4 py-2 border border-slate-700/80 bg-slate-900/80 text-slate-100 placeholder-slate-500 transition-all duration-200;
     backdrop-filter: blur(8px);
   }
 

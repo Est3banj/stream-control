@@ -168,7 +168,7 @@ export default function ConsultaCodigos() {
               <div className="mt-6 bg-indigo-950/40 rounded-xl p-6 border border-indigo-800/40">
                 <div className="text-center">
                   <p className="text-sm text-slate-400 mb-3">Enlace de código temporal</p>
-                  <div className="bg-slate-950/80 rounded-lg p-3 border border-slate-800 break-all">
+                  <div className="bg-slate-950/80 rounded-xl p-3 border border-slate-800 break-all">
                     <a
                       href={codigo}
                       target="_blank"
@@ -210,7 +210,7 @@ export default function ConsultaCodigos() {
                 <button
                   type="button"
                   onClick={() => navigator.clipboard.writeText(codigo).then(() => toast.success('Copiado'))}
-                  className="btn-primary mt-4 inline-flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm"
+                  className="btn-primary mt-4 inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm"
                 >
                   <Copy size={16} />
                   Copiar código

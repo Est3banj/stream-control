@@ -283,7 +283,7 @@ export default function Ajustes() {
               </div>
               <button
                 onClick={() => setModal(null)}
-                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+                className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               >
                 <X size={20} />
               </button>

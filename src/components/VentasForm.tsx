@@ -904,7 +904,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
               }
             />
             {s.cuentaId && s.perfiles.some(p => p.nombre) && (
-              <div className="mt-1 flex items-center gap-1.5 px-2 py-1 bg-indigo-950/40 rounded-lg border border-indigo-800/40">
+              <div className="mt-1 flex items-center gap-1.5 px-2 py-1 bg-indigo-950/40 rounded-xl border border-indigo-800/40">
                 <Check size={11} className="text-indigo-400 shrink-0" />
                 <span className="text-xs text-indigo-300">
                   {s.plataforma} — {formatear(s.costoPorPerfil)}/perfil
@@ -1126,7 +1126,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
                     onCuentaSelected={handleCuentaSelected}
                   />
                   {cuentaId && venta.perfiles.some(p => p.nombre) && (
-                    <div className="mt-1 flex items-center gap-1.5 px-3 py-1.5 bg-indigo-950/40 rounded-lg border border-indigo-800/40">
+                    <div className="mt-1 flex items-center gap-1.5 px-3 py-1.5 bg-indigo-950/40 rounded-xl border border-indigo-800/40">
                       <Check size={14} className="text-indigo-400 shrink-0" />
                       <span className="text-xs text-indigo-300">
                         {venta.plataforma} — {formatear(costoPorPerfil)}/perfil

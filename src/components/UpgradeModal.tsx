@@ -206,7 +206,7 @@ export default function UpgradeModal({ user, onClose }: UpgradeModalProps) {
         <button
           ref={closeButtonRef}
           onClick={handleClose}
-          className="absolute top-4 right-4 p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors z-10"
+          className="absolute top-4 right-4 p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors z-10"
           aria-label="Cerrar"
         >
           <X size={24} />
@@ -232,7 +232,7 @@ export default function UpgradeModal({ user, onClose }: UpgradeModalProps) {
               <button
                 key={p}
                 onClick={() => setPeriodo(p)}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${
+                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
                   periodo === p
                     ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-950/50'
                     : 'text-slate-400 hover:text-slate-200'

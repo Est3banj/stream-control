@@ -169,7 +169,7 @@ export default function CuentaDetail({ cuenta }: CuentaDetailProps) {
                           setAsignandoIdx(idx);
                           setBusquedaCliente('');
                         }}
-                        className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 transition-colors text-xs font-semibold flex items-center gap-1 shadow-md shadow-indigo-950/50"
+                        className="px-3 py-1.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-500 transition-colors text-xs font-semibold flex items-center gap-1 shadow-md shadow-indigo-950/50"
                         title="Asignar este perfil a un cliente"
                       >
                         <Link size={14} />
@@ -186,7 +186,7 @@ export default function CuentaDetail({ cuenta }: CuentaDetailProps) {
                             value={busquedaCliente}
                             onChange={e => setBusquedaCliente(e.target.value)}
                             placeholder="Buscar cliente..."
-                            className="w-full pl-8 pr-2 py-1.5 text-xs bg-slate-900 border border-slate-700 text-slate-100 placeholder-slate-500 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                            className="w-full pl-8 pr-2 py-1.5 text-xs bg-slate-900 border border-slate-700 text-slate-100 placeholder-slate-500 rounded-xl focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
                             autoFocus
                             disabled={guardando}
                             onKeyDown={e => {
@@ -197,7 +197,7 @@ export default function CuentaDetail({ cuenta }: CuentaDetailProps) {
                             }}
                           />
                         </div>
-                        <div className="max-h-40 overflow-y-auto space-y-0.5 bg-slate-900 rounded-lg border border-slate-800 shadow-xl">
+                        <div className="max-h-40 overflow-y-auto space-y-0.5 bg-slate-900 rounded-xl border border-slate-800 shadow-xl">
                           {loadingClientes ? (
                             <div className="p-2 text-xs text-slate-500 text-center">Cargando clientes...</div>
                           ) : clientesFiltrados.length === 0 ? (

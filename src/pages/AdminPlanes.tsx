@@ -233,7 +233,7 @@ export default function AdminPlanes() {
                         <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={() => openEdit(plan)}
-                            className="p-2 rounded-lg bg-indigo-950/50 text-indigo-400 hover:bg-indigo-900/60 border border-indigo-800/40 transition-colors"
+                            className="p-2 rounded-xl bg-indigo-950/50 text-indigo-400 hover:bg-indigo-900/60 border border-indigo-800/40 transition-colors"
                             title="Editar plan"
                           >
                             <Edit size={16} />
@@ -241,7 +241,7 @@ export default function AdminPlanes() {
                           <button
                             onClick={() => handleToggle(plan.id, plan.activo)}
                             disabled={togglingId === plan.id || deletingId === plan.id}
-                            className={`p-2 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${plan.activo
+                            className={`p-2 rounded-xl border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${plan.activo
                                 ? 'bg-amber-950/40 text-amber-400 border-amber-800/40 hover:bg-amber-900/60'
                                 : 'bg-emerald-950/40 text-emerald-400 border-emerald-800/40 hover:bg-emerald-900/60'
                               }`}
@@ -252,7 +252,7 @@ export default function AdminPlanes() {
                           <button
                             onClick={() => handleDelete(plan.id)}
                             disabled={deletingId === plan.id}
-                            className="p-2 rounded-lg bg-rose-950/40 text-rose-400 border border-rose-800/40 hover:bg-rose-900/60 transition-colors disabled:opacity-50"
+                            className="p-2 rounded-xl bg-rose-950/40 text-rose-400 border border-rose-800/40 hover:bg-rose-900/60 transition-colors disabled:opacity-50"
                             title="Eliminar plan"
                           >
                             <Trash2 size={16} />

@@ -79,7 +79,7 @@ export default function ConsultaInterna({ clienteNombre, proveedor, correoCuenta
         </div>
         <button
           onClick={onClose}
-          className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+          className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
         >
           <span className="sr-only">Cerrar</span>
           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -168,7 +168,7 @@ export default function ConsultaInterna({ clienteNombre, proveedor, correoCuenta
                   setTimeout(() => { btn.textContent = 'Copiar código'; }, 2000);
                 }
               })}
-              className="mt-4 inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-500 transition-colors shadow-md shadow-indigo-950/50"
+              className="mt-4 inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-500 transition-colors shadow-md shadow-indigo-950/50"
             >
               Copiar código
             </button>

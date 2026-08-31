@@ -152,7 +152,7 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
               {isEdit ? 'Actualiza la información del plan' : 'Define un nuevo plan de suscripción'}
             </p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors">
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors">
             <X size={24} />
           </button>
         </div>
@@ -279,7 +279,7 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
                   <button
                     type="button"
                     onClick={() => removeFeature(index)}
-                    className="p-2 rounded-lg bg-rose-950/40 text-rose-400 border border-rose-800/40 hover:bg-rose-900/60 transition-colors"
+                    className="p-2 rounded-xl bg-rose-950/40 text-rose-400 border border-rose-800/40 hover:bg-rose-900/60 transition-colors"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -300,7 +300,7 @@ export default function PlanForm({ plan, onClose, onSave }: PlanFormProps) {
                   type="button"
                   onClick={addFeature}
                   disabled={features.length >= 20}
-                  className="p-2 rounded-lg bg-indigo-950/50 text-indigo-400 border border-indigo-800/40 hover:bg-indigo-900/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-2 rounded-xl bg-indigo-950/50 text-indigo-400 border border-indigo-800/40 hover:bg-indigo-900/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Plus size={16} />
                 </button>

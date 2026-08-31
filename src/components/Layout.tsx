@@ -234,7 +234,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               {/* Menú móvil */}
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-lg hover:bg-slate-800/60 text-slate-300 transition-colors"
+                className="lg:hidden p-2 rounded-xl hover:bg-slate-800/60 text-slate-300 transition-colors"
                 aria-label="Abrir menú"
               >
                 <Menu size={24} className="text-slate-300" />
@@ -259,7 +259,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             rel="noopener noreferrer"
             className="fixed bottom-5 right-5 z-50 group"
           >
-            <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-slate-900 border border-slate-800 text-slate-200 text-sm font-medium px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-xl backdrop-blur-sm">
+            <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-slate-900 border border-slate-800 text-slate-200 text-sm font-medium px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-xl backdrop-blur-sm">
               Chateá con soporte
             </span>
             <div className="flex items-center justify-center w-12 h-12 rounded-full shadow-lg shadow-emerald-950/40 transition-all duration-300 hover:scale-110 active:scale-95 bg-[#25D366] text-white hover:bg-[#20bd5a]">

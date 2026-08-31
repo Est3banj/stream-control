@@ -265,7 +265,7 @@ export default function AdminSuscripciones() {
                           <select
                             value={s.estado}
                             onChange={(e) => handleChangeEstado(s.id, e.target.value as EstadoSuscripcion)}
-                            className="text-xs border border-slate-700 rounded-lg px-2 py-1.5 bg-slate-900 text-slate-200"
+                            className="text-xs border border-slate-700 rounded-xl px-2 py-1.5 bg-slate-900 text-slate-200"
                           >
                             <option value="activa">Activa</option>
                             <option value="expirada">Expirada</option>
@@ -274,7 +274,7 @@ export default function AdminSuscripciones() {
                           <select
                             value={s.pagoEstado}
                             onChange={(e) => handleChangePago(s.id, e.target.value as PagoEstado)}
-                            className="text-xs border border-slate-700 rounded-lg px-2 py-1.5 bg-slate-900 text-slate-200"
+                            className="text-xs border border-slate-700 rounded-xl px-2 py-1.5 bg-slate-900 text-slate-200"
                           >
                             <option value="pagado">Pagado</option>
                             <option value="pendiente">Pendiente</option>
@@ -282,14 +282,14 @@ export default function AdminSuscripciones() {
                           </select>
                           <button
                             onClick={() => handleRenovar(s)}
-                            className="p-2 rounded-lg bg-amber-950/40 text-amber-400 border border-amber-800/40 hover:bg-amber-900/60 transition-colors"
+                            className="p-2 rounded-xl bg-amber-950/40 text-amber-400 border border-amber-800/40 hover:bg-amber-900/60 transition-colors"
                             title="Renovar suscripción"
                           >
                             <RefreshCw size={16} />
                           </button>
                           <button
                             onClick={() => setViewSuscripcion(s)}
-                            className="p-2 rounded-lg bg-indigo-950/50 text-indigo-400 border border-indigo-800/40 hover:bg-indigo-900/60 transition-colors"
+                            className="p-2 rounded-xl bg-indigo-950/50 text-indigo-400 border border-indigo-800/40 hover:bg-indigo-900/60 transition-colors"
                             title="Ver detalles"
                           >
                             <Eye size={16} />
@@ -323,7 +323,7 @@ export default function AdminSuscripciones() {
               </div>
               <button
                 onClick={() => setShowCreate(false)}
-                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+                className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               >
                 <X size={24} />
               </button>
@@ -409,7 +409,7 @@ export default function AdminSuscripciones() {
               </div>
               <button
                 onClick={() => setViewSuscripcion(null)}
-                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+                className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               >
                 <X size={24} />
               </button>

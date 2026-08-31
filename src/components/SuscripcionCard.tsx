@@ -91,7 +91,7 @@ export default function SuscripcionCard({ suscripcion, onMarcarPagada, cargandoI
           </div>
 
           {suscripcion.notas && (
-            <p className="text-xs text-slate-400 italic bg-slate-900 border border-slate-800 rounded-lg p-2.5">
+            <p className="text-xs text-slate-400 italic bg-slate-900 border border-slate-800 rounded-xl p-2.5">
               {suscripcion.notas}
             </p>
           )}

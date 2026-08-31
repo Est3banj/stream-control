@@ -169,7 +169,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
           <div className="flex items-center gap-2">
             <div className="flex-1">
               {loading ? (
-                <div className="h-9 bg-slate-800 rounded-lg animate-pulse" />
+                <div className="h-9 bg-slate-800 rounded-xl animate-pulse" />
               ) : cuentasDisponibles.length === 0 ? (
                 <p className="text-xs text-slate-500 italic">
                   No hay cuentas disponibles para este proveedor
@@ -199,7 +199,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
             <button
               type="button"
               onClick={() => cambiarModo('nueva')}
-              className="p-1.5 rounded-lg bg-indigo-950/60 text-indigo-400 border border-indigo-800/40 hover:bg-indigo-900 transition-colors flex-shrink-0"
+              className="p-1.5 rounded-xl bg-indigo-950/60 text-indigo-400 border border-indigo-800/40 hover:bg-indigo-900 transition-colors flex-shrink-0"
               title="Registrar nueva cuenta"
             >
               <Plus size={16} />
@@ -228,7 +228,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
           )}
 
           {(cuentaSeleccionada && (perfilSeleccionado || cuentaSeleccionada.tipoVenta === 'completa')) && (
-            <div className="bg-indigo-950/40 rounded-lg px-3 py-2 border border-indigo-800/40">
+            <div className="bg-indigo-950/40 rounded-xl px-3 py-2 border border-indigo-800/40">
               <p className="text-xs text-indigo-300">
                 <span className="font-medium">
                   {cuentaSeleccionada.tipoVenta === 'completa' ? 'Costo total:' : 'Costo por perfil:'}
@@ -247,7 +247,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
       )}
 
       {modo === 'nueva' && (
-        <div className="space-y-3 bg-slate-950/60 rounded-lg p-3 border border-slate-800">
+        <div className="space-y-3 bg-slate-950/60 rounded-xl p-3 border border-slate-800">
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-slate-300">Registrar nueva cuenta de {proveedor}</p>
             <button
@@ -334,7 +334,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
                     <button
                       type="button"
                       onClick={() => eliminarPerfilForm(idx)}
-                      className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-950/40 transition-colors"
+                      className="p-1.5 rounded-xl text-rose-400 hover:bg-rose-950/40 transition-colors"
                     >
                       <X size={14} />
                     </button>
@@ -348,7 +348,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
             type="button"
             onClick={guardarCuentaNueva}
             disabled={submitting}
-            className="w-full py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold text-xs hover:from-indigo-500 hover:to-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 shadow-md shadow-indigo-950/50"
+            className="w-full py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold text-xs hover:from-indigo-500 hover:to-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 shadow-md shadow-indigo-950/50"
           >
             {submitting ? (
               <>

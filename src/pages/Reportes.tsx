@@ -273,7 +273,7 @@ export default function Reportes() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <div className="card cursor-default">
           <div className="flex items-center justify-between mb-4">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 shadow-md flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-md flex items-center justify-center">
               <DollarSign className="text-white" size={22} />
             </div>
             <TrendingUp className="text-emerald-400" size={24} />
@@ -284,7 +284,7 @@ export default function Reportes() {
 
         <div className="card cursor-default">
           <div className="flex items-center justify-between mb-4">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-rose-500 to-red-600 shadow-md flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-red-600 shadow-md flex items-center justify-center">
               <DollarSign className="text-white" size={22} />
             </div>
             <TrendingDown className="text-rose-400" size={24} />
@@ -295,7 +295,7 @@ export default function Reportes() {
 
         <div className="card cursor-default">
           <div className="flex items-center justify-between mb-4">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-700 shadow-md flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-700 shadow-md flex items-center justify-center">
               <TrendingUp className="text-white" size={22} />
             </div>
             <div className={`text-2xl font-bold ${totalUtilidad >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
@@ -313,7 +313,7 @@ export default function Reportes() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <div className="card cursor-default">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-700 shadow-md flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-700 shadow-md flex items-center justify-center">
                 <DollarSign className="text-white" size={22} />
               </div>
               <TrendingUp className="text-indigo-400" size={24} />
@@ -324,7 +324,7 @@ export default function Reportes() {
 
           <div className="card cursor-default">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-700 shadow-md flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-700 shadow-md flex items-center justify-center">
                 <DollarSign className="text-white" size={22} />
               </div>
               <TrendingUp className="text-indigo-400" size={24} />
@@ -335,7 +335,7 @@ export default function Reportes() {
 
           <div className="card cursor-default">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-700 shadow-md flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-700 shadow-md flex items-center justify-center">
                 <Users className="text-white" size={22} />
               </div>
               <TrendingUp className="text-indigo-400" size={24} />

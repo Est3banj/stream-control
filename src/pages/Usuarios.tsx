@@ -421,7 +421,7 @@ export default function Usuarios() {
                       <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => abrirCambiarPlan(u.id, u.nombre)}
-                          className="px-3 py-1.5 rounded-lg bg-indigo-950/60 text-indigo-300 hover:bg-indigo-900 border border-indigo-800/40 transition-colors text-xs font-medium"
+                          className="px-3 py-1.5 rounded-xl bg-indigo-950/60 text-indigo-300 hover:bg-indigo-900 border border-indigo-800/40 transition-colors text-xs font-medium"
                           title="Cambiar plan"
                         >
                           <Package size={14} className="inline mr-1" />
@@ -430,7 +430,7 @@ export default function Usuarios() {
                         <button
                           onClick={() => toggleEstado(u.id, u.estado)}
                           disabled={togglingId === u.id || guardandoPlan}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                          className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                             u.estado === 'activo'
                               ? 'bg-rose-950/40 text-rose-400 border-rose-800/40 hover:bg-rose-900/50'
                               : 'bg-emerald-950/40 text-emerald-400 border-emerald-800/40 hover:bg-emerald-900/50'
@@ -464,7 +464,7 @@ export default function Usuarios() {
                 <h2 className="text-xl font-bold text-white">Cambiar plan</h2>
                 <p className="text-slate-400 mt-1 text-sm">{planModal.usuarioNombre}</p>
               </div>
-              <button onClick={() => setPlanModal(null)} className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors">
+              <button onClick={() => setPlanModal(null)} className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors">
                 <X size={20} />
               </button>
             </div>

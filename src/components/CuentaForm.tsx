@@ -316,7 +316,7 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
           </div>
         </div>
         {fechaVencimientoCal && (
-          <div className="flex items-center justify-between px-3 py-2 bg-indigo-950/40 rounded-lg border border-indigo-800/40">
+          <div className="flex items-center justify-between px-3 py-2 bg-indigo-950/40 rounded-xl border border-indigo-800/40">
             <span className="text-sm font-medium text-indigo-300">Fecha de vencimiento</span>
             <span className="text-sm font-bold text-cyan-300">{fechaVencimientoCal}</span>
           </div>
@@ -360,7 +360,7 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
               <button
                 type="button"
                 onClick={() => quitarPerfil(idx)}
-                className="p-2 rounded-lg text-rose-400 hover:bg-rose-950/40 transition-colors"
+                className="p-2 rounded-xl text-rose-400 hover:bg-rose-950/40 transition-colors"
               >
                 <Trash2 size={18} />
               </button>

@@ -104,7 +104,7 @@ export const OtpInput: React.FC<OtpInputProps> = ({
             onKeyDown={(e) => handleKeyDown(index, e)}
             onPaste={handlePaste}
             disabled={disabled}
-            className={`w-11 h-14 sm:w-12 sm:h-16 text-center text-xl sm:text-2xl font-mono font-bold rounded-2xl border transition-all duration-200 outline-none shadow-sm caret-cyan-400 [color-scheme:dark]
+            className={`w-11 h-14 sm:w-12 sm:h-16 text-center text-xl sm:text-2xl font-mono font-bold rounded-xl border transition-all duration-200 outline-none shadow-sm caret-cyan-400 [color-scheme:dark]
               ${
                 hasError
                   ? 'border-red-500 bg-red-500/10 text-red-200 focus:bg-red-500/20 focus:text-red-100 focus:ring-2 focus:ring-red-400/30'
