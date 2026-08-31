@@ -21,8 +21,8 @@ vi.mock('firebase/firestore', () => ({
   getDocs: vi.fn().mockResolvedValue({
     size: 5,
     docs: [
-      { data: () => ({ precioVenta: 15000, pantallas: 2 }) },
-      { data: () => ({ precioVenta: 20000, pantallas: 1 }) },
+      { id: 'd1', data: () => ({ precioVenta: 15000, pantallas: 2 }) },
+      { id: 'd2', data: () => ({ precioVenta: 20000, pantallas: 1 }) },
     ],
   }),
   doc: vi.fn(),
@@ -92,6 +92,35 @@ describe('UsuarioDrawer', () => {
     expect(screen.getByText('elena@stream.com')).toBeInTheDocument();
     expect(screen.getByText('Email Verificado')).toBeInTheDocument();
     expect(screen.getByText('Pro Mensual')).toBeInTheDocument();
+  });
+
+  it('renders legacy user plan and activoHasta when no subscription doc exists', async () => {
+    const legacyUser: Usuario = {
+      id: 'legacy-1',
+      nombre: 'Legacy Marcos',
+      correo: 'marcos@stream.com',
+      rol: 'usuario',
+      estado: 'activo',
+      plan: 'Plan Emprendedor',
+      activoHasta: new Date(Date.now() + 86400 * 1000 * 12) as any,
+      createdAt: '2026-01-01',
+      emailVerified: false,
+    };
+
+    render(
+      <UsuarioDrawer
+        usuario={legacyUser}
+        isOpen={true}
+        onClose={vi.fn()}
+        planes={[]}
+        isVerificado={false}
+      />
+    );
+
+    expect(screen.getByText('Legacy Marcos')).toBeInTheDocument();
+    expect(screen.getByText('Plan Emprendedor')).toBeInTheDocument();
+    expect(screen.getByText('Activo')).toBeInTheDocument();
+    expect(screen.getByText(/días restantes/i)).toBeInTheDocument();
   });
 
   it('fetches on-demand telemetry for Clientes, Cuentas and Sales volume', async () => {

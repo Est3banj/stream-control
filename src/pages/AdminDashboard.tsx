@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
+import { db } from '../firebase';
+import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import { useAdminMetrics, type ExpirationItem } from '../hooks/useAdminMetrics';
 import { useMoneda } from '../hooks/useMoneda';
 import { useBroadcastBanner, type BroadcastConfig } from '../hooks/useBroadcastBanner';
-import { actualizarSuscripcion } from '../hooks/useSuscripciones';
+import { crearSuscripcion, actualizarSuscripcion } from '../hooks/useSuscripciones';
 import { sanitizarWhatsApp } from '../hooks/useAdminConfig';
+import { parseDateToMs, formatDate } from '../utils/dateUtils';
 import {
   DollarSign,
   Users,
@@ -35,7 +38,6 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import { Timestamp } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 import MarketingSuiteModal from '../components/Admin/MarketingSuiteModal';
 
@@ -77,15 +79,43 @@ export default function AdminDashboard() {
     const s = item.suscripcion;
     setExtendingId(s.id);
     try {
-      const currentFin = s.fechaFin?.seconds ? new Date(s.fechaFin.seconds * 1000) : new Date();
+      const fechaFinMs = parseDateToMs(s.fechaFin);
+      const currentFin = fechaFinMs ? new Date(fechaFinMs) : new Date();
       const baseDate = currentFin > new Date() ? currentFin : new Date();
       const newFin = new Date(baseDate);
       newFin.setDate(newFin.getDate() + 7);
+      const newFinTimestamp = Timestamp.fromDate(newFin);
 
-      await actualizarSuscripcion(s.id, {
-        fechaFin: Timestamp.fromDate(newFin),
-        estado: 'activa',
-      });
+      if (s.id.startsWith('legacy-')) {
+        await updateDoc(doc(db, 'usuarios', s.usuarioId), {
+          activoHasta: newFinTimestamp,
+          estado: 'activo',
+        });
+        await crearSuscripcion({
+          usuarioId: s.usuarioId,
+          usuarioNombre: s.usuarioNombre,
+          planId: s.planId,
+          planNombre: s.planNombre,
+          fechaInicio: s.fechaInicio || Timestamp.now(),
+          fechaFin: newFinTimestamp,
+          estado: 'activa',
+          pagoEstado: 'pendiente',
+          monto: s.monto || 0,
+        });
+      } else {
+        await actualizarSuscripcion(s.id, {
+          fechaFin: newFinTimestamp,
+          estado: 'activa',
+        });
+        try {
+          await updateDoc(doc(db, 'usuarios', s.usuarioId), {
+            activoHasta: newFinTimestamp,
+            estado: 'activo',
+          });
+        } catch {
+          // ignore
+        }
+      }
       toast.success(`Suscripción de ${s.usuarioNombre} extendida +7 días`);
     } catch (err) {
       console.error(err);
@@ -99,9 +129,10 @@ export default function AdminDashboard() {
   const buildWhatsAppLink = (item: ExpirationItem) => {
     const s = item.suscripcion;
     const u = item.usuario;
-    const phone = u?.correo ? '' : ''; // fallback if phone stored
-    const fecha = s.fechaFin?.seconds
-      ? new Date(s.fechaFin.seconds * 1000).toLocaleDateString('es-CO', {
+    const phone = (u as any)?.telefono || (u as any)?.phone || '';
+    const fechaFinMs = parseDateToMs(s.fechaFin);
+    const fecha = fechaFinMs
+      ? new Date(fechaFinMs).toLocaleDateString('es-CO', {
           day: '2-digit',
           month: 'short',
           year: 'numeric',
@@ -473,8 +504,9 @@ export default function AdminDashboard() {
               {filteredExpirations.length > 0 ? (
                 filteredExpirations.map((item) => {
                   const s = item.suscripcion;
-                  const fechaStr = s.fechaFin?.seconds
-                    ? new Date(s.fechaFin.seconds * 1000).toLocaleDateString('es-CO')
+                  const fechaFinMs = parseDateToMs(s.fechaFin);
+                  const fechaStr = fechaFinMs
+                    ? new Date(fechaFinMs).toLocaleDateString('es-CO')
                     : 'Sin fecha';
 
                   return (

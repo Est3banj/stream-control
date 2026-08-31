@@ -10,6 +10,7 @@ import useSuscripciones, {
 import usePlanes from '../hooks/usePlanes';
 import { useMoneda } from '../hooks/useMoneda';
 import { sanitizarWhatsApp } from '../hooks/useAdminConfig';
+import { parseDateToMs, formatDate } from '../utils/dateUtils';
 import SuscripcionCard from '../components/SuscripcionCard';
 import Paginador from '../components/Paginador';
 import {
@@ -92,7 +93,7 @@ export default function AdminSuscripciones() {
 
       // Cohorte
       if (filtroCohorte !== 'todas') {
-        const finMs = s.fechaFin?.seconds ? s.fechaFin.seconds * 1000 : 0;
+        const finMs = parseDateToMs(s.fechaFin) || 0;
         const diff = finMs - now;
 
         if (filtroCohorte === 'urgente3d') {
@@ -195,7 +196,8 @@ export default function AdminSuscripciones() {
   };
 
   const handleRenovar = (s: Suscripcion) => {
-    const fechaFin = new Date(s.fechaFin.seconds * 1000);
+    const finMs = parseDateToMs(s.fechaFin) || Date.now();
+    const fechaFin = new Date(finMs);
     const nextDay = new Date(fechaFin);
     nextDay.setDate(nextDay.getDate() + 1);
     const nextDayStr = nextDay.toISOString().split('T')[0];
@@ -209,12 +211,13 @@ export default function AdminSuscripciones() {
   };
 
   const buildWhatsAppMessageLink = (s: Suscripcion) => {
-    const fechaFinStr = s.fechaFin?.seconds
-      ? new Date(s.fechaFin.seconds * 1000).toLocaleDateString('es-CO')
+    const finMs = parseDateToMs(s.fechaFin);
+    const fechaFinStr = finMs
+      ? new Date(finMs).toLocaleDateString('es-CO')
       : 'pronto';
     const montoStr = formatearDesdeBase(s.monto || 0);
 
-    const diff = s.fechaFin?.seconds ? (s.fechaFin.seconds * 1000) - Date.now() : 0;
+    const diff = finMs ? finMs - Date.now() : 0;
     const diasRestantes = Math.ceil(diff / (24 * 60 * 60 * 1000));
     const diasTexto = diasRestantes <= 0 ? 'vencida' : `en ${diasRestantes} días`;
 
@@ -223,9 +226,8 @@ export default function AdminSuscripciones() {
     return `https://wa.me/?text=${encodeURIComponent(message)}`;
   };
 
-  const formatTimestamp = (ts?: Timestamp) => {
-    if (!ts?.seconds) return '—';
-    return new Date(ts.seconds * 1000).toLocaleDateString('es-CO');
+  const formatTimestamp = (ts?: any) => {
+    return formatDate(ts);
   };
 
   if (loading) {

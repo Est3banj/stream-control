@@ -23,6 +23,7 @@ import useSuscripciones, {
   actualizarSuscripcion,
 } from '../hooks/useSuscripciones';
 import usePlanes from '../hooks/usePlanes';
+import { formatDate } from '../utils/dateUtils';
 import type { Usuario } from '../types/usuario';
 import type { Suscripcion } from '../types/suscripcion';
 import UsuarioDrawer from '../components/Admin/UsuarioDrawer';
@@ -629,9 +630,7 @@ export default function Usuarios() {
                 paginatedUsuarios.map((u) => {
                   const isVerif = Boolean(verificados[u.id] || u.emailVerified || u.verificadoEn);
                   const suscripcion = getSuscripcionActiva(u.id);
-                  const fechaRegistro = u.createdAt
-                    ? new Date(u.createdAt).toLocaleDateString('es-CO')
-                    : '—';
+                  const fechaRegistro = formatDate(u.createdAt);
 
                   return (
                     <tr

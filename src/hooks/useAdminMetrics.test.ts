@@ -149,12 +149,136 @@ describe('calculateAdminMetrics engine', () => {
     expect(result.totalPendientesCount).toBe(1);
   });
 
-  it('handles verified vs pending email counts and plan distribution', () => {
-    const result = calculateAdminMetrics([], mockUsuarios, mockPlanes);
+  it('handles verified vs pending email counts and plan distribution with legacy fallback', () => {
+    const legacyUsuarios: Usuario[] = [
+      {
+        id: 'user-leg-1',
+        nombre: 'Legacy User',
+        correo: 'legacy@stream.com',
+        rol: 'usuario',
+        estado: 'activo',
+        plan: 'Starter',
+        activoHasta: null,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        emailVerified: true,
+      },
+    ];
 
-    expect(result.totalUsuarios).toBe(3);
-    expect(result.usuariosVerificados).toBe(2); // user-1 and user-2
-    expect(result.usuariosPendientes).toBe(1); // user-3
-    expect(result.porcentajeVerificados).toBeCloseTo(66.66, 1);
+    const result = calculateAdminMetrics([], legacyUsuarios, mockPlanes);
+
+    expect(result.totalUsuarios).toBe(1);
+    expect(result.usuariosVerificados).toBe(1);
+    expect(result.usuariosPendientes).toBe(0);
+    expect(result.mrr).toBe(30000);
+    expect(result.activeTenantsCount).toBe(1);
+    expect(result.distribucionPlanes).toEqual([{ name: 'Starter', value: 1 }]);
+  });
+
+  it('fallback detects upcoming expirations and mora from legacy usuario.activoHasta', () => {
+    const now = Date.now();
+    const twoDaysMs = now + 2 * 24 * 60 * 60 * 1000;
+    const overdueMs = now - 3 * 24 * 60 * 60 * 1000;
+
+    const legacyUsers: Usuario[] = [
+      {
+        id: 'u-expiring',
+        nombre: 'Expiring Tenant',
+        correo: 'exp@tenant.com',
+        rol: 'usuario',
+        estado: 'activo',
+        plan: 'Starter',
+        activoHasta: new Date(twoDaysMs) as any, // Date object format
+        createdAt: '2026-01-01',
+      },
+      {
+        id: 'u-overdue',
+        nombre: 'Overdue Tenant',
+        correo: 'overdue@tenant.com',
+        rol: 'usuario',
+        estado: 'activo',
+        plan: 'Starter',
+        activoHasta: new Date(overdueMs).toISOString() as any, // ISO string format
+        createdAt: '2026-01-01',
+      },
+    ];
+
+    const result = calculateAdminMetrics([], legacyUsers, mockPlanes);
+
+    expect(result.proximosVencer3Dias.length).toBe(1);
+    expect(result.proximosVencer3Dias[0].usuarioId).toBe('u-expiring');
+    expect(result.vencidasSinRenovar.length).toBe(1);
+    expect(result.vencidasSinRenovar[0].usuarioId).toBe('u-overdue');
+    expect(result.todasExpiraciones.length).toBe(2);
+  });
+
+  it('excludes super admin accounts from tenant count and MRR calculations', () => {
+    const mixedUsers: Usuario[] = [
+      {
+        id: 'admin-super',
+        nombre: 'Super Admin',
+        correo: 'super@admin.com',
+        rol: 'admin',
+        estado: 'activo',
+        plan: 'Pro Anual',
+        activoHasta: null,
+        createdAt: '2026-01-01',
+      },
+      {
+        id: 'tenant-real',
+        nombre: 'Real Tenant',
+        correo: 'tenant@test.com',
+        rol: 'usuario',
+        estado: 'activo',
+        plan: 'Starter',
+        activoHasta: null,
+        createdAt: '2026-01-01',
+      },
+    ];
+
+    const result = calculateAdminMetrics([], mixedUsers, mockPlanes);
+
+    expect(result.totalUsuarios).toBe(2);
+    expect(result.totalTenants).toBe(1); // Only tenant-real
+    expect(result.mrr).toBe(30000); // Only tenant-real Starter plan
+    expect(result.activeTenantsCount).toBe(1);
+  });
+
+  it('gracefully handles diverse date formats (Timestamp, _seconds, epoch number, ISO string, Date)', () => {
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    const mockSuscripciones: Suscripcion[] = [
+      {
+        id: 'sub-iso',
+        usuarioId: 'user-2',
+        usuarioNombre: 'Tenant Alpha',
+        planId: 'plan-starter',
+        planNombre: 'Starter',
+        fechaInicio: '2026-01-01T00:00:00Z' as any,
+        fechaFin: new Date(Date.now() + 86400 * 1000 * 2) as any,
+        estado: 'activa',
+        pagoEstado: 'pagado',
+        monto: 30000,
+        createdAt: nowSeconds as any,
+        updatedAt: nowSeconds as any,
+      },
+      {
+        id: 'sub-raw-seconds',
+        usuarioId: 'user-3',
+        usuarioNombre: 'Tenant Beta',
+        planId: 'plan-starter',
+        planNombre: 'Starter',
+        fechaInicio: { _seconds: nowSeconds - 86400 * 10, _nanoseconds: 0 } as any,
+        fechaFin: { _seconds: nowSeconds + 86400 * 1, _nanoseconds: 0 } as any,
+        estado: 'activa',
+        pagoEstado: 'pagado',
+        monto: 30000,
+        createdAt: (nowSeconds * 1000) as any,
+        updatedAt: (nowSeconds * 1000) as any,
+      },
+    ];
+
+    const result = calculateAdminMetrics(mockSuscripciones, mockUsuarios, mockPlanes);
+
+    expect(result.mrr).toBe(60000);
+    expect(result.proximosVencer3Dias.length).toBe(2);
   });
 });

@@ -14,6 +14,7 @@ import { callFunction } from '../../lib/apiClient';
 import { useMoneda } from '../../hooks/useMoneda';
 import { sanitizarWhatsApp } from '../../hooks/useAdminConfig';
 import { actualizarSuscripcion } from '../../hooks/useSuscripciones';
+import { parseDateToMs } from '../../utils/dateUtils';
 import type { Usuario } from '../../types/usuario';
 import type { Suscripcion } from '../../types/suscripcion';
 import type { Plan } from '../../types/plan';
@@ -95,38 +96,56 @@ export default function UsuarioDrawer({
       try {
         const tenantUid = usuario.id;
 
-        // 1. Clientes
-        const clientesQ = query(
-          collection(db, 'clientes'),
-          where('usuarioId', '==', tenantUid)
-        );
-        const clientesSnap = await getDocs(clientesQ);
-        const totalClientes = clientesSnap.size;
-
-        // 2. Cuentas (check both usuarioId and propietarioId)
-        let totalCuentas = 0;
+        // 1. Clientes (check both propietarioId and usuarioId)
+        const clienteIds = new Set<string>();
         try {
-          const cuentasQ = query(
-            collection(db, 'cuentas'),
-            where('usuarioId', '==', tenantUid)
+          const snap1 = await getDocs(
+            query(collection(db, 'clientes'), where('propietarioId', '==', tenantUid))
           );
-          const cuentasSnap = await getDocs(cuentasQ);
-          totalCuentas = cuentasSnap.size;
-        } catch {
-          // fallback
-        }
+          snap1.docs.forEach((d) => clienteIds.add(d.id));
+        } catch {}
+        try {
+          const snap2 = await getDocs(
+            query(collection(db, 'clientes'), where('usuarioId', '==', tenantUid))
+          );
+          snap2.docs.forEach((d) => clienteIds.add(d.id));
+        } catch {}
+        const totalClientes = clienteIds.size;
 
-        // 3. Ventas
-        const ventasQ = query(
-          collection(db, 'ventas'),
-          where('usuarioId', '==', tenantUid)
-        );
-        const ventasSnap = await getDocs(ventasQ);
-        const totalVentas = ventasSnap.size;
+        // 2. Cuentas (check both propietarioId and usuarioId)
+        const cuentaIds = new Set<string>();
+        try {
+          const snap1 = await getDocs(
+            query(collection(db, 'cuentas'), where('propietarioId', '==', tenantUid))
+          );
+          snap1.docs.forEach((d) => cuentaIds.add(d.id));
+        } catch {}
+        try {
+          const snap2 = await getDocs(
+            query(collection(db, 'cuentas'), where('usuarioId', '==', tenantUid))
+          );
+          snap2.docs.forEach((d) => cuentaIds.add(d.id));
+        } catch {}
+        const totalCuentas = cuentaIds.size;
 
+        // 3. Ventas (check both propietarioId and usuarioId)
+        const ventasMap = new Map<string, any>();
+        try {
+          const snap1 = await getDocs(
+            query(collection(db, 'ventas'), where('propietarioId', '==', tenantUid))
+          );
+          snap1.docs.forEach((d) => ventasMap.set(d.id, d.data()));
+        } catch {}
+        try {
+          const snap2 = await getDocs(
+            query(collection(db, 'ventas'), where('usuarioId', '==', tenantUid))
+          );
+          snap2.docs.forEach((d) => ventasMap.set(d.id, d.data()));
+        } catch {}
+
+        const totalVentas = ventasMap.size;
         let volumenVentas = 0;
-        ventasSnap.docs.forEach((d) => {
-          const v = d.data();
+        ventasMap.forEach((v) => {
           const precio = Number(v.precioVenta) || 0;
           const pantallas = Number(v.pantallas) || 1;
           volumenVentas += precio * pantallas;
@@ -178,13 +197,14 @@ export default function UsuarioDrawer({
       const now = new Date();
       let baseDate = now;
 
-      // Check current active subscription fechaFin
-      if (suscripcionActiva?.fechaFin?.seconds) {
-        const subFin = new Date(suscripcionActiva.fechaFin.seconds * 1000);
-        if (subFin > now) baseDate = subFin;
-      } else if (usuario.activoHasta) {
-        const userFin = usuario.activoHasta.toDate();
-        if (userFin > now) baseDate = userFin;
+      // Check current active subscription fechaFin or user activoHasta
+      const subFinMs = parseDateToMs(suscripcionActiva?.fechaFin);
+      const userFinMs = parseDateToMs(usuario.activoHasta);
+
+      if (subFinMs && subFinMs > now.getTime()) {
+        baseDate = new Date(subFinMs);
+      } else if (userFinMs && userFinMs > now.getTime()) {
+        baseDate = new Date(userFinMs);
       }
 
       const nuevaFechaFin = new Date(baseDate);
@@ -279,21 +299,35 @@ export default function UsuarioDrawer({
 
   // WhatsApp Support message
   const getWhatsAppUrl = () => {
+    const phone = (usuario as any)?.telefono || (usuario as any)?.phone || '';
+    const cleanPhone = sanitizarWhatsApp(phone);
     const msg = `👋 Hola ${usuario.nombre}, te contactamos desde el equipo de soporte de *StreamControl Pro*. ¿En qué podemos ayudarte con tu cuenta?`;
+    if (cleanPhone) {
+      return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
+    }
     return `https://wa.me/?text=${encodeURIComponent(msg)}`;
   };
 
-  // Calculate subscription remaining days and percentage
+  // Calculate subscription remaining days and percentage (with fallback to usuario.activoHasta)
   const calculateSubscriptionProgress = () => {
-    if (!suscripcionActiva?.fechaInicio?.seconds || !suscripcionActiva?.fechaFin?.seconds) {
-      return { diasRestantes: 0, porcentaje: 0, totalDias: 30 };
+    const startMs =
+      parseDateToMs(suscripcionActiva?.fechaInicio) ||
+      parseDateToMs(usuario.createdAt) ||
+      (usuario.activoHasta ? (parseDateToMs(usuario.activoHasta)! - 30 * 24 * 60 * 60 * 1000) : null);
+
+    const endMs =
+      parseDateToMs(suscripcionActiva?.fechaFin) ||
+      parseDateToMs(usuario.activoHasta);
+
+    if (!endMs) {
+      return { diasRestantes: 0, porcentaje: 0, totalDias: 30, hasData: false, startMs: null, endMs: null };
     }
-    const startMs = suscripcionActiva.fechaInicio.seconds * 1000;
-    const endMs = suscripcionActiva.fechaFin.seconds * 1000;
+
+    const effectiveStartMs = startMs || (endMs - 30 * 24 * 60 * 60 * 1000);
     const nowMs = Date.now();
 
-    const totalDuration = Math.max(1, endMs - startMs);
-    const elapsed = Math.max(0, nowMs - startMs);
+    const totalDuration = Math.max(1, endMs - effectiveStartMs);
+    const elapsed = Math.max(0, nowMs - effectiveStartMs);
     const diff = endMs - nowMs;
     const diasRestantes = Math.ceil(diff / (24 * 60 * 60 * 1000));
     const porcentaje = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
@@ -302,6 +336,9 @@ export default function UsuarioDrawer({
       diasRestantes,
       porcentaje,
       totalDias: Math.ceil(totalDuration / (24 * 60 * 60 * 1000)),
+      hasData: true,
+      startMs: effectiveStartMs,
+      endMs,
     };
   };
 
@@ -455,6 +492,16 @@ export default function UsuarioDrawer({
                 >
                   {suscripcionActiva.pagoEstado === 'pagado' ? 'Pagado' : 'Pago Pendiente'}
                 </span>
+              ) : subProgress.hasData ? (
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+                    subProgress.diasRestantes > 0
+                      ? 'bg-emerald-950/60 text-emerald-400 border-emerald-800/50'
+                      : 'bg-rose-950/60 text-rose-400 border-rose-800/50'
+                  }`}
+                >
+                  {subProgress.diasRestantes > 0 ? 'Activo' : 'Vencido'}
+                </span>
               ) : (
                 <span className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-400 border border-slate-700">
                   Free
@@ -462,7 +509,7 @@ export default function UsuarioDrawer({
               )}
             </div>
 
-            {suscripcionActiva && (
+            {subProgress.hasData && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs text-slate-300">
                   <span>Vigencia del ciclo:</span>
@@ -487,14 +534,14 @@ export default function UsuarioDrawer({
                 <div className="flex justify-between text-[11px] text-slate-400 pt-1">
                   <span>
                     Inicio:{' '}
-                    {suscripcionActiva.fechaInicio?.seconds
-                      ? new Date(suscripcionActiva.fechaInicio.seconds * 1000).toLocaleDateString('es-CO')
+                    {subProgress.startMs
+                      ? new Date(subProgress.startMs).toLocaleDateString('es-CO')
                       : '—'}
                   </span>
                   <span>
                     Vence:{' '}
-                    {suscripcionActiva.fechaFin?.seconds
-                      ? new Date(suscripcionActiva.fechaFin.seconds * 1000).toLocaleDateString('es-CO')
+                    {subProgress.endMs
+                      ? new Date(subProgress.endMs).toLocaleDateString('es-CO')
                       : '—'}
                   </span>
                 </div>
