@@ -81,21 +81,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        const ref = doc(db, "usuarios", firebaseUser.uid);
-        const snap = await getDoc(ref);
-        const userData = snap.exists() ? (snap.data() as Record<string, unknown>) : {};
-
-        // 🔒 Cuenta vencida → cerrar sesión automáticamente
-        if (isExpired(userData.activoHasta)) {
-          await signOut(auth);
-          return;
+        try {
+          if (typeof firebaseUser.reload === 'function') {
+            await firebaseUser.reload().catch(() => undefined);
+          }
+        } catch {
+          // ignore reload error
         }
 
-        setUser({
-          ...firebaseUser,
-          ...userData,
-          emailVerified: firebaseUser.emailVerified || (userData.emailVerified === true),
-        } as FirebaseUserWithData);
+        try {
+          const ref = doc(db, "usuarios", firebaseUser.uid);
+          const snap = await getDoc(ref);
+          const userData = snap.exists() ? (snap.data() as Record<string, unknown>) : {};
+
+          // 🔒 Cuenta vencida → cerrar sesión automáticamente
+          if (isExpired(userData.activoHasta)) {
+            await signOut(auth);
+            setUser(null);
+            setLoading(false);
+            return;
+          }
+
+          const isVerified = Boolean(
+            firebaseUser.emailVerified ||
+            userData.emailVerified === true ||
+            userData.emailVerified === 'true' ||
+            userData.rol === 'admin'
+          );
+
+          setUser({
+            ...firebaseUser,
+            ...userData,
+            emailVerified: isVerified,
+          } as FirebaseUserWithData);
+        } catch (err) {
+          console.error("Error cargando perfil en onAuthStateChanged:", err);
+          setUser({
+            ...firebaseUser,
+            emailVerified: Boolean(firebaseUser.emailVerified),
+          } as FirebaseUserWithData);
+        }
       } else {
         setUser(null);
       }
@@ -113,6 +138,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const firebaseUser = userCredential.user;
+
+      try {
+        if (typeof firebaseUser.reload === 'function') {
+          await firebaseUser.reload().catch(() => undefined);
+        }
+      } catch {
+        // ignore reload error
+      }
 
       const ref = doc(db, "usuarios", firebaseUser.uid);
       const snap = await getDoc(ref);
@@ -136,8 +169,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Verificación de email obligatoria (excepto admins y Google)
-      const isEmailVerified = firebaseUser.emailVerified || userData.emailVerified === true;
-      if (!isEmailVerified && userData.rol !== 'admin') {
+      const isEmailVerified = Boolean(
+        firebaseUser.emailVerified ||
+        userData.emailVerified === true ||
+        userData.emailVerified === 'true' ||
+        userData.rol === 'admin'
+      );
+
+      if (!isEmailVerified) {
         setUser({ ...firebaseUser, ...userData, emailVerified: false } as FirebaseUserWithData);
         setLoading(false);
         throw new Error("Verificá tu correo antes de continuar. Revisá tu bandeja de entrada.");
@@ -146,7 +185,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser({
         ...firebaseUser,
         ...userData,
-        emailVerified: isEmailVerified,
+        emailVerified: true,
       } as FirebaseUserWithData);
       setLoading(false);
       return userCredential;
@@ -237,8 +276,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!isVerified && current.uid) {
       try {
         const snap = await getDoc(doc(db, "usuarios", current.uid));
-        if (snap.exists() && (snap.data() as Record<string, unknown>)?.emailVerified === true) {
-          isVerified = true;
+        if (snap.exists()) {
+          const data = snap.data() as Record<string, unknown>;
+          if (data?.emailVerified === true || data?.emailVerified === 'true' || data?.rol === 'admin') {
+            isVerified = true;
+          }
         }
       } catch (err) {
         console.warn('Error consultando estado en Firestore:', err);

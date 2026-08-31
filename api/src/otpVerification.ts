@@ -85,6 +85,10 @@ export async function verificarCodigoOTP(req: AuthedReq): Promise<unknown> {
   // Código válido -> actualizar usuario y eliminar OTP
   let uid = req.auth?.uid;
 
+  if (!uid && typeof data.uid === 'string' && data.uid.trim()) {
+    uid = data.uid.trim();
+  }
+
   if (!uid) {
     const userSnap = await db.collection('usuarios').where('correo', '==', email).limit(1).get();
     if (!userSnap.empty) {

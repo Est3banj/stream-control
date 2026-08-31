@@ -11,6 +11,9 @@ const mockRegister = vi.fn();
 const mockLoginWithGoogle = vi.fn();
 const mockCallFunction = vi.fn();
 
+let mockUser: { uid: string; email: string; emailVerified?: boolean; rol?: string } | null = null;
+let mockLoading = false;
+
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
   return {
@@ -21,6 +24,8 @@ vi.mock('react-router-dom', async () => {
 
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
+    user: mockUser,
+    loading: mockLoading,
     login: mockLogin,
     register: mockRegister,
     loginWithGoogle: mockLoginWithGoogle,
@@ -41,6 +46,26 @@ vi.mock('react-hot-toast', () => ({
 describe('Login and Auth Container Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUser = null;
+    mockLoading = false;
+  });
+
+  it('redirects already authenticated and verified user to / on mount', () => {
+    mockUser = {
+      uid: 'u-verified-1',
+      email: 'already@streamcontrol.com',
+      emailVerified: true,
+      rol: 'usuario',
+    };
+    mockLoading = false;
+
+    render(
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>
+    );
+
+    expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true });
   });
 
   it('renders login tab by default with inputs and actions', () => {

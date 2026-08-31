@@ -25,7 +25,7 @@ interface LoginProps {
 }
 
 export default function Login({ initialModo = 'login' }: LoginProps) {
-  const { login, loginWithGoogle } = useAuth();
+  const { user, loading: authLoading, login, loginWithGoogle } = useAuth();
   const nav = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -48,6 +48,13 @@ export default function Login({ initialModo = 'login' }: LoginProps) {
   const [emailRecuperacion, setEmailRecuperacion] = useState('');
   const [enviado, setEnviado] = useState(false);
   const [recuperando, setRecuperando] = useState(false);
+
+  // Redirigir al dashboard si ya está autenticado y verificado
+  useEffect(() => {
+    if (!authLoading && user && (user.emailVerified || user.rol === 'admin')) {
+      nav('/', { replace: true });
+    }
+  }, [authLoading, user, nav]);
 
   // Sync mode with query params if changed externally
   useEffect(() => {

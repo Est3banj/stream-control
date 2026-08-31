@@ -22,8 +22,9 @@ export default function PrivateRoute({ children, roles }: PrivateRouteProps) {
   if (!user) return <Navigate to="/login" replace />;
 
   // Email sin verificar → bloqueo total (excepto admins y Google que ya verifica)
-  if (!user.emailVerified && user.rol !== 'admin') {
-    return <VerificarEmail />;
+  const isVerified = Boolean(user.emailVerified || user.rol === 'admin');
+  if (!isVerified) {
+    return <Navigate to="/verificar-email" replace />;
   }
 
   if (roles && !user.rol) {
