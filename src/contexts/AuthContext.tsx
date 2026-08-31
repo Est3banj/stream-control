@@ -29,7 +29,7 @@ interface AuthContextValue {
   register: (data: { nombre: string; correo: string; password: string; moneda: string; tasa: number }) => Promise<UserCredential>;
   logout: () => Promise<void>;
   loading: boolean;
-  sendVerificationEmail: () => Promise<void>;
+  sendVerificationEmail: (overrideEmail?: string, overrideNombre?: string) => Promise<void>;
   refreshUser: () => Promise<boolean>;
   updateProfileData: (data: { nombre?: string; moneda?: string; tasa?: number }) => Promise<void>;
   updateUserEmail: (newEmail: string, currentPassword: string) => Promise<void>;
@@ -159,9 +159,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * Envía el correo de verificación via Cloud Function (patrón enviarCorreoRecuperacion).
    * Funciona incluso sin sesión activa, solo necesita el email.
    */
-  const sendVerificationEmail = async (): Promise<void> => {
-    const email = auth.currentUser?.email || user?.correo;
-    const nombre = user?.nombre;
+  const sendVerificationEmail = async (overrideEmail?: string, overrideNombre?: string): Promise<void> => {
+    const email = overrideEmail || auth.currentUser?.email || user?.correo;
+    const nombre = overrideNombre || user?.nombre || 'Usuario';
     if (!email) throw new Error('No hay correo asociado a la sesión');
     await callFunction('enviarCorreoVerificacion', { email, nombre });
   };
@@ -276,9 +276,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Enviar email de verificación con template personalizado (via Cloud Function)
       // No usar fallback nativo: Firebase limita la generación de links (TOO_MANY_ATTEMPTS)
       try {
-        await sendVerificationEmail();
+        await sendVerificationEmail(data.correo, data.nombre);
       } catch (err) {
-        console.warn('No se pudo enviar email de verificación:', err);
+        console.error('Error al enviar correo de verificación inicial:', err);
       }
 
       setLoading(false);

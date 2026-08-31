@@ -16,7 +16,6 @@ import {
   sendEmailChangedEmail,
   sendPasswordChangedEmail,
   sendResetPasswordEmail,
-  sendVerificationEmail,
   sendWelcomeEmail,
 } from './email.js';
 import type { AuthedReq } from './registry.js';
@@ -275,38 +274,6 @@ export async function enviarCorreoRecuperacion(req: AuthedReq): Promise<unknown>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// enviarCorreoVerificacion — none (rate-limit email:sha256 1/60s en registry)
-// ─────────────────────────────────────────────────────────────────────────
-
-export async function enviarCorreoVerificacion(req: AuthedReq): Promise<unknown> {
-  const { email, nombre } = dataOf(req);
-  if (!email) {
-    throw new APIError('invalid-argument', 'Email es requerido');
-  }
-
-  try {
-    const verifyLink = await getAdmin().auth().generateEmailVerificationLink(email as string, {
-      url: 'https://streamcontrol-10837.firebaseapp.com',
-    });
-
-    await sendVerificationEmail(email as string, (nombre as string) || 'Usuario', verifyLink);
-    return { success: true };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : '';
-    console.error('❌ Error sending verification email:', message);
-
-    // Firebase Auth limita la generación de links (TOO_MANY_ATTEMPTS_TRY_LATER)
-    if (message.includes('TOO_MANY_ATTEMPTS')) {
-      throw new APIError(
-        'resource-exhausted',
-        'Demasiados intentos. Esperá unos minutos y volvé a intentar.'
-      );
-    }
-
-    throw new APIError('internal', 'Error al enviar el correo de verificación');
-  }
-}
 
 // ─────────────────────────────────────────────────────────────────────────
 // listarVerificados — admin (rol: claims + fallback Firestore, en app.ts)

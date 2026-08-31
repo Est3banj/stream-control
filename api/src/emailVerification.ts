@@ -20,7 +20,7 @@ const TOKEN_EXPIRATION_MS = 24 * 60 * 60 * 1000; // 24 horas
 export async function generarTokenVerificacion(req: AuthedReq): Promise<unknown> {
   const data = (req.data ?? {}) as Record<string, unknown>;
   const email = String(data.email ?? '').trim().toLowerCase();
-  const nombre = String(data.nombre ?? 'Usuario');
+  const nombre = (String(data.nombre ?? '').trim()) || 'Usuario';
 
   if (!email) {
     throw new APIError('invalid-argument', 'Email es requerido');
