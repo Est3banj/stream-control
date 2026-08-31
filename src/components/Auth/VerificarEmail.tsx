@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { LogOut, Edit3, ShieldCheck, ArrowRight, Loader2, KeyRound } from 'lucide-react';
+import { LogOut, Edit3, ShieldCheck, ArrowRight, Loader2, KeyRound, MessageCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useAdminConfig, getWhatsAppSupportNumber } from '../../hooks/useAdminConfig';
 import type { VerificationStep } from '../../types/authVerification';
 import AuthLayout from './AuthLayout';
 import OtpInput from './OtpInput';
@@ -25,6 +26,12 @@ export default function VerificarEmail() {
   const [currentDisplayEmail, setCurrentDisplayEmail] = useState<string>(
     user?.correo || user?.email || ''
   );
+  const { config } = useAdminConfig();
+  const whatsappNumber = getWhatsAppSupportNumber(config?.whatsapp);
+  const mensajeWhatsApp = encodeURIComponent(
+    `Hola, necesito ayuda con la verificación de mi cuenta en StreamControl. Mi correo es: ${currentDisplayEmail}`
+  );
+  const whatsappSupportUrl = `https://wa.me/${whatsappNumber}?text=${mensajeWhatsApp}`;
 
   useEffect(() => {
     if (user?.correo || user?.email) {
@@ -249,17 +256,32 @@ export default function VerificarEmail() {
               />
             </div>
 
-            {/* Botón de Salida / Cerrar Sesión */}
-            <div className="mt-6 pt-4 border-t border-slate-800/80 w-full flex items-center justify-between text-xs text-slate-400">
-              <span>¿Problemas con el registro?</span>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="inline-flex items-center gap-1.5 text-slate-300 hover:text-white font-medium transition-colors"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>Cerrar sesión</span>
-              </button>
+            {/* Ayuda / Soporte y Salida */}
+            <div className="mt-6 pt-4 border-t border-slate-800/80 w-full flex flex-col gap-3 text-xs">
+              <div className="flex items-center justify-between text-slate-400">
+                <span>¿Problemas para recibir el código?</span>
+                <a
+                  href={whatsappSupportUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  <span>Contactar soporte</span>
+                </a>
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-slate-800/40 text-slate-400">
+                <span>¿Problemas con el registro?</span>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="inline-flex items-center gap-1.5 text-slate-300 hover:text-white font-medium transition-colors"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Cerrar sesión</span>
+                </button>
+              </div>
             </div>
           </motion.div>
         )}

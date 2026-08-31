@@ -46,6 +46,18 @@ vi.mock('../../contexts/AuthContext', () => ({
   }),
 }));
 
+let mockAdminConfig = { whatsapp: '' };
+
+vi.mock('../../hooks/useAdminConfig', async () => {
+  const actual = await vi.importActual<typeof import('../../hooks/useAdminConfig')>(
+    '../../hooks/useAdminConfig'
+  );
+  return {
+    ...actual,
+    useAdminConfig: () => ({ config: mockAdminConfig, loading: false }),
+  };
+});
+
 vi.mock('react-hot-toast', () => ({
   default: {
     success: vi.fn(),
@@ -58,6 +70,7 @@ describe('VerificarEmail OTP Flow Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     sessionStorage.clear();
+    mockAdminConfig = { whatsapp: '' };
     mockUser = {
       uid: 'usr-100',
       email: 'ana@example.com',
@@ -273,5 +286,72 @@ describe('VerificarEmail OTP Flow Component', () => {
       );
     }).not.toThrow();
   });
+
+  it('renders WhatsApp support link with default fallback number and custom message in a new tab', () => {
+    render(
+      <MemoryRouter>
+        <VerificarEmail />
+      </MemoryRouter>
+    );
+
+    const supportLink = screen.getByRole('link', { name: /Contactar soporte/i });
+    expect(supportLink).toBeInTheDocument();
+    expect(supportLink).toHaveAttribute('target', '_blank');
+    expect(supportLink).toHaveAttribute('rel', 'noopener noreferrer');
+
+    const href = supportLink.getAttribute('href') || '';
+    expect(href).toContain('https://wa.me/573247349128?text=');
+    expect(decodeURIComponent(href)).toContain(
+      'Hola, necesito ayuda con la verificación de mi cuenta en StreamControl. Mi correo es: ana@example.com'
+    );
+  });
+
+  it('renders WhatsApp support link with dynamic configured WhatsApp number from admin config', () => {
+    mockAdminConfig = { whatsapp: '+57 (300) 987-6543' };
+
+    render(
+      <MemoryRouter>
+        <VerificarEmail />
+      </MemoryRouter>
+    );
+
+    const supportLink = screen.getByRole('link', { name: /Contactar soporte/i });
+    expect(supportLink).toBeInTheDocument();
+
+    const href = supportLink.getAttribute('href') || '';
+    expect(href).toContain('https://wa.me/573009876543?text=');
+  });
+
+  it('updates WhatsApp support link message when email is changed', async () => {
+    mockUpdateUserEmail.mockResolvedValueOnce(undefined);
+    mockEnviarCodigoOTP.mockResolvedValueOnce(undefined);
+
+    render(
+      <MemoryRouter>
+        <VerificarEmail />
+      </MemoryRouter>
+    );
+
+    const editBtn = screen.getByTitle('Corregir correo');
+    fireEvent.click(editBtn);
+
+    fireEvent.change(screen.getByPlaceholderText('ejemplo@dominio.com'), {
+      target: { value: 'actualizado@dominio.com' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('••••••••'), {
+      target: { value: 'password123' },
+    });
+
+    fireEvent.click(screen.getByText('Actualizar y Enviar'));
+
+    await waitFor(() => {
+      const supportLink = screen.getByRole('link', { name: /Contactar soporte/i });
+      const href = supportLink.getAttribute('href') || '';
+      expect(decodeURIComponent(href)).toContain(
+        'Hola, necesito ayuda con la verificación de mi cuenta en StreamControl. Mi correo es: actualizado@dominio.com'
+      );
+    });
+  });
 });
+
 
