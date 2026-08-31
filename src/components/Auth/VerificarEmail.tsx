@@ -286,7 +286,7 @@ export default function VerificarEmail() {
                 className="inline-flex items-center gap-1.5 text-slate-500 hover:text-slate-300 font-medium transition-colors"
               >
                 <LogOut className="w-3.5 h-3.5" />
-                <span>Cerrar sesión</span>
+                <span>Cerrar</span>
               </button>
             </div>
           </motion.div>
