@@ -95,7 +95,7 @@ describe('VerificarEmail OTP Flow Component', () => {
     expect(screen.getByText('ana@example.com')).toBeInTheDocument();
     expect(screen.getAllByRole('textbox')).toHaveLength(6);
     expect(screen.getByText('Verificar código')).toBeInTheDocument();
-    expect(screen.getByText(/Reenviar código OTP/i)).toBeInTheDocument();
+    expect(screen.getByText(/Reenviar código/i)).toBeInTheDocument();
     expect(screen.getByText('¿Problemas con el registro?')).toBeInTheDocument();
     expect(screen.queryByText('¿Problemas para recibir el código?')).not.toBeInTheDocument();
     expect(screen.getByText('Cerrar sesión')).toBeInTheDocument();
@@ -193,14 +193,14 @@ describe('VerificarEmail OTP Flow Component', () => {
       </MemoryRouter>
     );
 
-    const resendBtn = screen.getByText(/Reenviar código OTP/i);
+    const resendBtn = screen.getByText('Reenviar código');
     fireEvent.click(resendBtn);
 
     await waitFor(() => {
       expect(mockEnviarCodigoOTP).toHaveBeenCalledTimes(1);
     });
 
-    expect(screen.getByText(/Reenviar código OTP \(\d+s\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/Reenviar código \(\d+s\)/i)).toBeInTheDocument();
   });
 
   it('opens CambiarEmailModal when clicking edit and updates email on success', async () => {

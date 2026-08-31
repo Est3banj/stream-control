@@ -14,7 +14,7 @@ interface CooldownButtonProps {
 export const CooldownButton: React.FC<CooldownButtonProps> = ({
   onClick,
   durationSeconds = 60,
-  label = 'Reenviar correo',
+  label = 'Reenviar código',
   loading = false,
   className = '',
   storageKey = 'sc_email_cooldown_until',

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, X, AlertCircle, Loader2 } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import toast from 'react-hot-toast';
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Mail, Lock, X, AlertCircle, Loader2 } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
+import toast from "react-hot-toast";
 
 interface CambiarEmailModalProps {
   isOpen: boolean;
@@ -15,11 +15,11 @@ export const CambiarEmailModal: React.FC<CambiarEmailModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
-  currentEmail = '',
+  currentEmail = "",
 }) => {
   const { updateUserEmail, enviarCodigoOTP, sendVerificationEmail } = useAuth();
-  const [newEmail, setNewEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [newEmail, setNewEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -29,24 +29,26 @@ export const CambiarEmailModal: React.FC<CambiarEmailModalProps> = ({
 
     const emailTrimmed = newEmail.trim().toLowerCase();
     if (!emailTrimmed) {
-      setErrorMsg('Ingresá el nuevo correo electrónico');
+      setErrorMsg("Ingresá el nuevo correo electrónico");
       return;
     }
 
     if (emailTrimmed === currentEmail.toLowerCase()) {
-      setErrorMsg('El nuevo correo no puede ser idéntico al actual');
+      setErrorMsg("El nuevo correo no puede ser idéntico al actual");
       return;
     }
 
     // Validación básica de formato email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(emailTrimmed)) {
-      setErrorMsg('Ingresá un formato de correo válido (ej. usuario@dominio.com)');
+      setErrorMsg(
+        "Ingresá un formato de correo válido (ej. usuario@dominio.com)",
+      );
       return;
     }
 
     if (!password) {
-      setErrorMsg('Ingresá tu contraseña actual para confirmar el cambio');
+      setErrorMsg("Ingresá tu contraseña actual para confirmar el cambio");
       return;
     }
 
@@ -61,25 +63,34 @@ export const CambiarEmailModal: React.FC<CambiarEmailModalProps> = ({
           await sendVerificationEmail();
         }
       } catch (sendErr) {
-        console.warn('Error reenviando código OTP:', sendErr);
+        console.warn("Error reenviando código:", sendErr);
       }
 
-      toast.success('Correo actualizado. Te enviamos un nuevo código.');
+      toast.success("Correo actualizado. Te enviamos un nuevo código.");
       onSuccess(emailTrimmed);
       onClose();
     } catch (err: unknown) {
-      console.error('Error al cambiar email:', err);
+      console.error("Error al cambiar email:", err);
       const error = err as { code?: string; message?: string };
-      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        setErrorMsg('Contraseña incorrecta. Verificá tus credenciales.');
-      } else if (error.code === 'auth/email-already-in-use') {
-        setErrorMsg('Este correo electrónico ya está registrado en el sistema.');
-      } else if (error.code === 'auth/invalid-email') {
-        setErrorMsg('El correo ingresado no es válido.');
-      } else if (error.code === 'auth/requires-recent-login') {
-        setErrorMsg('Por seguridad, volvé a iniciar sesión antes de modificar tu correo.');
+      if (
+        error.code === "auth/wrong-password" ||
+        error.code === "auth/invalid-credential"
+      ) {
+        setErrorMsg("Contraseña incorrecta. Verificá tus credenciales.");
+      } else if (error.code === "auth/email-already-in-use") {
+        setErrorMsg(
+          "Este correo electrónico ya está registrado en el sistema.",
+        );
+      } else if (error.code === "auth/invalid-email") {
+        setErrorMsg("El correo ingresado no es válido.");
+      } else if (error.code === "auth/requires-recent-login") {
+        setErrorMsg(
+          "Por seguridad, volvé a iniciar sesión antes de modificar tu correo.",
+        );
       } else {
-        setErrorMsg(error.message || 'Error al actualizar el correo. Intentá de nuevo.');
+        setErrorMsg(
+          error.message || "Error al actualizar el correo. Intentá de nuevo.",
+        );
       }
     } finally {
       setLoading(false);
@@ -104,7 +115,7 @@ export const CambiarEmailModal: React.FC<CambiarEmailModalProps> = ({
             initial={{ opacity: 0, scale: 0.95, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 12 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
             className="relative z-10 w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-7 shadow-2xl shadow-black/80 text-white"
           >
             {/* Botón Cerrar */}
@@ -122,8 +133,12 @@ export const CambiarEmailModal: React.FC<CambiarEmailModalProps> = ({
                 <Mail className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white">Corregir correo</h3>
-                <p className="text-xs text-slate-400">Actualizá tu dirección de email</p>
+                <h3 className="text-lg font-bold text-white">
+                  Corregir correo
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Actualizá tu dirección de email
+                </p>
               </div>
             </div>
 

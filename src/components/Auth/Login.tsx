@@ -86,7 +86,7 @@ export default function Login({ initialModo = 'login' }: LoginProps) {
       if (err.message?.includes('inactivo')) {
         toast.error('Tu cuenta está inactiva. Contactá al administrador.');
       } else if (err.message?.includes('no registrado')) {
-        toast.error('Este usuario no está registrado en la base de datos.');
+        toast.error('Este usuario no está registrado.');
       } else if (err.message?.includes('Verificá tu correo') || err.message?.includes('verificar')) {
         toast.error('Verificá tu correo antes de continuar. Te redirigimos a la pantalla de verificación.');
         nav('/verificar-email');

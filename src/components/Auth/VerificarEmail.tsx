@@ -89,12 +89,12 @@ export default function VerificarEmail() {
         await enviarCodigoOTP(currentDisplayEmail);
       }
       setOtpCode('');
-      toast.success('Código enviado. Revisá tu casilla de correo o spam.');
+      toast.success('Código reenviado con éxito.');
     } catch (error: unknown) {
-      console.error('Error al reenviar OTP:', error);
+      console.error('Error al reenviar código:', error);
       const err = error as { code?: string; message?: string };
       if (err.code === 'resource-exhausted' || err.code === 'functions/resource-exhausted') {
-        toast.error('Esperá un minuto antes de solicitar otro código OTP.');
+        toast.error('Esperá un minuto antes de solicitar otro código.');
       } else {
         toast.error(err.message || 'Error al enviar el código de verificación.');
       }
@@ -261,7 +261,7 @@ export default function VerificarEmail() {
                 onClick={handleReenviar}
                 durationSeconds={60}
                 loading={enviando}
-                label="Reenviar código OTP"
+                label="Reenviar código"
               />
             </div>
 
