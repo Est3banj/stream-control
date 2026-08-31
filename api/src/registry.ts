@@ -9,6 +9,7 @@ import type { Request, Response } from 'express';
 import * as codigos from './codigos.js';
 import * as handlers from './handlers.js';
 import * as emailVerification from './emailVerification.js';
+import * as otpVerification from './otpVerification.js';
 import { sha256 } from './rateLimit.js';
 
 export interface AuthedReq extends Request {
@@ -37,6 +38,7 @@ const MSG_DIRECTO = 'Demasiadas consultas. Esperá un momento antes de intentar 
 const MSG_VALIDAR = 'Demasiadas consultas. Intenta de nuevo en unos minutos.';
 const MSG_RECUPERACION = 'Esperá un minuto antes de solicitar otro correo de recuperación';
 const MSG_VERIFICACION = 'Esperá un minuto antes de reenviar el correo de verificación';
+const MSG_OTP = 'Esperá un minuto antes de solicitar otro código OTP';
 
 export const FN_REGISTRY: Record<string, RouteDef> = {
   // ── 10 bearer ──
@@ -58,7 +60,7 @@ export const FN_REGISTRY: Record<string, RouteDef> = {
   onNuevoUsuario: { auth: 'bearer', handler: handlers.onNuevoUsuario },
   onNotificacionEmail: { auth: 'bearer', handler: handlers.onNotificacionEmail },
 
-  // ── 5 none ──
+  // ── 7 none ──
   validarToken: {
     auth: 'none',
     handler: codigos.validarToken,
@@ -84,6 +86,17 @@ export const FN_REGISTRY: Record<string, RouteDef> = {
   verificarEmailToken: {
     auth: 'none',
     handler: emailVerification.verificarEmailToken,
+  },
+  enviarCodigoOTP: {
+    auth: 'none',
+    handler: otpVerification.enviarCodigoOTP,
+    rateLimits: [
+      { scope: 'email', key: (req) => sha256(String(dataOf(req).email ?? '')), max: 1, windowMs: 60_000, message: MSG_OTP },
+    ],
+  },
+  verificarCodigoOTP: {
+    auth: 'none',
+    handler: otpVerification.verificarCodigoOTP,
   },
   telegramWebhook: { auth: 'none', raw: true, handler: handlers.telegramWebhook },
 
