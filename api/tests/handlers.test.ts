@@ -297,7 +297,7 @@ describe('desvincularTelegram (bearer)', () => {
 });
 
 describe('enviarCorreoRecuperacion / enviarCorreoVerificacion (none + rate-limit 1/60s en registry)', () => {
-  it('recuperación → 200 y envía con link de reset directo a /reset-password', async () => {
+  it('recuperación → 200 y envía con link de reset directo a /app/reset-password', async () => {
     const res = await request(app)
       .post('/api/enviarCorreoRecuperacion')
       .send({ data: { email: 'ana@example.com', nombre: 'Ana' } });
@@ -306,12 +306,12 @@ describe('enviarCorreoRecuperacion / enviarCorreoVerificacion (none + rate-limit
     expect(res.body.result).toEqual({ success: true });
     expect(backend.auth.generatePasswordResetLink).toHaveBeenCalledWith(
       'ana@example.com',
-      expect.objectContaining({ url: expect.stringContaining('/reset-password') })
+      expect.objectContaining({ url: expect.stringContaining('/app/reset-password') })
     );
     expect(emailMocks.sendMail).toHaveBeenCalledTimes(1);
     const call = emailMocks.sendMail.mock.calls[0]?.[0] as { to?: string; html?: string } | undefined;
     expect(call?.to).toBe('ana@example.com');
-    expect(call?.html).toContain('/reset-password?oobCode=fake-oob-code-123&apiKey=fake-api-key-456');
+    expect(call?.html).toContain('/app/reset-password?oobCode=fake-oob-code-123&apiKey=fake-api-key-456');
   });
 
   it('recuperación con APP_URL con trailing slash normaliza la URL correctamente', async () => {
@@ -322,7 +322,7 @@ describe('enviarCorreoRecuperacion / enviarCorreoVerificacion (none + rate-limit
 
     expect(res.status).toBe(200);
     const call = emailMocks.sendMail.mock.calls[0]?.[0] as { to?: string; html?: string } | undefined;
-    expect(call?.html).toContain('https://streamcontrol.pro/reset-password?oobCode=fake-oob-code-123');
+    expect(call?.html).toContain('https://streamcontrol.pro/app/reset-password?oobCode=fake-oob-code-123');
     expect(call?.html).not.toContain('https://streamcontrol.pro//');
     delete process.env.APP_URL;
   });

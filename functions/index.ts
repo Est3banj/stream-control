@@ -518,13 +518,13 @@ export const enviarCorreoRecuperacion = onCall(
     try {
       const appUrl = APP_URL.value();
       const rawFirebaseLink = await admin.auth().generatePasswordResetLink(email, {
-        url: `${appUrl}/reset-password`,
+        url: `${appUrl}/app/reset-password`,
       });
       const parsed = new URL(rawFirebaseLink);
       const oobCode = parsed.searchParams.get('oobCode');
       const apiKey = parsed.searchParams.get('apiKey') || '';
       // Direct link to our own custom page
-      const customResetLink = `${appUrl}/reset-password?oobCode=${encodeURIComponent(oobCode || '')}${apiKey ? `&apiKey=${encodeURIComponent(apiKey)}` : ''}`;
+      const customResetLink = `${appUrl}/app/reset-password?oobCode=${encodeURIComponent(oobCode || '')}${apiKey ? `&apiKey=${encodeURIComponent(apiKey)}` : ''}`;
 
       await sendResetPasswordEmail(email, nombre || 'Usuario', customResetLink);
       return { success: true };
