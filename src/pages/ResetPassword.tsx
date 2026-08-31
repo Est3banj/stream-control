@@ -4,7 +4,7 @@ import { verifyPasswordResetCode, confirmPasswordReset } from 'firebase/auth';
 import { auth } from '../firebase';
 import { callFunction } from '../lib/apiClient';
 import toast from 'react-hot-toast';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   Lock,
   Eye,
@@ -146,28 +146,48 @@ export default function ResetPassword() {
     }
   };
 
+  const renderBranding = () => (
+    <div className="flex flex-col items-center mb-5 text-center">
+      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500/20 via-purple-500/15 to-transparent border border-indigo-500/30 p-2 shadow-xl shadow-indigo-950/50 backdrop-blur-md flex items-center justify-center mb-3">
+        <img
+          src="/app/stream.webp"
+          alt="StreamControl Pro"
+          onError={(e) => {
+            const target = e.currentTarget;
+            if (!target.src.endsWith('/stream.webp') || target.src.includes('/app/stream.webp')) {
+              target.src = '/stream.webp';
+            }
+          }}
+          className="w-full h-full object-contain drop-shadow-md"
+        />
+      </div>
+
+      <div className="flex items-center gap-2">
+        <span className="text-xl font-bold tracking-tight text-white bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
+          StreamControl Pro
+        </span>
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 rounded-full">
+          <ShieldCheck className="w-3 h-3 text-indigo-400" />
+          Seguridad
+        </span>
+      </div>
+    </div>
+  );
+
   return (
-    <AuthLayout
-      subtitle={
-        status === 'ready'
-          ? 'Creá una nueva contraseña segura para tu cuenta'
-          : status === 'success'
-          ? 'Tu cuenta está protegida con tu nueva contraseña'
-          : 'Restablecimiento seguro de contraseña'
-      }
-      badge="Seguridad"
-    >
+    <AuthLayout hideHeader>
       <div className="flex flex-col w-full">
         {/* ── ESTADO: VALIDANDO CÓDIGO ── */}
         {status === 'validating' && (
-          <div className="flex flex-col items-center text-center py-4">
-            <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 mb-4 shadow-lg shadow-indigo-950/40">
-              <Loader2 className="w-8 h-8 animate-spin" />
+          <div className="flex flex-col items-center text-center py-2">
+            {renderBranding()}
+            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 mb-3 shadow-lg shadow-indigo-950/40">
+              <Loader2 className="w-6 h-6 animate-spin" />
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-white mb-1 tracking-tight">
               Verificando enlace...
             </h2>
-            <p className="text-xs sm:text-sm text-slate-400">
+            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-sm">
               Estamos comprobando la validez de tu enlace de recuperación.
             </p>
           </div>
@@ -180,8 +200,9 @@ export default function ResetPassword() {
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center text-center py-2"
           >
-            <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 mb-4 shadow-lg shadow-rose-950/40">
-              <AlertCircle className="w-8 h-8" />
+            {renderBranding()}
+            <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 mb-3 shadow-lg shadow-rose-950/40">
+              <AlertCircle className="w-6 h-6" />
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-white mb-1.5 tracking-tight">
               Enlace inválido o expirado
@@ -217,24 +238,33 @@ export default function ResetPassword() {
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col w-full"
+            className="flex flex-col items-center text-center w-full"
           >
-            <div className="mb-5 text-left">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-2">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Nueva Clave</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                Restablecer contraseña
-              </h2>
-              {userEmail && (
-                <p className="text-slate-400 text-xs sm:text-sm mt-1">
-                  Para la cuenta: <strong className="text-slate-200">{userEmail}</strong>
-                </p>
-              )}
-            </div>
+            {renderBranding()}
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3.5" noValidate>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 tracking-tight">
+              Restablecer contraseña
+            </h2>
+
+            <p className="text-slate-400 text-xs sm:text-sm mb-4 leading-relaxed max-w-sm">
+              Creá una nueva contraseña segura para tu cuenta
+            </p>
+
+            {/* Badge con el Correo Electrónico */}
+            {userEmail && (
+              <div className="w-full bg-slate-950/70 border border-slate-800/90 rounded-2xl p-3.5 mb-4 flex items-center justify-between gap-2 text-left">
+                <div className="min-w-0 flex-1">
+                  <span className="text-[10px] uppercase tracking-wider text-slate-500 block font-medium">
+                    Cuenta
+                  </span>
+                  <span className="text-xs sm:text-sm font-semibold text-slate-200 truncate block">
+                    {userEmail}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="flex flex-col gap-3.5 w-full text-left" noValidate>
               {/* Nueva Contraseña */}
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1.5 ml-1">
@@ -375,13 +405,14 @@ export default function ResetPassword() {
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center text-center py-2"
           >
-            <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-4 shadow-lg shadow-emerald-950/40">
-              <CheckCircle2 className="w-8 h-8" />
+            {renderBranding()}
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-3 shadow-lg shadow-emerald-950/40">
+              <CheckCircle2 className="w-6 h-6" />
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-white mb-2 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 tracking-tight">
               ¡Contraseña restablecida!
             </h2>
-            <p className="text-xs sm:text-sm text-slate-300 mb-5 max-w-sm leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-400 mb-5 max-w-sm leading-relaxed">
               Tu contraseña fue actualizada correctamente. Te enviamos una notificación de seguridad a tu correo.
             </p>
 

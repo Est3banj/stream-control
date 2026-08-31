@@ -134,6 +134,10 @@ describe('ResetPassword Page Component', () => {
       expect(screen.getByText('esteban@example.com')).toBeInTheDocument();
     });
 
+    expect(screen.getByText('StreamControl Pro')).toBeInTheDocument();
+    expect(screen.getByText('Seguridad')).toBeInTheDocument();
+    expect(screen.getByText('Creá una nueva contraseña segura para tu cuenta')).toBeInTheDocument();
+    expect(screen.queryByText('Nueva Clave')).not.toBeInTheDocument();
     expect(screen.getByPlaceholderText('Mínimo 6 caracteres')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Repetí la nueva contraseña')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Guardar nueva contraseña/i })).toBeInTheDocument();
