@@ -263,6 +263,9 @@ export async function enviarCorreoRecuperacion(req: AuthedReq): Promise<unknown>
   }
 
   const cleanEmail = String(email).trim().toLowerCase();
+  if (!cleanEmail.includes('@') || cleanEmail.length < 5) {
+    throw new APIError('invalid-argument', 'El formato del correo electrónico no es válido');
+  }
 
   try {
     const appUrl = APP_URL();
@@ -275,31 +278,37 @@ export async function enviarCorreoRecuperacion(req: AuthedReq): Promise<unknown>
     } catch (linkErr: unknown) {
       const err = linkErr as { code?: string; message?: string; errorInfo?: { code?: string } };
       const code = err?.code || err?.errorInfo?.code || '';
+      const msg = typeof err?.message === 'string' ? err.message : '';
 
       if (
         code === 'auth/unauthorized-continue-uri' ||
         code === 'auth/invalid-continue-uri' ||
         code === 'auth/invalid-dynamic-link-domain' ||
-        (typeof err?.message === 'string' && (
-          err.message.includes('auth/unauthorized-continue-uri') ||
-          err.message.includes('auth/invalid-continue-uri') ||
-          err.message.includes('auth/invalid-dynamic-link-domain')
-        ))
+        msg.includes('auth/unauthorized-continue-uri') ||
+        msg.includes('auth/invalid-continue-uri') ||
+        msg.includes('auth/invalid-dynamic-link-domain')
       ) {
-        console.warn(`⚠️ Warning: generatePasswordResetLink failed with ${code || err.message}, retrying without actionCodeSettings`);
+        console.warn(`⚠️ Warning: generatePasswordResetLink failed with ${code || msg}, retrying without actionCodeSettings`);
         rawFirebaseLink = await getAdmin().auth().generatePasswordResetLink(cleanEmail);
       } else {
         throw linkErr;
       }
     }
 
-    const parsed = new URL(rawFirebaseLink);
-    const oobCode = parsed.searchParams.get('oobCode');
-    const apiKey = parsed.searchParams.get('apiKey') || '';
-    // Direct link to our own custom page in the SPA namespace
-    const customResetLink = `${appUrl}/app/reset-password?oobCode=${encodeURIComponent(oobCode || '')}${apiKey ? `&apiKey=${encodeURIComponent(apiKey)}` : ''}`;
+    let customResetLink = rawFirebaseLink;
+    try {
+      const parsed = new URL(rawFirebaseLink);
+      const oobCode = parsed.searchParams.get('oobCode');
+      const apiKey = parsed.searchParams.get('apiKey') || '';
+      if (oobCode) {
+        customResetLink = `${appUrl}/app/reset-password?oobCode=${encodeURIComponent(oobCode)}${apiKey ? `&apiKey=${encodeURIComponent(apiKey)}` : ''}`;
+      }
+    } catch (urlErr) {
+      console.warn('⚠️ Could not parse rawFirebaseLink as URL, using raw link:', urlErr);
+    }
 
     await sendResetPasswordEmail(cleanEmail, (nombre as string) || 'Usuario', customResetLink);
+
     return {
       success: true,
       message: 'Si el correo está registrado, recibirás un enlace de recuperación.',
@@ -307,9 +316,18 @@ export async function enviarCorreoRecuperacion(req: AuthedReq): Promise<unknown>
   } catch (error: unknown) {
     const err = error as { code?: string; message?: string; errorInfo?: { code?: string } };
     const code = err?.code || err?.errorInfo?.code || '';
+    const message = typeof err?.message === 'string' ? err.message : '';
 
     // OWASP standard: Do not leak whether the user exists or not via error / 500
-    if (code === 'auth/user-not-found' || (typeof err?.message === 'string' && err.message.includes('auth/user-not-found'))) {
+    // Firebase returns code 'auth/user-not-found', 'EMAIL_NOT_FOUND', or internal assert "Unable to create the email action link" when user does not exist
+    if (
+      code === 'auth/user-not-found' ||
+      code === 'auth/email-not-found' ||
+      message.includes('auth/user-not-found') ||
+      message.includes('EMAIL_NOT_FOUND') ||
+      message.includes('Unable to create the email action link') ||
+      message.includes('no user record')
+    ) {
       console.log(`ℹ️ Password reset requested for non-existent user: ${cleanEmail}`);
       return {
         success: true,
@@ -317,7 +335,7 @@ export async function enviarCorreoRecuperacion(req: AuthedReq): Promise<unknown>
       };
     }
 
-    if (code === 'auth/invalid-email' || (typeof err?.message === 'string' && err.message.includes('auth/invalid-email'))) {
+    if (code === 'auth/invalid-email' || message.includes('auth/invalid-email')) {
       throw new APIError('invalid-argument', 'El formato del correo electrónico no es válido');
     }
 

@@ -348,6 +348,23 @@ describe('enviarCorreoRecuperacion / enviarCorreoVerificacion (none + rate-limit
     expect(emailMocks.sendMail).not.toHaveBeenCalled();
   });
 
+  it('recuperación con error INTERNAL ASSERT FAILED / EMAIL_NOT_FOUND → 200 OWASP', async () => {
+    backend.auth.generatePasswordResetLink.mockRejectedValueOnce(
+      new Error('INTERNAL ASSERT FAILED: Unable to create the email action link')
+    );
+
+    const res = await request(app)
+      .post('/api/enviarCorreoRecuperacion')
+      .send({ data: { email: 'no-existe2@example.com', nombre: 'Desconocido' } });
+
+    expect(res.status).toBe(200);
+    expect(res.body.result).toEqual({
+      success: true,
+      message: 'Si el correo está registrado, recibirás un enlace de recuperación.',
+    });
+    expect(emailMocks.sendMail).not.toHaveBeenCalled();
+  });
+
   it('recuperación con error de continue-uri (auth/unauthorized-continue-uri) → fallback a generatePasswordResetLink sin settings', async () => {
     backend.auth.generatePasswordResetLink
       .mockRejectedValueOnce({
