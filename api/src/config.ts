@@ -52,6 +52,14 @@ export function SMTP_PASS(): string {
   return process.env.SMTP_PASS || '';
 }
 
+export function RESEND_API_KEY(): string {
+  return process.env.RESEND_API_KEY || '';
+}
+
+export function EMAIL_FROM(): string {
+  return process.env.EMAIL_FROM || 'StreamControl <soporte@streamcontrol.pro>';
+}
+
 export function APP_URL(): string {
   return process.env.APP_URL || DEFAULT_APP_URL;
 }
