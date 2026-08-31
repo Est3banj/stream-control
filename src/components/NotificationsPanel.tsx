@@ -75,7 +75,8 @@ export default function NotificationsPanel() {
       case 'promocion':
       case 'promo':
         return {
-          label: '🔥 Promoción',
+          label: 'Promoción',
+          badgeIcon: <Flame size={12} className="text-amber-400" />,
           icon: <Flame size={18} className="text-amber-400" />,
           wrapper: 'bg-amber-950/20 border-l-2 border-amber-500',
           badge: 'bg-amber-950/80 text-amber-300 border border-amber-800/60',
@@ -86,7 +87,8 @@ export default function NotificationsPanel() {
       case 'alerta':
       case 'warning':
         return {
-          label: '⏰ Vencimiento de Plan',
+          label: 'Vencimiento de Plan',
+          badgeIcon: <Clock size={12} className="text-rose-400" />,
           icon: <Clock size={18} className="text-rose-400" />,
           wrapper: 'bg-rose-950/20 border-l-2 border-rose-500',
           badge: 'bg-rose-950/80 text-rose-300 border border-rose-800/60',
@@ -96,7 +98,8 @@ export default function NotificationsPanel() {
       case 'publicidad':
       case 'feature':
         return {
-          label: '🚀 Novedad',
+          label: 'Novedad',
+          badgeIcon: <Sparkles size={12} className="text-cyan-400" />,
           icon: <Sparkles size={18} className="text-cyan-400" />,
           wrapper: 'bg-cyan-950/20 border-l-2 border-cyan-500',
           badge: 'bg-cyan-950/80 text-cyan-300 border border-cyan-800/60',
@@ -107,7 +110,8 @@ export default function NotificationsPanel() {
       case 'general':
       default:
         return {
-          label: '📢 Comunicado',
+          label: 'Comunicado',
+          badgeIcon: <Megaphone size={12} className="text-indigo-400" />,
           icon: <Megaphone size={18} className="text-indigo-400" />,
           wrapper: 'bg-indigo-950/20 border-l-2 border-indigo-500',
           badge: 'bg-indigo-950/80 text-indigo-300 border border-indigo-800/60',
@@ -150,11 +154,11 @@ export default function NotificationsPanel() {
 
   const getMensaje = (diasRestantes: number) => {
     if (diasRestantes <= 0) {
-      return `⚠️ Vencido hace ${Math.abs(diasRestantes)} día(s)`;
+      return `Vencido hace ${Math.abs(diasRestantes)} día(s)`;
     } else if (diasRestantes === 1) {
-      return '⚠️ Vence mañana';
+      return 'Vence mañana';
     } else {
-      return `⚠️ Vence en ${diasRestantes} días`;
+      return `Vence en ${diasRestantes} días`;
     }
   };
 
@@ -240,9 +244,10 @@ export default function NotificationsPanel() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2 mb-1">
                               <span
-                                className={`px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider ${badgeInfo.badge}`}
+                                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider ${badgeInfo.badge}`}
                               >
-                                {badgeInfo.label}
+                                {badgeInfo.badgeIcon}
+                                <span>{badgeInfo.label}</span>
                               </span>
                               <button
                                 onClick={() => marcarComoLeida(anuncio.id)}
@@ -323,8 +328,9 @@ export default function NotificationsPanel() {
                               </div>
                             )}
                             <div className="mt-2">
-                              <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${colors.text}`}>
-                                {getMensaje(notif.diasRestantes as number)}
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${colors.text}`}>
+                                <Clock size={12} />
+                                <span>{getMensaje(notif.diasRestantes as number)}</span>
                               </span>
                             </div>
                           </div>

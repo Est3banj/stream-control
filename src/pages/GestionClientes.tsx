@@ -169,7 +169,7 @@ export default function GestionClientes() {
         plataforma: formEditar.plataforma.trim(),
       });
 
-      toast.success('✅ Cliente actualizado correctamente');
+      toast.success('Cliente actualizado correctamente');
       setMostrarEditar(false);
       setClienteEditando(null);
     } catch (error: unknown) {
@@ -281,7 +281,7 @@ export default function GestionClientes() {
         usuarioEmail: user.email,
       });
 
-      toast.success(`✅ Pago de ${formatear(monto)} registrado correctamente`);
+      toast.success(`Pago de ${formatear(monto)} registrado correctamente`);
       setMostrarCobrar(false);
       setClienteCobrar(null);
       setMontoPago('');
@@ -830,7 +830,7 @@ export default function GestionClientes() {
                   Cancelar
                 </button>
                 <button type="submit" disabled={guardando} className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed">
-                  {guardando ? 'Guardando...' : '💾 Guardar Cambios'}
+                  {guardando ? 'Guardando...' : 'Guardar Cambios'}
                 </button>
               </div>
             </form>
@@ -1116,7 +1116,7 @@ export default function GestionClientes() {
                   disabled={guardando}
                   className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {guardando ? 'Registrando...' : '💰 Cobrar'}
+                  {guardando ? 'Registrando...' : 'Cobrar'}
                 </button>
               </div>
             </form>

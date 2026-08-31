@@ -125,10 +125,10 @@ function buildOtpHtml(userName: string, otpCode: string): string {
       <p>Hola <strong>${userName}</strong>, ingresá el siguiente código de 6 dígitos en la aplicación para activar tu cuenta:</p>
       <div class="otp-box">
         <div class="otp-code">${otpCode}</div>
-        <div class="expiry">⏳ Válido por 10 minutos</div>
+        <div class="expiry">Válido por 10 minutos</div>
       </div>
       <div class="security-note">
-        🔒 <strong>Seguridad:</strong> Nunca compartas este código con nadie. El equipo de StreamControl nunca te lo solicitará.
+        <strong>Seguridad:</strong> Nunca compartas este código con nadie. El equipo de StreamControl nunca te lo solicitará.
       </div>
     </div>
     <div class="footer">
@@ -245,7 +245,7 @@ function buildPasswordChangedHtml(userName: string): string {
       <h2>Hola ${userName}, tu contraseña fue cambiada exitosamente</h2>
       <p>Te confirmamos que la contraseña de tu cuenta de StreamControl se actualizó correctamente.</p>
       <div class="warning">
-        <p><strong>⚠️ Importante:</strong> Si no fuiste vos quien realizó este cambio, contactá a soporte inmediatamente al <strong>+57 324 734 9128</strong> para proteger tu cuenta.</p>
+        <p><strong>Importante:</strong> Si no fuiste vos quien realizó este cambio, contactá a soporte inmediatamente al <strong>+57 324 734 9128</strong> para proteger tu cuenta.</p>
       </div>
       <p style="text-align: center;">
         <a class="btn" href="https://streamcontrol.pro" target="_blank">Ir a StreamControl</a>
@@ -300,7 +300,7 @@ function buildEmailChangedHtml(userName: string, newEmail: string): string {
         <p><strong>Nuevo correo:</strong> ${newEmail}</p>
       </div>
       <div class="warning">
-        <p><strong>⚠️ Importante:</strong> Si no solicitaste este cambio, contactá a soporte inmediatamente al <strong>+57 324 734 9128</strong> para proteger tu cuenta.</p>
+        <p><strong>Importante:</strong> Si no solicitaste este cambio, contactá a soporte inmediatamente al <strong>+57 324 734 9128</strong> para proteger tu cuenta.</p>
       </div>
       <p style="text-align: center;">
         <a class="btn" href="https://streamcontrol.pro" target="_blank">Ir a StreamControl</a>
@@ -349,7 +349,7 @@ function buildResetPasswordHtml(userName: string, resetLink: string): string {
       <h2>Hola ${userName}, recibimos una solicitud para restablecer tu contraseña</h2>
       <p>Hacé clic en el botón de abajo para crear una nueva contraseña. Este enlace expira en 1 hora.</p>
       <div class="warning">
-        <p><strong>🔒 Importante:</strong> Si no solicitaste esto, ignorá este mensaje. Nadie puede cambiar tu contraseña sin acceder a este enlace.</p>
+        <p><strong>Importante:</strong> Si no solicitaste esto, ignorá este mensaje. Nadie puede cambiar tu contraseña sin acceder a este enlace.</p>
       </div>
       <p style="text-align: center;">
         <a class="btn" href="${resetLink}" target="_blank">Restablecer contraseña</a>
@@ -474,13 +474,12 @@ function escapeHtml(str: string): string {
     .replace(/'/g, '&#039;');
 }
 
-export function getBroadcastBadgeInfo(tipo?: string): { label: string; emoji: string; bg: string; text: string; border: string } {
+export function getBroadcastBadgeInfo(tipo?: string): { label: string; bg: string; text: string; border: string } {
   switch (tipo?.toLowerCase()) {
     case 'promocion':
     case 'promo':
       return {
-        label: '🔥 Promoción Especial',
-        emoji: '🔥',
+        label: 'Promoción Especial',
         bg: '#451a03',
         text: '#f59e0b',
         border: '#78350f',
@@ -490,8 +489,7 @@ export function getBroadcastBadgeInfo(tipo?: string): { label: string; emoji: st
     case 'alerta':
     case 'warning':
       return {
-        label: '⏰ Alerta de Suscripción',
-        emoji: '⏰',
+        label: 'Alerta de Suscripción',
         bg: '#4c0519',
         text: '#f43f5e',
         border: '#881337',
@@ -500,8 +498,7 @@ export function getBroadcastBadgeInfo(tipo?: string): { label: string; emoji: st
     case 'publicidad':
     case 'feature':
       return {
-        label: '🚀 Nueva Función / Novedad',
-        emoji: '🚀',
+        label: 'Nueva Función / Novedad',
         bg: '#083344',
         text: '#06b6d4',
         border: '#155e75',
@@ -511,8 +508,7 @@ export function getBroadcastBadgeInfo(tipo?: string): { label: string; emoji: st
     case 'general':
     default:
       return {
-        label: '📢 Comunicado Oficial',
-        emoji: '📢',
+        label: 'Comunicado Oficial',
         bg: '#1e1b4b',
         text: '#818cf8',
         border: '#3730a3',
@@ -622,10 +618,9 @@ export async function sendBroadcastEmail(options: {
   linkBoton?: string;
   textoBoton?: string;
 }): Promise<void> {
-  const badge = getBroadcastBadgeInfo(options.tipo);
   await sendEmail({
     to: options.to,
-    subject: `${badge.emoji} ${options.titulo} — StreamControl Pro`,
+    subject: `${options.titulo} — StreamControl Pro`,
     html: buildBroadcastHtml(
       options.userName,
       options.titulo,

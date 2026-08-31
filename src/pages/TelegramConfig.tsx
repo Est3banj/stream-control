@@ -3,7 +3,7 @@ import { db } from '../firebase';
 import { doc, setDoc, collection, Timestamp, query, where, getDocs, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
 import { callFunction } from '../lib/apiClient';
 import { useAuth } from '../contexts/AuthContext';
-import { MessageCircle, Link2, Unlink, Copy, Check, RefreshCw, ExternalLink } from 'lucide-react';
+import { MessageCircle, Link2, Unlink, Copy, Check, RefreshCw, ExternalLink, Calendar, DollarSign, Bell, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import usePermisos from '../hooks/usePermisos';
 import FeatureBlocked from '../components/FeatureBlocked';
@@ -72,7 +72,7 @@ function TelegramConfigContent({ user }: { user: ReturnType<typeof useAuth>['use
       if (restante <= 0) {
         setCodigo('');
         setExpiraEn(null);
-        toast.error('⏰ El código expiró. Generá uno nuevo.');
+        toast.error('El código expiró. Generá uno nuevo.');
         clearInterval(interval);
       }
     }, 1000);
@@ -108,7 +108,7 @@ function TelegramConfigContent({ user }: { user: ReturnType<typeof useAuth>['use
       setCodigo(code);
       setExpiraEn(expira.getTime());
       setCopiado(false);
-      toast.success('✅ Código generado. Tenés 15 minutos para usarlo.');
+      toast.success('Código generado. Tenés 15 minutos para usarlo.');
     } catch (error: unknown) {
       console.error('Error generando código:', error);
       toast.error('Error al generar el código. Verificá los permisos de Firestore.');
@@ -122,7 +122,7 @@ function TelegramConfigContent({ user }: { user: ReturnType<typeof useAuth>['use
       await navigator.clipboard.writeText(codigo);
       setCopiado(true);
       setTimeout(() => setCopiado(false), 2000);
-      toast.success('📋 Código copiado al portapapeles');
+      toast.success('Código copiado al portapapeles');
     } catch (error: unknown) {
       toast.error('No se pudo copiar automáticamente');
     }
@@ -177,7 +177,7 @@ function TelegramConfigContent({ user }: { user: ReturnType<typeof useAuth>['use
           </div>
           <div>
             <h2 className="text-xl font-bold text-white">
-              {vinculado ? '✅ Conectado' : '❌ No conectado'}
+              {vinculado ? 'Conectado' : 'No conectado'}
             </h2>
             <p className="text-sm text-slate-400">
               {vinculado
@@ -283,9 +283,10 @@ function TelegramConfigContent({ user }: { user: ReturnType<typeof useAuth>['use
                 </button>
               </div>
 
-              <div className="bg-amber-950/30 rounded-xl p-4 border border-amber-800/40">
+              <div className="bg-amber-950/30 rounded-xl p-4 border border-amber-800/40 flex items-start gap-2.5">
+                <AlertTriangle className="text-amber-400 shrink-0 mt-0.5" size={16} />
                 <p className="text-xs text-amber-300">
-                  ⚠️ <b>Importante:</b> No compartas este código con nadie más.
+                  <b>Importante:</b> No compartas este código con nadie más.
                   Solo el bot de Telegram @NotiStream_bot debe recibirlo.
                   Después de usarlo o si expira en 15 minutos, dejará de ser válido.
                 </p>
@@ -300,15 +301,15 @@ function TelegramConfigContent({ user }: { user: ReturnType<typeof useAuth>['use
         <h3 className="text-lg font-bold text-white mb-3">¿Qué notificaciones vas a recibir?</h3>
         <ul className="space-y-2 text-sm text-slate-300">
           <li className="flex items-start gap-3">
-            <span className="text-indigo-400 mt-0.5">📅</span>
+            <span className="text-indigo-400 mt-0.5"><Calendar size={16} /></span>
             <span><b className="text-white">Vencimientos:</b> Cuando un cliente tenga 3, 2 o 1 día(s) antes de vencer</span>
           </li>
           <li className="flex items-start gap-3">
-            <span className="text-emerald-400 mt-0.5">💰</span>
+            <span className="text-emerald-400 mt-0.5"><DollarSign size={16} /></span>
             <span><b className="text-white">Mora:</b> Clientes con saldo pendiente por cobrar</span>
           </li>
           <li className="flex items-start gap-3">
-            <span className="text-cyan-400 mt-0.5">🔔</span>
+            <span className="text-cyan-400 mt-0.5"><Bell size={16} /></span>
             <span><b className="text-white">Recordatorios:</b> Resumen diario de clientes por vencer</span>
           </li>
         </ul>

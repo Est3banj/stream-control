@@ -221,7 +221,7 @@ export default function AdminSuscripciones() {
     const diasRestantes = Math.ceil(diff / (24 * 60 * 60 * 1000));
     const diasTexto = diasRestantes <= 0 ? 'vencida' : `en ${diasRestantes} días`;
 
-    const message = `👋 ¡Hola ${s.usuarioNombre}! Te escribimos de *StreamControl Pro* para recordarte que tu suscripción al plan *${s.planNombre}* vence el ${fechaFinStr} (${diasTexto}).\n\n💰 *Valor de renovación:* ${montoStr}\n\n¿Deseas que te enviemos los medios de pago disponibles para mantener tu servicio activo sin interrupciones? Quedamos atentos para ayudarte. 🚀`;
+    const message = `Hola ${s.usuarioNombre}, te escribimos de *StreamControl Pro* para recordarte que tu suscripción al plan *${s.planNombre}* vence el ${fechaFinStr} (${diasTexto}).\n\n*Valor de renovación:* ${montoStr}\n\n¿Deseas que te enviemos los medios de pago disponibles para mantener tu servicio activo sin interrupciones? Quedamos atentos para ayudarte.`;
 
     return `https://wa.me/?text=${encodeURIComponent(message)}`;
   };
@@ -282,10 +282,10 @@ export default function AdminSuscripciones() {
         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
           {[
             { id: 'todas', label: 'Todas las Cohortes' },
-            { id: 'urgente3d', label: '🚨 Próximos a Vencer (≤3d)' },
-            { id: 'semana7d', label: '⚠️ Esta Semana (≤7d)' },
-            { id: 'vencidas', label: '⏳ En Gracia / Vencidos' },
-            { id: 'activas', label: '✅ Activas al Día' },
+            { id: 'urgente3d', label: 'Próximos a Vencer (≤3d)' },
+            { id: 'semana7d', label: 'Esta Semana (≤7d)' },
+            { id: 'vencidas', label: 'En Gracia / Vencidos' },
+            { id: 'activas', label: 'Activas al Día' },
           ].map((tab) => (
             <button
               key={tab.id}

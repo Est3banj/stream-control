@@ -230,7 +230,7 @@ export default function MarketingSuiteModal({
                     }`}
                   >
                     <Megaphone size={18} className="text-indigo-400" />
-                    <span className="text-xs font-semibold">📢 Comunicado</span>
+                    <span className="text-xs font-semibold">Comunicado</span>
                   </button>
 
                   <button
@@ -243,7 +243,7 @@ export default function MarketingSuiteModal({
                     }`}
                   >
                     <Flame size={18} className="text-amber-400" />
-                    <span className="text-xs font-semibold">🔥 Promoción</span>
+                    <span className="text-xs font-semibold">Promoción</span>
                   </button>
 
                   <button
@@ -256,7 +256,7 @@ export default function MarketingSuiteModal({
                     }`}
                   >
                     <Clock size={18} className="text-rose-400" />
-                    <span className="text-xs font-semibold">⏰ Vencimiento</span>
+                    <span className="text-xs font-semibold">Vencimiento</span>
                   </button>
 
                   <button
@@ -269,7 +269,7 @@ export default function MarketingSuiteModal({
                     }`}
                   >
                     <Sparkles size={18} className="text-cyan-400" />
-                    <span className="text-xs font-semibold">🚀 Novedad</span>
+                    <span className="text-xs font-semibold">Novedad</span>
                   </button>
                 </div>
               </div>
@@ -284,7 +284,7 @@ export default function MarketingSuiteModal({
                     type="text"
                     value={titulo}
                     onChange={(e) => setTitulo(e.target.value)}
-                    placeholder="Ej: 🔥 50% de Descuento en Plan Anual o Actualización de Seguridad"
+                    placeholder="Ej: 50% de Descuento en Plan Anual o Actualización de Seguridad"
                     className="w-full h-11 px-4 rounded-xl bg-slate-950/70 border border-slate-800 hover:border-slate-700 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
                     required
                   />
@@ -539,14 +539,28 @@ export default function MarketingSuiteModal({
                   </p>
                   <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 shadow-xl space-y-2.5">
                     <div className="flex items-center justify-between">
-                      <span className="px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-indigo-950/80 text-cyan-300 border border-indigo-800/60">
-                        {tipo === 'promocion'
-                          ? '🔥 Promoción'
-                          : tipo === 'vencimiento'
-                          ? '⏰ Vencimiento de Plan'
-                          : tipo === 'novedad'
-                          ? '🚀 Novedad'
-                          : '📢 Comunicado'}
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-indigo-950/80 text-cyan-300 border border-indigo-800/60">
+                        {tipo === 'promocion' ? (
+                          <>
+                            <Flame size={12} className="text-amber-400" />
+                            <span>Promoción</span>
+                          </>
+                        ) : tipo === 'vencimiento' ? (
+                          <>
+                            <Clock size={12} className="text-rose-400" />
+                            <span>Vencimiento</span>
+                          </>
+                        ) : tipo === 'novedad' ? (
+                          <>
+                            <Sparkles size={12} className="text-cyan-400" />
+                            <span>Novedad</span>
+                          </>
+                        ) : (
+                          <>
+                            <Megaphone size={12} className="text-indigo-400" />
+                            <span>Comunicado</span>
+                          </>
+                        )}
                       </span>
                       <span className="text-[10px] text-slate-500">Ahora</span>
                     </div>
@@ -577,12 +591,12 @@ export default function MarketingSuiteModal({
                     </div>
                     <div className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-950/60 text-cyan-300 border border-indigo-800/60">
                       {tipo === 'promocion'
-                        ? '🔥 Promoción Especial'
+                        ? 'Promoción Especial'
                         : tipo === 'vencimiento'
-                        ? '⏰ Alerta de Suscripción'
+                        ? 'Alerta de Suscripción'
                         : tipo === 'novedad'
-                        ? '🚀 Nueva Función'
-                        : '📢 Comunicado Oficial'}
+                        ? 'Nueva Función'
+                        : 'Comunicado Oficial'}
                     </div>
                     <h3 className="text-lg font-bold text-white">
                       {titulo || 'Título del correo masivo'}

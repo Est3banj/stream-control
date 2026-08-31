@@ -117,7 +117,7 @@ export default function ResetPassword() {
       try {
         await callFunction('notificarPasswordReseteado', { email: userEmail });
       } catch (notifyErr) {
-        console.warn('⚠️ No se pudo enviar el correo de notificación:', notifyErr);
+        console.warn('No se pudo enviar el correo de notificación:', notifyErr);
       }
 
       // 3. Estado de éxito y redirección

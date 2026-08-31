@@ -72,7 +72,7 @@ describe('NotificationsPanel', () => {
     expect(screen.getByText('2')).toBeInTheDocument();
   });
 
-  it('displays platform announcement with sleek badge (🔥 Promoción), message and CTA button', () => {
+  it('displays platform announcement with sleek badge (Promoción), message and CTA button', () => {
     mockUseAnunciosGlobales.mockReturnValue({
       anuncios: [
         {
@@ -93,14 +93,14 @@ describe('NotificationsPanel', () => {
     const bellBtn = screen.getByRole('button', { name: /notificaciones/i });
     fireEvent.click(bellBtn);
 
-    expect(screen.getByText('🔥 Promoción')).toBeInTheDocument();
+    expect(screen.getByText('Promoción')).toBeInTheDocument();
     expect(screen.getByText('Black Friday Streaming')).toBeInTheDocument();
     expect(screen.getByText('Renová con 30% de descuento.')).toBeInTheDocument();
     const ctaBtn = screen.getByRole('link', { name: /obtener descuento/i });
     expect(ctaBtn).toHaveAttribute('href', 'https://streamcontrol.pro/promo');
   });
 
-  it('displays different announcement types (📢 Comunicado, ⏰ Vencimiento de Plan, 🚀 Novedad)', () => {
+  it('displays different announcement types (Comunicado, Vencimiento de Plan, Novedad)', () => {
     mockUseAnunciosGlobales.mockReturnValue({
       anuncios: [
         { id: 'a1', titulo: 'Aviso de Mantenimiento', mensaje: 'Breve corte.', tipo: 'comunicado', activo: true },
@@ -114,9 +114,9 @@ describe('NotificationsPanel', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /notificaciones/i }));
 
-    expect(screen.getByText('📢 Comunicado')).toBeInTheDocument();
-    expect(screen.getByText('⏰ Vencimiento de Plan')).toBeInTheDocument();
-    expect(screen.getByText('🚀 Novedad')).toBeInTheDocument();
+    expect(screen.getByText('Comunicado')).toBeInTheDocument();
+    expect(screen.getByText('Vencimiento de Plan')).toBeInTheDocument();
+    expect(screen.getByText('Novedad')).toBeInTheDocument();
   });
 
   it('marks individual announcement as read and updates unread count', () => {

@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { callFunction } from '../lib/apiClient';
-import { Loader2, AlertCircle, Mail, Monitor } from 'lucide-react';
+import { Loader2, AlertCircle, Mail, Monitor, Clock, Tag } from 'lucide-react';
 import CasoSelector, { CASE_LABELS } from './CasoSelector';
 import CodeResult from './CodeResult';
 import { maskEmail } from '../constants';
@@ -180,7 +180,7 @@ export default function ConsultaInterna({ clienteNombre, proveedor, correoCuenta
               <span className="text-slate-300">{maskEmail(codeResult.email)}</span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-indigo-400 shrink-0 w-4">🕐</span>
+              <Clock size={16} className="text-indigo-400 shrink-0" />
               <span className="text-slate-300">
                 {new Date(codeResult.fecha).toLocaleDateString('es-CO', {
                   year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
@@ -188,7 +188,7 @@ export default function ConsultaInterna({ clienteNombre, proveedor, correoCuenta
               </span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-indigo-400 shrink-0 w-4">🏷</span>
+              <Tag size={16} className="text-indigo-400 shrink-0" />
               <span className="text-slate-300">{CASE_LABELS[codeResult.tipo] || codeResult.tipo}</span>
             </div>
           </div>

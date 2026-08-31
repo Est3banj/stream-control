@@ -140,7 +140,7 @@ export default function AdminDashboard() {
       : 'pronto';
     const montoStr = formatearDesdeBase(s.monto || 0);
 
-    const message = `👋 ¡Hola ${s.usuarioNombre || 'Cliente'}! Te escribimos de *StreamControl Pro* para recordarte que tu suscripción al plan *${s.planNombre}* vence el ${fecha} (${item.diasRestantes <= 0 ? 'vencida' : `en ${item.diasRestantes} días`}).\n\n💰 *Monto de renovación:* ${montoStr}\n\n¿Deseas renovar tu acceso y recibir los medios de pago disponibles? Quedamos a tu disposición para mantener tu servicio sin interrupciones. 🚀`;
+    const message = `Hola ${s.usuarioNombre || 'Cliente'}, te escribimos de *StreamControl Pro* para recordarte que tu suscripción al plan *${s.planNombre}* vence el ${fecha} (${item.diasRestantes <= 0 ? 'vencida' : `en ${item.diasRestantes} días`}).\n\n*Monto de renovación:* ${montoStr}\n\n¿Deseas renovar tu acceso y recibir los medios de pago disponibles? Quedamos a tu disposición para mantener tu servicio sin interrupciones.`;
 
     const cleanPhone = sanitizarWhatsApp(phone || '');
     if (cleanPhone) {

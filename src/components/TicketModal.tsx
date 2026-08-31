@@ -3,7 +3,7 @@ import { db } from '../firebase';
 import {
   collection, query, where, getDocs, doc, getDoc,
 } from 'firebase/firestore';
-import { X, Copy, Check, ExternalLink, Key } from 'lucide-react';
+import { X, Copy, Check, ExternalLink, Key, Ticket } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 
@@ -208,7 +208,8 @@ export default function TicketModal({ cliente, onClose }: TicketModalProps) {
         {/* Header */}
         <div className="sticky top-0 bg-slate-900 border-b border-slate-800 px-5 py-3.5 flex items-center justify-between rounded-t-2xl z-10">
           <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <span>🎫</span> Ticket: {cliente.nombre}
+            <Ticket size={18} className="text-cyan-400" />
+            <span>Ticket: {cliente.nombre}</span>
           </h2>
           <button
             onClick={onClose}

@@ -64,10 +64,10 @@ describe('AdminSuscripciones', () => {
     render(<AdminSuscripciones />);
 
     expect(screen.getByText('Todas las Cohortes')).toBeInTheDocument();
-    expect(screen.getByText('🚨 Próximos a Vencer (≤3d)')).toBeInTheDocument();
-    expect(screen.getByText('⚠️ Esta Semana (≤7d)')).toBeInTheDocument();
-    expect(screen.getByText('⏳ En Gracia / Vencidos')).toBeInTheDocument();
-    expect(screen.getByText('✅ Activas al Día')).toBeInTheDocument();
+    expect(screen.getByText('Próximos a Vencer (≤3d)')).toBeInTheDocument();
+    expect(screen.getByText('Esta Semana (≤7d)')).toBeInTheDocument();
+    expect(screen.getByText('En Gracia / Vencidos')).toBeInTheDocument();
+    expect(screen.getByText('Activas al Día')).toBeInTheDocument();
 
     expect(screen.getAllByText('Todos').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('Pagado')).toBeInTheDocument();

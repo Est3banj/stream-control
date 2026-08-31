@@ -329,7 +329,7 @@ export default function UsuarioDrawer({
   const getWhatsAppUrl = () => {
     const phone = (usuario as any)?.telefono || (usuario as any)?.phone || '';
     const cleanPhone = sanitizarWhatsApp(phone);
-    const msg = `👋 Hola ${usuario.nombre}, te contactamos desde el equipo de soporte de *StreamControl Pro*. ¿En qué podemos ayudarte con tu cuenta?`;
+    const msg = `Hola ${usuario.nombre}, te contactamos desde el equipo de soporte de *StreamControl Pro*. ¿En qué podemos ayudarte con tu cuenta?`;
     if (cleanPhone) {
       return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
     }

@@ -443,8 +443,8 @@ export default function Usuarios() {
             onClick={abrirModalSincronizar}
             className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 hover:text-cyan-200 border border-slate-700/80 text-xs sm:text-sm font-semibold shadow-lg shadow-cyan-950/30 transition-all hover:scale-105 active:scale-95"
           >
-            <RefreshCw size={16} className={syncLoading ? 'animate-spin' : ''} />
-            <span>⚡ Sincronizar con Auth</span>
+            <RefreshCw size={15} className={syncLoading ? 'animate-spin' : ''} />
+            <span>Sincronizar con Auth</span>
           </button>
 
           <button

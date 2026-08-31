@@ -48,7 +48,7 @@ export default function PWAInstallButton({ showInSidebar = false }: PWAInstallBu
       setShowBanner(false);
       setDeferredPrompt(null);
       localStorage.setItem('pwa-installed', 'true');
-      toast.success('¡Aplicación instalada exitosamente! 🎉');
+      toast.success('¡Aplicación instalada exitosamente!');
     });
 
     return () => {
@@ -69,7 +69,7 @@ export default function PWAInstallButton({ showInSidebar = false }: PWAInstallBu
       if (outcome === 'accepted') {
         toast.success('Instalación iniciada...');
       } else {
-        toast('Instalación cancelada', { icon: 'ℹ️' });
+        toast('Instalación cancelada');
       }
 
       setDeferredPrompt(null);

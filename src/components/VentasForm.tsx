@@ -286,7 +286,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
 
     const cuenta = cuentas.find(c => c.id === newCuentaId);
     if (!cuenta) {
-      console.warn('⚠️ [handleCuentaSelected] Cuenta no encontrada en useCuentas:', { newCuentaId, cuentasCount: cuentas.length, cuentas });
+      console.warn('[handleCuentaSelected] Cuenta no encontrada en useCuentas:', { newCuentaId, cuentasCount: cuentas.length, cuentas });
       return;
     }
 
@@ -375,7 +375,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
 
       const cuenta = cuentas.find(c => c.id === newCuentaId);
       if (!cuenta) {
-        console.warn('⚠️ [handleServicioCuentaSelected] Cuenta no encontrada:', { newCuentaId, cuentasCount: cuentas.length, servicioId: s.id });
+        console.warn('[handleServicioCuentaSelected] Cuenta no encontrada:', { newCuentaId, cuentasCount: cuentas.length, servicioId: s.id });
         return { ...s, cuentaId: newCuentaId, costoPorPerfil: newCostoPorPerfil };
       }
 
@@ -643,7 +643,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       setCostoPorPerfil(0);
 
     } catch (error) {
-      console.error('❌ Error al registrar la venta:', error);
+      console.error('Error al registrar la venta:', error);
       toast.error('Error al registrar la venta. Inténtelo nuevamente.');
     } finally {
       setSubmitting(false);
@@ -826,7 +826,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       setCostoTotalCombo(0);
 
     } catch (error) {
-      console.error('❌ Error al registrar venta combinada:', error);
+      console.error('Error al registrar venta combinada:', error);
       toast.error('Error al registrar la venta combinada. Inténtelo nuevamente.');
     } finally {
       setSubmitting(false);

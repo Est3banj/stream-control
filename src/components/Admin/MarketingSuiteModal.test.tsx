@@ -23,10 +23,10 @@ describe('MarketingSuiteModal', () => {
     render(<MarketingSuiteModal isOpen={true} onClose={vi.fn()} />);
 
     expect(screen.getByText('Marketing & Comunicación Masiva')).toBeInTheDocument();
-    expect(screen.getByText('📢 Comunicado')).toBeInTheDocument();
-    expect(screen.getByText('🔥 Promoción')).toBeInTheDocument();
-    expect(screen.getByText('⏰ Vencimiento')).toBeInTheDocument();
-    expect(screen.getByText('🚀 Novedad')).toBeInTheDocument();
+    expect(screen.getByText('Comunicado')).toBeInTheDocument();
+    expect(screen.getByText('Promoción')).toBeInTheDocument();
+    expect(screen.getByText('Vencimiento')).toBeInTheDocument();
+    expect(screen.getByText('Novedad')).toBeInTheDocument();
 
     // Inputs
     expect(screen.getByPlaceholderText(/50% de Descuento/i)).toBeInTheDocument();
@@ -91,8 +91,8 @@ describe('MarketingSuiteModal', () => {
       target: { value: 'Aprovechá la oferta especial durante 48 horas.' },
     });
 
-    // Select category '🔥 Promoción'
-    fireEvent.click(screen.getByText('🔥 Promoción'));
+    // Select category 'Promoción'
+    fireEvent.click(screen.getByText('Promoción'));
 
     // Check email channel
     const emailCheckbox = screen.getByLabelText(/correo masivo/i);

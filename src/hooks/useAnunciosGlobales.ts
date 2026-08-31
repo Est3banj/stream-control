@@ -66,12 +66,12 @@ export function useAnunciosGlobales() {
           setLoading(false);
         },
         (err) => {
-          console.warn('⚠️ Error escuchando anunciosGlobales:', err);
+          console.warn('Error escuchando anunciosGlobales:', err);
           setLoading(false);
         }
       );
     } catch (e) {
-      console.warn('⚠️ Error configurando listener de anunciosGlobales:', e);
+      console.warn('Error configurando listener de anunciosGlobales:', e);
       setLoading(false);
     }
 
