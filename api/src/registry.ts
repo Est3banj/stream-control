@@ -91,6 +91,13 @@ export const FN_REGISTRY: Record<string, RouteDef> = {
       { scope: 'email', key: (req) => sha256(String(dataOf(req).email ?? '').trim().toLowerCase()), max: 1, windowMs: 60_000, message: MSG_VERIFICACION },
     ],
   },
+  enviarVerificacionEmail: {
+    auth: 'none',
+    handler: emailVerification.generarTokenVerificacion,
+    rateLimits: [
+      { scope: 'email', key: (req) => sha256(String(dataOf(req).email ?? '').trim().toLowerCase()), max: 1, windowMs: 60_000, message: MSG_VERIFICACION },
+    ],
+  },
   verificarEmailToken: {
     auth: 'none',
     handler: emailVerification.verificarEmailToken,

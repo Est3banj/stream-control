@@ -101,7 +101,7 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
     // fallthrough a 403
   }
 
-  sendError(res, 403, 'permission-denied', 'Solo admin puede listar verificados');
+  sendError(res, 403, 'permission-denied', 'Solo administradores pueden realizar esta acción');
 }
 
 // ── Cron secret (constant-time) ─────────────────────────────────────────

@@ -477,6 +477,16 @@ describe('notificarPasswordReseteado (none + rate-limit en registry)', () => {
     expect(html).toContain('/r/verificar-email?token=');
   });
 
+  it('alias enviarVerificacionEmail → 200 y delega correctamente', async () => {
+    const res = await request(app)
+      .post('/api/enviarVerificacionEmail')
+      .send({ data: { email: 'alias@example.com' } });
+
+    expect(res.status).toBe(200);
+    const html = (emailMocks.sendMail.mock.calls[0]?.[0] as { html?: string } | undefined)?.html ?? '';
+    expect(html).toContain('/r/verificar-email?token=');
+  });
+
   it('verificación en dev mode (sin SMTP_USER / SMTP_PASS) → 200 con graceful fallback sin llamar sendMail', async () => {
     delete process.env.SMTP_USER;
     delete process.env.SMTP_PASS;

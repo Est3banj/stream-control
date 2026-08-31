@@ -50,7 +50,7 @@ export function createApp(registry: Record<string, RouteDef> = FN_REGISTRY): exp
           // Fallback: Firestore usuarios/{uid}.rol (parity v2 index.ts:586-592)
           const snap = await db().collection('usuarios').doc(authed.auth!.uid).get();
           if (!snap.exists || snap.data()?.rol !== 'admin') {
-            throw new APIError('permission-denied', 'Solo admin puede listar verificados');
+            throw new APIError('permission-denied', 'Solo administradores pueden realizar esta acción');
           }
         }
       }

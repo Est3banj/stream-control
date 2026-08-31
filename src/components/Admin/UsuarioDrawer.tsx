@@ -256,9 +256,17 @@ export default function UsuarioDrawer({
 
   // Send Verification Email
   const handleSendVerificationEmail = async () => {
+    const emailToUse = usuario.correo || usuario.email;
+    if (!emailToUse) {
+      toast.error('El usuario no tiene correo registrado');
+      return;
+    }
     setActionLoading('verify-email');
     try {
-      await callFunction('enviarVerificacionEmail', { uid: usuario.id });
+      await callFunction('enviarCorreoVerificacion', {
+        email: emailToUse,
+        nombre: usuario.nombre,
+      });
       toast.success('Email de verificación reenviado');
     } catch (err: any) {
       console.error(err);
