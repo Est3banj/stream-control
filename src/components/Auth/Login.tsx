@@ -359,18 +359,9 @@ export default function Login({ initialModo = 'login' }: LoginProps) {
 
                   {/* Contraseña */}
                   <div>
-                    <div className="flex items-center justify-between mb-1.5 ml-1 mr-1">
-                      <label className="text-xs font-medium text-slate-300">
-                        Contraseña
-                      </label>
-                      <button
-                        type="button"
-                        onClick={abrirRecuperacion}
-                        className="text-[11px] text-indigo-400 hover:text-indigo-300 transition-colors"
-                      >
-                        ¿Olvidaste tu contraseña?
-                      </button>
-                    </div>
+                    <label className="block text-xs font-medium text-slate-300 mb-1.5 ml-1">
+                      Contraseña
+                    </label>
                     <div className="relative flex items-center bg-slate-950/70 border border-slate-800 rounded-2xl transition-all duration-200 focus-within:border-indigo-500/80 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:bg-slate-950/90">
                       <Lock className="w-4 h-4 text-slate-500 ml-3.5 mr-2 flex-shrink-0" />
                       <input
@@ -391,6 +382,15 @@ export default function Login({ initialModo = 'login' }: LoginProps) {
                         className="absolute right-3 text-slate-400 hover:text-slate-200 p-1 transition-colors"
                       >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <div className="flex justify-end pt-1.5">
+                      <button
+                        type="button"
+                        onClick={abrirRecuperacion}
+                        className="text-xs text-slate-400 hover:text-cyan-400 transition-colors"
+                      >
+                        ¿Olvidaste tu contraseña?
                       </button>
                     </div>
                   </div>
