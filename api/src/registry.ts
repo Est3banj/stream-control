@@ -8,6 +8,7 @@
 import type { Request, Response } from 'express';
 import * as codigos from './codigos.js';
 import * as handlers from './handlers.js';
+import * as emailVerification from './emailVerification.js';
 import { sha256 } from './rateLimit.js';
 
 export interface AuthedReq extends Request {
@@ -75,10 +76,14 @@ export const FN_REGISTRY: Record<string, RouteDef> = {
   },
   enviarCorreoVerificacion: {
     auth: 'none',
-    handler: handlers.enviarCorreoVerificacion,
+    handler: emailVerification.generarTokenVerificacion,
     rateLimits: [
       { scope: 'email', key: (req) => sha256(String(dataOf(req).email ?? '')), max: 1, windowMs: 60_000, message: MSG_VERIFICACION },
     ],
+  },
+  verificarEmailToken: {
+    auth: 'none',
+    handler: emailVerification.verificarEmailToken,
   },
   telegramWebhook: { auth: 'none', raw: true, handler: handlers.telegramWebhook },
 

@@ -316,25 +316,14 @@ describe('enviarCorreoRecuperacion / enviarCorreoVerificacion (none + rate-limit
     expect(res.body.error.code).toBe('invalid-argument');
   });
 
-  it('verificación → 200; TOO_MANY_ATTEMPTS → 429 resource-exhausted', async () => {
+  it('verificación → 200 y genera link con token', async () => {
     const res = await request(app)
       .post('/api/enviarCorreoVerificacion')
       .send({ data: { email: 'ana@example.com' } });
 
     expect(res.status).toBe(200);
     const html = (emailMocks.sendMail.mock.calls[0]?.[0] as { html?: string } | undefined)?.html ?? '';
-    expect(html).toContain('https://verify.example/link');
-
-    backend.auth.generateEmailVerificationLink.mockRejectedValueOnce(
-      new Error('TOO_MANY_ATTEMPTS_TRY_LATER')
-    );
-    const exhaust = await request(app)
-      .post('/api/enviarCorreoVerificacion')
-      .send({ data: { email: 'otra@example.com' } });
-
-    expect(exhaust.status).toBe(429);
-    expect(exhaust.body.error.code).toBe('resource-exhausted');
-    expect(exhaust.body.error.message).toContain('Demasiados intentos');
+    expect(html).toContain('/r/verificar-email?token=');
   });
 });
 

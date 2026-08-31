@@ -55,6 +55,9 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,webp,ico,svg}'],
+        // Forzar activación inmediata del nuevo SW
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
           {
             urlPattern: /^https?:\/\/(?:firestore|firebase|googleapis|gstatic)\.googleapis\.com\/.*/i,
