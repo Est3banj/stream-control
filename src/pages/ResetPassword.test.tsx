@@ -355,4 +355,32 @@ describe('ResetPassword Page Component', () => {
 
     expect(mockNavigate).toHaveBeenCalledWith('/login');
   });
+
+  it('handles SPA path /app/reset-password?oobCode=valid-code seamlessly with query parameters', async () => {
+    window.history.replaceState(null, '', '/app/reset-password?oobCode=spa-code&apiKey=api-123');
+    mockVerifyPasswordResetCode.mockResolvedValueOnce('user@streamcontrol.pro');
+
+    render(
+      <MemoryRouter>
+        <ResetPassword />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Restablecer contraseña' })).toBeInTheDocument();
+      expect(screen.getByText('user@streamcontrol.pro')).toBeInTheDocument();
+    });
+    expect(mockVerifyPasswordResetCode).toHaveBeenCalledWith(expect.anything(), 'spa-code');
+  });
+
+  it('navigates to login when clicking volver al inicio de sesión without Router wrapper', () => {
+    window.history.replaceState(null, '', '/reset-password');
+
+    render(<ResetPassword />);
+
+    const loginBtn = screen.getByRole('button', { name: /Volver al inicio de sesión/i });
+    fireEvent.click(loginBtn);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/login');
+  });
 });

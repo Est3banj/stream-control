@@ -34,7 +34,7 @@ export default function App() {
   const pathname = window.location.pathname;
 
   // Public password reset link when accessed without /app prefix
-  if (pathname === '/reset-password') {
+  if (pathname === '/reset-password' || pathname.startsWith('/reset-password/')) {
     return (
       <ErrorBoundary>
         <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-950"><div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin" /></div>}>

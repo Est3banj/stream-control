@@ -314,6 +314,19 @@ describe('enviarCorreoRecuperacion / enviarCorreoVerificacion (none + rate-limit
     expect(call?.html).toContain('/reset-password?oobCode=fake-oob-code-123&apiKey=fake-api-key-456');
   });
 
+  it('recuperación con APP_URL con trailing slash normaliza la URL correctamente', async () => {
+    process.env.APP_URL = 'https://streamcontrol.pro/';
+    const res = await request(app)
+      .post('/api/enviarCorreoRecuperacion')
+      .send({ data: { email: 'maria@example.com', nombre: 'Maria' } });
+
+    expect(res.status).toBe(200);
+    const call = emailMocks.sendMail.mock.calls[0]?.[0] as { to?: string; html?: string } | undefined;
+    expect(call?.html).toContain('https://streamcontrol.pro/reset-password?oobCode=fake-oob-code-123');
+    expect(call?.html).not.toContain('https://streamcontrol.pro//');
+    delete process.env.APP_URL;
+  });
+
   it('recuperación sin email → 400', async () => {
     const res = await request(app).post('/api/enviarCorreoRecuperacion').send({ data: {} });
     expect(res.status).toBe(400);

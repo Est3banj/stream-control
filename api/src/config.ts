@@ -61,5 +61,5 @@ export function EMAIL_FROM(): string {
 }
 
 export function APP_URL(): string {
-  return process.env.APP_URL || DEFAULT_APP_URL;
+  return (process.env.APP_URL || DEFAULT_APP_URL).replace(/\/+$/, '');
 }

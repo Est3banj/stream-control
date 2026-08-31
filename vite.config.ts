@@ -11,6 +11,8 @@ function devRewrites() {
       server.middlewares.use((req: any, _res: any, next: any) => {
         if (req.url?.startsWith('/r/')) {
           req.url = '/app/index.html';
+        } else if (req.url?.startsWith('/reset-password')) {
+          req.url = '/app/index.html';
         } else if (req.url === '/stream.webp') {
           req.url = '/app/stream.webp';
         } else if (req.url === '/favicon.ico') {

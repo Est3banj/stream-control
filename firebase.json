@@ -15,16 +15,19 @@
         "source": "/login",
         "destination": "/app/login",
         "type": 302
-      },
-      {
-        "source": "/reset-password",
-        "destination": "/app/reset-password",
-        "type": 302
       }
     ],
     "rewrites": [
       {
         "source": "/r/**",
+        "destination": "/app/index.html"
+      },
+      {
+        "source": "/reset-password",
+        "destination": "/app/index.html"
+      },
+      {
+        "source": "/reset-password/**",
         "destination": "/app/index.html"
       },
       {
