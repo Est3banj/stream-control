@@ -1,10 +1,12 @@
 /**
- * Port de functions/email.ts — defineSecret → process.env (vía config.ts).
- * Transporter lazy singleton; funciones de envío intactas.
+ * Servicio de Email Híbrido:
+ * 1. Resend REST API (vía native fetch)
+ * 2. Nodemailer SMTP (fallback)
+ * 3. Log en consola para dev mode
  */
 
 import * as nodemailer from 'nodemailer';
-import { SMTP_PASS, SMTP_USER } from './config.js';
+import { EMAIL_FROM, RESEND_API_KEY, SMTP_PASS, SMTP_USER } from './config.js';
 
 let transporter: nodemailer.Transporter | null = null;
 
@@ -21,6 +23,129 @@ function getTransporter(): nodemailer.Transporter {
     });
   }
   return transporter;
+}
+
+export interface SendEmailOptions {
+  to: string;
+  subject: string;
+  html: string;
+}
+
+/**
+ * Despachador de correos unificado con cascada:
+ * Resend REST API -> Nodemailer SMTP -> Dev Console Mock
+ */
+export async function sendEmail({ to, subject, html }: SendEmailOptions): Promise<void> {
+  const resendKey = RESEND_API_KEY();
+
+  // 1. Prioridad: Resend REST API vía fetch nativo
+  if (resendKey) {
+    try {
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${resendKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: EMAIL_FROM(),
+          to: [to],
+          subject,
+          html,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        console.error('❌ Resend API returned error:', response.status, errorBody);
+        throw new Error(`Resend error status ${response.status}: ${errorBody}`);
+      }
+
+      console.log('✅ Email successfully sent via Resend API to', to);
+      return;
+    } catch (resendErr) {
+      console.warn('⚠️ Resend dispatch failed, evaluating SMTP fallback...', resendErr);
+      // Caída al siguiente nivel (SMTP)
+    }
+  }
+
+  // 2. Fallback: Nodemailer SMTP
+  const smtpUser = SMTP_USER();
+  const smtpPass = SMTP_PASS();
+  if (smtpUser && smtpPass) {
+    try {
+      await getTransporter().sendMail({
+        from: EMAIL_FROM() || `"StreamControl" <${smtpUser}>`,
+        to,
+        subject,
+        html,
+      });
+      console.log('✅ Email successfully sent via SMTP to', to);
+      return;
+    } catch (smtpErr) {
+      console.error('❌ SMTP fallback failed:', smtpErr);
+      throw smtpErr;
+    }
+  }
+
+  // 3. Fallback: Mock para desarrollo local
+  console.log('\n========================================');
+  console.log('✉️  [DEV MODE EMAIL]');
+  console.log('To:', to);
+  console.log('Subject:', subject);
+  console.log('========================================\n');
+}
+
+function buildOtpHtml(userName: string, otpCode: string): string {
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin: 0; padding: 0; background-color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    .container { max-width: 540px; margin: 0 auto; padding: 40px 20px; }
+    .card { background: #1e293b; border-radius: 16px; padding: 40px 32px; border: 1px solid #334155; text-align: center; }
+    .logo { color: #6366f1; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 24px; }
+    h2 { color: #f8fafc; font-size: 22px; font-weight: 700; margin: 0 0 12px 0; }
+    p { color: #94a3b8; font-size: 15px; line-height: 1.6; margin: 0 0 24px 0; }
+    .otp-box { background: #0f172a; border: 1px solid #4f46e5; border-radius: 12px; padding: 20px; margin: 24px 0; text-align: center; }
+    .otp-code { font-family: 'Courier New', Courier, monospace; font-size: 38px; font-weight: 800; letter-spacing: 10px; color: #818cf8; margin-left: 10px; }
+    .expiry { font-size: 13px; color: #cbd5e1; margin-top: 8px; }
+    .security-note { background: #1e1b4b; border-radius: 8px; padding: 12px 16px; font-size: 13px; color: #a5b4fc; text-align: left; margin: 24px 0 0 0; }
+    .footer { margin-top: 32px; text-align: center; font-size: 12px; color: #64748b; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="logo">StreamControl</div>
+      <h2>Tu código de verificación</h2>
+      <p>Hola <strong>${userName}</strong>, ingresá el siguiente código de 6 dígitos en la aplicación para activar tu cuenta:</p>
+      <div class="otp-box">
+        <div class="otp-code">${otpCode}</div>
+        <div class="expiry">⏳ Válido por 10 minutos</div>
+      </div>
+      <div class="security-note">
+        🔒 <strong>Seguridad:</strong> Nunca compartas este código con nadie. El equipo de StreamControl nunca te lo solicitará.
+      </div>
+    </div>
+    <div class="footer">
+      <p>StreamControl Pro — Plataforma de Gestión de Streaming</p>
+      <p>¿No solicitaste este registro? Podés ignorar este correo con total tranquilidad.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+export async function sendOtpEmail(to: string, userName: string, otp: string): Promise<void> {
+  await sendEmail({
+    to,
+    subject: `StreamControl — Tu código de verificación: ${otp}`,
+    html: buildOtpHtml(userName, otp),
+  });
 }
 
 function buildWelcomeHtml(userName: string): string {
@@ -75,8 +200,7 @@ function buildWelcomeHtml(userName: string): string {
 
 export async function sendWelcomeEmail(to: string, userName: string): Promise<void> {
   try {
-    await getTransporter().sendMail({
-      from: `"StreamControl" <${SMTP_USER()}>`,
+    await sendEmail({
       to,
       subject: `¡Bienvenido a StreamControl, ${userName}!`,
       html: buildWelcomeHtml(userName),
@@ -242,8 +366,7 @@ function buildResetPasswordHtml(userName: string, resetLink: string): string {
 
 export async function sendPasswordChangedEmail(to: string, userName: string): Promise<void> {
   try {
-    await getTransporter().sendMail({
-      from: `"StreamControl" <${SMTP_USER()}>`,
+    await sendEmail({
       to,
       subject: `StreamControl — Tu contraseña fue cambiada`,
       html: buildPasswordChangedHtml(userName),
@@ -256,8 +379,7 @@ export async function sendPasswordChangedEmail(to: string, userName: string): Pr
 
 export async function sendEmailChangedEmail(to: string, userName: string, newEmail: string): Promise<void> {
   try {
-    await getTransporter().sendMail({
-      from: `"StreamControl" <${SMTP_USER()}>`,
+    await sendEmail({
       to,
       subject: `StreamControl — Tu correo fue actualizado`,
       html: buildEmailChangedHtml(userName, newEmail),
@@ -270,8 +392,7 @@ export async function sendEmailChangedEmail(to: string, userName: string, newEma
 
 export async function sendResetPasswordEmail(to: string, userName: string, resetLink: string): Promise<void> {
   try {
-    await getTransporter().sendMail({
-      from: `"StreamControl" <${SMTP_USER()}>`,
+    await sendEmail({
       to,
       subject: `StreamControl — Restablece tu contraseña`,
       html: buildResetPasswordHtml(userName, resetLink),
@@ -336,27 +457,9 @@ function buildVerificationHtml(userName: string, verifyLink: string): string {
 }
 
 export async function sendVerificationEmail(to: string, userName: string, verifyLink: string): Promise<void> {
-  const user = SMTP_USER();
-  const pass = SMTP_PASS();
-
-  if (!user || !pass) {
-    console.log('\n========================================');
-    console.log('🔗 [DEV MODE] Link de verificación para ' + to + ':');
-    console.log(verifyLink);
-    console.log('========================================\n');
-    return;
-  }
-
-  try {
-    await getTransporter().sendMail({
-      from: `"StreamControl" <${user}>`,
-      to,
-      subject: `StreamControl — Confirmá tu correo electrónico`,
-      html: buildVerificationHtml(userName, verifyLink),
-    });
-    console.log('✅ Verification email sent to', to);
-  } catch (error) {
-    console.error('❌ Error sending verification email to', to, error);
-    throw error;
-  }
+  await sendEmail({
+    to,
+    subject: `StreamControl — Confirmá tu correo electrónico`,
+    html: buildVerificationHtml(userName, verifyLink),
+  });
 }
