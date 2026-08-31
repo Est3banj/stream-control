@@ -579,3 +579,182 @@ describe('cleanupNoVerificados (cron, x-cron-secret)', () => {
     expect(backend.auth.deleteUser).not.toHaveBeenCalledWith('u-admin');
   });
 });
+
+describe('enviarComunicadoMasivo (admin)', () => {
+  beforeEach(() => {
+    backend.auth.setToken(TK, { uid: 'uid-user', role: 'user' });
+    backend.auth.setToken('tk-admin', { uid: 'uid-admin', role: 'admin' });
+  });
+
+  it('sin auth → 401 unauthenticated', async () => {
+    const res = await request(app)
+      .post('/api/enviarComunicadoMasivo')
+      .send({ data: { titulo: 'Promo', mensaje: 'Hola' } });
+
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe('unauthenticated');
+  });
+
+  it('usuario no admin → 403 permission-denied', async () => {
+    const res = await request(app)
+      .post('/api/enviarComunicadoMasivo')
+      .set('Authorization', `Bearer ${TK}`)
+      .send({ data: { titulo: 'Promo', mensaje: 'Hola' } });
+
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe('permission-denied');
+  });
+
+  it('faltan titulo o mensaje → 400 invalid-argument', async () => {
+    const resSinTitulo = await request(app)
+      .post('/api/enviarComunicadoMasivo')
+      .set('Authorization', 'Bearer tk-admin')
+      .send({ data: { mensaje: 'Hola' } });
+    expect(resSinTitulo.status).toBe(400);
+    expect(resSinTitulo.body.error.code).toBe('invalid-argument');
+
+    const resSinMensaje = await request(app)
+      .post('/api/enviarComunicadoMasivo')
+      .set('Authorization', 'Bearer tk-admin')
+      .send({ data: { titulo: 'Promo' } });
+    expect(resSinMensaje.status).toBe(400);
+    expect(resSinMensaje.body.error.code).toBe('invalid-argument');
+  });
+
+  it('publica in-app y banner correctamente', async () => {
+    const res = await request(app)
+      .post('/api/enviarComunicadoMasivo')
+      .set('Authorization', 'Bearer tk-admin')
+      .send({
+        data: {
+          titulo: 'Mantenimiento Programado',
+          mensaje: 'El sistema entrará en mantenimiento breve.',
+          tipo: 'vencimiento',
+          linkBoton: 'https://wa.me/573247349128',
+          textoBoton: 'Contactar Soporte',
+          canales: { inApp: true, banner: true, email: false },
+        },
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.result.success).toBe(true);
+    expect(res.body.result.anuncioId).toBeDefined();
+
+    // Validar in-app en anunciosGlobales
+    const anuncioId = res.body.result.anuncioId;
+    const guardado = backend.getData('anunciosGlobales', anuncioId);
+    expect(guardado).toBeDefined();
+    expect(guardado?.titulo).toBe('Mantenimiento Programado');
+    expect(guardado?.activo).toBe(true);
+
+    // Validar banner en config/broadcast
+    const broadcastDoc = backend.getData('config', 'broadcast');
+    expect(broadcastDoc?.activo).toBe(true);
+    expect(broadcastDoc?.mensaje).toBe('El sistema entrará en mantenimiento breve.');
+  });
+
+  it('envía correo masivo a todos los usuarios con branding Dark SaaS', async () => {
+    backend.seed('usuarios', 'u1', { nombre: 'Roberto Gómez', correo: 'roberto@example.com' });
+    backend.seed('usuarios', 'u2', { nombre: 'María Pérez', correo: 'maria@example.com' });
+
+    const res = await request(app)
+      .post('/api/enviarComunicadoMasivo')
+      .set('Authorization', 'Bearer tk-admin')
+      .send({
+        data: {
+          titulo: '¡Nueva Función de Activación Automática!',
+          mensaje: 'Descubrí la nueva integración de códigos de TV y perfiles.',
+          tipo: 'novedad',
+          linkBoton: 'https://streamcontrol.pro',
+          textoBoton: 'Ver Novedades',
+          segmento: 'todos',
+          canales: { inApp: false, banner: false, email: true },
+        },
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.result.enviados).toBe(2);
+    expect(emailMocks.sendMail).toHaveBeenCalledTimes(2);
+
+    const firstCall = emailMocks.sendMail.mock.calls[0]?.[0] as { to?: string; html?: string; subject?: string } | undefined;
+    expect(firstCall?.subject).toContain('StreamControl Pro');
+    expect(firstCall?.subject).toContain('¡Nueva Función de Activación Automática!');
+    expect(firstCall?.html).toContain('StreamControl Pro');
+    expect(firstCall?.html).toContain('Nueva Función / Novedad');
+    expect(firstCall?.html).toContain('https://streamcontrol.pro');
+    expect(firstCall?.html).toContain('Ver Novedades');
+  });
+
+  it('filtra usuarios por segmento "activos"', async () => {
+    backend.seed('usuarios', 'u1', { nombre: 'Activo 1', correo: 'activo1@example.com' });
+    backend.seed('usuarios', 'u2', { nombre: 'Inactivo 2', correo: 'inactivo2@example.com' });
+
+    backend.seed('suscripciones', 'sub1', {
+      usuarioId: 'u1',
+      usuarioNombre: 'Activo 1',
+      usuarioEmail: 'activo1@example.com',
+      estado: 'activa',
+    });
+    backend.seed('suscripciones', 'sub2', {
+      usuarioId: 'u2',
+      usuarioNombre: 'Inactivo 2',
+      usuarioEmail: 'inactivo2@example.com',
+      estado: 'cancelada',
+    });
+
+    const res = await request(app)
+      .post('/api/enviarComunicadoMasivo')
+      .set('Authorization', 'Bearer tk-admin')
+      .send({
+        data: {
+          titulo: 'Descuento para suscriptores',
+          mensaje: 'Beneficio exclusivo para cuentas activas.',
+          tipo: 'promocion',
+          segmento: 'activos',
+          canales: { inApp: false, banner: false, email: true },
+        },
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.result.enviados).toBe(1);
+    expect(emailMocks.sendMail).toHaveBeenCalledTimes(1);
+    const call = emailMocks.sendMail.mock.calls[0]?.[0] as { to?: string } | undefined;
+    expect(call?.to).toBe('activo1@example.com');
+  });
+
+  it('filtra usuarios por segmento "por_vencer" (≤ 7 días)', async () => {
+    const ahoraMs = Date.now();
+    const dia3 = ahoraMs + 3 * 86400 * 1000;
+    const dia20 = ahoraMs + 20 * 86400 * 1000;
+
+    backend.seed('suscripciones', 'sub-vence', {
+      usuarioNombre: 'Por Vencer',
+      usuarioEmail: 'vence@example.com',
+      estado: 'activa',
+      fechaFin: { seconds: Math.floor(dia3 / 1000) },
+    });
+    backend.seed('suscripciones', 'sub-lejos', {
+      usuarioNombre: 'Lejos',
+      usuarioEmail: 'lejos@example.com',
+      estado: 'activa',
+      fechaFin: { seconds: Math.floor(dia20 / 1000) },
+    });
+
+    const res = await request(app)
+      .post('/api/enviarComunicadoMasivo')
+      .set('Authorization', 'Bearer tk-admin')
+      .send({
+        data: {
+          titulo: 'Tu suscripción vence pronto',
+          mensaje: 'Renová antes de que finalice tu ciclo.',
+          tipo: 'vencimiento',
+          segmento: 'por_vencer',
+          canales: { email: true },
+        },
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.result.enviados).toBe(1);
+    expect(emailMocks.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'vence@example.com' }));
+  });
+});

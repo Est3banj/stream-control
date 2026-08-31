@@ -37,6 +37,7 @@ import {
 } from 'recharts';
 import { Timestamp } from 'firebase/firestore';
 import toast from 'react-hot-toast';
+import MarketingSuiteModal from '../components/Admin/MarketingSuiteModal';
 
 const DONUT_COLORS = ['#6366f1', '#06b6d4', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899'];
 
@@ -67,63 +68,9 @@ export default function AdminDashboard() {
   // Cohort filter for Action Center
   const [cohortFilter, setCohortFilter] = useState<'riesgo' | 'urgente' | 'mora'>('riesgo');
 
-  // Broadcast modal state
-  const [showBroadcastModal, setShowBroadcastModal] = useState(false);
-  const [broadcastForm, setBroadcastForm] = useState<{
-    mensaje: string;
-    tipo: 'info' | 'warning' | 'critical';
-    activo: boolean;
-  }>({
-    mensaje: broadcast.mensaje || broadcast.message || '',
-    tipo: (broadcast.tipo || broadcast.type || 'info') as 'info' | 'warning' | 'critical',
-    activo: Boolean(broadcast.activo || broadcast.active),
-  });
-  const [savingBroadcast, setSavingBroadcast] = useState(false);
+  // Marketing Suite & Broadcast modal state
+  const [showMarketingModal, setShowMarketingModal] = useState(false);
   const [extendingId, setExtendingId] = useState<string | null>(null);
-
-  const handleOpenBroadcastModal = () => {
-    setBroadcastForm({
-      mensaje: broadcast.mensaje || broadcast.message || '',
-      tipo: (broadcast.tipo || broadcast.type || 'info') as 'info' | 'warning' | 'critical',
-      activo: Boolean(broadcast.activo || broadcast.active),
-    });
-    setShowBroadcastModal(true);
-  };
-
-  const handleSaveBroadcast = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSavingBroadcast(true);
-    try {
-      await updateBroadcast({
-        activo: broadcastForm.activo,
-        mensaje: broadcastForm.mensaje,
-        tipo: broadcastForm.tipo,
-        usuarioEmail: user?.email || 'admin',
-      });
-      toast.success('Anuncio global actualizado correctamente');
-      setShowBroadcastModal(false);
-    } catch (err) {
-      console.error(err);
-      toast.error('Error al guardar anuncio global');
-    } finally {
-      setSavingBroadcast(false);
-    }
-  };
-
-  const handleClearBroadcast = async () => {
-    setSavingBroadcast(true);
-    try {
-      await clearBroadcast(user?.email || 'admin');
-      setBroadcastForm({ mensaje: '', tipo: 'info', activo: false });
-      toast.success('Anuncio global desactivado');
-      setShowBroadcastModal(false);
-    } catch (err) {
-      console.error(err);
-      toast.error('Error al desactivar anuncio');
-    } finally {
-      setSavingBroadcast(false);
-    }
-  };
 
   // Grace extension (+7 days)
   const handleExtenderGracia = async (item: ExpirationItem) => {
@@ -218,11 +165,12 @@ export default function AdminDashboard() {
 
         <div className="flex items-center gap-3">
           <button
-            onClick={handleOpenBroadcastModal}
+            onClick={() => setShowMarketingModal(true)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-950/70 hover:bg-indigo-900 border border-indigo-500/30 hover:border-indigo-500/60 text-cyan-300 text-sm font-semibold transition-all shadow-lg shadow-indigo-950/50 hover:scale-105 active:scale-95"
+            aria-label="Alerta Global"
           >
             <Megaphone size={18} className="text-cyan-400" />
-            <span>Alerta Global</span>
+            <span>Marketing & Alerta Global</span>
             {Boolean(broadcast.activo || broadcast.active) && (
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             )}
@@ -622,122 +570,15 @@ export default function AdminDashboard() {
           </table>
         </div>
       </div>
-
-      {/* Modal Broadcast Banner Quick Manager */}
-      {showBroadcastModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full p-6 text-slate-100 animate-scale-in">
-            <div className="flex items-center justify-between mb-6 pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-500/15 border border-indigo-500/30 text-cyan-400 flex items-center justify-center">
-                  <Megaphone size={20} />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-white">Anuncio Global</h2>
-                  <p className="text-xs text-slate-400">Publicar banner visible para todos los tenants</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowBroadcastModal(false)}
-                className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveBroadcast} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                  Estado del Anuncio
-                </label>
-                <div className="flex items-center gap-3">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="activo"
-                      checked={broadcastForm.activo === true}
-                      onChange={() => setBroadcastForm({ ...broadcastForm, activo: true })}
-                      className="accent-indigo-500 w-4 h-4"
-                    />
-                    <span className="text-sm font-medium text-emerald-400">Activo (Visible)</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="activo"
-                      checked={broadcastForm.activo === false}
-                      onChange={() => setBroadcastForm({ ...broadcastForm, activo: false })}
-                      className="accent-indigo-500 w-4 h-4"
-                    />
-                    <span className="text-sm font-medium text-slate-400">Inactivo (Oculto)</span>
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                  Tipo de Notificación
-                </label>
-                <select
-                  value={broadcastForm.tipo}
-                  onChange={(e) =>
-                    setBroadcastForm({
-                      ...broadcastForm,
-                      tipo: e.target.value as 'info' | 'warning' | 'critical',
-                    })
-                  }
-                  className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-950/70 border border-slate-800 hover:border-slate-700 text-sm text-slate-100"
-                >
-                  <option value="info">🔵 Informativo (Info)</option>
-                  <option value="warning">🟡 Advertencia / Mantenimiento (Warning)</option>
-                  <option value="critical">🔴 Crítico / Alerta urgente (Critical)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                  Mensaje del Banner
-                </label>
-                <textarea
-                  rows={3}
-                  value={broadcastForm.mensaje}
-                  onChange={(e) => setBroadcastForm({ ...broadcastForm, mensaje: e.target.value })}
-                  placeholder="Ej: Mantenimiento programado hoy a las 23:00 UTC. La plataforma continuará operativa..."
-                  className="w-full p-3 rounded-xl bg-slate-950/70 border border-slate-800 hover:border-slate-700 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
-                  required
-                />
-              </div>
-
-              <div className="flex gap-3 pt-4 border-t border-slate-800">
-                <button
-                  type="button"
-                  onClick={handleClearBroadcast}
-                  disabled={savingBroadcast}
-                  className="px-4 py-2.5 rounded-xl bg-rose-950/50 hover:bg-rose-900 border border-rose-800/40 text-rose-300 text-sm font-medium transition-colors"
-                >
-                  Desactivar
-                </button>
-                <div className="flex-1 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowBroadcastModal(false)}
-                    className="flex-1 btn-secondary text-sm"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={savingBroadcast}
-                    className="flex-1 btn-primary text-sm shadow-lg shadow-indigo-950/50"
-                  >
-                    {savingBroadcast ? 'Guardando...' : 'Publicar'}
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Modal Marketing & Comunicación Masiva */}
+      <MarketingSuiteModal
+        isOpen={showMarketingModal}
+        onClose={() => setShowMarketingModal(false)}
+        bannerActivo={Boolean(broadcast.activo || broadcast.active)}
+        onClearBanner={async () => {
+          await clearBroadcast(user?.email || 'admin');
+        }}
+      />
     </div>
   );
 }

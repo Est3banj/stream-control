@@ -167,6 +167,11 @@ export function createFirestoreFake() {
         where(field: string, op: string, value: unknown) {
           return { ...this, _filters: [{ field, op, value }] };
         },
+        add(data: DocData): Promise<Ref & { id: string }> {
+          const id = `auto_${Math.random().toString(36).slice(2, 10)}`;
+          const r = store.ref(col, id);
+          return store.set(col, id, data).then(() => ({ ...r, id } as Ref & { id: string }));
+        },
         orderBy() {
           return this;
         },

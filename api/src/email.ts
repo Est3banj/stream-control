@@ -464,3 +464,175 @@ export async function sendVerificationEmail(to: string, userName: string, verify
     html: buildVerificationHtml(userName, verifyLink),
   });
 }
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+export function getBroadcastBadgeInfo(tipo?: string): { label: string; emoji: string; bg: string; text: string; border: string } {
+  switch (tipo?.toLowerCase()) {
+    case 'promocion':
+    case 'promo':
+      return {
+        label: '🔥 Promoción Especial',
+        emoji: '🔥',
+        bg: '#451a03',
+        text: '#f59e0b',
+        border: '#78350f',
+      };
+    case 'vencimiento':
+    case 'vencimiento_plan':
+    case 'alerta':
+    case 'warning':
+      return {
+        label: '⏰ Alerta de Suscripción',
+        emoji: '⏰',
+        bg: '#4c0519',
+        text: '#f43f5e',
+        border: '#881337',
+      };
+    case 'novedad':
+    case 'publicidad':
+    case 'feature':
+      return {
+        label: '🚀 Nueva Función / Novedad',
+        emoji: '🚀',
+        bg: '#083344',
+        text: '#06b6d4',
+        border: '#155e75',
+      };
+    case 'comunicado':
+    case 'info':
+    case 'general':
+    default:
+      return {
+        label: '📢 Comunicado Oficial',
+        emoji: '📢',
+        bg: '#1e1b4b',
+        text: '#818cf8',
+        border: '#3730a3',
+      };
+  }
+}
+
+export function buildBroadcastHtml(
+  userName: string,
+  titulo: string,
+  mensaje: string,
+  tipo?: string,
+  linkBoton?: string,
+  textoBoton?: string
+): string {
+  const badge = getBroadcastBadgeInfo(tipo);
+  const formattedParagraphs = mensaje
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => `<p style="color: #cbd5e1; font-size: 15px; line-height: 1.65; margin: 0 0 14px 0;">${escapeHtml(line)}</p>`)
+    .join('');
+
+  const ctaButtonHtml = linkBoton
+    ? `
+      <div style="text-align: center; margin: 32px 0 16px 0;">
+        <a href="${escapeHtml(linkBoton)}" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #ffffff !important; text-decoration: none; padding: 14px 36px; border-radius: 12px; font-size: 15px; font-weight: 700; box-shadow: 0 8px 20px -4px rgba(79, 70, 229, 0.45); letter-spacing: 0.2px;">
+          ${escapeHtml(textoBoton || 'Acceder ahora')} &rarr;
+        </a>
+      </div>
+    `
+    : '';
+
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(titulo)}</title>
+  <style>
+    body { margin: 0; padding: 0; background-color: #0b0f19; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f8fafc; }
+    .wrapper { width: 100%; background-color: #0b0f19; padding: 40px 0; }
+    .container { max-width: 580px; margin: 0 auto; padding: 0 20px; }
+    .card { background-color: #131b2e; border: 1px solid #23304c; border-radius: 18px; padding: 36px 32px; box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6); }
+    .header { text-align: center; margin-bottom: 24px; }
+    .logo { color: #818cf8; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin: 0; text-shadow: 0 0 20px rgba(99, 102, 241, 0.3); }
+    .logo-sub { color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 4px; }
+    .badge-container { text-align: center; margin: 20px 0 16px 0; }
+    .badge { display: inline-block; padding: 6px 16px; border-radius: 9999px; font-size: 12px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+    h1 { color: #ffffff; font-size: 22px; font-weight: 800; margin: 0 0 18px 0; text-align: center; line-height: 1.35; letter-spacing: -0.3px; }
+    .user-greeting { color: #94a3b8; font-size: 15px; margin-bottom: 16px; }
+    .content-box { background-color: #0c1222; border: 1px solid #1e293b; border-radius: 14px; padding: 22px 24px; margin: 18px 0; }
+    .footer { margin-top: 32px; text-align: center; font-size: 12px; color: #64748b; line-height: 1.6; }
+    .footer strong { color: #94a3b8; }
+    .footer-links { margin-top: 12px; }
+    .footer-links a { color: #818cf8; text-decoration: none; margin: 0 8px; font-weight: 500; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="container">
+      <div class="card">
+        <div class="header">
+          <div class="logo">StreamControl Pro</div>
+          <div class="logo-sub">Plataforma de Control & Streaming</div>
+        </div>
+
+        <div class="badge-container">
+          <span class="badge" style="background-color: ${badge.bg}; color: ${badge.text}; border: 1px solid ${badge.border};">
+            ${badge.label}
+          </span>
+        </div>
+
+        <h1>${escapeHtml(titulo)}</h1>
+
+        <div class="user-greeting">
+          Hola <strong style="color: #ffffff;">${escapeHtml(userName)}</strong>,
+        </div>
+
+        <div class="content-box">
+          ${formattedParagraphs}
+        </div>
+
+        ${ctaButtonHtml}
+      </div>
+
+      <div class="footer">
+        <p>StreamControl Pro — Gestión Inteligente de Cuentas, Clientes y Streaming</p>
+        <p>¿Tenés alguna consulta o necesitas asistencia? Escribinos a WhatsApp al <strong>+57 324 734 9128</strong></p>
+        <div class="footer-links">
+          <a href="https://streamcontrol.pro" target="_blank">Ir a la Plataforma</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+export async function sendBroadcastEmail(options: {
+  to: string;
+  userName: string;
+  titulo: string;
+  mensaje: string;
+  tipo?: string;
+  linkBoton?: string;
+  textoBoton?: string;
+}): Promise<void> {
+  const badge = getBroadcastBadgeInfo(options.tipo);
+  await sendEmail({
+    to: options.to,
+    subject: `${badge.emoji} ${options.titulo} — StreamControl Pro`,
+    html: buildBroadcastHtml(
+      options.userName,
+      options.titulo,
+      options.mensaje,
+      options.tipo,
+      options.linkBoton,
+      options.textoBoton
+    ),
+  });
+}

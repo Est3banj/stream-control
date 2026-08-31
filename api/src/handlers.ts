@@ -14,6 +14,7 @@ import { getAdmin, getDb } from './firebase.js';
 import { desasignarPerfil as desasignarPerfilCore } from './desasignar.js';
 import { APP_URL } from './config.js';
 import {
+  sendBroadcastEmail,
   sendEmailChangedEmail,
   sendPasswordChangedEmail,
   sendResetPasswordEmail,
@@ -468,4 +469,226 @@ export async function cleanupNoVerificados(): Promise<unknown> {
   await listAll();
   console.log(`cleanupNoVerificados: ${eliminados} eliminados, ${candidatos} candidatos`);
   return { eliminados, candidatos };
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// enviarComunicadoMasivo — admin (marketing, in-app y correo masivo Resend)
+// ─────────────────────────────────────────────────────────────────────────
+
+export async function enviarComunicadoMasivo(req: AuthedReq): Promise<unknown> {
+  if (!req.auth) {
+    throw new APIError('unauthenticated', 'Debes iniciar sesión');
+  }
+
+  const {
+    titulo,
+    mensaje,
+    tipo = 'comunicado',
+    linkBoton = '',
+    textoBoton = '',
+    segmento = 'todos',
+    canales = { inApp: true, banner: false, email: false },
+  } = dataOf(req) as {
+    titulo?: string;
+    mensaje?: string;
+    tipo?: string;
+    linkBoton?: string;
+    textoBoton?: string;
+    segmento?: 'todos' | 'activos' | 'por_vencer';
+    canales?: { inApp?: boolean; banner?: boolean; email?: boolean };
+  };
+
+  if (!titulo || typeof titulo !== 'string' || !titulo.trim()) {
+    throw new APIError('invalid-argument', 'El título del comunicado es requerido');
+  }
+  if (!mensaje || typeof mensaje !== 'string' || !mensaje.trim()) {
+    throw new APIError('invalid-argument', 'El mensaje del comunicado es requerido');
+  }
+
+  const cleanTitulo = titulo.trim();
+  const cleanMensaje = mensaje.trim();
+  const cleanTipo = tipo.trim().toLowerCase();
+  const cleanLink = typeof linkBoton === 'string' ? linkBoton.trim() : '';
+  const cleanTextoBoton = typeof textoBoton === 'string' ? textoBoton.trim() : '';
+
+  const fechaIso = new Date().toISOString();
+
+  // 1. In-App: Guardar en colección 'anunciosGlobales'
+  let anuncioId: string | undefined;
+  if (canales?.inApp) {
+    const anuncioRef = db.collection('anunciosGlobales').doc();
+    anuncioId = anuncioRef.id;
+    await anuncioRef.set({
+      id: anuncioId,
+      titulo: cleanTitulo,
+      mensaje: cleanMensaje,
+      tipo: cleanTipo,
+      linkBoton: cleanLink,
+      textoBoton: cleanTextoBoton,
+      activo: true,
+      audiencia: segmento,
+      canales,
+      fecha: fechaIso,
+      createdAt: fechaIso,
+      creadoPor: req.auth.uid,
+    });
+  }
+
+  // 2. Banner Superior: Actualizar 'config/broadcast' y 'configuracion/anuncioGlobal'
+  if (canales?.banner) {
+    const bannerPayload = {
+      activo: true,
+      active: true,
+      mensaje: cleanMensaje,
+      message: cleanMensaje,
+      titulo: cleanTitulo,
+      tipo: cleanTipo === 'promocion' ? 'info' : cleanTipo === 'vencimiento' ? 'warning' : cleanTipo === 'alerta' ? 'critical' : 'info',
+      type: cleanTipo === 'promocion' ? 'info' : cleanTipo === 'vencimiento' ? 'warning' : cleanTipo === 'alerta' ? 'critical' : 'info',
+      fecha: fechaIso,
+      updatedBy: req.auth.uid,
+    };
+    await db.collection('config').doc('broadcast').set(bannerPayload, { merge: true });
+    await db.collection('configuracion').doc('anuncioGlobal').set(bannerPayload, { merge: true }).catch(() => {});
+  }
+
+  // 3. Envío masivo por Correo Electrónico (Resend / SMTP)
+  let totalDestinatarios = 0;
+  let enviados = 0;
+  let fallidos = 0;
+  const fallidosEmails: string[] = [];
+
+  if (canales?.email) {
+    const destinatariosMap = new Map<string, { email: string; nombre: string }>();
+
+    if (segmento === 'todos') {
+      // a) De Firestore 'usuarios'
+      const usersSnap = await db.collection('usuarios').get();
+      usersSnap.docs.forEach((doc) => {
+        const d = doc.data();
+        const email = (d.correo || d.email) as string | undefined;
+        if (email && email.includes('@')) {
+          destinatariosMap.set(email.trim().toLowerCase(), {
+            email: email.trim().toLowerCase(),
+            nombre: (d.nombre as string) || 'Usuario',
+          });
+        }
+      });
+
+      // b) De Firebase Auth listUsers
+      try {
+        const auth = getAdmin().auth();
+        const listAll = async (nextPageToken?: string) => {
+          const authResult = await auth.listUsers(1000, nextPageToken);
+          authResult.users.forEach((u) => {
+            if (u.email && !destinatariosMap.has(u.email.trim().toLowerCase())) {
+              destinatariosMap.set(u.email.trim().toLowerCase(), {
+                email: u.email.trim().toLowerCase(),
+                nombre: u.displayName || 'Usuario',
+              });
+            }
+          });
+          if (authResult.pageToken) await listAll(authResult.pageToken);
+        };
+        await listAll();
+      } catch (authErr) {
+        console.warn('⚠️ Warning listing Auth users for broadcast:', authErr);
+      }
+    } else if (segmento === 'activos' || segmento === 'por_vencer') {
+      const subsSnap = await db.collection('suscripciones').where('estado', '==', 'activa').get();
+      const ahoraMs = Date.now();
+      const SIETE_DIAS_MS = 7 * 24 * 60 * 60 * 1000;
+
+      for (const doc of subsSnap.docs) {
+        const sub = doc.data();
+        const uid = sub.usuarioId || sub.propietarioId;
+        const subEmail = (sub.usuarioEmail || sub.correo) as string | undefined;
+        const subNombre = (sub.usuarioNombre || sub.nombre || 'Usuario') as string;
+
+        let cumple = true;
+        if (segmento === 'por_vencer') {
+          let finMs = 0;
+          if (sub.fechaFin?.seconds) {
+            finMs = sub.fechaFin.seconds * 1000;
+          } else if (typeof sub.fechaFin?.toMillis === 'function') {
+            finMs = sub.fechaFin.toMillis();
+          } else if (typeof sub.fechaFin?.toDate === 'function') {
+            finMs = sub.fechaFin.toDate().getTime();
+          } else if (typeof sub.fechaFin === 'string') {
+            finMs = new Date(sub.fechaFin).getTime();
+          }
+
+          if (finMs > 0) {
+            const diffMs = finMs - ahoraMs;
+            cumple = diffMs <= SIETE_DIAS_MS;
+          }
+        }
+
+        if (cumple) {
+          if (subEmail && subEmail.includes('@')) {
+            destinatariosMap.set(subEmail.trim().toLowerCase(), {
+              email: subEmail.trim().toLowerCase(),
+              nombre: subNombre,
+            });
+          } else if (uid) {
+            const userDoc = await db.collection('usuarios').doc(uid).get();
+            if (userDoc.exists) {
+              const ud = userDoc.data();
+              const em = (ud?.correo || ud?.email) as string | undefined;
+              if (em && em.includes('@')) {
+                destinatariosMap.set(em.trim().toLowerCase(), {
+                  email: em.trim().toLowerCase(),
+                  nombre: (ud?.nombre as string) || subNombre,
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+
+    const destinatarios = Array.from(destinatariosMap.values());
+    totalDestinatarios = destinatarios.length;
+
+    // Despacho en batches de 10
+    const BATCH_SIZE = 10;
+    for (let i = 0; i < destinatarios.length; i += BATCH_SIZE) {
+      const batch = destinatarios.slice(i, i + BATCH_SIZE);
+      const results = await Promise.allSettled(
+        batch.map((dest) =>
+          sendBroadcastEmail({
+            to: dest.email,
+            userName: dest.nombre,
+            titulo: cleanTitulo,
+            mensaje: cleanMensaje,
+            tipo: cleanTipo,
+            linkBoton: cleanLink,
+            textoBoton: cleanTextoBoton,
+          })
+        )
+      );
+
+      results.forEach((res, idx) => {
+        if (res.status === 'fulfilled') {
+          enviados++;
+        } else {
+          fallidos++;
+          fallidosEmails.push(batch[idx].email);
+          console.error(`❌ Error enviando comunicado a ${batch[idx].email}:`, res.reason);
+        }
+      });
+    }
+  }
+
+  return {
+    success: true,
+    anuncioId,
+    titulo: cleanTitulo,
+    tipo: cleanTipo,
+    segmento,
+    canales,
+    totalDestinatarios,
+    enviados,
+    fallidos,
+    fallidosEmails: fallidos > 0 ? fallidosEmails : undefined,
+  };
 }

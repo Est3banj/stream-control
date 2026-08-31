@@ -125,8 +125,8 @@ describe('AdminDashboard', () => {
     fireEvent.click(broadcastBtn);
 
     await waitFor(() => {
-      expect(screen.getByText('Anuncio Global')).toBeInTheDocument();
-      expect(screen.getByText('Publicar banner visible para todos los tenants')).toBeInTheDocument();
+      expect(screen.getByText('Marketing & Comunicación Masiva')).toBeInTheDocument();
+      expect(screen.getByText(/publicá avisos in-app/i)).toBeInTheDocument();
     });
   });
 });
