@@ -1,3 +1,4 @@
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -41,12 +42,12 @@ describe('AdminSuscripciones', () => {
     mockUsePlanes.mockReturnValue({ planes: [], loading: false, error: null });
   });
 
-  it('renders title', async () => {
+  it('renders title and pipeline description', async () => {
     const AdminSuscripciones = (await import('./AdminSuscripciones')).default;
     render(<AdminSuscripciones />);
 
-    expect(screen.getByText('Gestión de Suscripciones')).toBeInTheDocument();
-    expect(screen.getByText('Administra las suscripciones de los usuarios')).toBeInTheDocument();
+    expect(screen.getByText('Gestión de Suscripciones & Cobranzas')).toBeInTheDocument();
+    expect(screen.getByText('Pipeline de cobro por WhatsApp, cohortes de vencimiento y renovación proactiva')).toBeInTheDocument();
   });
 
   it('shows loading state', async () => {
@@ -58,16 +59,17 @@ describe('AdminSuscripciones', () => {
     expect(screen.getByText('Cargando suscripciones...')).toBeInTheDocument();
   });
 
-  it('shows filter controls', async () => {
+  it('shows expiration cohort tabs and filter controls', async () => {
     const AdminSuscripciones = (await import('./AdminSuscripciones')).default;
     render(<AdminSuscripciones />);
 
-    expect(screen.getByText('Todas')).toBeInTheDocument();
-    expect(screen.getByText('Activa')).toBeInTheDocument();
-    expect(screen.getByText('Expirada')).toBeInTheDocument();
-    expect(screen.getByText('Cancelada')).toBeInTheDocument();
+    expect(screen.getByText('Todas las Cohortes')).toBeInTheDocument();
+    expect(screen.getByText('🚨 Próximos a Vencer (≤3d)')).toBeInTheDocument();
+    expect(screen.getByText('⚠️ Esta Semana (≤7d)')).toBeInTheDocument();
+    expect(screen.getByText('⏳ En Gracia / Vencidos')).toBeInTheDocument();
+    expect(screen.getByText('✅ Activas al Día')).toBeInTheDocument();
 
-    expect(screen.getByText('Todos')).toBeInTheDocument();
+    expect(screen.getAllByText('Todos').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('Pagado')).toBeInTheDocument();
     expect(screen.getByText('Pendiente')).toBeInTheDocument();
     expect(screen.getByText('Vencido')).toBeInTheDocument();

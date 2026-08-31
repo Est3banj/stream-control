@@ -187,7 +187,7 @@ export default function App() {
           <Route
             path="/cuentas"
             element={
-              <PrivateRoute roles={['admin', 'usuario']}>
+              <PrivateRoute roles={['usuario']}>
                 <Layout>
                   <GestionCuentas />
                 </Layout>
@@ -201,7 +201,7 @@ export default function App() {
           <Route
             path="/consulta-codigos"
             element={
-              <PrivateRoute roles={['admin', 'usuario']}>
+              <PrivateRoute roles={['usuario']}>
                 <Layout>
                   <ConsultaCodigos />
                 </Layout>
@@ -212,7 +212,7 @@ export default function App() {
           <Route
             path="/mayoristas"
             element={
-              <PrivateRoute roles={['admin', 'usuario']}>
+              <PrivateRoute roles={['usuario']}>
                 <Layout>
                   <VentasMayoristas />
                 </Layout>

@@ -1,0 +1,22 @@
+change: super-admin-control-center
+status: completed
+mode: openspec
+created_at: "2026-08-31T17:08:30-05:00"
+updated_at: "2026-08-31T17:22:00-05:00"
+dependencies: []
+artifacts:
+  explore: openspec/changes/super-admin-control-center/explore.md
+  proposal: openspec/changes/super-admin-control-center/proposal.md
+  specs: openspec/changes/super-admin-control-center/specs.md
+  design: openspec/changes/super-admin-control-center/design.md
+  tasks: openspec/changes/super-admin-control-center/tasks.md
+phase_progress:
+  explore: completed
+  proposal: completed
+  specs: completed
+  design: completed
+  tasks: completed
+  apply: completed
+  verify: completed
+  archive: completed
+next_recommended: /sdd-archive super-admin-control-center

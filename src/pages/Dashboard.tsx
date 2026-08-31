@@ -11,13 +11,19 @@ import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Toolti
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { Venta } from '../types/venta';
+import AdminDashboard from './AdminDashboard';
 
 const COLORS = ['#6366F1', '#38BDF8', '#A855F7', '#34D399', '#F43F5E'];
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const permisos = usePermisos(user);
   const isAdmin = user?.rol === 'admin';
+
+  if (isAdmin) {
+    return <AdminDashboard />;
+  }
+
+  const permisos = usePermisos(user);
   const { ventas, loading, error } = useVentas(user);
   const { clientes } = useClientes(user);
   const { suscripciones } = useSuscripciones(user);

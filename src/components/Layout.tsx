@@ -9,6 +9,8 @@ import UpgradeModalContext from '../contexts/UpgradeModalContext';
 import usePermisos from '../hooks/usePermisos';
 import { useAdminConfig, sanitizarWhatsApp } from '../hooks/useAdminConfig';
 
+import BroadcastBanner from './BroadcastBanner';
+
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const permisos = usePermisos(user);
@@ -51,14 +53,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const navItems: { to: string; icon: React.ComponentType<{ size?: number; className?: string }>; label: string }[] = user?.rol === 'admin'
     ? [
-        { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-        { to: '/cuentas', icon: CreditCard, label: 'Cuentas' },
-        { to: '/mayoristas', icon: UserPlus, label: 'Mayoristas' },
-        { to: '/admin/planes', icon: Package, label: 'Planes' },
-        { to: '/admin/suscripciones', icon: ClipboardList, label: 'Suscripciones' },
-        { to: '/usuarios', icon: UserCog, label: 'Usuarios' },
+        { to: '/', icon: LayoutDashboard, label: 'Panel Ejecutivo' },
+        { to: '/usuarios', icon: Users, label: 'Directorio & CRM Usuarios' },
+        { to: '/admin/suscripciones', icon: CreditCard, label: 'Suscripciones & Cobranzas' },
+        { to: '/admin/planes', icon: Package, label: 'Planes & Cuotas' },
         { to: '/telegram', icon: Send, label: 'Telegram' },
-        { to: '/consulta-codigos', icon: Key, label: 'Códigos' },
         { to: '/ajustes', icon: Settings, label: 'Ajustes' },
       ]
     : [
@@ -199,6 +198,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Contenido principal */}
         <main className="flex-1 lg:ml-0 min-h-screen relative z-10 flex flex-col">
+          <BroadcastBanner />
           {/* Header superior */}
           <header className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/80 px-4 sm:px-6 lg:px-8 py-3 lg:py-4 flex items-center justify-between text-slate-100">
             {/* Logo/Título - Solo móvil */}
