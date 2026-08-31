@@ -23,6 +23,14 @@
         "destination": "/app/index.html"
       },
       {
+        "source": "/reset-password",
+        "destination": "/app/index.html"
+      },
+      {
+        "source": "/reset-password/**",
+        "destination": "/app/index.html"
+      },
+      {
         "source": "/app/**",
         "destination": "/app/index.html"
       },

@@ -12,11 +12,11 @@ import type { Response } from 'express';
 import { APIError } from './errors.js';
 import { getAdmin, getDb } from './firebase.js';
 import { desasignarPerfil as desasignarPerfilCore } from './desasignar.js';
+import { APP_URL } from './config.js';
 import {
   sendEmailChangedEmail,
   sendPasswordChangedEmail,
   sendResetPasswordEmail,
-  sendVerificationEmail,
   sendWelcomeEmail,
 } from './email.js';
 import type { AuthedReq } from './registry.js';
@@ -84,7 +84,7 @@ export async function onNuevoUsuario(req: AuthedReq): Promise<unknown> {
 
   const snap = await userRef.get();
   const userData = snap.exists ? snap.data() : null;
-  const correo = userData?.correo as string | undefined;
+  const correo = (userData?.correo || userData?.email) as string | undefined;
   if (!correo) {
     console.log('⏭️ No correo field on new user doc, skipping welcome email');
     return { success: true, skipped: true };
@@ -263,11 +263,18 @@ export async function enviarCorreoRecuperacion(req: AuthedReq): Promise<unknown>
   }
 
   try {
-    const resetLink = await getAdmin().auth().generatePasswordResetLink(email as string, {
-      url: 'https://streamcontrol-10837.firebaseapp.com',
+    const appUrl = APP_URL();
+    const rawFirebaseLink = await getAdmin().auth().generatePasswordResetLink(email as string, {
+      url: `${appUrl}/app/reset-password`,
     });
 
-    await sendResetPasswordEmail(email as string, (nombre as string) || 'Usuario', resetLink);
+    const parsed = new URL(rawFirebaseLink);
+    const oobCode = parsed.searchParams.get('oobCode');
+    const apiKey = parsed.searchParams.get('apiKey') || '';
+    // Direct link to our own custom page in the SPA namespace
+    const customResetLink = `${appUrl}/app/reset-password?oobCode=${encodeURIComponent(oobCode || '')}${apiKey ? `&apiKey=${encodeURIComponent(apiKey)}` : ''}`;
+
+    await sendResetPasswordEmail(email as string, (nombre as string) || 'Usuario', customResetLink);
     return { success: true };
   } catch (error) {
     console.error('❌ Error sending recovery email:', error);
@@ -276,37 +283,64 @@ export async function enviarCorreoRecuperacion(req: AuthedReq): Promise<unknown>
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// enviarCorreoVerificacion — none (rate-limit email:sha256 1/60s en registry)
+// notificarPasswordReseteado — none (rate-limit email:sha256 en registry)
 // ─────────────────────────────────────────────────────────────────────────
 
-export async function enviarCorreoVerificacion(req: AuthedReq): Promise<unknown> {
+export async function notificarPasswordReseteado(req: AuthedReq): Promise<unknown> {
   const { email, nombre } = dataOf(req);
   if (!email) {
     throw new APIError('invalid-argument', 'Email es requerido');
   }
 
-  try {
-    const verifyLink = await getAdmin().auth().generateEmailVerificationLink(email as string, {
-      url: 'https://streamcontrol-10837.firebaseapp.com',
-    });
+  const cleanEmail = String(email).trim().toLowerCase();
+  let userName = (typeof nombre === 'string' && nombre.trim()) ? nombre.trim() : '';
 
-    await sendVerificationEmail(email as string, (nombre as string) || 'Usuario', verifyLink);
+  if (!userName) {
+    try {
+      const usersSnap = await db
+        .collection('usuarios')
+        .where('correo', '==', cleanEmail)
+        .limit(1)
+        .get();
+
+      if (!usersSnap.empty) {
+        userName = (usersSnap.docs[0].data().nombre as string) || '';
+      } else {
+        const usersSnapEmail = await db
+          .collection('usuarios')
+          .where('email', '==', cleanEmail)
+          .limit(1)
+          .get();
+        if (!usersSnapEmail.empty) {
+          userName = (usersSnapEmail.docs[0].data().nombre as string) || '';
+        }
+      }
+
+      if (!userName) {
+        try {
+          const admin = getAdmin();
+          const userRecord = await admin.auth().getUserByEmail(cleanEmail);
+          if (userRecord?.displayName) {
+            userName = userRecord.displayName;
+          }
+        } catch {
+          // ignore
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️ Error searching user name for password reset notification:', e);
+    }
+  }
+
+  try {
+    await sendPasswordChangedEmail(cleanEmail, userName || 'Usuario');
     return { success: true };
   } catch (error) {
-    const message = error instanceof Error ? error.message : '';
-    console.error('❌ Error sending verification email:', message);
-
-    // Firebase Auth limita la generación de links (TOO_MANY_ATTEMPTS_TRY_LATER)
-    if (message.includes('TOO_MANY_ATTEMPTS')) {
-      throw new APIError(
-        'resource-exhausted',
-        'Demasiados intentos. Esperá unos minutos y volvé a intentar.'
-      );
-    }
-
-    throw new APIError('internal', 'Error al enviar el correo de verificación');
+    console.error('❌ Error sending password changed notification email:', error);
+    throw new APIError('internal', 'Error al enviar la notificación de cambio de contraseña');
   }
 }
+
 
 // ─────────────────────────────────────────────────────────────────────────
 // listarVerificados — admin (rol: claims + fallback Firestore, en app.ts)

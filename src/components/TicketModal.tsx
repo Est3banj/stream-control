@@ -200,17 +200,20 @@ export default function TicketModal({ cliente, onClose }: TicketModalProps) {
 
   // ── Render ──
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto text-slate-100"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-3 flex items-center justify-between rounded-t-2xl">
-          <h2 className="text-lg font-bold text-gray-900">🎫 Ticket: {cliente.nombre}</h2>
+        <div className="sticky top-0 bg-slate-900 border-b border-slate-800 px-5 py-3.5 flex items-center justify-between rounded-t-2xl z-10">
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <span>🎫</span> Ticket: {cliente.nombre}
+          </h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+            aria-label="Cerrar"
           >
             <X size={18} />
           </button>
@@ -219,57 +222,57 @@ export default function TicketModal({ cliente, onClose }: TicketModalProps) {
         {/* Body */}
         <div className="p-5 space-y-4">
           {loading ? (
-            <div className="text-center py-8 text-gray-400">Cargando datos...</div>
+            <div className="text-center py-8 text-slate-400">Cargando datos...</div>
           ) : servicios.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">
+            <div className="text-center py-8 text-slate-400">
               No se encontraron servicios para este cliente.
             </div>
           ) : (
             <>
               {/* Info del cliente */}
-              <div className="bg-gray-50 rounded-xl p-3 text-sm text-gray-600 space-y-0.5">
-                <p><span className="font-medium text-gray-800">Cliente:</span> {cliente.nombre}</p>
+              <div className="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3 text-sm text-slate-300 space-y-0.5">
+                <p><span className="font-medium text-slate-400">Cliente:</span> <span className="text-slate-100 font-semibold">{cliente.nombre}</span></p>
                 {cliente.telefono && (
-                  <p><span className="font-medium text-gray-800">Teléfono:</span> {cliente.telefono}</p>
+                  <p><span className="font-medium text-slate-400">Teléfono:</span> <span className="text-slate-200">{cliente.telefono}</span></p>
                 )}
               </div>
 
               {/* Servicios */}
               {servicios.map((s, i) => (
-                <div key={i} className="border border-gray-200 rounded-xl overflow-hidden">
-                  <div className="bg-indigo-50 px-4 py-2 font-semibold text-indigo-800 text-sm flex items-center gap-2">
+                <div key={i} className="border border-slate-800 rounded-xl bg-slate-950/40 overflow-hidden">
+                  <div className="bg-indigo-950/50 px-4 py-2 font-semibold text-indigo-300 border-b border-indigo-900/40 text-sm flex items-center gap-2">
                     <Key size={14} />
                     Servicio {i + 1}: {s.plataforma}
                   </div>
                   <div className="p-4 space-y-2 text-sm">
                     {s.correo && (
                       <div className="grid grid-cols-3 gap-1">
-                        <span className="text-gray-500 col-span-1">Correo:</span>
-                        <span className="font-medium text-gray-800 col-span-2">{s.correo}</span>
+                        <span className="text-slate-400 col-span-1">Correo:</span>
+                        <span className="font-medium text-slate-200 col-span-2">{s.correo}</span>
                       </div>
                     )}
                     {s.contrasena && (
                       <div className="grid grid-cols-3 gap-1">
-                        <span className="text-gray-500 col-span-1">Contraseña:</span>
-                        <span className="font-medium text-gray-800 col-span-2 font-mono">{s.contrasena}</span>
+                        <span className="text-slate-400 col-span-1">Contraseña:</span>
+                        <span className="font-medium text-slate-200 col-span-2 font-mono">{s.contrasena}</span>
                       </div>
                     )}
                     {s.perfil && (
                       <div className="grid grid-cols-3 gap-1">
-                        <span className="text-gray-500 col-span-1">Perfil:</span>
-                        <span className="font-medium text-gray-800 col-span-2">{s.perfil}</span>
+                        <span className="text-slate-400 col-span-1">Perfil:</span>
+                        <span className="font-medium text-slate-200 col-span-2">{s.perfil}</span>
                       </div>
                     )}
                     {s.pin && (
                       <div className="grid grid-cols-3 gap-1">
-                        <span className="text-gray-500 col-span-1">PIN:</span>
-                        <span className="font-medium text-gray-800 col-span-2 font-mono">{s.pin}</span>
+                        <span className="text-slate-400 col-span-1">PIN:</span>
+                        <span className="font-medium text-slate-200 col-span-2 font-mono">{s.pin}</span>
                       </div>
                     )}
                     {s.diasRestantes !== null && (
                       <div className="grid grid-cols-3 gap-1">
-                        <span className="text-gray-500 col-span-1">Vence en:</span>
-                        <span className={`font-medium col-span-2 ${s.diasRestantes <= 3 ? 'text-red-600' : 'text-green-600'}`}>
+                        <span className="text-slate-400 col-span-1">Vence en:</span>
+                        <span className={`font-medium col-span-2 ${s.diasRestantes <= 3 ? 'text-rose-400' : 'text-emerald-400'}`}>
                           {formatearDias(s.diasRestantes)}
                         </span>
                       </div>
@@ -280,16 +283,16 @@ export default function TicketModal({ cliente, onClose }: TicketModalProps) {
 
               {/* Token activo */}
               {tokenInfo && tokenInfo.activo && (
-                <div className="border border-blue-200 bg-blue-50 rounded-xl p-3">
+                <div className="border border-cyan-800/40 bg-cyan-950/30 rounded-xl p-3">
                   <div className="flex items-start gap-2">
-                    <ExternalLink size={16} className="text-blue-600 mt-0.5 shrink-0" />
+                    <ExternalLink size={16} className="text-cyan-400 mt-0.5 shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-blue-800">Código de acceso activo</p>
+                      <p className="text-sm font-medium text-cyan-300">Código de acceso activo</p>
                       <a
                         href={`${APP_URL}/r/${tokenInfo.token}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-blue-600 hover:text-blue-800 underline break-all"
+                        className="text-sm text-cyan-400 hover:text-cyan-300 underline break-all font-mono"
                       >
                         {APP_URL}/r/{tokenInfo.token}
                       </a>
@@ -302,18 +305,18 @@ export default function TicketModal({ cliente, onClose }: TicketModalProps) {
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 bg-white border-t border-gray-100 px-5 py-3 flex gap-2 rounded-b-2xl">
+        <div className="sticky bottom-0 bg-slate-900 border-t border-slate-800 px-5 py-3.5 flex gap-2 rounded-b-2xl z-10">
           <button
             onClick={copiarAlPortapapeles}
             disabled={servicios.length === 0}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold text-sm"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 btn-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all font-semibold text-sm"
           >
             {copiado ? <Check size={16} /> : <Copy size={16} />}
             {copiado ? '¡Copiado!' : 'Copiar ticket'}
           </button>
           <button
             onClick={onClose}
-            className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium text-sm"
+            className="px-4 py-2.5 btn-secondary text-sm"
           >
             Cerrar
           </button>

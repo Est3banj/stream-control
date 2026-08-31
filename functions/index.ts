@@ -120,7 +120,7 @@ export const generarNotificacionesVencimientos = onSchedule(
       let notificacionesCreadas = 0;
       let telegramEnviados = 0;
       let morasNotificadas = 0;
-      const batch = db.batch();
+      let batch = db.batch();
       let batchCount = 0;
       const MAX_BATCH_SIZE = 500;
 
@@ -173,6 +173,7 @@ export const generarNotificacionesVencimientos = onSchedule(
 
               if (batchCount >= MAX_BATCH_SIZE) {
                 await batch.commit();
+                batch = db.batch();
                 batchCount = 0;
               }
             }
@@ -212,6 +213,7 @@ export const generarNotificacionesVencimientos = onSchedule(
 
             if (batchCount >= MAX_BATCH_SIZE) {
               await batch.commit();
+              batch = db.batch();
               batchCount = 0;
             }
           }
@@ -277,6 +279,7 @@ export const generarNotificacionesVencimientos = onSchedule(
 
             if (batchCount >= MAX_BATCH_SIZE) {
               await batch.commit();
+              batch = db.batch();
               batchCount = 0;
             }
           }
@@ -334,6 +337,7 @@ export const generarNotificacionesVencimientos = onSchedule(
 
             if (batchCount >= MAX_BATCH_SIZE) {
               await batch.commit();
+              batch = db.batch();
               batchCount = 0;
             }
           }
@@ -344,8 +348,8 @@ export const generarNotificacionesVencimientos = onSchedule(
         await batch.commit();
       }
 
-      // ── Auto-cleanup: liberar perfiles de clientes vencidos hace +3 días ──
-      const perfilesLiberados = await limpiarPerfilesVencidos(3);
+      // ── Auto-cleanup: liberar perfiles de clientes vencidos (1 día de gracia / fechaVencimiento < hoy) ──
+      const perfilesLiberados = await limpiarPerfilesVencidos(0);
       if (perfilesLiberados > 0) {
         console.log(`${perfilesLiberados} perfil(es) liberado(s) automáticamente`);
       }
@@ -512,11 +516,17 @@ export const enviarCorreoRecuperacion = onCall(
     recoveryRateLimit.set(email, ahora);
 
     try {
-      const resetLink = await admin.auth().generatePasswordResetLink(email, {
-        url: 'https://streamcontrol-10837.firebaseapp.com',
+      const appUrl = APP_URL.value();
+      const rawFirebaseLink = await admin.auth().generatePasswordResetLink(email, {
+        url: `${appUrl}/app/reset-password`,
       });
+      const parsed = new URL(rawFirebaseLink);
+      const oobCode = parsed.searchParams.get('oobCode');
+      const apiKey = parsed.searchParams.get('apiKey') || '';
+      // Direct link to our own custom page
+      const customResetLink = `${appUrl}/app/reset-password?oobCode=${encodeURIComponent(oobCode || '')}${apiKey ? `&apiKey=${encodeURIComponent(apiKey)}` : ''}`;
 
-      await sendResetPasswordEmail(email, nombre || 'Usuario', resetLink);
+      await sendResetPasswordEmail(email, nombre || 'Usuario', customResetLink);
       return { success: true };
     } catch (error) {
       console.error('❌ Error sending recovery email:', error);

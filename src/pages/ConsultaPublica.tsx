@@ -150,18 +150,28 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
   }, [selectedCaso, token, resetIdleTimer]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] bg-gradient-to-br from-[#0a0a1a] via-[#1a0a2e] to-[#0a0a1a] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-950 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4 text-slate-100 relative overflow-hidden">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-[#ffc62a]/5 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl" />
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-violet-600/10 rounded-full blur-3xl" />
       </div>
 
       <div className="relative w-full max-w-lg">
-        <div className="bg-white/[0.04] backdrop-blur-2xl rounded-3xl border border-white/[0.08] p-8 sm:p-10 shadow-2xl">
+        <div className="bg-slate-900/80 backdrop-blur-2xl rounded-3xl border border-slate-800 p-8 sm:p-10 shadow-2xl">
 
           {/* HEADER */}
           <div className="flex items-center gap-3 mb-6">
-            <img src="/stream.webp" alt="StreamControl" className="w-10 h-10 rounded-xl" />
+            <img 
+              src="/app/stream.webp" 
+              alt="StreamControl" 
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (!target.src.endsWith('/stream.webp') || target.src.includes('/app/stream.webp')) {
+                  target.src = '/stream.webp';
+                }
+              }}
+              className="w-10 h-10 rounded-xl" 
+            />
             <h1 className="text-xl font-bold text-white">
               {state === 'validating' && 'Validando...'}
               {state === 'invalid' && 'Token inválido'}
@@ -172,28 +182,28 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
           {/* VALIDATING */}
           {state === 'validating' && (
             <div className="flex flex-col items-center py-8">
-              <Loader2 className="animate-spin text-[#ffc62a] mb-4" size={36} />
-              <p className="text-gray-400">Validando token...</p>
+              <Loader2 className="animate-spin text-indigo-400 mb-4" size={36} />
+              <p className="text-slate-400">Validando token...</p>
             </div>
           )}
 
           {/* INVALID */}
           {state === 'invalid' && (
             <div className="space-y-4">
-              <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 text-center">
+              <div className="bg-rose-950/40 border border-rose-800/60 rounded-xl p-6 text-center">
                 {errorMsg.includes('conectar') ? (
-                  <WifiOff className="text-red-400 mx-auto mb-3" size={36} />
+                  <WifiOff className="text-rose-400 mx-auto mb-3" size={36} />
                 ) : (
-                  <AlertCircle className="text-red-400 mx-auto mb-3" size={36} />
+                  <AlertCircle className="text-rose-400 mx-auto mb-3" size={36} />
                 )}
-                <p className="text-red-300 font-medium">{errorMsg}</p>
+                <p className="text-rose-300 font-medium">{errorMsg}</p>
                 {errorMsg.includes('conectar') && (
                   <button
                     onClick={() => {
                       setState('validating');
                       window.location.reload();
                     }}
-                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all bg-white/10 text-white hover:bg-white/20 border border-white/10 text-sm"
+                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all bg-slate-800 text-slate-100 hover:bg-slate-700 border border-slate-700 text-sm"
                   >
                     <RefreshCw size={16} />
                     Reintentar
@@ -201,7 +211,7 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
                 )}
               </div>
               {!errorMsg.includes('conectar') && (
-                <p className="text-gray-500 text-sm text-center">
+                <p className="text-slate-500 text-sm text-center">
                   Si creés que esto es un error, contactá a tu vendedor.
                 </p>
               )}
@@ -212,22 +222,22 @@ export default function ConsultaPublica({ token: propToken }: ConsultaPublicaPro
           {state === 'ready' && (
             <div className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1.5">Token</label>
+                <label className="block text-sm font-medium text-slate-400 mb-1.5">Token</label>
                 <input
                   type="text"
                   readOnly
                   value={token || ''}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-200 font-mono text-sm"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-200 font-mono text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1.5">Correo</label>
+                <label className="block text-sm font-medium text-slate-400 mb-1.5">Correo</label>
                 <input
                   type="text"
                   readOnly
                   value={email || '—'}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-200 text-sm"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-200 text-sm"
                 />
               </div>
 

@@ -27,18 +27,18 @@ export default function CodeResult({ code, email, fecha, tipo, expiraEn }: CodeR
   // VISTA PARA LINK
   if (isLink) {
     return (
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-6 animate-fade-in text-slate-100">
         <div className="text-center">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#ffc62a]/10 mb-3">
-            <ExternalLink className="text-[#ffc62a]" size={28} />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-amber-400/10 border border-amber-400/20 mb-3 shadow-lg shadow-amber-950/30">
+            <ExternalLink className="text-amber-400" size={28} />
           </div>
-          <p className="text-sm text-gray-400 mb-2">Enlace de código temporal</p>
-          <div className="bg-white/5 rounded-xl p-4 border border-white/10 break-all">
+          <p className="text-sm text-slate-400 mb-2">Enlace de código temporal</p>
+          <div className="bg-slate-950/70 rounded-xl p-4 border border-slate-800 break-all">
             <a
               href={code}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#ffc62a] hover:underline text-sm font-mono"
+              className="text-amber-400 hover:text-amber-300 hover:underline text-sm font-mono"
             >
               {code}
             </a>
@@ -56,7 +56,7 @@ export default function CodeResult({ code, email, fecha, tipo, expiraEn }: CodeR
             href={code}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-[#ffc62a] text-black hover:bg-[#ffd84a] transition-all"
+            className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-amber-400 text-slate-950 hover:bg-amber-300 transition-all shadow-lg shadow-amber-950/40"
           >
             <ExternalLink size={18} />
             Abrir enlace
@@ -65,8 +65,8 @@ export default function CodeResult({ code, email, fecha, tipo, expiraEn }: CodeR
             onClick={handleCopy}
             className={`flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl font-semibold border transition-all ${
               copied
-                ? 'bg-green-500/20 text-green-400 border-green-500/30'
-                : 'bg-white/10 text-white border-white/10 hover:bg-white/20'
+                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                : 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 hover:text-white'
             }`}
           >
             {copied ? <Check size={18} /> : <Copy size={18} />}
@@ -74,21 +74,21 @@ export default function CodeResult({ code, email, fecha, tipo, expiraEn }: CodeR
           </button>
         </div>
 
-        <div className="space-y-3 bg-white/5 rounded-xl p-4 border border-white/10">
+        <div className="space-y-3 bg-slate-950/60 rounded-xl p-4 border border-slate-800">
           <div className="flex items-center gap-3 text-sm">
-            <Mail size={16} className="text-gray-500 shrink-0" />
-            <span className="text-gray-300">{showFullEmail ? email : maskEmail(email)}</span>
+            <Mail size={16} className="text-slate-400 shrink-0" />
+            <span className="text-slate-200">{showFullEmail ? email : maskEmail(email)}</span>
             <button
               onClick={() => setShowFullEmail(!showFullEmail)}
-              className="ml-auto text-gray-500 hover:text-gray-300 transition-colors"
+              className="ml-auto text-slate-400 hover:text-slate-200 transition-colors"
               title={showFullEmail ? 'Ocultar correo' : 'Ver correo completo'}
             >
               {showFullEmail ? <EyeOff size={14} /> : <Eye size={14} />}
             </button>
           </div>
           <div className="flex items-center gap-3 text-sm">
-            <Clock size={16} className="text-gray-500 shrink-0" />
-            <span className="text-gray-300">
+            <Clock size={16} className="text-slate-400 shrink-0" />
+            <span className="text-slate-300">
               {new Date(fecha).toLocaleDateString('es-CO', {
                 year: 'numeric',
                 month: 'long',
@@ -99,8 +99,8 @@ export default function CodeResult({ code, email, fecha, tipo, expiraEn }: CodeR
             </span>
           </div>
           <div className="flex items-center gap-3 text-sm">
-            <Tag size={16} className="text-gray-500 shrink-0" />
-            <span className="text-gray-300">{CASE_LABELS[tipo] || tipo}</span>
+            <Tag size={16} className="text-slate-400 shrink-0" />
+            <span className="text-slate-300">{CASE_LABELS[tipo] || tipo}</span>
           </div>
         </div>
       </div>
@@ -109,14 +109,14 @@ export default function CodeResult({ code, email, fecha, tipo, expiraEn }: CodeR
 
   // VISTA PARA CODIGO NUMERICO
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in text-slate-100">
       <div className="text-center">
-        <p className="text-sm text-gray-400 mb-2">Código de verificación</p>
+        <p className="text-sm text-slate-400 mb-2">Código de verificación</p>
         <div className="relative inline-block">
-          <div className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-[0.2em] text-[#ffc62a] select-all font-mono animate-scale-in">
+          <div className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-[0.2em] text-amber-400 select-all font-mono animate-scale-in">
             {code}
           </div>
-          <div className="absolute -inset-4 bg-[#ffc62a]/5 blur-3xl rounded-full pointer-events-none" />
+          <div className="absolute -inset-4 bg-amber-400/10 blur-3xl rounded-full pointer-events-none" />
         </div>
       </div>
 
@@ -125,8 +125,8 @@ export default function CodeResult({ code, email, fecha, tipo, expiraEn }: CodeR
           onClick={handleCopy}
           className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all ${
             copied
-              ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-              : 'bg-[#ffc62a]/10 text-[#ffc62a] border border-[#ffc62a]/30 hover:bg-[#ffc62a]/20'
+              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+              : 'bg-amber-400/15 text-amber-300 border border-amber-400/30 hover:bg-amber-400/25 shadow-lg shadow-amber-950/30'
           }`}
         >
           {copied ? <Check size={20} /> : <Copy size={20} />}
@@ -134,21 +134,21 @@ export default function CodeResult({ code, email, fecha, tipo, expiraEn }: CodeR
         </button>
       </div>
 
-      <div className="space-y-3 bg-white/5 rounded-xl p-4 border border-white/10">
+      <div className="space-y-3 bg-slate-950/60 rounded-xl p-4 border border-slate-800">
         <div className="flex items-center gap-3 text-sm">
-          <Mail size={16} className="text-gray-500 shrink-0" />
-          <span className="text-gray-300">{showFullEmail ? email : maskEmail(email)}</span>
+          <Mail size={16} className="text-slate-400 shrink-0" />
+          <span className="text-slate-200">{showFullEmail ? email : maskEmail(email)}</span>
           <button
             onClick={() => setShowFullEmail(!showFullEmail)}
-            className="ml-auto text-gray-500 hover:text-gray-300 transition-colors"
+            className="ml-auto text-slate-400 hover:text-slate-200 transition-colors"
             title={showFullEmail ? 'Ocultar correo' : 'Ver correo completo'}
           >
             {showFullEmail ? <EyeOff size={14} /> : <Eye size={14} />}
           </button>
         </div>
         <div className="flex items-center gap-3 text-sm">
-          <Clock size={16} className="text-gray-500 shrink-0" />
-          <span className="text-gray-300">
+          <Clock size={16} className="text-slate-400 shrink-0" />
+          <span className="text-slate-300">
             {new Date(fecha).toLocaleDateString('es-CO', {
               year: 'numeric',
               month: 'long',
@@ -159,8 +159,8 @@ export default function CodeResult({ code, email, fecha, tipo, expiraEn }: CodeR
           </span>
         </div>
         <div className="flex items-center gap-3 text-sm">
-          <Tag size={16} className="text-gray-500 shrink-0" />
-          <span className="text-gray-300">{CASE_LABELS[tipo] || tipo}</span>
+          <Tag size={16} className="text-slate-400 shrink-0" />
+          <span className="text-slate-300">{CASE_LABELS[tipo] || tipo}</span>
         </div>
       </div>
     </div>

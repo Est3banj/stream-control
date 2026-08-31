@@ -30,6 +30,8 @@ export interface AuthFake {
   generateEmailVerificationLink: ReturnType<typeof vi.fn>;
   listUsers: ReturnType<typeof vi.fn>;
   deleteUser: ReturnType<typeof vi.fn>;
+  updateUser: ReturnType<typeof vi.fn>;
+  getUserByEmail: ReturnType<typeof vi.fn>;
 }
 
 function makeAuthFake(): AuthFake {
@@ -55,13 +57,19 @@ function makeAuthFake(): AuthFake {
       }
       return { ...decoded };
     }),
-    generatePasswordResetLink: vi.fn(async () => 'https://reset.example/link'),
+    generatePasswordResetLink: vi.fn(async () => 'https://streamcontrol-10837.firebaseapp.com/__/auth/action?mode=resetPassword&oobCode=fake-oob-code-123&apiKey=fake-api-key-456'),
     generateEmailVerificationLink: vi.fn(async () => 'https://verify.example/link'),
     listUsers: vi.fn(async (_max: number, _pageToken?: string) => ({
       users: [...users],
       pageToken: undefined,
     })),
     deleteUser: vi.fn(async () => undefined),
+    updateUser: vi.fn(async (_uid: string, _data: Record<string, unknown>) => undefined),
+    getUserByEmail: vi.fn(async (email: string) => {
+      const user = users.find(u => (u as unknown as { email?: string }).email === email);
+      if (user) return { ...user };
+      return { uid: 'uid-test-email', email };
+    }),
   };
 
   return auth;

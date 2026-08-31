@@ -1,0 +1,21 @@
+change: verificacion-email-otp
+status: verified
+mode: openspec
+created_at: "2026-08-31T10:20:35-05:00"
+updated_at: "2026-08-31T15:29:00-05:00"
+dependencies: []
+artifacts:
+  proposal: openspec/changes/verificacion-email-otp/proposal.md
+  specs: openspec/changes/verificacion-email-otp/specs.md
+  design: openspec/changes/verificacion-email-otp/design.md
+  tasks: openspec/changes/verificacion-email-otp/tasks.md
+phase_progress:
+  explore: skipped
+  proposal: completed
+  specs: completed
+  design: completed
+  tasks: completed
+  apply: completed
+  verify: completed
+  archive: pending
+next_recommended: /sdd-archive verificacion-email-otp

@@ -39,11 +39,18 @@ describe('useClientes', () => {
     useClientes = mod.default;
   });
 
+  function formatLocalDate(d: Date): string {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
   it('returns clientes with computed diasRestantes', async () => {
     const today = new Date();
     const futureDate = new Date(today);
     futureDate.setDate(futureDate.getDate() + 5);
-    const fechaStr = futureDate.toISOString().split('T')[0];
+    const fechaStr = formatLocalDate(futureDate);
 
     mockOnSnapshot.mockImplementation((q: unknown, onNext: (snapshot: ReturnType<typeof createQuerySnapshot>) => void) => {
       const snapshot = createQuerySnapshot([
@@ -95,7 +102,7 @@ describe('useClientes', () => {
   it('handles expired clientes (negative diasRestantes)', async () => {
     const pastDate = new Date();
     pastDate.setDate(pastDate.getDate() - 3);
-    const fechaStr = pastDate.toISOString().split('T')[0];
+    const fechaStr = formatLocalDate(pastDate);
 
     mockOnSnapshot.mockImplementation((q: unknown, onNext: (snapshot: ReturnType<typeof createQuerySnapshot>) => void) => {
       const snapshot = createQuerySnapshot([

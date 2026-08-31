@@ -9,6 +9,8 @@ export interface AdminConfig {
 const CONFIG_DOC = 'general';
 const CONFIG_COLLECTION = 'config';
 
+export const DEFAULT_WHATSAPP_SUPPORT = '573247349128';
+
 const DEFAULT_CONFIG: AdminConfig = {
   whatsapp: '',
 };
@@ -47,4 +49,10 @@ export async function updateAdminConfig(data: Partial<AdminConfig>): Promise<voi
 /** Extrae solo dígitos de un número de teléfono para usar en links de WhatsApp */
 export function sanitizarWhatsApp(numero: string): string {
   return numero.replace(/[^0-9]/g, '');
+}
+
+/** Devuelve el número de WhatsApp configurado o el de soporte por defecto */
+export function getWhatsAppSupportNumber(customNumber?: string): string {
+  const sanitized = customNumber ? sanitizarWhatsApp(customNumber) : '';
+  return sanitized || DEFAULT_WHATSAPP_SUPPORT;
 }

@@ -12,6 +12,7 @@ vi.mock('../src/firebase', () => mockFirebaseModule());
 vi.mock('firebase-admin', () => mockFirebaseAdmin());
 
 import { generarNotificacionesVencimientos } from '../src/crons/vencimientos.js';
+import { limpiarPerfilesVencidos } from '../src/desasignar.js';
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -22,6 +23,7 @@ function iso(d: Date): string {
 const hoy = new Date();
 hoy.setHours(0, 0, 0, 0);
 const HOY = iso(hoy);
+const AYER = iso(new Date(hoy.getTime() - 1 * DAY));
 const MANANA = iso(new Date(hoy.getTime() + DAY));
 const EN_3 = iso(new Date(hoy.getTime() + 3 * DAY));
 const VENCIDO = iso(new Date(hoy.getTime() - 5 * DAY));
@@ -126,26 +128,80 @@ describe('generarNotificacionesVencimientos', () => {
     expect(backend.getData('notificaciones', `cuenta_cu-sin_${HOY}`)).toBeUndefined();
   });
 
-  it('auto-cleanup: libera perfiles de clientes vencidos hace más de 3 días', async () => {
-    backend.seed('clientes', 'cl-viejo', {
-      nombre: 'Viejo',
-      fechaVencimiento: VENCIDO,
+  it('auto-cleanup: libera perfiles de clientes vencidos ayer (1 día / fechaVencimiento < HOY)', async () => {
+    backend.seed('clientes', 'cl-ayer', {
+      nombre: 'Ayer',
+      fechaVencimiento: AYER,
       propietarioId: 'uid-5',
       cuentaId: 'cu-9',
       perfilAsignado: 'p1',
+    });
+    backend.seed('clientes', 'cl-hoy', {
+      nombre: 'Hoy',
+      fechaVencimiento: HOY,
+      propietarioId: 'uid-5',
+      cuentaId: 'cu-9',
+      perfilAsignado: 'p2',
     });
     backend.seed('cuentas', 'cu-9', {
       propietarioId: 'uid-5',
       proveedor: 'Netflix',
       estado: 'asignada',
-      perfiles: [{ nombre: 'p1', estado: 'asignado', clienteNombre: 'Viejo' }],
+      perfiles: [
+        { nombre: 'p1', estado: 'asignado', clienteNombre: 'Ayer' },
+        { nombre: 'p2', estado: 'asignado', clienteNombre: 'Hoy' },
+      ],
     });
 
     const res = await generarNotificacionesVencimientos();
 
     expect(res.perfilesLiberados).toBe(1);
-    const perfil = (backend.getData('cuentas', 'cu-9')!.perfiles as Array<Record<string, unknown>>)[0];
-    expect(perfil.estado).toBe('disponible');
-    expect(backend.getData('clientes', 'cl-viejo')!.cuentaId).toBeUndefined();
+    const perfiles = backend.getData('cuentas', 'cu-9')!.perfiles as Array<Record<string, unknown>>;
+    expect(perfiles[0].estado).toBe('disponible');
+    expect(perfiles[1].estado).toBe('asignado');
+    expect(backend.getData('clientes', 'cl-ayer')!.cuentaId).toBeUndefined();
+    expect(backend.getData('clientes', 'cl-hoy')!.cuentaId).toBe('cu-9');
+  });
+
+  it('limpiarPerfilesVencidos: diasGracia = 0 desasigna con fechaVencimiento < hoyStr', async () => {
+    backend.seed('clientes', 'cl-vencido-1', {
+      nombre: 'Vencido1',
+      fechaVencimiento: AYER,
+      propietarioId: 'uid-6',
+      cuentaId: 'cu-10',
+      perfilAsignado: 'perfil-1',
+    });
+    backend.seed('cuentas', 'cu-10', {
+      propietarioId: 'uid-6',
+      proveedor: 'Disney',
+      estado: 'asignada',
+      perfiles: [{ nombre: 'perfil-1', estado: 'asignado', clienteNombre: 'Vencido1' }],
+    });
+
+    const liberados = await limpiarPerfilesVencidos(0);
+    expect(liberados).toBe(1);
+
+    const cuenta = backend.getData('cuentas', 'cu-10')!;
+    const perfiles = cuenta.perfiles as Array<Record<string, unknown>>;
+    expect(perfiles[0].estado).toBe('disponible');
+    expect(cuenta.estado).toBe('disponible');
+    expect(backend.getData('clientes', 'cl-vencido-1')!.cuentaId).toBeUndefined();
+  });
+
+  it('limpiarPerfilesVencidos: maneja más de 500 registros con reinstanciación de batch', async () => {
+    // 505 clientes vencidos sin cuenta (1 write cada uno)
+    for (let i = 0; i < 505; i++) {
+      backend.seed('clientes', `cl-mass-${i}`, {
+        nombre: `Cliente ${i}`,
+        fechaVencimiento: AYER,
+        cuentaId: 'cu-inexistente',
+        perfilAsignado: 'p1',
+      });
+    }
+
+    const liberados = await limpiarPerfilesVencidos(0);
+    expect(liberados).toBe(505);
+    expect(backend.getData('clientes', 'cl-mass-0')!.cuentaId).toBeUndefined();
+    expect(backend.getData('clientes', 'cl-mass-504')!.cuentaId).toBeUndefined();
   });
 });

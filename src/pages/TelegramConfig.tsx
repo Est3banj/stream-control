@@ -14,12 +14,12 @@ export default function TelegramConfig() {
 
   if (!permisos.puedeUsarTelegram) {
     return (
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-6 animate-fade-in text-slate-100">
         <div className="mb-6">
-          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
             Telegram
           </h1>
-          <p className="text-gray-600">Recibí notificaciones de vencimientos en tu Telegram</p>
+          <p className="text-slate-400">Recibí notificaciones de vencimientos en tu Telegram</p>
         </div>
         <FeatureBlocked
           feature="Notificaciones Telegram"
@@ -156,30 +156,30 @@ function TelegramConfigContent({ user }: { user: ReturnType<typeof useAuth>['use
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in text-slate-100">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
           Telegram
         </h1>
-        <p className="text-gray-600">Conectá tu cuenta de Telegram para recibir notificaciones</p>
+        <p className="text-slate-400">Conectá tu cuenta de Telegram para recibir notificaciones</p>
       </div>
 
       {/* Estado actual */}
-      <div className="card">
+      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-xl p-6">
         <div className="flex items-center gap-4 mb-6">
-          <div className={`w-14 h-14 rounded-xl flex items-center justify-center shadow-lg ${
+          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg ${
             vinculado
-              ? 'bg-gradient-to-br from-green-500 to-teal-600'
-              : 'bg-gradient-to-br from-gray-400 to-gray-500'
+              ? 'bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-950/50'
+              : 'bg-slate-800 border border-slate-700 text-slate-400'
           }`}>
             <MessageCircle className="text-white" size={28} />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-900">
+            <h2 className="text-xl font-bold text-white">
               {vinculado ? '✅ Conectado' : '❌ No conectado'}
             </h2>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-slate-400">
               {vinculado
                 ? 'Recibís notificaciones de vencimientos y mora por Telegram'
                 : 'Activá las notificaciones para no perderte ningún vencimiento'}
@@ -191,7 +191,7 @@ function TelegramConfigContent({ user }: { user: ReturnType<typeof useAuth>['use
           <button
             onClick={desvincular}
             disabled={desvinculando}
-            className="btn-secondary flex items-center gap-2 text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+            className="btn-secondary flex items-center gap-2 text-rose-400 hover:text-rose-300 border-rose-800/40 hover:bg-rose-950/40"
           >
             {desvinculando ? (
               <RefreshCw size={18} className="animate-spin" />
@@ -202,20 +202,20 @@ function TelegramConfigContent({ user }: { user: ReturnType<typeof useAuth>['use
           </button>
         ) : (
           <div className="space-y-4">
-            <p className="text-sm text-gray-600">
-              <b>Pasos para conectar:</b>
+            <p className="text-sm text-slate-300 font-semibold">
+              Pasos para conectar:
             </p>
-            <ol className="space-y-3 text-sm text-gray-600">
+            <ol className="space-y-3 text-sm text-slate-400">
               <li className="flex items-start gap-3">
-                <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center flex-shrink-0 text-xs">1</span>
+                <span className="w-6 h-6 rounded-full bg-indigo-950/80 border border-indigo-800/40 text-indigo-300 font-bold flex items-center justify-center shrink-0 text-xs">1</span>
                 <span>Generá un código de vinculación abajo</span>
               </li>
               <li className="flex items-start gap-3">
-                <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center flex-shrink-0 text-xs">2</span>
-                <span>Abrí Telegram y buscá <b>@NotiStream_bot</b></span>
+                <span className="w-6 h-6 rounded-full bg-indigo-950/80 border border-indigo-800/40 text-indigo-300 font-bold flex items-center justify-center shrink-0 text-xs">2</span>
+                <span>Abrí Telegram y buscá <b className="text-white">@NotiStream_bot</b></span>
               </li>
               <li className="flex items-start gap-3">
-                <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center flex-shrink-0 text-xs">3</span>
+                <span className="w-6 h-6 rounded-full bg-indigo-950/80 border border-indigo-800/40 text-indigo-300 font-bold flex items-center justify-center shrink-0 text-xs">3</span>
                 <span>Enviale el código al bot</span>
               </li>
             </ol>
@@ -225,14 +225,14 @@ function TelegramConfigContent({ user }: { user: ReturnType<typeof useAuth>['use
 
       {/* Generar código */}
       {!vinculado && (
-        <div className="card">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Generar código de vinculación</h3>
+        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-xl p-6">
+          <h3 className="text-lg font-bold text-white mb-4">Generar código de vinculación</h3>
 
           {!codigo ? (
             <button
               onClick={generarCodigo}
               disabled={generando}
-              className="btn-primary flex items-center gap-2"
+              className="btn-primary flex items-center gap-2 shadow-lg shadow-indigo-950/50"
             >
               {generando ? (
                 <RefreshCw size={18} className="animate-spin" />
@@ -243,13 +243,13 @@ function TelegramConfigContent({ user }: { user: ReturnType<typeof useAuth>['use
             </button>
           ) : (
             <div className="space-y-4">
-              <div className="bg-gradient-to-r from-indigo-50 to-indigo-50 rounded-xl p-6 border border-indigo-200 text-center">
-                <p className="text-sm text-gray-500 mb-2">Tu código de vinculación</p>
-                <p className="text-3xl font-mono font-bold tracking-widest text-blue-700 select-all">
+              <div className="bg-indigo-950/40 rounded-2xl p-6 border border-indigo-800/40 text-center">
+                <p className="text-sm text-slate-400 mb-2">Tu código de vinculación</p>
+                <p className="text-3xl font-mono font-bold tracking-widest text-cyan-300 select-all">
                   {codigo}
                 </p>
                 {expiraEn && (
-                  <p className="text-xs text-gray-400 mt-2">
+                  <p className="text-xs text-slate-400 mt-2">
                     Expira en 15 minutos
                   </p>
                 )}
@@ -258,11 +258,11 @@ function TelegramConfigContent({ user }: { user: ReturnType<typeof useAuth>['use
               <div className="flex gap-3">
                 <button
                   onClick={copiarCodigo}
-                  className="btn-primary flex-1 flex items-center justify-center gap-2"
+                  className="btn-primary flex-1 flex items-center justify-center gap-2 shadow-lg shadow-indigo-950/50"
                 >
                   {copiado ? (
                     <>
-                      <Check size={18} className="text-green-300" />
+                      <Check size={18} className="text-emerald-400" />
                       Copiado
                     </>
                   ) : (
@@ -283,8 +283,8 @@ function TelegramConfigContent({ user }: { user: ReturnType<typeof useAuth>['use
                 </button>
               </div>
 
-              <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-200">
-                <p className="text-xs text-yellow-700">
+              <div className="bg-amber-950/30 rounded-xl p-4 border border-amber-800/40">
+                <p className="text-xs text-amber-300">
                   ⚠️ <b>Importante:</b> No compartas este código con nadie más.
                   Solo el bot de Telegram @NotiStream_bot debe recibirlo.
                   Después de usarlo o si expira en 15 minutos, dejará de ser válido.
@@ -296,20 +296,20 @@ function TelegramConfigContent({ user }: { user: ReturnType<typeof useAuth>['use
       )}
 
       {/* Información adicional */}
-      <div className="card bg-gradient-to-r from-gray-50 to-indigo-50">
-        <h3 className="text-lg font-bold text-gray-900 mb-3">¿Qué notificaciones vas a recibir?</h3>
-        <ul className="space-y-2 text-sm text-gray-600">
+      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-xl p-6">
+        <h3 className="text-lg font-bold text-white mb-3">¿Qué notificaciones vas a recibir?</h3>
+        <ul className="space-y-2 text-sm text-slate-300">
           <li className="flex items-start gap-3">
-            <span className="text-blue-500 mt-0.5">📅</span>
-            <span><b>Vencimientos:</b> Cuando un cliente tenga 3, 2 o 1 día(s) antes de vencer</span>
+            <span className="text-indigo-400 mt-0.5">📅</span>
+            <span><b className="text-white">Vencimientos:</b> Cuando un cliente tenga 3, 2 o 1 día(s) antes de vencer</span>
           </li>
           <li className="flex items-start gap-3">
-            <span className="text-blue-500 mt-0.5">💰</span>
-            <span><b>Mora:</b> Clientes con saldo pendiente por cobrar</span>
+            <span className="text-emerald-400 mt-0.5">💰</span>
+            <span><b className="text-white">Mora:</b> Clientes con saldo pendiente por cobrar</span>
           </li>
           <li className="flex items-start gap-3">
-            <span className="text-blue-500 mt-0.5">🔔</span>
-            <span><b>Recordatorios:</b> Resumen diario de clientes por vencer</span>
+            <span className="text-cyan-400 mt-0.5">🔔</span>
+            <span><b className="text-white">Recordatorios:</b> Resumen diario de clientes por vencer</span>
           </li>
         </ul>
       </div>

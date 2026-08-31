@@ -297,17 +297,34 @@ describe('desvincularTelegram (bearer)', () => {
 });
 
 describe('enviarCorreoRecuperacion / enviarCorreoVerificacion (none + rate-limit 1/60s en registry)', () => {
-  it('recuperación → 200 y envía con link de reset', async () => {
+  it('recuperación → 200 y envía con link de reset directo a /app/reset-password', async () => {
     const res = await request(app)
       .post('/api/enviarCorreoRecuperacion')
       .send({ data: { email: 'ana@example.com', nombre: 'Ana' } });
 
     expect(res.status).toBe(200);
     expect(res.body.result).toEqual({ success: true });
+    expect(backend.auth.generatePasswordResetLink).toHaveBeenCalledWith(
+      'ana@example.com',
+      expect.objectContaining({ url: expect.stringContaining('/app/reset-password') })
+    );
     expect(emailMocks.sendMail).toHaveBeenCalledTimes(1);
     const call = emailMocks.sendMail.mock.calls[0]?.[0] as { to?: string; html?: string } | undefined;
     expect(call?.to).toBe('ana@example.com');
-    expect(call?.html).toContain('https://reset.example/link');
+    expect(call?.html).toContain('/app/reset-password?oobCode=fake-oob-code-123&apiKey=fake-api-key-456');
+  });
+
+  it('recuperación con APP_URL con trailing slash normaliza la URL correctamente', async () => {
+    process.env.APP_URL = 'https://streamcontrol.pro/';
+    const res = await request(app)
+      .post('/api/enviarCorreoRecuperacion')
+      .send({ data: { email: 'maria@example.com', nombre: 'Maria' } });
+
+    expect(res.status).toBe(200);
+    const call = emailMocks.sendMail.mock.calls[0]?.[0] as { to?: string; html?: string } | undefined;
+    expect(call?.html).toContain('https://streamcontrol.pro/app/reset-password?oobCode=fake-oob-code-123');
+    expect(call?.html).not.toContain('https://streamcontrol.pro//');
+    delete process.env.APP_URL;
   });
 
   it('recuperación sin email → 400', async () => {
@@ -315,26 +332,72 @@ describe('enviarCorreoRecuperacion / enviarCorreoVerificacion (none + rate-limit
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe('invalid-argument');
   });
+});
 
-  it('verificación → 200; TOO_MANY_ATTEMPTS → 429 resource-exhausted', async () => {
+describe('notificarPasswordReseteado (none + rate-limit en registry)', () => {
+  it('envía notificación de contraseña cambiada con nombre provisto', async () => {
+    const res = await request(app)
+      .post('/api/notificarPasswordReseteado')
+      .send({ data: { email: 'carlos@example.com', nombre: 'Carlos' } });
+
+    expect(res.status).toBe(200);
+    expect(res.body.result).toEqual({ success: true });
+    expect(emailMocks.sendMail).toHaveBeenCalledTimes(1);
+    const call = emailMocks.sendMail.mock.calls[0]?.[0] as { to?: string; html?: string; subject?: string } | undefined;
+    expect(call?.to).toBe('carlos@example.com');
+    expect(call?.subject).toContain('Tu contraseña fue cambiada');
+    expect(call?.html).toContain('Carlos');
+  });
+
+  it('busca nombre en Firestore si no se pasa nombre explícito', async () => {
+    backend.seed('usuarios', 'uid-carlos', { nombre: 'Carlos Firestore', correo: 'carlos@example.com' });
+
+    const res = await request(app)
+      .post('/api/notificarPasswordReseteado')
+      .send({ data: { email: 'carlos@example.com' } });
+
+    expect(res.status).toBe(200);
+    expect(res.body.result).toEqual({ success: true });
+    expect(emailMocks.sendMail).toHaveBeenCalledTimes(1);
+    const call = emailMocks.sendMail.mock.calls[0]?.[0] as { to?: string; html?: string } | undefined;
+    expect(call?.html).toContain('Carlos Firestore');
+  });
+
+  it('notificarPasswordReseteado sin email → 400 invalid-argument', async () => {
+    const res = await request(app).post('/api/notificarPasswordReseteado').send({ data: {} });
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('invalid-argument');
+  });
+
+  it('verificación → 200 y genera link con token', async () => {
     const res = await request(app)
       .post('/api/enviarCorreoVerificacion')
       .send({ data: { email: 'ana@example.com' } });
 
     expect(res.status).toBe(200);
     const html = (emailMocks.sendMail.mock.calls[0]?.[0] as { html?: string } | undefined)?.html ?? '';
-    expect(html).toContain('https://verify.example/link');
+    expect(html).toContain('/r/verificar-email?token=');
+  });
 
-    backend.auth.generateEmailVerificationLink.mockRejectedValueOnce(
-      new Error('TOO_MANY_ATTEMPTS_TRY_LATER')
-    );
-    const exhaust = await request(app)
+  it('verificación en dev mode (sin SMTP_USER / SMTP_PASS) → 200 con graceful fallback sin llamar sendMail', async () => {
+    delete process.env.SMTP_USER;
+    delete process.env.SMTP_PASS;
+
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    const res = await request(app)
       .post('/api/enviarCorreoVerificacion')
-      .send({ data: { email: 'otra@example.com' } });
+      .send({ data: { email: 'dev@example.com' } });
 
-    expect(exhaust.status).toBe(429);
-    expect(exhaust.body.error.code).toBe('resource-exhausted');
-    expect(exhaust.body.error.message).toContain('Demasiados intentos');
+    expect(res.status).toBe(200);
+    expect(res.body.result).toEqual({ success: true });
+    expect(emailMocks.sendMail).not.toHaveBeenCalled();
+
+    const loggedOutput = consoleSpy.mock.calls.map(call => call.join(' ')).join('\n');
+    expect(loggedOutput).toContain('✉️  [DEV MODE EMAIL]');
+    expect(loggedOutput).toContain('To: dev@example.com');
+
+    consoleSpy.mockRestore();
   });
 });
 

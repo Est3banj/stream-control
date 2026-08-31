@@ -5,6 +5,9 @@ export interface Usuario {
   id: string;
   nombre: string;
   correo: string;
+  email?: string;
+  emailVerified?: boolean;
+  verificadoEn?: number;
   rol: 'admin' | 'usuario';
   estado: 'activo' | 'inactivo';
   activoHasta: Timestamp | null;

@@ -113,10 +113,12 @@ export async function desasignarPerfil(
 /**
  * Busca clientes cuya fechaVencimiento pasó hace más de `diasGracia` días
  * y libera sus perfiles automáticamente.
+ * Con diasGracia = 0, fechaLimiteStr es hoy (YYYY-MM-DD), capturando clientes
+ * con fechaVencimiento < hoyStr (vencidos ayer o antes / 1 día de gracia cumplido).
  *
  * Retorna la cantidad de perfiles liberados.
  */
-export async function limpiarPerfilesVencidos(diasGracia: number): Promise<number> {
+export async function limpiarPerfilesVencidos(diasGracia: number = 0): Promise<number> {
   const hoy = new Date();
   hoy.setHours(0, 0, 0, 0);
 
@@ -131,7 +133,7 @@ export async function limpiarPerfilesVencidos(diasGracia: number): Promise<numbe
 
   let liberados = 0;
   let saltados = 0;
-  const batch = db.batch();
+  let batch = db.batch();
   let batchCount = 0;
   const MAX_BATCH_SIZE = 500;
 
@@ -158,6 +160,7 @@ export async function limpiarPerfilesVencidos(diasGracia: number): Promise<numbe
       liberados++;
       if (batchCount >= MAX_BATCH_SIZE) {
         await batch.commit();
+        batch = db.batch();
         batchCount = 0;
       }
       continue;
@@ -177,6 +180,7 @@ export async function limpiarPerfilesVencidos(diasGracia: number): Promise<numbe
       liberados++;
       if (batchCount >= MAX_BATCH_SIZE) {
         await batch.commit();
+        batch = db.batch();
         batchCount = 0;
       }
       continue;
@@ -195,6 +199,7 @@ export async function limpiarPerfilesVencidos(diasGracia: number): Promise<numbe
       liberados++;
       if (batchCount >= MAX_BATCH_SIZE) {
         await batch.commit();
+        batch = db.batch();
         batchCount = 0;
       }
       continue;
@@ -227,6 +232,7 @@ export async function limpiarPerfilesVencidos(diasGracia: number): Promise<numbe
 
     if (batchCount >= MAX_BATCH_SIZE) {
       await batch.commit();
+      batch = db.batch();
       batchCount = 0;
     }
   }

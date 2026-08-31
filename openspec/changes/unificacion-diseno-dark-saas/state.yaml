@@ -1,0 +1,21 @@
+change: unificacion-diseno-dark-saas
+status: verified
+mode: openspec
+created_at: "2026-08-31T11:58:39-05:00"
+updated_at: "2026-08-31T15:29:00-05:00"
+dependencies: []
+artifacts:
+  proposal: openspec/changes/unificacion-diseno-dark-saas/proposal.md
+  specs: openspec/changes/unificacion-diseno-dark-saas/specs.md
+  design: openspec/changes/unificacion-diseno-dark-saas/design.md
+  tasks: openspec/changes/unificacion-diseno-dark-saas/tasks.md
+phase_progress:
+  explore: skipped
+  proposal: completed
+  specs: completed
+  design: completed
+  tasks: completed
+  apply: completed
+  verify: completed
+  archive: pending
+next_recommended: /sdd-archive unificacion-diseno-dark-saas

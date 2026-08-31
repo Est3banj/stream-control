@@ -20,7 +20,8 @@ describe('CuentaForm', () => {
   it('renders form fields', () => {
     render(<CuentaForm onSubmit={mockSubmit} onCancel={mockCancel} />);
 
-    expect(screen.getByText('Proveedor')).toBeTruthy();
+    expect(screen.getByText(/Plataforma \/ Servicio/i)).toBeTruthy();
+    expect(screen.getByText(/Nombre del Proveedor \(Mayorista\)/i)).toBeTruthy();
     expect(screen.getByText('Correo de la cuenta')).toBeTruthy();
     expect(screen.getByText('Contraseña')).toBeTruthy();
     expect(screen.getByText('Costo de la cuenta')).toBeTruthy();
@@ -55,7 +56,7 @@ describe('CuentaForm', () => {
     let perfilInputs = screen.getAllByPlaceholderText('Nombre del perfil');
     expect(perfilInputs).toHaveLength(2);
 
-    const removeBtn = document.querySelector('button.p-2.rounded-lg.text-red-500');
+    const removeBtn = document.querySelector('button.text-rose-400') || document.querySelector('button.text-red-500');
     if (removeBtn) fireEvent.click(removeBtn);
 
     await waitFor(() => {

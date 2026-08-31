@@ -71,39 +71,39 @@ export default function ConsultaInterna({ clienteNombre, proveedor, correoCuenta
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-slate-100">
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Consultar código</h2>
-          <p className="text-gray-600 mt-1">{clienteNombre}</p>
+          <h2 className="text-2xl font-bold text-white">Consultar código</h2>
+          <p className="text-slate-400 mt-1">{clienteNombre}</p>
         </div>
         <button
           onClick={onClose}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
         >
           <span className="sr-only">Cerrar</span>
-          <svg className="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
 
-      <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-100 space-y-2">
+      <div className="bg-slate-950/60 rounded-xl p-4 border border-slate-800 space-y-2">
         <div className="flex items-center gap-3 text-sm">
-          <Monitor size={16} className="text-indigo-500 shrink-0" />
-          <span className="text-gray-700 font-medium">{proveedor}</span>
+          <Monitor size={16} className="text-indigo-400 shrink-0" />
+          <span className="text-slate-200 font-medium">{proveedor}</span>
         </div>
         <div className="flex items-center gap-3 text-sm">
-          <Mail size={16} className="text-indigo-500 shrink-0" />
-          <span className="text-gray-600">{maskEmail(correoCuenta)}</span>
+          <Mail size={16} className="text-indigo-400 shrink-0" />
+          <span className="text-slate-400">{maskEmail(correoCuenta)}</span>
         </div>
       </div>
 
       {estado === 'idle' && (
         <div className="space-y-6">
           {notFound && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
-              <p className="text-amber-700 text-sm">
+            <div className="bg-amber-950/30 border border-amber-800/40 rounded-xl p-4 text-center">
+              <p className="text-amber-300 text-sm">
                 No se encontró código de verificación. Intenta de nuevo en unos minutos.
               </p>
             </div>
@@ -111,7 +111,7 @@ export default function ConsultaInterna({ clienteNombre, proveedor, correoCuenta
 
           {casos.length > 0 ? (
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-3">Seleccioná el tipo de código</p>
+              <p className="text-sm font-semibold text-slate-300 mb-3">Seleccioná el tipo de código</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {casos.map((caso) => (
                   <button
@@ -120,8 +120,8 @@ export default function ConsultaInterna({ clienteNombre, proveedor, correoCuenta
                     onClick={() => setSelectedCaso(caso)}
                     className={`p-3 rounded-xl text-left transition-all border text-sm ${
                       selectedCaso === caso
-                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-semibold'
-                        : 'border-gray-200 bg-white text-gray-700 hover:border-indigo-300 hover:bg-indigo-50/50'
+                        ? 'border-indigo-500 bg-indigo-950/40 text-cyan-300 font-semibold shadow-md shadow-indigo-950/30'
+                        : 'border-slate-800 bg-slate-900/80 text-slate-300 hover:border-slate-700 hover:bg-slate-800'
                     }`}
                   >
                     {CASE_LABELS[caso] || caso}
@@ -130,15 +130,15 @@ export default function ConsultaInterna({ clienteNombre, proveedor, correoCuenta
               </div>
             </div>
           ) : (
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
-              <p className="text-gray-500 text-sm">No hay códigos disponibles para este proveedor</p>
+            <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-4 text-center">
+              <p className="text-slate-400 text-sm">No hay códigos disponibles para este proveedor</p>
             </div>
           )}
 
           <button
             onClick={consultar}
             disabled={!selectedCaso}
-            className="w-full py-3 rounded-xl font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg hover:from-indigo-700 hover:to-indigo-800 active:scale-[0.98]"
+            className="btn-primary w-full py-3 text-center disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Consultar código
           </button>
@@ -147,17 +147,17 @@ export default function ConsultaInterna({ clienteNombre, proveedor, correoCuenta
 
       {estado === 'consulting' && (
         <div className="flex flex-col items-center py-8">
-          <Loader2 className="animate-spin text-indigo-600 mb-4" size={36} />
-          <p className="text-gray-600 font-medium">Buscando código de verificación...</p>
-          <p className="text-gray-400 text-sm mt-1">Esto puede tomar unos segundos</p>
+          <Loader2 className="animate-spin text-indigo-400 mb-4" size={36} />
+          <p className="text-slate-200 font-medium">Buscando código de verificación...</p>
+          <p className="text-slate-400 text-sm mt-1">Esto puede tomar unos segundos</p>
         </div>
       )}
 
       {estado === 'result' && codeResult && (
         <div className="space-y-6">
-          <div className="text-center bg-gradient-to-r from-indigo-50 to-violet-50 rounded-xl p-6 border border-indigo-100">
-            <p className="text-sm text-gray-500 mb-2">Código de verificación</p>
-            <p className="text-4xl sm:text-5xl font-bold tracking-widest text-indigo-700 select-all font-mono">
+          <div className="text-center bg-slate-950/80 rounded-xl p-6 border border-slate-800">
+            <p className="text-sm text-slate-400 mb-2">Código de verificación</p>
+            <p className="text-4xl sm:text-5xl font-bold tracking-widest text-amber-400 select-all font-mono">
               {codeResult.codigo}
             </p>
             <button
@@ -168,41 +168,41 @@ export default function ConsultaInterna({ clienteNombre, proveedor, correoCuenta
                   setTimeout(() => { btn.textContent = 'Copiar código'; }, 2000);
                 }
               })}
-              className="mt-4 inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors"
+              className="mt-4 inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-500 transition-colors shadow-md shadow-indigo-950/50"
             >
               Copiar código
             </button>
           </div>
 
-          <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-2 text-sm">
+          <div className="bg-slate-950/60 rounded-xl p-4 border border-slate-800 space-y-2 text-sm">
             <div className="flex items-center gap-3">
-              <Mail size={16} className="text-gray-400 shrink-0" />
-              <span className="text-gray-600">{maskEmail(codeResult.email)}</span>
+              <Mail size={16} className="text-indigo-400 shrink-0" />
+              <span className="text-slate-300">{maskEmail(codeResult.email)}</span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-gray-400 shrink-0 w-4">🕐</span>
-              <span className="text-gray-600">
+              <span className="text-indigo-400 shrink-0 w-4">🕐</span>
+              <span className="text-slate-300">
                 {new Date(codeResult.fecha).toLocaleDateString('es-CO', {
                   year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
                 })}
               </span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-gray-400 shrink-0 w-4">🏷</span>
-              <span className="text-gray-600">{CASE_LABELS[codeResult.tipo] || codeResult.tipo}</span>
+              <span className="text-indigo-400 shrink-0 w-4">🏷</span>
+              <span className="text-slate-300">{CASE_LABELS[codeResult.tipo] || codeResult.tipo}</span>
             </div>
           </div>
 
           <div className="flex gap-3">
             <button
               onClick={reiniciar}
-              className="flex-1 py-3 rounded-xl font-semibold transition-all bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+              className="btn-secondary flex-1 py-3"
             >
               Consultar otro código
             </button>
             <button
               onClick={onClose}
-              className="flex-1 py-3 rounded-xl font-semibold transition-all bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg hover:from-indigo-700 hover:to-indigo-800"
+              className="btn-primary flex-1 py-3"
             >
               Cerrar
             </button>
@@ -212,20 +212,20 @@ export default function ConsultaInterna({ clienteNombre, proveedor, correoCuenta
 
       {estado === 'error' && (
         <div className="space-y-4">
-          <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-            <AlertCircle className="text-red-500 mx-auto mb-3" size={36} />
-            <p className="text-red-700 font-medium">{errorMsg}</p>
+          <div className="bg-rose-950/40 border border-rose-800/60 rounded-xl p-6 text-center text-rose-300">
+            <AlertCircle className="text-rose-400 mx-auto mb-3" size={36} />
+            <p className="font-medium">{errorMsg}</p>
           </div>
           <div className="flex gap-3">
             <button
               onClick={() => setEstado('idle')}
-              className="flex-1 py-3 rounded-xl font-semibold transition-all bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+              className="btn-secondary flex-1 py-3"
             >
               Intentar de nuevo
             </button>
             <button
               onClick={onClose}
-              className="flex-1 py-3 rounded-xl font-semibold transition-all bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg hover:from-indigo-700 hover:to-indigo-800"
+              className="btn-primary flex-1 py-3"
             >
               Cerrar
             </button>

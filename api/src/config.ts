@@ -45,13 +45,21 @@ export function TELEGRAM_WEBHOOK_SECRET(): string {
 }
 
 export function SMTP_USER(): string {
-  return requireEnv('SMTP_USER');
+  return process.env.SMTP_USER || '';
 }
 
 export function SMTP_PASS(): string {
-  return requireEnv('SMTP_PASS');
+  return process.env.SMTP_PASS || '';
+}
+
+export function RESEND_API_KEY(): string {
+  return process.env.RESEND_API_KEY || '';
+}
+
+export function EMAIL_FROM(): string {
+  return process.env.EMAIL_FROM || 'StreamControl Security <security@streamcontrol.pro>';
 }
 
 export function APP_URL(): string {
-  return process.env.APP_URL || DEFAULT_APP_URL;
+  return (process.env.APP_URL || DEFAULT_APP_URL).replace(/\/+$/, '');
 }

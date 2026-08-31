@@ -36,6 +36,12 @@ export function createApp(registry: Record<string, RouteDef> = FN_REGISTRY): exp
       // ── Seguridad según flag del registry ──
       if (def.auth === 'bearer' || def.auth === 'admin') {
         (req as AuthedReq).auth = await verifyBearer(req);
+      } else if (def.auth === 'none' && req.headers.authorization) {
+        try {
+          (req as AuthedReq).auth = await verifyBearer(req);
+        } catch {
+          // Token opcional: si falla o expira, ignorar para auth: 'none'
+        }
       }
       if (def.auth === 'admin') {
         const authed = req as AuthedReq;

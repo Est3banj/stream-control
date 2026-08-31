@@ -15,6 +15,7 @@ interface CuentaFormProps {
 export default function CuentaForm({ initialData, onSubmit, onCancel, loading }: CuentaFormProps) {
   const isEdit = !!initialData;
   const [proveedor, setProveedor] = useState(initialData?.proveedor || '');
+  const [nombreProveedor, setNombreProveedor] = useState(initialData?.nombreProveedor || '');
   const [correoCuenta, setCorreoCuenta] = useState(initialData?.correoCuenta || '');
   const [contrasena, setContrasena] = useState('');
   const [mostrarContrasena, setMostrarContrasena] = useState(false);
@@ -58,7 +59,7 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
     setSubmitting(true);
 
     if (!proveedorActual.trim()) {
-      toast.error('El proveedor es obligatorio');
+      toast.error('La plataforma es obligatoria');
       setSubmitting(false);
       return;
     }
@@ -108,9 +109,11 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
     const fechaVencimiento = fechaVencimientoCal || undefined;
     const fechaInicioVal = fechaInicio || undefined;
     const diasServicioVal = diasServicio ? Number(diasServicio) : undefined;
+    const nombreProveedorVal = nombreProveedor.trim() || undefined;
 
     if (isEdit) {
       await onSubmit({
+        nombreProveedor: nombreProveedorVal,
         costo: Number(costo),
         estado,
         tipoVenta,
@@ -123,6 +126,7 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
       await onSubmit({
         propietarioId: '',
         proveedor: proveedorActual.trim(),
+        nombreProveedor: nombreProveedorVal,
         correoCuenta: correoCuenta.trim(),
         contrasena: contrasena.trim(),
         costo: Number(costo),
@@ -138,20 +142,20 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Proveedor */}
+    <form onSubmit={handleSubmit} className="space-y-6 text-slate-100">
+      {/* Plataforma / Servicio */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Proveedor <span className="text-red-500">*</span>
+        <label className="block text-sm font-semibold text-slate-300 mb-2">
+          Plataforma / Servicio <span className="text-rose-400">*</span>
         </label>
         <select
           value={proveedor}
           onChange={(e) => setProveedor(e.target.value)}
-          className="w-full"
+          className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
           required
           disabled={isEdit}
         >
-          <option value="">Seleccionar proveedor...</option>
+          <option value="">Seleccionar plataforma...</option>
           {PROVEEDORES.map(p => (
             <option key={p} value={p}>{p}</option>
           ))}
@@ -161,81 +165,95 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
             type="text"
             value={otroProveedor}
             onChange={(e) => setOtroProveedor(e.target.value)}
-            placeholder="Nombre del proveedor"
-            className="w-full mt-2"
+            placeholder="Nombre de la plataforma"
+            className="w-full mt-2 bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
             required
             disabled={isEdit}
           />
         )}
       </div>
 
+      {/* Nombre del Proveedor (Mayorista) */}
+      <div>
+        <label className="block text-sm font-semibold text-slate-300 mb-2">
+          Nombre del Proveedor (Mayorista)
+        </label>
+        <input
+          type="text"
+          value={nombreProveedor}
+          onChange={(e) => setNombreProveedor(e.target.value)}
+          placeholder="Ej: Pedro Cuentas, Distribuidor XYZ (opcional)"
+          className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
+        />
+      </div>
+
       {/* Tipo de venta */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-3">
-          Tipo de venta <span className="text-red-500">*</span>
+        <label className="block text-sm font-semibold text-slate-300 mb-3">
+          Tipo de venta <span className="text-rose-400">*</span>
         </label>
         <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
             onClick={() => setTipoVenta('perfiles')}
-            className={`p-4 rounded-xl border-2 text-left transition-all ${
+            className={`p-4 rounded-xl border text-left transition-all ${
               tipoVenta === 'perfiles'
-                ? 'border-indigo-500 bg-indigo-50'
-                : 'border-gray-200 bg-white hover:border-gray-300'
+                ? 'border-indigo-500 bg-indigo-950/40 shadow-lg shadow-indigo-950/40'
+                : 'border-slate-800 bg-slate-900/80 hover:border-slate-700'
             }`}
           >
-            <p className="font-semibold text-gray-900">Por perfiles</p>
-            <p className="text-sm text-gray-500 mt-1">Vendé cada perfil por separado</p>
+            <p className="font-semibold text-white">Por perfiles</p>
+            <p className="text-sm text-slate-400 mt-1">Vendé cada perfil por separado</p>
           </button>
           <button
             type="button"
             onClick={() => setTipoVenta('completa')}
-            className={`p-4 rounded-xl border-2 text-left transition-all ${
+            className={`p-4 rounded-xl border text-left transition-all ${
               tipoVenta === 'completa'
-                ? 'border-indigo-500 bg-indigo-50'
-                : 'border-gray-200 bg-white hover:border-gray-300'
+                ? 'border-indigo-500 bg-indigo-950/40 shadow-lg shadow-indigo-950/40'
+                : 'border-slate-800 bg-slate-900/80 hover:border-slate-700'
             }`}
           >
-            <p className="font-semibold text-gray-900">Completa</p>
-            <p className="text-sm text-gray-500 mt-1">Vendé la cuenta completa</p>
+            <p className="font-semibold text-white">Completa</p>
+            <p className="text-sm text-slate-400 mt-1">Vendé la cuenta completa</p>
           </button>
         </div>
       </div>
 
       {/* Credenciales — solo en creación */}
       {!isEdit && (
-        <div className="space-y-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-          <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Credenciales</h3>
+        <div className="space-y-4 p-4 bg-slate-950/60 rounded-xl border border-slate-800">
+          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">Credenciales</h3>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Correo de la cuenta <span className="text-red-500">*</span>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">
+              Correo de la cuenta <span className="text-rose-400">*</span>
             </label>
             <input
               type="email"
               value={correoCuenta}
               onChange={(e) => setCorreoCuenta(e.target.value)}
-              className="w-full"
+              className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
               placeholder="netflix@ejemplo.com"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Contraseña <span className="text-red-500">*</span>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">
+              Contraseña <span className="text-rose-400">*</span>
             </label>
             <div className="relative">
               <input
                 type={mostrarContrasena ? 'text' : 'password'}
                 value={contrasena}
                 onChange={(e) => setContrasena(e.target.value)}
-                className="w-full pr-12"
+                className="w-full pr-12 bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
                 placeholder="Contraseña de la cuenta"
                 required
               />
               <button
                 type="button"
                 onClick={() => setMostrarContrasena(!mostrarContrasena)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
                 tabIndex={-1}
               >
                 {mostrarContrasena ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -247,16 +265,16 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
 
       {/* Costo */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Costo de la cuenta <span className="text-red-500">*</span>
+        <label className="block text-sm font-semibold text-slate-300 mb-2">
+          Costo de la cuenta <span className="text-rose-400">*</span>
         </label>
         <div className="relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">$</span>
           <input
             type="number"
             value={costo}
             onChange={(e) => setCosto(e.target.value)}
-            className="w-full pl-8"
+            className="w-full pl-8 bg-slate-900/80 border border-slate-700/80 text-slate-100"
             min="0"
             step="100"
             placeholder="0"
@@ -266,41 +284,41 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
       </div>
 
       {/* Período del Servicio */}
-      <div className="space-y-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+      <div className="space-y-4 p-4 bg-slate-950/60 rounded-xl border border-slate-800">
         <div className="flex items-center gap-2">
-          <Calendar size={18} className="text-gray-500" />
-          <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Período del Servicio</h3>
+          <Calendar size={18} className="text-indigo-400" />
+          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">Período del Servicio</h3>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-slate-300 mb-2">
               Fecha de inicio
             </label>
             <input
               type="date"
               value={fechaInicio}
               onChange={(e) => setFechaInicio(e.target.value)}
-              className="w-full"
+              className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-slate-300 mb-2">
               Duración (días)
             </label>
             <input
               type="number"
               value={diasServicio}
               onChange={(e) => setDiasServicio(e.target.value)}
-              className="w-full"
+              className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
               min="1"
               placeholder="Ej: 30"
             />
           </div>
         </div>
         {fechaVencimientoCal && (
-          <div className="flex items-center justify-between px-3 py-2 bg-indigo-50 rounded-lg border border-indigo-100">
-            <span className="text-sm font-medium text-indigo-600">Fecha de vencimiento</span>
-            <span className="text-sm font-bold text-indigo-700">{fechaVencimientoCal}</span>
+          <div className="flex items-center justify-between px-3 py-2 bg-indigo-950/40 rounded-lg border border-indigo-800/40">
+            <span className="text-sm font-medium text-indigo-300">Fecha de vencimiento</span>
+            <span className="text-sm font-bold text-cyan-300">{fechaVencimientoCal}</span>
           </div>
         )}
       </div>
@@ -308,25 +326,25 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
       {/* Perfiles */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <label className="block text-sm font-semibold text-gray-700">Perfiles</label>
+          <label className="block text-sm font-semibold text-slate-300">Perfiles</label>
           <button
             type="button"
             onClick={agregarPerfil}
-            className="text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"
+            className="text-sm text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1"
           >
             <Plus size={16} />
             Agregar perfil
           </button>
         </div>
         {perfiles.map((perfil, idx) => (
-          <div key={idx} className="flex gap-2 items-start p-3 bg-gray-50 rounded-xl border border-gray-100">
+          <div key={idx} className="flex gap-2 items-start p-3 bg-slate-950/60 rounded-xl border border-slate-800">
             <div className="flex-1">
               <input
                 type="text"
                 value={perfil.nombre}
                 onChange={(e) => actualizarPerfil(idx, 'nombre', e.target.value)}
                 placeholder="Nombre del perfil"
-                className="w-full"
+                className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
               />
             </div>
             <div className="w-24">
@@ -335,14 +353,14 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
                 value={perfil.pin}
                 onChange={(e) => actualizarPerfil(idx, 'pin', e.target.value)}
                 placeholder="PIN"
-                className="w-full"
+                className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
               />
             </div>
             {perfiles.length > 1 && (
               <button
                 type="button"
                 onClick={() => quitarPerfil(idx)}
-                className="p-2 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+                className="p-2 rounded-lg text-rose-400 hover:bg-rose-950/40 transition-colors"
               >
                 <Trash2 size={18} />
               </button>
@@ -354,11 +372,11 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
       {/* Estado — solo en edición */}
       {isEdit && (
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Estado</label>
+          <label className="block text-sm font-semibold text-slate-300 mb-2">Estado</label>
           <select
             value={estado}
             onChange={(e) => setEstado(e.target.value as 'disponible' | 'asignada' | 'expirada')}
-            className="w-full"
+            className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
           >
             <option value="disponible">Disponible</option>
             <option value="asignada">Asignada</option>
@@ -368,7 +386,7 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
       )}
 
       {/* Acciones */}
-      <div className="flex gap-3 pt-4 border-t border-gray-100">
+      <div className="flex gap-3 pt-4 border-t border-slate-800">
         <button type="button" onClick={onCancel} className="btn-secondary flex-1" disabled={loading || submitting}>
           Cancelar
         </button>

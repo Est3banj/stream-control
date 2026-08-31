@@ -8,6 +8,7 @@ import Paginador from '../components/Paginador';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { Search, Download, DollarSign, TrendingUp, TrendingDown, Calendar, Filter, X, AlertCircle, Users, UserPlus, Layers } from 'lucide-react';
+import PlataformaBadge from '../components/PlataformaBadge';
 import toast from 'react-hot-toast';
 import type { Venta } from '../types/venta';
 
@@ -93,10 +94,10 @@ export default function Reportes() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="flex items-center justify-center min-h-[60vh] text-slate-100">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
-          <p className="text-gray-600 font-medium">Cargando reportes...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mb-4"></div>
+          <p className="text-slate-400 font-medium">Cargando reportes...</p>
         </div>
       </div>
     );
@@ -104,12 +105,12 @@ export default function Reportes() {
 
   if (!permisos.puedeVerReportesAvanzados) {
     return (
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-6 animate-fade-in text-slate-100">
         <div className="mb-6">
-          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
             Reportes
           </h1>
-          <p className="text-gray-600">Reportes avanzados y exportación de datos</p>
+          <p className="text-slate-400">Reportes avanzados y exportación de datos</p>
         </div>
         <FeatureBlocked
           feature="Reportes Avanzados"
@@ -157,19 +158,19 @@ export default function Reportes() {
   const vendedoresActivos = new Set(ventas.map(v => v.usuarioEmail).filter(Boolean)).size;
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in text-slate-100">
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
-          <AlertCircle className="text-red-500 shrink-0" size={20} />
-          <p className="text-sm text-red-700">{error}</p>
+        <div className="bg-rose-950/40 border border-rose-800/60 rounded-xl p-4 flex items-center gap-3 text-rose-300">
+          <AlertCircle className="text-rose-400 shrink-0" size={20} />
+          <p className="text-sm">{error}</p>
         </div>
       )}
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-indigo-700">
+        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
           {esAdmin ? 'Reportes de la Plataforma' : 'Reportes de Ventas'}
         </h1>
-        <p className="text-gray-600">Analiza y exporta tus datos de ventas</p>
+        <p className="text-slate-400">Analiza y exporta tus datos de ventas</p>
       </div>
 
       {/* Tabs: Clientes / Sub-distribuidor */}
@@ -186,8 +187,8 @@ export default function Reportes() {
               onClick={() => setTipoVenta(tab.key)}
               className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
                 tipoVenta === tab.key
-                  ? 'bg-indigo-600 text-white shadow-lg'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-950/50'
+                  : 'bg-slate-900/80 text-slate-300 border border-slate-800 hover:bg-slate-800 hover:text-white'
               }`}
             >
               <Icon size={18} />
@@ -198,14 +199,14 @@ export default function Reportes() {
       </div>
 
       {/* Filtros */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-5">
-        <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
-          <Filter className="text-indigo-600" size={20} />
-          <h2 className="text-lg font-semibold text-gray-900">Filtros</h2>
+      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-xl p-6 space-y-5">
+        <div className="flex items-center gap-3 pb-3 border-b border-slate-800">
+          <Filter className="text-indigo-400" size={20} />
+          <h2 className="text-lg font-semibold text-white">Filtros</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-slate-300 mb-2">
               <Calendar size={16} className="inline mr-1" />
               Desde
             </label>
@@ -213,12 +214,12 @@ export default function Reportes() {
               type="date"
               value={fechaInicio}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFechaInicio(e.target.value)}
-              className="w-full"
+              className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-slate-300 mb-2">
               <Calendar size={16} className="inline mr-1" />
               Hasta
             </label>
@@ -226,28 +227,28 @@ export default function Reportes() {
               type="date"
               value={fechaFin}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFechaFin(e.target.value)}
-              className="w-full"
+              className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-slate-300 mb-2">
               Buscar
             </label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                 placeholder="Cliente o Plataforma"
-                className="w-full pl-10"
+                className="w-full pl-10 bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
               />
             </div>
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="block text-sm font-semibold text-gray-700 mb-2 opacity-0">Acciones</label>
+            <label className="block text-sm font-semibold text-slate-300 mb-2 opacity-0">Acciones</label>
             <div className="flex gap-2">
               <button
                 onClick={() => { setFechaInicio(''); setFechaFin(''); setSearchTerm(''); }}
@@ -270,39 +271,39 @@ export default function Reportes() {
 
       {/* Totales */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="card cursor-default">
           <div className="flex items-center justify-between mb-4">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-sm flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 shadow-md flex items-center justify-center">
               <DollarSign className="text-white" size={22} />
             </div>
-            <TrendingUp className="text-green-500" size={24} />
+            <TrendingUp className="text-emerald-400" size={24} />
           </div>
-          <p className="text-sm font-medium text-gray-600 mb-1">Ingresos Totales</p>
-          <p className="text-3xl font-bold text-green-600">{formatear(totalIngresos)}</p>
+          <p className="text-sm font-medium text-slate-400 mb-1">Ingresos Totales</p>
+          <p className="text-3xl font-bold text-emerald-400">{formatear(totalIngresos)}</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="card cursor-default">
           <div className="flex items-center justify-between mb-4">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-sm flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-rose-500 to-red-600 shadow-md flex items-center justify-center">
               <DollarSign className="text-white" size={22} />
             </div>
-            <TrendingDown className="text-red-500" size={24} />
+            <TrendingDown className="text-rose-400" size={24} />
           </div>
-          <p className="text-sm font-medium text-gray-600 mb-1">Costos Totales</p>
-          <p className="text-3xl font-bold text-red-600">{formatear(totalCostos)}</p>
+          <p className="text-sm font-medium text-slate-400 mb-1">Costos Totales</p>
+          <p className="text-3xl font-bold text-rose-400">{formatear(totalCostos)}</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="card cursor-default">
           <div className="flex items-center justify-between mb-4">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-sm flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-700 shadow-md flex items-center justify-center">
               <TrendingUp className="text-white" size={22} />
             </div>
-            <div className={`text-2xl font-bold ${totalUtilidad >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            <div className={`text-2xl font-bold ${totalUtilidad >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
               {totalUtilidad >= 0 ? '↑' : '↓'}
             </div>
           </div>
-          <p className="text-sm font-medium text-gray-600 mb-1">Utilidad Total</p>
-          <p className={`text-3xl font-bold ${totalUtilidad >= 0 ? 'text-indigo-600' : 'text-red-600'}`}>
+          <p className="text-sm font-medium text-slate-400 mb-1">Utilidad Total</p>
+          <p className={`text-3xl font-bold ${totalUtilidad >= 0 ? 'text-cyan-300' : 'text-rose-400'}`}>
             {formatear(totalUtilidad)}
           </p>
         </div>
@@ -310,59 +311,59 @@ export default function Reportes() {
 
       {esAdmin ? (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="card cursor-default">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-sm flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-700 shadow-md flex items-center justify-center">
                 <DollarSign className="text-white" size={22} />
               </div>
-              <TrendingUp className="text-indigo-500" size={24} />
+              <TrendingUp className="text-indigo-400" size={24} />
             </div>
-            <p className="text-sm font-medium text-gray-600 mb-1">Promedio por Venta</p>
-            <p className="text-3xl font-bold text-indigo-600">{formatear(promedioPorVenta)}</p>
+            <p className="text-sm font-medium text-slate-400 mb-1">Promedio por Venta</p>
+            <p className="text-3xl font-bold text-white">{formatear(promedioPorVenta)}</p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="card cursor-default">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-sm flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-700 shadow-md flex items-center justify-center">
                 <DollarSign className="text-white" size={22} />
               </div>
-              <TrendingUp className="text-indigo-500" size={24} />
+              <TrendingUp className="text-indigo-400" size={24} />
             </div>
-            <p className="text-sm font-medium text-gray-600 mb-1">Total Ventas</p>
-            <p className="text-3xl font-bold text-indigo-600">{totalVentas.toLocaleString()}</p>
+            <p className="text-sm font-medium text-slate-400 mb-1">Total Ventas</p>
+            <p className="text-3xl font-bold text-white">{totalVentas.toLocaleString()}</p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="card cursor-default">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-sm flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-700 shadow-md flex items-center justify-center">
                 <Users className="text-white" size={22} />
               </div>
-              <TrendingUp className="text-indigo-500" size={24} />
+              <TrendingUp className="text-indigo-400" size={24} />
             </div>
-            <p className="text-sm font-medium text-gray-600 mb-1">Vendedores Activos</p>
-            <p className="text-3xl font-bold text-indigo-600">{vendedoresActivos}</p>
+            <p className="text-sm font-medium text-slate-400 mb-1">Vendedores Activos</p>
+            <p className="text-3xl font-bold text-white">{vendedoresActivos}</p>
           </div>
         </div>
       ) : (
         <>
           {/* Tabla de ventas */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="p-6 border-b border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900">Historial de Ventas</h2>
+          <div className="bg-slate-900/80 rounded-2xl shadow-xl border border-slate-800 overflow-hidden text-slate-100">
+            <div className="p-6 border-b border-slate-800">
+              <h2 className="text-xl font-bold text-white">Historial de Ventas</h2>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-indigo-600 text-white">
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Cliente</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Plataforma</th>
-                    <th className="px-4 py-4 text-center text-sm font-semibold">Pantallas</th>
-                    <th className="px-4 py-4 text-right text-sm font-semibold">Ingreso</th>
-                    <th className="px-4 py-4 text-right text-sm font-semibold">Costo</th>
-                    <th className="px-4 py-4 text-right text-sm font-semibold">Utilidad</th>
-                    {esAdmin && <th className="px-4 py-4 text-left text-sm font-semibold">Registrado por</th>}
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Fecha Venta</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Vencimiento</th>
+                  <tr className="bg-slate-900 border-b border-slate-800 text-slate-300 uppercase tracking-wider text-xs">
+                    <th className="px-4 py-4 text-left font-semibold">Cliente</th>
+                    <th className="px-4 py-4 text-left font-semibold">Plataforma</th>
+                    <th className="px-4 py-4 text-center font-semibold">Pantallas</th>
+                    <th className="px-4 py-4 text-right font-semibold">Ingreso</th>
+                    <th className="px-4 py-4 text-right font-semibold">Costo</th>
+                    <th className="px-4 py-4 text-right font-semibold">Utilidad</th>
+                    {esAdmin && <th className="px-4 py-4 text-left font-semibold">Registrado por</th>}
+                    <th className="px-4 py-4 text-left font-semibold">Fecha Venta</th>
+                    <th className="px-4 py-4 text-left font-semibold">Vencimiento</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -370,33 +371,31 @@ export default function Reportes() {
                     ventasPaginadas.map((v: Venta) => (
                       <tr
                         key={v.id}
-                        className="border-b border-gray-100 hover:bg-indigo-50/50 transition-all duration-200"
+                        className="border-b border-slate-800/60 hover:bg-slate-800/40 transition-colors"
                       >
-                        <td className="px-4 py-4 font-medium text-gray-900">{v.nombre}</td>
+                        <td className="px-4 py-4 font-medium text-white">{v.nombre}</td>
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-2">
-                            <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-sm font-medium">
-                              {v.plataforma}
-                            </span>
+                            <PlataformaBadge plataforma={v.plataforma} />
                             {v.grupoId && (
-                              <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold whitespace-nowrap" title={`ID de grupo: ${v.grupoId.slice(0, 8)}…`}>
+                              <span className="px-2 py-0.5 rounded-full bg-emerald-950/50 text-emerald-400 border border-emerald-800/40 text-xs font-semibold whitespace-nowrap" title={`ID de grupo: ${v.grupoId.slice(0, 8)}…`}>
                                 Combo
                               </span>
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-4 text-center text-gray-700">{v.pantallas}</td>
-                        <td className="px-4 py-4 text-right font-semibold text-green-600">
+                        <td className="px-4 py-4 text-center text-slate-300">{v.pantallas}</td>
+                        <td className="px-4 py-4 text-right font-semibold text-emerald-400">
                           {formatearDesdeVenta((v.precioVenta || 0) * (v.pantallas || 0), v.monedaVenta, v.tasaVenta)}
                         </td>
-                        <td className="px-4 py-4 text-right">
+                        <td className="px-4 py-4 text-right text-slate-300">
                           {formatearDesdeVenta(Number(v.costoServicio || 0), v.monedaVenta, v.tasaVenta)}
                         </td>
-                        <td className="px-4 py-4 text-right">
+                        <td className="px-4 py-4 text-right font-semibold text-cyan-300">
                           {formatearDesdeVenta(Number(v.utilidad || 0), v.monedaVenta, v.tasaVenta)}
                         </td>
-                        {esAdmin && <td className="px-4 py-4 text-gray-600">{v.usuarioEmail || '—'}</td>}
-                        <td className="px-4 py-4 text-gray-600">
+                        {esAdmin && <td className="px-4 py-4 text-slate-400">{v.usuarioEmail || '—'}</td>}
+                        <td className="px-4 py-4 text-slate-300">
                           {v.fechaVenta
                             ? new Date(v.fechaVenta + 'T00:00:00').toLocaleDateString('es-CO')
                             : v.fechaRegistro?.seconds
@@ -406,20 +405,20 @@ export default function Reportes() {
                         <td className="px-4 py-4">
                           {v.fechaVencimiento ? (
                             <div className="flex items-center gap-2">
-                              <Calendar size={14} className="text-indigo-500" />
-                              <span className="text-gray-700 font-medium">
+                              <Calendar size={14} className="text-indigo-400" />
+                              <span className="text-slate-200 font-medium">
                                 {new Date(v.fechaVencimiento).toLocaleDateString('es-CO')}
                               </span>
                             </div>
                           ) : (
-                            <span className="text-gray-400">—</span>
+                            <span className="text-slate-500">—</span>
                           )}
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={colCount} className="text-center py-12 text-gray-500">
+                      <td colSpan={colCount} className="text-center py-12 text-slate-500">
                         <p className="font-medium">No se encontraron ventas en el rango seleccionado</p>
                       </td>
                     </tr>

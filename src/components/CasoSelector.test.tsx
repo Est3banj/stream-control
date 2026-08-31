@@ -30,28 +30,29 @@ describe('CasoSelector', () => {
     expect(screen.getByText('Max - código acceso')).toBeTruthy();
   });
 
-  it('calls onSelect when a case is clicked', () => {
+  it('calls onSelect when a case is selected', () => {
     const casos = ['viajenet', 'hogarnet'];
     render(<CasoSelector casos={casos} selected="" onSelect={mockOnSelect} />);
 
-    const viajeBtn = screen.getByText('Netflix - Estoy de viaje');
-    fireEvent.click(viajeBtn);
+    const select = screen.getByRole('combobox');
+    fireEvent.change(select, { target: { value: 'viajenet' } });
 
     expect(mockOnSelect).toHaveBeenCalledWith('viajenet');
   });
 
-  it('highlights the selected case', () => {
+  it('selects the active case value', () => {
     const casos = ['viajenet', 'hogarnet'];
     render(<CasoSelector casos={casos} selected="viajenet" onSelect={mockOnSelect} />);
 
-    const buttons = screen.getAllByRole('button');
-    const selectedBtn = buttons.find(b => b.textContent?.includes('Netflix - Estoy de viaje'));
-    expect(selectedBtn?.className).toContain('border-[#ffc62a]');
+    const select = screen.getByRole('combobox') as HTMLSelectElement;
+    expect(select.value).toBe('viajenet');
   });
 
-  it('renders nothing when casos array is empty', () => {
-    const { container } = render(<CasoSelector casos={[]} selected="" onSelect={mockOnSelect} />);
+  it('renders only default option when casos array is empty', () => {
+    render(<CasoSelector casos={[]} selected="" onSelect={mockOnSelect} />);
 
-    expect(container.querySelectorAll('button').length).toBe(0);
+    const options = screen.getAllByRole('option');
+    expect(options).toHaveLength(1);
+    expect(options[0].textContent).toBe('Selecciona un caso');
   });
 });

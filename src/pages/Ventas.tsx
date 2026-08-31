@@ -24,6 +24,9 @@ export default function Ventas() {
       telefono: cliente.telefono,
       correo: cliente.correo || '',
       plataforma: cliente.plataforma,
+      cuentaId: cliente.cuentaId || '',
+      perfilNombre: cliente.perfilAsignado || '',
+      perfil: cliente.perfilAsignado || '',
     };
 
     if (user?.uid) {
@@ -39,32 +42,47 @@ export default function Ventas() {
         .then((snapshot) => {
           if (!snapshot.empty) {
             const lastVenta = snapshot.docs[0].data() as Venta;
-            data.perfil = lastVenta.perfil || '';
-            data.pinPerfil = lastVenta.pinPerfil || '';
+            data.perfil = cliente.perfilAsignado || lastVenta.perfilNombre || lastVenta.perfil || '';
+            data.perfilNombre = cliente.perfilAsignado || lastVenta.perfilNombre || lastVenta.perfil || '';
+            data.cuentaId = cliente.cuentaId || lastVenta.cuentaId || '';
+            data.pinPerfil = lastVenta.perfilPin || lastVenta.pinPerfil || '';
             data.pantallas = lastVenta.pantallas || 1;
             data.precioVenta = lastVenta.precioVenta || 0;
-            data.costoServicio = lastVenta.costoServicio || 0;
+            data.costoServicio = lastVenta.costoPorPerfil || lastVenta.costoServicio || 0;
+            if (lastVenta.perfiles && lastVenta.perfiles.length > 0) {
+              data.perfiles = lastVenta.perfiles;
+            } else if (data.perfilNombre) {
+              data.perfiles = [{ nombre: data.perfilNombre as string, pin: (data.pinPerfil as string) || '' }];
+            }
+          } else if (cliente.perfilAsignado) {
+            data.perfiles = [{ nombre: cliente.perfilAsignado, pin: '' }];
           }
           setInitialData(data);
           setLoading(false);
         })
         .catch(() => {
+          if (cliente.perfilAsignado && !data.perfiles) {
+            data.perfiles = [{ nombre: cliente.perfilAsignado, pin: '' }];
+          }
           setInitialData(data);
           setLoading(false);
         });
     } else {
+      if (cliente.perfilAsignado && !data.perfiles) {
+        data.perfiles = [{ nombre: cliente.perfilAsignado, pin: '' }];
+      }
       setInitialData(data);
       setLoading(false);
     }
   }, [location.state, user]);
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in text-slate-100">
       <div className="mb-6">
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
           Registrar Venta
         </h1>
-        <p className="text-gray-600">
+        <p className="text-slate-400">
           {initialData
             ? 'Datos del cliente precargados — ajustá lo necesario'
             : 'Completa el formulario para registrar una nueva venta'}
@@ -72,8 +90,8 @@ export default function Ventas() {
       </div>
       {loading ? (
         <div className="flex items-center justify-center min-h-[40vh]">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
-          <p className="ml-3 text-gray-600 font-medium">Cargando datos del cliente...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mb-4"></div>
+          <p className="ml-3 text-slate-400 font-medium">Cargando datos del cliente...</p>
         </div>
       ) : (
         <VentasForm initialData={initialData} />

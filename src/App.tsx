@@ -19,6 +19,10 @@ const Ajustes = lazy(() => import('./pages/Ajustes'));
 const GestionCuentas = lazy(() => import('./pages/GestionCuentas'));
 const ConsultaPublica = lazy(() => import('./pages/ConsultaPublica'));
 const ConsultaCodigos = lazy(() => import('./pages/ConsultaCodigos'));
+const VentasMayoristas = lazy(() => import('./pages/VentasMayoristas'));
+const VerificarEmailLink = lazy(() => import('./pages/VerificarEmailLink'));
+const RegisterPage = lazy(() => import('./pages/Register'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 
 /** Handle public consultation route served via Firebase rewrite /r/** → /app/index.html */
 function PublicConsulta() {
@@ -28,6 +32,33 @@ function PublicConsulta() {
 
 export default function App() {
   const pathname = window.location.pathname;
+
+  // Public password reset link when accessed without /app prefix (direct or via /r/)
+  if (
+    pathname === '/reset-password' ||
+    pathname.startsWith('/reset-password/') ||
+    pathname === '/r/reset-password' ||
+    pathname.startsWith('/r/reset-password/')
+  ) {
+    return (
+      <ErrorBoundary>
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-950"><div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin" /></div>}>
+          <ResetPassword />
+        </Suspense>
+      </ErrorBoundary>
+    );
+  }
+
+  // Public verification link: /r/verificar-email?token=xxx
+  if (pathname === '/r/verificar-email') {
+    return (
+      <ErrorBoundary>
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-950"><div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin" /></div>}>
+          <VerificarEmailLink />
+        </Suspense>
+      </ErrorBoundary>
+    );
+  }
 
   // Public consultation links are served via Firebase rewrite to /app/index.html
   // but without /app prefix in the URL — render ConsultaPublica outside BrowserRouter
@@ -47,9 +78,11 @@ export default function App() {
       <ErrorBoundary>
         <Suspense fallback={<div className="container">Cargando...</div>}>
           <Routes>
-          {/* Ruta pública */}
+          {/* Rutas públicas */}
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route path="/verificar-email" element={<VerificarEmail />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Rutas privadas */}
           <Route
@@ -175,6 +208,18 @@ export default function App() {
               </PrivateRoute>
             }
           />
+
+          <Route
+            path="/mayoristas"
+            element={
+              <PrivateRoute roles={['admin', 'usuario']}>
+                <Layout>
+                  <VentasMayoristas />
+                </Layout>
+              </PrivateRoute>
+            }
+          />
+          <Route path="/revendedores" element={<Navigate to="/mayoristas" replace />} />
 
           {/* Catch-all: redirigir a dashboard */}
           <Route path="*" element={<Navigate to="/" replace />} />

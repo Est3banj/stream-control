@@ -12,6 +12,7 @@ export interface Cuenta {
   id: string;
   propietarioId: string;
   proveedor: string;
+  nombreProveedor?: string;
   correoCuenta: string;
   costo: number;
   tipoVenta: 'perfiles' | 'completa';

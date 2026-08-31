@@ -150,34 +150,35 @@ export default function Ajustes() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in text-slate-100">
       <div className="mb-6">
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
           Ajustes
         </h1>
-        <p className="text-gray-600">Gestiona tu perfil y configuración</p>
+        <p className="text-slate-400">Gestiona tu perfil y configuración</p>
       </div>
 
       {/* Section 1: Nombre */}
-      <div className="card">
-        <div className="flex items-center gap-2 mb-6">
-          <User className="text-indigo-600" size={24} />
-          <h2 className="text-xl font-bold text-gray-900">Nombre</h2>
+      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-xl p-6">
+        <div className="flex items-center gap-2 mb-6 pb-3 border-b border-slate-800">
+          <User className="text-indigo-400" size={24} />
+          <h2 className="text-xl font-bold text-white">Nombre</h2>
         </div>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre completo</label>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">Nombre completo</label>
             <input
               type="text"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               placeholder="Tu nombre"
+              className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
             />
           </div>
           <button
             onClick={handleSaveNombre}
             disabled={guardandoNombre}
-            className="btn-primary"
+            className="btn-primary shadow-lg shadow-indigo-950/50"
           >
             {guardandoNombre ? 'Guardando...' : 'Guardar cambios'}
           </button>
@@ -185,18 +186,18 @@ export default function Ajustes() {
       </div>
 
       {/* Section: Moneda */}
-      <div className="card">
-        <div className="flex items-center gap-2 mb-6">
-          <User className="text-indigo-600" size={24} />
-          <h2 className="text-xl font-bold text-gray-900">Moneda</h2>
+      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-xl p-6">
+        <div className="flex items-center gap-2 mb-6 pb-3 border-b border-slate-800">
+          <User className="text-indigo-400" size={24} />
+          <h2 className="text-xl font-bold text-white">Moneda</h2>
         </div>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Moneda predeterminada</label>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">Moneda predeterminada</label>
             <select
               value={moneda}
               onChange={(e) => setMoneda(e.target.value)}
-              className="w-full"
+              className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
             >
               {MONEDAS.map(m => (
                 <option key={m.codigo} value={m.codigo}>
@@ -208,7 +209,7 @@ export default function Ajustes() {
           <button
             onClick={handleSaveMoneda}
             disabled={guardandoMoneda}
-            className="btn-primary"
+            className="btn-primary shadow-lg shadow-indigo-950/50"
           >
             {guardandoMoneda ? 'Guardando...' : 'Guardar moneda'}
           </button>
@@ -216,24 +217,24 @@ export default function Ajustes() {
       </div>
 
       {/* Section 2: Correo */}
-      <div className="card">
-        <div className="flex items-center gap-2 mb-6">
-          <Mail className="text-indigo-600" size={24} />
-          <h2 className="text-xl font-bold text-gray-900">Correo electrónico</h2>
+      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-xl p-6">
+        <div className="flex items-center gap-2 mb-6 pb-3 border-b border-slate-800">
+          <Mail className="text-indigo-400" size={24} />
+          <h2 className="text-xl font-bold text-white">Correo electrónico</h2>
         </div>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Correo actual</label>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">Correo actual</label>
             <input
               type="email"
               value={user?.email || ''}
               disabled
-              className="w-full opacity-60 cursor-not-allowed"
+              className="w-full opacity-60 cursor-not-allowed bg-slate-950/60 border border-slate-800 text-slate-300 font-mono"
             />
           </div>
           <button
             onClick={() => abrirModal('email')}
-            className="btn-primary"
+            className="btn-primary shadow-lg shadow-indigo-950/50"
           >
             Cambiar correo
           </button>
@@ -241,24 +242,24 @@ export default function Ajustes() {
       </div>
 
       {/* Section 3: Contraseña */}
-      <div className="card">
-        <div className="flex items-center gap-2 mb-6">
-          <Lock className="text-indigo-600" size={24} />
-          <h2 className="text-xl font-bold text-gray-900">Contraseña</h2>
+      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-xl p-6">
+        <div className="flex items-center gap-2 mb-6 pb-3 border-b border-slate-800">
+          <Lock className="text-indigo-400" size={24} />
+          <h2 className="text-xl font-bold text-white">Contraseña</h2>
         </div>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Contraseña actual</label>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">Contraseña actual</label>
             <input
               type="password"
               value="********"
               disabled
-              className="w-full opacity-60 cursor-not-allowed"
+              className="w-full opacity-60 cursor-not-allowed bg-slate-950/60 border border-slate-800 text-slate-300 font-mono"
             />
           </div>
           <button
             onClick={() => abrirModal('password')}
-            className="btn-primary"
+            className="btn-primary shadow-lg shadow-indigo-950/50"
           >
             Cambiar contraseña
           </button>
@@ -267,14 +268,14 @@ export default function Ajustes() {
 
       {/* Modal */}
       {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="card max-w-md w-full animate-scale-in">
-            <div className="flex items-center justify-between mb-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6 text-slate-100 animate-scale-in">
+            <div className="flex items-center justify-between mb-6 pb-3 border-b border-slate-800">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">
+                <h2 className="text-xl font-bold text-white">
                   {modal === 'email' ? 'Cambiar correo' : 'Cambiar contraseña'}
                 </h2>
-                <p className="text-gray-600 mt-1 text-sm">
+                <p className="text-slate-400 mt-1 text-sm">
                   {modal === 'email'
                     ? 'Ingresá tu nueva dirección de correo'
                     : 'Ingresá tu nueva contraseña'}
@@ -282,28 +283,29 @@ export default function Ajustes() {
               </div>
               <button
                 onClick={() => setModal(null)}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               >
-                <X size={20} className="text-gray-600" />
+                <X size={20} />
               </button>
             </div>
 
             <div className="space-y-4">
               {/* Contraseña actual (ambos modales) */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Contraseña actual</label>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">Contraseña actual</label>
                 <input
                   type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="Ingresá tu contraseña actual"
+                  className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
                 />
                 {modal === 'password' && (
                   <button
                     type="button"
                     onClick={handlePasswordReset}
                     disabled={recuperandoPass}
-                    className="text-xs text-indigo-600 hover:text-indigo-800 hover:underline mt-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="text-xs text-indigo-400 hover:text-indigo-300 hover:underline mt-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {recuperandoPass ? 'Enviando...' : '¿Olvidaste tu contraseña?'}
                   </button>
@@ -312,32 +314,35 @@ export default function Ajustes() {
 
               {modal === 'email' ? (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Nuevo correo</label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">Nuevo correo</label>
                   <input
                     type="email"
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
                     placeholder="nuevo@correo.com"
+                    className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
                   />
                 </div>
               ) : (
                 <>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Nueva contraseña</label>
+                    <label className="block text-sm font-semibold text-slate-300 mb-2">Nueva contraseña</label>
                     <input
                       type="password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="Mínimo 6 caracteres"
+                      className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Confirmar nueva contraseña</label>
+                    <label className="block text-sm font-semibold text-slate-300 mb-2">Confirmar nueva contraseña</label>
                     <input
                       type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Repetí la nueva contraseña"
+                      className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
                     />
                   </div>
                 </>
@@ -353,7 +358,7 @@ export default function Ajustes() {
                 <button
                   onClick={modal === 'email' ? handleChangeEmail : handleChangePassword}
                   disabled={guardando}
-                  className="btn-primary flex-1"
+                  className="btn-primary flex-1 shadow-lg shadow-indigo-950/50"
                 >
                   {guardando ? 'Guardando...' : 'Confirmar'}
                 </button>

@@ -29,7 +29,9 @@ interface AuthContextValue {
   register: (data: { nombre: string; correo: string; password: string; moneda: string; tasa: number }) => Promise<UserCredential>;
   logout: () => Promise<void>;
   loading: boolean;
-  sendVerificationEmail: () => Promise<void>;
+  sendVerificationEmail: (overrideEmail?: string, overrideNombre?: string) => Promise<void>;
+  enviarCodigoOTP: (overrideEmail?: string, overrideNombre?: string) => Promise<void>;
+  verificarCodigo: (codigo: string, overrideEmail?: string) => Promise<void>;
   refreshUser: () => Promise<boolean>;
   updateProfileData: (data: { nombre?: string; moneda?: string; tasa?: number }) => Promise<void>;
   updateUserEmail: (newEmail: string, currentPassword: string) => Promise<void>;
@@ -79,17 +81,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        const ref = doc(db, "usuarios", firebaseUser.uid);
-        const snap = await getDoc(ref);
-        const userData = snap.exists() ? (snap.data() as Record<string, unknown>) : {};
-
-        // 🔒 Cuenta vencida → cerrar sesión automáticamente
-        if (isExpired(userData.activoHasta)) {
-          await signOut(auth);
-          return;
+        try {
+          if (typeof firebaseUser.reload === 'function') {
+            await firebaseUser.reload().catch(() => undefined);
+          }
+        } catch {
+          // ignore reload error
         }
 
-        setUser({ ...firebaseUser, ...userData } as FirebaseUserWithData);
+        try {
+          const ref = doc(db, "usuarios", firebaseUser.uid);
+          const snap = await getDoc(ref);
+          const userData = snap.exists() ? (snap.data() as Record<string, unknown>) : {};
+
+          // 🔒 Cuenta vencida → cerrar sesión automáticamente
+          if (isExpired(userData.activoHasta)) {
+            await signOut(auth);
+            setUser(null);
+            setLoading(false);
+            return;
+          }
+
+          const isVerified = Boolean(
+            firebaseUser.emailVerified ||
+            userData.emailVerified === true ||
+            userData.emailVerified === 'true' ||
+            userData.rol === 'admin'
+          );
+
+          setUser({
+            ...firebaseUser,
+            ...userData,
+            correo: (userData.correo as string) || (userData.email as string) || firebaseUser.email || '',
+            email: firebaseUser.email || (userData.email as string) || (userData.correo as string) || '',
+            emailVerified: isVerified,
+          } as FirebaseUserWithData);
+        } catch (err) {
+          console.error("Error cargando perfil en onAuthStateChanged:", err);
+          setUser({
+            ...firebaseUser,
+            correo: firebaseUser.email || '',
+            email: firebaseUser.email || '',
+            emailVerified: Boolean(firebaseUser.emailVerified),
+          } as FirebaseUserWithData);
+        }
       } else {
         setUser(null);
       }
@@ -107,6 +142,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const firebaseUser = userCredential.user;
+
+      try {
+        if (typeof firebaseUser.reload === 'function') {
+          await firebaseUser.reload().catch(() => undefined);
+        }
+      } catch {
+        // ignore reload error
+      }
 
       const ref = doc(db, "usuarios", firebaseUser.uid);
       const snap = await getDoc(ref);
@@ -130,13 +173,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Verificación de email obligatoria (excepto admins y Google)
-      if (!firebaseUser.emailVerified && userData.rol !== 'admin') {
-        setUser({ ...firebaseUser, ...userData } as FirebaseUserWithData);
+      const isEmailVerified = Boolean(
+        firebaseUser.emailVerified ||
+        userData.emailVerified === true ||
+        userData.emailVerified === 'true' ||
+        userData.rol === 'admin'
+      );
+
+      if (!isEmailVerified) {
+        setUser({
+          ...firebaseUser,
+          ...userData,
+          correo: (userData.correo as string) || (userData.email as string) || firebaseUser.email || '',
+          email: firebaseUser.email || (userData.email as string) || (userData.correo as string) || '',
+          emailVerified: false,
+        } as FirebaseUserWithData);
         setLoading(false);
         throw new Error("Verificá tu correo antes de continuar. Revisá tu bandeja de entrada.");
       }
 
-      setUser({ ...firebaseUser, ...userData } as FirebaseUserWithData);
+      setUser({
+        ...firebaseUser,
+        ...userData,
+        correo: (userData.correo as string) || (userData.email as string) || firebaseUser.email || '',
+        email: firebaseUser.email || (userData.email as string) || (userData.correo as string) || '',
+        emailVerified: true,
+      } as FirebaseUserWithData);
       setLoading(false);
       return userCredential;
     } catch (error) {
@@ -150,25 +212,98 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * Envía el correo de verificación via Cloud Function (patrón enviarCorreoRecuperacion).
    * Funciona incluso sin sesión activa, solo necesita el email.
    */
-  const sendVerificationEmail = async (): Promise<void> => {
-    const email = auth.currentUser?.email;
-    const nombre = user?.nombre;
+  const sendVerificationEmail = async (overrideEmail?: string, overrideNombre?: string): Promise<void> => {
+    const email = (overrideEmail || auth.currentUser?.email || user?.correo || (user as unknown as { email?: string })?.email || '').trim().toLowerCase();
+    const nombre = overrideNombre || user?.nombre || 'Usuario';
     if (!email) throw new Error('No hay correo asociado a la sesión');
     await callFunction('enviarCorreoVerificacion', { email, nombre });
   };
 
   /**
+   * Envía el código OTP de 6 dígitos via Cloud Function /api/enviarCodigoOTP.
+   */
+  const enviarCodigoOTP = async (overrideEmail?: string, overrideNombre?: string): Promise<void> => {
+    const email = (overrideEmail || auth.currentUser?.email || user?.correo || (user as unknown as { email?: string })?.email || '').trim().toLowerCase();
+    const nombre = overrideNombre || user?.nombre || 'Usuario';
+    if (!email) throw new Error('No hay correo asociado a la sesión');
+    await callFunction('enviarCodigoOTP', { email, nombre });
+  };
+
+  /**
+   * Valida el código OTP de 6 dígitos via Cloud Function /api/verificarCodigoOTP
+   * y recarga el token y perfil del usuario.
+   */
+  const verificarCodigo = async (codigo: string, overrideEmail?: string): Promise<void> => {
+    const email = (overrideEmail || auth.currentUser?.email || user?.correo || (user as unknown as { email?: string })?.email || '').trim().toLowerCase();
+    if (!email) throw new Error('No hay correo asociado a la sesión');
+    const uid = auth.currentUser?.uid || user?.uid;
+    await callFunction('verificarCodigoOTP', { email, codigo, uid });
+
+    // Recargar Firebase Auth y refrescar claims
+    try {
+      if (auth.currentUser?.reload) {
+        await auth.currentUser.reload();
+      }
+      if (auth.currentUser?.getIdToken) {
+        await auth.currentUser.getIdToken(true);
+      }
+    } catch (err) {
+      console.warn('Advertencia al refrescar auth.currentUser tras verificar OTP:', err);
+    }
+
+    // Actualizar estado reactivo local inmediatamente
+    setUser((prev) => (prev ? ({ ...prev, emailVerified: true } as FirebaseUserWithData) : null));
+  };
+
+  /**
    * Recarga el usuario de Firebase Auth y devuelve si ya verificó el correo.
+   * Protegido contra llamadas en estados no autenticados o con tokens stale/inválidos (400 Identity Toolkit).
    */
   const refreshUser = async (): Promise<boolean> => {
     const current = auth.currentUser;
-    if (!current) return false;
-    await current.reload();
-    const verified = auth.currentUser?.emailVerified ?? false;
-    if (verified && user) {
-      setUser({ ...user, emailVerified: verified } as FirebaseUserWithData);
+    if (!current || !current.uid) return false;
+
+    try {
+      if (typeof current.reload === 'function') {
+        await current.reload();
+      }
+    } catch (err: unknown) {
+      const error = err as { code?: string; message?: string };
+      if (
+        error?.code === 'auth/user-not-found' ||
+        error?.code === 'auth/user-token-expired' ||
+        error?.code === 'auth/invalid-user-token' ||
+        error?.code === 'auth/network-request-failed' ||
+        error?.message?.includes('INVALID_ID_TOKEN') ||
+        error?.message?.includes('TOKEN_EXPIRED')
+      ) {
+        console.info('refreshUser: sesión no lista o token no válido (' + (error.code || error.message || 'unknown') + ')');
+        return false;
+      }
+      console.warn('refreshUser: advertencia al recargar Firebase Auth user:', err);
     }
-    return verified;
+
+    let isVerified = auth.currentUser?.emailVerified ?? false;
+
+    // Backup: Si Firebase Auth aún no lo marca pero Firestore sí
+    if (!isVerified && current.uid) {
+      try {
+        const snap = await getDoc(doc(db, "usuarios", current.uid));
+        if (snap.exists()) {
+          const data = snap.data() as Record<string, unknown>;
+          if (data?.emailVerified === true || data?.emailVerified === 'true' || data?.rol === 'admin') {
+            isVerified = true;
+          }
+        }
+      } catch (err) {
+        console.warn('Error consultando estado en Firestore:', err);
+      }
+    }
+
+    if (isVerified) {
+      setUser(prev => prev ? { ...prev, emailVerified: true } as FirebaseUserWithData : null);
+    }
+    return isVerified;
   };
 
   const loginWithGoogle = async (): Promise<void> => {
@@ -232,8 +367,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const profile = {
         nombre: data.nombre,
         correo: data.correo,
+        email: data.correo,
         rol: 'usuario',
         estado: 'activo',
+        emailVerified: false,
         moneda: data.moneda,
         tasa: data.tasa,
         activoHasta: null,
@@ -246,12 +383,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Post-write trigger v2 onNuevoUsuario → fire-and-forget (1 reintento, no bloquea)
       fireAndForget('onNuevoUsuario');
 
-      // Enviar email de verificación con template personalizado (via Cloud Function)
-      // No usar fallback nativo: Firebase limita la generación de links (TOO_MANY_ATTEMPTS)
+      // Enviar código OTP de verificación con template personalizado (via Cloud Function)
       try {
-        await sendVerificationEmail();
+        await enviarCodigoOTP(data.correo, data.nombre);
       } catch (err) {
-        console.warn('No se pudo enviar email de verificación:', err);
+        console.error('Error al enviar código OTP de verificación inicial:', err);
       }
 
       setLoading(false);
@@ -315,7 +451,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, loginWithGoogle, register, logout, loading, sendVerificationEmail, refreshUser, updateProfileData, updateUserEmail, updateUserPassword }}>
+    <AuthContext.Provider value={{ user, login, loginWithGoogle, register, logout, loading, sendVerificationEmail, enviarCodigoOTP, verificarCodigo, refreshUser, updateProfileData, updateUserEmail, updateUserPassword }}>
       {children}
     </AuthContext.Provider>
   );

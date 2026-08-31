@@ -13,6 +13,7 @@ import Paginador from '../components/Paginador';
 import ConsultaInterna from '../components/ConsultaInterna';
 import DropdownMenu from '../components/DropdownMenu';
 import TicketModal from '../components/TicketModal';
+import PlataformaBadge from '../components/PlataformaBadge';
 import toast from 'react-hot-toast';
 import { Search, Download, MessageCircle, Calendar, Users, TrendingUp, X, AlertCircle, Edit, Mail, DollarSign, CheckCircle, UserCheck, AlertTriangle, RefreshCw, Sparkles, Link, Key, Copy, ExternalLink, Shield, LogOut } from 'lucide-react';
 import type { Venta } from '../types/venta';
@@ -412,14 +413,14 @@ export default function GestionClientes() {
       )}
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-indigo-700">
+        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
           {user?.rol === 'admin' ? 'Gestión de Clientes — Plataforma' : 'Gestión de Clientes'}
         </h1>
-        <p className="text-gray-600">Administra y contacta a tus clientes</p>
+        <p className="text-slate-400">Administra y contacta a tus clientes</p>
       </div>
 
       {/* Controles */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-xl p-6 text-slate-100">
         <div className="flex flex-col md:flex-row gap-4 items-center">
           {/* Filtros */}
           <div className="flex gap-2 flex-wrap">
@@ -428,8 +429,8 @@ export default function GestionClientes() {
                 key={tipo}
                 onClick={() => setFiltro(tipo)}
                 className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${filtro === tipo
-                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg'
-                    : 'bg-white/80 text-gray-700 hover:bg-white'
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-950/50'
+                    : 'bg-slate-900/80 text-slate-300 border border-slate-800 hover:bg-slate-800 hover:text-white'
                   }`}
               >
                 {tipo.charAt(0).toUpperCase() + tipo.slice(1)}
@@ -439,13 +440,13 @@ export default function GestionClientes() {
 
           {/* Búsqueda */}
           <div className="flex-1 relative max-w-md w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
             <input
               type="text"
               placeholder="Buscar cliente, plataforma o teléfono..."
               value={busqueda}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBusqueda(e.target.value)}
-              className="w-full pl-10 pr-4"
+              className="w-full pl-10 pr-4 bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
             />
           </div>
 
@@ -465,50 +466,50 @@ export default function GestionClientes() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="card cursor-default">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-indigo-950/50">
                 <Users className="text-white" size={24} />
               </div>
-              <Users className="text-blue-400" size={20} />
+              <Users className="text-indigo-400" size={20} />
             </div>
             <div className="space-y-1">
-              <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Total Clientes</p>
-              <p className="text-2xl font-bold text-gray-900">{clientes.todos.length.toLocaleString()}</p>
+              <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Total Clientes</p>
+              <p className="text-2xl font-bold text-white">{clientes.todos.length.toLocaleString()}</p>
             </div>
           </div>
           <div className="card cursor-default">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-950/50">
                 <CheckCircle className="text-white" size={24} />
               </div>
-              <CheckCircle className="text-green-400" size={20} />
+              <CheckCircle className="text-emerald-400" size={20} />
             </div>
             <div className="space-y-1">
-              <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Clientes Activos</p>
-              <p className="text-2xl font-bold text-gray-900">{clientes.activos.length.toLocaleString()}</p>
+              <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Clientes Activos</p>
+              <p className="text-2xl font-bold text-white">{clientes.activos.length.toLocaleString()}</p>
             </div>
           </div>
           <div className="card cursor-default">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-pink-600 flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center shadow-lg shadow-rose-950/50">
                 <AlertTriangle className="text-white" size={24} />
               </div>
-              <AlertTriangle className="text-red-400" size={20} />
+              <AlertTriangle className="text-rose-400" size={20} />
             </div>
             <div className="space-y-1">
-              <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Clientes Vencidos</p>
-              <p className="text-2xl font-bold text-gray-900">{clientes.inactivos.length.toLocaleString()}</p>
+              <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Clientes Vencidos</p>
+              <p className="text-2xl font-bold text-white">{clientes.inactivos.length.toLocaleString()}</p>
             </div>
           </div>
           <div className="card cursor-default">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-950/50">
                 <UserCheck className="text-white" size={24} />
               </div>
-              <UserCheck className="text-purple-400" size={20} />
+              <UserCheck className="text-indigo-400" size={20} />
             </div>
             <div className="space-y-1">
-              <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Vendedores</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Vendedores</p>
+              <p className="text-2xl font-bold text-white">
                 {new Set(clientes.todos.map(c => c.propietarioId).filter(Boolean)).size.toLocaleString()}
               </p>
             </div>
@@ -518,13 +519,13 @@ export default function GestionClientes() {
 
       {/* Banner de límite para Starter */}
       {user?.rol !== 'admin' && permisos.planNombre === 'Starter' && (
-        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3">
-          <Sparkles className="text-amber-500 shrink-0" size={20} />
+        <div className="bg-gradient-to-r from-amber-950/40 to-orange-950/40 border border-amber-800/50 rounded-2xl p-4 flex items-center gap-3">
+          <Sparkles className="text-amber-400 shrink-0" size={20} />
           <div className="flex-1">
-            <p className="text-sm font-medium text-amber-800">
+            <p className="text-sm font-medium text-amber-300">
               Plan Starter — <strong>{clientes.todos.length}</strong> de {permisos.clienteLimit} clientes usados
             </p>
-            <p className="text-xs text-amber-600 mt-0.5">
+            <p className="text-xs text-amber-400/80 mt-0.5">
               Actualizá a Professional para clientes ilimitados.
             </p>
           </div>
@@ -532,28 +533,28 @@ export default function GestionClientes() {
       )}
 
       {/* Lista de clientes */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-slate-900/80 rounded-2xl shadow-xl border border-slate-800 overflow-hidden text-slate-100">
         {user?.rol === 'admin' && (
-          <div className="px-6 pt-4 pb-2">
-            <p className="text-sm text-gray-500 italic">Vista general de todos los vendedores de la plataforma</p>
+          <div className="px-6 pt-4 pb-2 border-b border-slate-800">
+            <p className="text-sm text-slate-400 italic">Vista general de todos los vendedores de la plataforma</p>
           </div>
         )}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-indigo-600 text-white">
-                <th className="px-4 py-4 text-left text-sm font-semibold">Cliente</th>
+              <tr className="bg-slate-900 border-b border-slate-800 text-slate-300 uppercase tracking-wider text-xs">
+                <th className="px-4 py-4 text-left font-semibold">Cliente</th>
                 {user?.rol === 'admin' && (
-                  <th className="px-4 py-4 text-left text-sm font-semibold">Vendedor</th>
+                  <th className="px-4 py-4 text-left font-semibold">Vendedor</th>
                 )}
-                <th className="px-4 py-4 text-left text-sm font-semibold">Contacto</th>
-                <th className="px-4 py-4 text-left text-sm font-semibold">Plataforma</th>
-                <th className="px-4 py-4 text-left text-sm font-semibold">Cuenta</th>
-                <th className="px-4 py-4 text-left text-sm font-semibold">Vencimiento</th>
-                <th className="px-4 py-4 text-center text-sm font-semibold">Días Restantes</th>
-                <th className="px-4 py-4 text-center text-sm font-semibold">Estado Pago</th>
-                <th className="px-4 py-4 text-center text-sm font-semibold">Token</th>
-                <th className="px-4 py-4 text-center text-sm font-semibold">Acciones</th>
+                <th className="px-4 py-4 text-left font-semibold">Contacto</th>
+                <th className="px-4 py-4 text-left font-semibold">Plataforma</th>
+                <th className="px-4 py-4 text-left font-semibold">Cuenta</th>
+                <th className="px-4 py-4 text-left font-semibold">Vencimiento</th>
+                <th className="px-4 py-4 text-center font-semibold">Días Restantes</th>
+                <th className="px-4 py-4 text-center font-semibold">Estado Pago</th>
+                <th className="px-4 py-4 text-center font-semibold">Token</th>
+                <th className="px-4 py-4 text-center font-semibold">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -561,40 +562,38 @@ export default function GestionClientes() {
                 clientesPaginados.map((c: Cliente) => (
                   <tr
                     key={c.id}
-                    className="border-b border-gray-100 hover:bg-indigo-50/30 transition-colors"
+                    className="border-b border-slate-800/60 hover:bg-slate-800/40 transition-colors"
                   >
                     <td className="px-4 py-4">
-                      <div className="font-semibold text-gray-900">{c.nombre}</div>
+                      <div className="font-semibold text-white">{c.nombre}</div>
                       {c.correo && (
-                        <div className="text-xs text-gray-500 mt-1">{c.correo}</div>
+                        <div className="text-xs text-slate-400 mt-1">{c.correo}</div>
                       )}
                     </td>
                     {user?.rol === 'admin' && (
                       <td className="px-4 py-4">
-                        <div className="text-gray-700">{c.usuarioEmail || '—'}</div>
+                        <div className="text-slate-300">{c.usuarioEmail || '—'}</div>
                       </td>
                     )}
                     <td className="px-4 py-4">
-                      <div className="text-gray-700">{c.telefono}</div>
+                      <div className="text-slate-300">{c.telefono}</div>
                     </td>
                     <td className="px-4 py-4">
-                      <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-sm font-medium">
-                        {c.plataforma || '—'}
-                      </span>
+                      <PlataformaBadge plataforma={c.plataforma} />
                     </td>
                     <td className="px-4 py-4">
                       {c.cuentaId ? (
-                        <div className="text-sm text-gray-700">
-                          <div className="font-medium text-indigo-600">{c.perfilAsignado || '—'}</div>
-                          <div className="text-xs text-gray-400 mt-0.5">Cuenta asignada</div>
+                        <div className="text-sm text-slate-200">
+                          <div className="font-medium text-indigo-400">{c.perfilAsignado || '—'}</div>
+                          <div className="text-xs text-slate-500 mt-0.5">Cuenta asignada</div>
                         </div>
                       ) : (
-                        <span className="text-sm text-gray-400">—</span>
+                        <span className="text-sm text-slate-500">—</span>
                       )}
                     </td>
                     <td className="px-4 py-4">
-                      <div className="flex items-center gap-2 text-gray-700">
-                        <Calendar size={16} className="text-gray-400" />
+                      <div className="flex items-center gap-2 text-slate-300">
+                        <Calendar size={16} className="text-slate-400" />
                         {c.fechaVencimiento
                           ? new Date(c.fechaVencimiento).toLocaleDateString('es-CO')
                           : '—'}
@@ -602,11 +601,11 @@ export default function GestionClientes() {
                     </td>
                     <td className="px-4 py-4 text-center">
                       <span
-                        className={`px-3 py-1 rounded-full text-sm font-semibold ${c.diasRestantes! > 7
-                            ? 'bg-green-100 text-green-700'
+                        className={`inline-block px-3 py-1 rounded-full text-xs font-semibold border ${c.diasRestantes! > 7
+                            ? 'bg-emerald-950/50 text-emerald-400 border-emerald-800/40'
                             : c.diasRestantes! > 0
-                              ? 'bg-yellow-100 text-yellow-700'
-                              : 'bg-red-100 text-red-700'
+                              ? 'bg-amber-950/50 text-amber-400 border-amber-800/40'
+                              : 'bg-rose-950/50 text-rose-400 border-rose-800/40'
                           }`}
                       >
                         {c.diasRestantes! > 0 ? `${c.diasRestantes} días` : 'Vencido'}
@@ -614,12 +613,12 @@ export default function GestionClientes() {
                     </td>
                     <td className="px-4 py-4 text-center">
                       {c.saldoPendiente > 0 ? (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-red-100 text-red-700 text-sm font-semibold">
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-rose-950/50 text-rose-400 border border-rose-800/40 text-xs font-semibold">
                           <AlertCircle size={14} />
                           Debe ${formatear(c.saldoPendiente)}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-semibold">
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-950/50 text-emerald-400 border border-emerald-800/40 text-xs font-semibold">
                           Al día
                         </span>
                       )}
@@ -630,25 +629,25 @@ export default function GestionClientes() {
                           t => t.clienteId === c.id && t.activo
                         );
                         if (!tokenCliente) {
-                          return <span className="text-sm text-gray-400">—</span>;
+                          return <span className="text-sm text-slate-500">—</span>;
                         }
                         const expirado = new Date(tokenCliente.expiraEn) < new Date();
                         if (expirado) {
                           return (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-red-100 text-red-600 text-xs font-medium">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-800 text-slate-400 border border-slate-700 text-xs font-medium">
                               Expirado
                             </span>
                           );
                         }
                         return (
                           <div className="flex items-center justify-center gap-1">
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 text-green-600 text-xs font-medium">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-cyan-950/50 text-cyan-400 border border-cyan-800/40 text-xs font-medium">
                               <Key size={12} />
                               Vigente
                             </span>
                             <button
                               onClick={() => setConfirmarRevocar({ tokenId: tokenCliente.id, clienteNombre: c.nombre })}
-                              className="p-1 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
+                              className="p-1 rounded-lg bg-rose-950/60 text-rose-400 hover:bg-rose-900 border border-rose-800/50 transition-colors"
                               title="Revocar token"
                             >
                               <X size={14} />
@@ -722,8 +721,8 @@ export default function GestionClientes() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={user?.rol === 'admin' ? 10 : 9} className="text-center py-12 text-gray-500">
-                    <Users size={48} className="mx-auto mb-3 text-gray-300" />
+                  <td colSpan={user?.rol === 'admin' ? 10 : 9} className="text-center py-12 text-slate-500">
+                    <Users size={48} className="mx-auto mb-3 text-slate-700" />
                     <p className="font-medium">No se encontraron clientes {filtro}</p>
                   </td>
                 </tr>
@@ -747,73 +746,73 @@ export default function GestionClientes() {
 
       {/* Modal de edición */}
       {mostrarEditar && clienteEditando && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="card max-w-2xl w-full animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full p-6 text-slate-100 animate-scale-in">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Editar Cliente</h2>
-                <p className="text-gray-600 mt-1">Actualiza la información del cliente</p>
+                <h2 className="text-2xl font-bold text-white">Editar Cliente</h2>
+                <p className="text-slate-400 mt-1">Actualiza la información del cliente</p>
               </div>
               <button
                 onClick={() => {
                   setMostrarEditar(false);
                   setClienteEditando(null);
                 }}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               >
-                <X size={24} className="text-gray-600" />
+                <X size={24} />
               </button>
             </div>
 
             <form onSubmit={guardarEdicion} className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Nombre del cliente <span className="text-red-500">*</span>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                  Nombre del cliente <span className="text-rose-400">*</span>
                 </label>
                 <input
                   type="text"
                   value={formEditar.nombre}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEditar({ ...formEditar, nombre: e.target.value })}
-                  className="w-full"
+                  className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Teléfono o usuario <span className="text-red-500">*</span>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                  Teléfono o usuario <span className="text-rose-400">*</span>
                 </label>
                 <input
                   type="text"
                   value={formEditar.telefono}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEditar({ ...formEditar, telefono: e.target.value })}
                   placeholder="+573104567890 o @usuario"
-                  className="w-full"
+                  className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-slate-300 mb-2">
                   Correo electrónico
                 </label>
                 <input
                   type="email"
                   value={formEditar.correo}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEditar({ ...formEditar, correo: e.target.value })}
-                  className="w-full"
+                  className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Plataforma <span className="text-red-500">*</span>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                  Plataforma <span className="text-rose-400">*</span>
                 </label>
                 <input
                   type="text"
                   value={formEditar.plataforma}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEditar({ ...formEditar, plataforma: e.target.value })}
-                  className="w-full"
+                  className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
                   required
                 />
               </div>
@@ -840,12 +839,12 @@ export default function GestionClientes() {
 
       {/* Modal de historial */}
       {mostrarHistorial && clienteSeleccionado && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="card max-w-3xl w-full max-h-[90vh] overflow-y-auto animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 text-slate-100 animate-scale-in">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Historial de Ventas</h2>
-                <p className="text-gray-600 mt-1">{clienteSeleccionado.nombre}</p>
+                <h2 className="text-2xl font-bold text-white">Historial de Ventas</h2>
+                <p className="text-slate-400 mt-1">{clienteSeleccionado.nombre}</p>
               </div>
               <button
                 onClick={() => {
@@ -857,9 +856,9 @@ export default function GestionClientes() {
                   setClienteSeleccionado(null);
                   setHistorialVentas([]);
                 }}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               >
-                <X size={24} className="text-gray-600" />
+                <X size={24} />
               </button>
             </div>
 
@@ -868,30 +867,32 @@ export default function GestionClientes() {
                 {historialVentas.map((venta: Venta) => (
                   <div
                     key={venta.id}
-                    className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100"
+                    className="p-4 rounded-xl bg-slate-950/60 border border-slate-800"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <div className="flex-1">
-                        <div className="font-semibold text-gray-900">{venta.plataforma}</div>
+                        <div className="mb-1">
+                          <PlataformaBadge plataforma={venta.plataforma} size="lg" />
+                        </div>
                         {venta.correo && (
-                          <div className="text-sm text-indigo-600 mt-1 flex items-center gap-1">
+                          <div className="text-sm text-indigo-300 mt-1 flex items-center gap-1">
                             <Mail size={14} />
                             {venta.correo}
                           </div>
                         )}
-                        <div className="text-sm text-gray-600 mt-1">
+                        <div className="text-sm text-slate-300 mt-1">
                           {venta.pantallas} pantalla(s) • {formatearDesdeVenta(venta.precioVenta * venta.pantallas, venta.monedaVenta, venta.tasaVenta)}
                         </div>
                         {venta.perfil && (
-                          <div className="text-xs text-gray-500 mt-1">
-                            Perfil: <span className="font-medium">{venta.perfil}</span>
+                          <div className="text-xs text-slate-400 mt-1">
+                            Perfil: <span className="font-medium text-slate-200">{venta.perfil}</span>
                             {venta.pinPerfil && (
-                              <> • PIN: <span className="font-medium">{venta.pinPerfil}</span></>
+                              <> • PIN: <span className="font-medium text-slate-200">{venta.pinPerfil}</span></>
                             )}
                           </div>
                         )}
                         {venta.fechaRegistro?.seconds && (
-                          <div className="text-xs text-gray-500 mt-1">
+                          <div className="text-xs text-slate-400 mt-1">
                             Fecha venta: {new Date(venta.fechaRegistro.seconds * 1000).toLocaleDateString('es-CO', {
                               year: 'numeric',
                               month: 'long',
@@ -900,7 +901,7 @@ export default function GestionClientes() {
                           </div>
                         )}
                         {venta.fechaVencimiento && (
-                          <div className="text-xs text-indigo-600 mt-1 font-medium flex items-center gap-1">
+                          <div className="text-xs text-indigo-300 mt-1 font-medium flex items-center gap-1">
                             <Calendar size={12} />
                             Vence: {new Date(venta.fechaVencimiento).toLocaleDateString('es-CO', {
                               year: 'numeric',
@@ -911,7 +912,7 @@ export default function GestionClientes() {
                         )}
                       </div>
                       <div className="text-right">
-                        <div className="text-lg font-bold text-green-600">
+                        <div className="text-lg font-bold text-emerald-400">
                           Utilidad: {formatearDesdeVenta(venta.utilidad || 0, venta.monedaVenta, venta.tasaVenta)}
                         </div>
                       </div>
@@ -920,7 +921,7 @@ export default function GestionClientes() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12 text-gray-500">
+              <div className="text-center py-12 text-slate-500">
                 <p>No hay ventas registradas para este cliente</p>
               </div>
             )}
@@ -930,34 +931,34 @@ export default function GestionClientes() {
 
       {/* Modal de link de códigos */}
       {mostrarTokenModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="card max-w-lg w-full animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full p-6 text-slate-100 animate-scale-in">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Link de Códigos Generado</h2>
-                <p className="text-gray-600 mt-1">Compartí este link con tu cliente</p>
+                <h2 className="text-2xl font-bold text-white">Link de Códigos Generado</h2>
+                <p className="text-slate-400 mt-1">Compartí este link con tu cliente</p>
               </div>
               <button
                 onClick={() => {
                   setMostrarTokenModal(false);
                   setTokenGeneradoURL('');
                 }}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               >
-                <X size={24} className="text-gray-600" />
+                <X size={24} />
               </button>
             </div>
 
             <div className="space-y-4">
-              <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-100">
-                <p className="text-sm font-medium text-indigo-700 mb-2">URL de consulta</p>
+              <div className="bg-slate-950/70 rounded-xl p-4 border border-slate-800">
+                <p className="text-sm font-medium text-cyan-300 mb-2">URL de consulta</p>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 bg-white rounded-lg px-4 py-3 text-sm text-indigo-600 border border-indigo-200 break-all font-mono">
+                  <code className="flex-1 bg-slate-900 rounded-lg px-4 py-3 text-sm text-cyan-400 border border-slate-800 break-all font-mono">
                     {tokenGeneradoURL}
                   </code>
                   <button
                     onClick={copiarTokenURL}
-                    className="p-3 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shrink-0"
+                    className="p-3 rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 transition-colors shrink-0 shadow-md shadow-indigo-950/50"
                     title="Copiar link"
                   >
                     <Copy size={18} />
@@ -965,7 +966,7 @@ export default function GestionClientes() {
                 </div>
               </div>
 
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-slate-400">
                 El link expira en 30 días. El cliente puede consultar códigos de verificación desde esta URL.
               </p>
 
@@ -996,8 +997,8 @@ export default function GestionClientes() {
 
       {/* Modal de consulta de código */}
       {mostrarConsultaCodigo && consultaData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="card max-w-lg w-full max-h-[90vh] overflow-y-auto animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 text-slate-100 animate-scale-in">
             <ConsultaInterna
               clienteNombre={consultaData.clienteNombre}
               proveedor={consultaData.proveedor}
@@ -1014,13 +1015,13 @@ export default function GestionClientes() {
 
       {/* Modal: Confirmar revocación de token */}
       {confirmarRevocar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="card max-w-md w-full animate-scale-in text-center">
-            <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="text-red-600" size={32} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in text-center text-slate-100">
+            <div className="w-16 h-16 rounded-full bg-rose-950/60 border border-rose-800/50 flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="text-rose-400" size={32} />
             </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Revocar token</h2>
-            <p className="text-gray-600 mb-6">
+            <h2 className="text-xl font-bold text-white mb-2">Revocar token</h2>
+            <p className="text-slate-300 mb-6">
               ¿Estás seguro de revocar el token de <strong>{confirmarRevocar.clienteNombre}</strong>?
               El link de códigos dejará de funcionar inmediatamente.
             </p>
@@ -1035,7 +1036,7 @@ export default function GestionClientes() {
               <button
                 onClick={handleRevocarToken}
                 disabled={revocando}
-                className="flex-1 py-2.5 rounded-xl font-semibold text-white transition-all bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                className="flex-1 py-2.5 rounded-xl font-semibold text-white transition-all bg-rose-600 hover:bg-rose-500 shadow-lg shadow-rose-950/50 disabled:opacity-50"
               >
                 {revocando ? 'Revocando...' : 'Sí, revocar'}
               </button>
@@ -1046,12 +1047,12 @@ export default function GestionClientes() {
 
       {/* Modal de cobro */}
       {mostrarCobrar && clienteCobrar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="card max-w-md w-full animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6 text-slate-100 animate-scale-in">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Registrar Pago</h2>
-                <p className="text-gray-600 mt-1">{clienteCobrar.nombre}</p>
+                <h2 className="text-2xl font-bold text-white">Registrar Pago</h2>
+                <p className="text-slate-400 mt-1">{clienteCobrar.nombre}</p>
               </div>
               <button
                 onClick={() => {
@@ -1059,40 +1060,40 @@ export default function GestionClientes() {
                   setClienteCobrar(null);
                   setMontoPago('');
                 }}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               >
-                <X size={24} className="text-gray-600" />
+                <X size={24} />
               </button>
             </div>
 
             <form onSubmit={registrarPago} className="space-y-4">
-              <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
-                <p className="text-sm text-gray-600">
+              <div className="bg-amber-950/30 rounded-xl p-4 border border-amber-800/40">
+                <p className="text-sm text-slate-300">
                   Saldo pendiente:{' '}
-                  <span className="font-bold text-orange-700">
+                  <span className="font-bold text-amber-300">
                     {formatear(clienteCobrar.saldoPendiente)}
                   </span>
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Monto a cobrar <span className="text-red-500">*</span>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                  Monto a cobrar <span className="text-rose-400">*</span>
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">$</span>
                   <input
                     type="number"
                     value={montoPago}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMontoPago(e.target.value)}
-                    className="w-full pl-8"
+                    className="w-full pl-8 bg-slate-900/80 border border-slate-700/80 text-slate-100"
                     min="0.01"
                     max={clienteCobrar.saldoPendiente}
                     step="0.01"
                     required
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-slate-400 mt-1">
                   Máximo: {formatear(clienteCobrar.saldoPendiente)}
                 </p>
               </div>
@@ -1112,7 +1113,7 @@ export default function GestionClientes() {
                 <button
                   type="submit"
                   disabled={guardando}
-                  className="btn-primary flex-1 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {guardando ? 'Registrando...' : '💰 Cobrar'}
                 </button>
@@ -1124,16 +1125,16 @@ export default function GestionClientes() {
 
       {/* Modal: Confirmar liberación de perfil */}
       {confirmarLiberar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="card max-w-md w-full animate-scale-in text-center">
-            <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center mx-auto mb-4">
-              <LogOut className="text-orange-600" size={32} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in text-center text-slate-100">
+            <div className="w-16 h-16 rounded-full bg-amber-950/60 border border-amber-800/50 flex items-center justify-center mx-auto mb-4">
+              <LogOut className="text-amber-400" size={32} />
             </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Liberar perfil</h2>
-            <p className="text-gray-600 mb-2">
+            <h2 className="text-xl font-bold text-white mb-2">Liberar perfil</h2>
+            <p className="text-slate-300 mb-2">
               ¿Estás seguro de liberar el perfil <strong>{confirmarLiberar.perfilAsignado}</strong> de <strong>{confirmarLiberar.nombre}</strong>?
             </p>
-            <p className="text-sm text-gray-500 mb-6">
+            <p className="text-sm text-slate-400 mb-6">
               El perfil volverá a estar disponible para otros clientes. Esta acción no se puede deshacer.
             </p>
             <div className="flex gap-3">
@@ -1147,7 +1148,7 @@ export default function GestionClientes() {
               <button
                 onClick={handleLiberarPerfil}
                 disabled={liberando}
-                className="flex-1 py-2.5 rounded-xl font-semibold text-white transition-all bg-orange-600 hover:bg-orange-700 disabled:opacity-50"
+                className="flex-1 py-2.5 rounded-xl font-semibold text-white transition-all bg-amber-600 hover:bg-amber-500 shadow-lg shadow-amber-950/50 disabled:opacity-50"
               >
                 {liberando ? 'Liberando...' : 'Sí, liberar perfil'}
               </button>

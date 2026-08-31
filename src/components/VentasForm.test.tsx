@@ -394,3 +394,66 @@ describe('VentasForm — Cálculo de utilidad', () => {
     });
   });
 });
+
+describe('SelectorCuenta — calcularCostoPorPerfil', () => {
+  it('retorna el costo unitario correcto cuando los perfiles están asignados (caso renovación)', async () => {
+    const { calcularCostoPorPerfil } = await import('./SelectorCuenta');
+    const cuentaPerfilesAsignados: any = {
+      id: 'c1',
+      costo: 30000,
+      tipoVenta: 'perfiles',
+      perfiles: [
+        { nombre: 'Perfil 1', pin: '1111', estado: 'asignado' },
+        { nombre: 'Perfil 2', pin: '2222', estado: 'asignado' },
+        { nombre: 'Perfil 3', pin: '3333', estado: 'asignado' },
+        { nombre: 'Perfil 4', pin: '4444', estado: 'asignado' },
+        { nombre: 'Perfil 5', pin: '5555', estado: 'asignado' },
+      ],
+    };
+
+    // 30000 / 5 = 6000 (NO 30000)
+    expect(calcularCostoPorPerfil(cuentaPerfilesAsignados)).toBe(6000);
+  });
+
+  it('retorna el costo total cuando el tipo de venta es completa', async () => {
+    const { calcularCostoPorPerfil } = await import('./SelectorCuenta');
+    const cuentaCompleta: any = {
+      id: 'c2',
+      costo: 45000,
+      tipoVenta: 'completa',
+      perfiles: [],
+    };
+
+    expect(calcularCostoPorPerfil(cuentaCompleta)).toBe(45000);
+  });
+});
+
+describe('VentasForm — Renovación con initialData', () => {
+  it('precarga correctamente los datos de la última venta del cliente', async () => {
+    const { container } = render(
+      <VentasForm
+        initialData={{
+          nombre: 'Cliente Renovar',
+          telefono: '+573119876543',
+          plataforma: 'Max',
+          precioVenta: 18000,
+          costoServicio: 6000,
+          perfilNombre: 'Perfil 1',
+          perfiles: [{ nombre: 'Perfil 1', pin: '9999' }],
+        }}
+      />,
+    );
+
+    expect(screen.getByPlaceholderText('Ej: Juan Pérez')).toHaveValue('Cliente Renovar');
+    expect(screen.getByPlaceholderText('Ej: +573104567890 o @usuario')).toHaveValue('+573119876543');
+    expect(getInput(container, 'precioVenta')).toHaveValue(18000);
+    expect(getInput(container, 'costoServicio')).toHaveValue(6000);
+    expect(screen.getByPlaceholderText('Principal')).toHaveValue('Perfil 1');
+    expect(screen.getByPlaceholderText('1234')).toHaveValue('9999');
+
+    // Utilidad esperada: 18000 - 6000 = 12000
+    await waitFor(() => {
+      expect(screen.getByText('$12.000')).toBeInTheDocument();
+    });
+  });
+});

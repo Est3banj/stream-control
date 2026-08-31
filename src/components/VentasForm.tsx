@@ -51,7 +51,11 @@ interface ServicioItem {
 }
 
 interface VentasFormProps {
-  initialData?: Partial<VentaFormState>;
+  initialData?: Partial<VentaFormState> & {
+    cuentaId?: string;
+    perfilNombre?: string;
+    perfil?: string;
+  };
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────
@@ -155,7 +159,15 @@ export default function VentasForm({ initialData }: VentasFormProps) {
   });
 
   useEffect(() => {
-    if (initialData) setVenta(prev => ({ ...prev, ...initialData }));
+    if (initialData) {
+      setVenta(prev => ({ ...prev, ...initialData }));
+      if (initialData.cuentaId) {
+        setCuentaId(initialData.cuentaId);
+      }
+      if (initialData.perfilNombre || initialData.perfil) {
+        setPerfilAsignado(initialData.perfilNombre || initialData.perfil || null);
+      }
+    }
   }, [initialData]);
 
   // Sync perfiles[] con cantidad de pantallas
@@ -291,20 +303,24 @@ export default function VentasForm({ initialData }: VentasFormProps) {
     };
     cargarContrasena();
 
+    const pinParaPerfil = newPerfilPin || (newPerfilNombre ? cuenta.perfiles?.find(p => p.nombre === newPerfilNombre)?.pin || '' : '');
+
     setVenta(prev => ({
       ...prev,
       correo: cuenta.correoCuenta || prev.correo,
       costoServicio: newCostoPorPerfil || prev.costoServicio,
       perfiles: cuenta.tipoVenta !== 'completa'
-        ? prev.perfiles.map((_, i) => {
-            const disp = (cuenta.perfiles || []).filter(p => p.estado === 'disponible');
-            return disp[i] ? { nombre: disp[i].nombre, pin: disp[i].pin } : { nombre: '', pin: '' };
-          })
+        ? (newPerfilNombre
+            ? [{ nombre: newPerfilNombre, pin: pinParaPerfil }, ...prev.perfiles.slice(1)]
+            : prev.perfiles.map((_, i) => {
+                const disp = (cuenta.perfiles || []).filter(p => p.estado === 'disponible');
+                return disp[i] ? { nombre: disp[i].nombre, pin: disp[i].pin } : { nombre: '', pin: '' };
+              }))
         : prev.perfiles,
     }));
 
     setPerfilAsignado(newPerfilNombre);
-    setPerfilPinSeleccionado(newPerfilPin);
+    setPerfilPinSeleccionado(pinParaPerfil || null);
   };
 
   // ─── Handlers (multi) ───
@@ -376,19 +392,22 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       })();
 
       const disp = (cuenta.perfiles || []).filter(p => p.estado === 'disponible');
+      const pinParaPerfil = newPerfilPin || (newPerfilNombre ? cuenta.perfiles?.find(p => p.nombre === newPerfilNombre)?.pin || '' : '');
 
       return {
         ...s,
         cuentaId: newCuentaId,
         perfilNombre: newPerfilNombre,
-        perfilPin: newPerfilPin,
+        perfilPin: pinParaPerfil || null,
         correo: cuenta.correoCuenta || s.correo,
         costoServicio: newCostoPorPerfil || s.costoServicio,
         costoPorPerfil: newCostoPorPerfil,
         perfiles: cuenta.tipoVenta !== 'completa'
-          ? s.perfiles.map((_, i) =>
-              disp[i] ? { nombre: disp[i].nombre, pin: disp[i].pin } : { nombre: '', pin: '' }
-            )
+          ? (newPerfilNombre
+              ? [{ nombre: newPerfilNombre, pin: pinParaPerfil }, ...s.perfiles.slice(1)]
+              : s.perfiles.map((_, i) =>
+                  disp[i] ? { nombre: disp[i].nombre, pin: disp[i].pin } : { nombre: '', pin: '' }
+                ))
           : s.perfiles,
       };
     }));
@@ -830,36 +849,36 @@ export default function VentasForm({ initialData }: VentasFormProps) {
 
   // ─── Render helpers ───
   const InputLabel = ({ children, required = false }: { children: React.ReactNode; required?: boolean }) => (
-    <label className="block text-xs font-medium text-gray-500 mb-0.5">
+    <label className="block text-xs font-medium text-slate-300 mb-1">
       {children}
-      {required && <span className="text-red-400 ml-0.5">*</span>}
+      {required && <span className="text-rose-400 ml-0.5">*</span>}
     </label>
   );
 
   const SectionHeader = ({ icon: Icon, title }: { icon: React.ElementType; title: string }) => (
-    <div className="flex items-center gap-1.5 pb-1.5 mb-2 border-b border-gray-100">
-      <Icon size={14} className="text-indigo-500" />
-      <h2 className="text-xs font-bold text-gray-800">{title}</h2>
+    <div className="flex items-center gap-2 pb-2 mb-3 border-b border-slate-800">
+      <Icon size={16} className="text-indigo-400" />
+      <h2 className="text-sm font-bold text-white uppercase tracking-wide">{title}</h2>
     </div>
   );
 
   const renderServicioCard = (s: ServicioItem, index: number) => (
     <div
       key={s.id}
-      className="border-l-2 border-indigo-200 pl-2.5 space-y-1.5"
+      className="border-l-2 border-indigo-500 pl-3 space-y-2 py-1 bg-slate-950/40 rounded-r-xl border-y border-r border-slate-800/60 pr-3 my-2"
     >
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-indigo-600">
+        <span className="text-xs font-semibold text-cyan-300">
           Servicio #{index + 1}
         </span>
         {servicios.length > 1 && (
           <button
             type="button"
             onClick={() => eliminarServicio(s.id)}
-            className="p-0.5 rounded text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+            className="p-1 rounded text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 transition-colors"
             title="Eliminar servicio"
           >
-            <X size={13} />
+            <X size={14} />
           </button>
         )}
       </div>
@@ -885,9 +904,9 @@ export default function VentasForm({ initialData }: VentasFormProps) {
               }
             />
             {s.cuentaId && s.perfiles.some(p => p.nombre) && (
-              <div className="mt-1 flex items-center gap-1.5 px-2 py-1 bg-indigo-50 rounded border border-indigo-100">
-                <Check size={11} className="text-indigo-600 shrink-0" />
-                <span className="text-xs text-indigo-700">
+              <div className="mt-1 flex items-center gap-1.5 px-2 py-1 bg-indigo-950/40 rounded-lg border border-indigo-800/40">
+                <Check size={11} className="text-indigo-400 shrink-0" />
+                <span className="text-xs text-indigo-300">
                   {s.plataforma} — {formatear(s.costoPorPerfil)}/perfil
                 </span>
               </div>
@@ -902,7 +921,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
             value={s.correo}
             onChange={e => handleServicioChange(s.id, 'correo', e.target.value)}
             placeholder="email de la cuenta (Netflix...)"
-            className="w-full text-sm"
+            className="w-full text-sm bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
           />
         </div>
 
@@ -913,7 +932,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
             value={s.contrasena}
             onChange={e => handleServicioChange(s.id, 'contrasena', e.target.value)}
             placeholder="contraseña de la cuenta"
-            className="w-full text-sm"
+            className="w-full text-sm bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
             autoComplete="off"
           />
         </div>
@@ -924,7 +943,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
             type="number"
             value={s.pantallas}
             onChange={e => handleServicioChange(s.id, 'pantallas', Number(e.target.value))}
-            className="w-full text-sm"
+            className="w-full text-sm bg-slate-900/80 border border-slate-700/80 text-slate-100"
             min="1"
           />
         </div>
@@ -935,7 +954,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
             type="date"
             value={s.fechaInicio}
             onChange={e => handleServicioChange(s.id, 'fechaInicio', e.target.value)}
-            className="w-full text-sm"
+            className="w-full text-sm bg-slate-900/80 border border-slate-700/80 text-slate-100"
           />
         </div>
 
@@ -945,7 +964,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
             type="number"
             value={s.diasServicio}
             onChange={e => handleServicioChange(s.id, 'diasServicio', e.target.value)}
-            className="w-full text-sm"
+            className="w-full text-sm bg-slate-900/80 border border-slate-700/80 text-slate-100"
             min="1"
             placeholder="30"
           />
@@ -967,7 +986,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
                   handleServicioChange(s.id, 'perfiles', p);
                 }}
                 placeholder="Principal"
-                className="w-full text-sm"
+                className="w-full text-sm bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
               />
             </div>
             <div>
@@ -981,7 +1000,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
                   handleServicioChange(s.id, 'perfiles', p);
                 }}
                 placeholder="1234"
-                className="w-full text-sm"
+                className="w-full text-sm bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
                 maxLength={10}
               />
             </div>
@@ -993,13 +1012,13 @@ export default function VentasForm({ initialData }: VentasFormProps) {
 
   // ─── JSX ───────────────────────────────────────────────────────────────
   return (
-    <form onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-4">
+    <form onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-4 text-slate-100">
 
       {/* ═══════ Cliente ═══════ */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
+      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-xl p-4">
         <SectionHeader icon={Layers} title="Cliente" />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <InputLabel required>Nombre</InputLabel>
             <input
@@ -1009,7 +1028,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
               onChange={handleChange}
               onBlur={handleBlurNombre}
               placeholder="Ej: Juan Pérez"
-              className="w-full"
+              className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
               required
             />
           </div>
@@ -1022,7 +1041,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
               onChange={handleChange}
               onBlur={handleBlurTelefono}
               placeholder="Ej: +573104567890 o @usuario"
-              className="w-full"
+              className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
               required
             />
           </div>
@@ -1030,15 +1049,15 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       </div>
 
       {/* ═══════ Servicio(s) ═══════ */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
-        <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-gray-100">
-          <div className="flex items-center gap-1.5">
-            <Layers size={14} className="text-indigo-500" />
-            <h2 className="text-xs font-bold text-gray-800">
+      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-xl p-4">
+        <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-800">
+          <div className="flex items-center gap-2">
+            <Layers size={16} className="text-indigo-400" />
+            <h2 className="text-sm font-bold text-white uppercase tracking-wide">
               {modoCombinado ? 'Servicios' : 'Servicio'}
             </h2>
             {modoCombinado && cantServicios > 0 && (
-              <span className="text-xs bg-indigo-100 text-indigo-700 font-semibold px-1.5 py-0.5 rounded-full">
+              <span className="text-xs bg-indigo-950/60 text-cyan-300 font-semibold px-2 py-0.5 rounded-full border border-indigo-800/40">
                 {cantServicios}
               </span>
             )}
@@ -1047,10 +1066,10 @@ export default function VentasForm({ initialData }: VentasFormProps) {
           <button
             type="button"
             onClick={toggleModoCombinado}
-            className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-all ${
+            className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-all ${
               modoCombinado
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-950/50'
+                : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700 hover:text-white'
             }`}
           >
             {modoCombinado ? 'Combinado ON' : 'Combinado OFF'}
@@ -1059,8 +1078,8 @@ export default function VentasForm({ initialData }: VentasFormProps) {
 
         {!modoCombinado ? (
           /* ─── SINGLE SERVICE ─── */
-          <div className="space-y-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="sm:col-span-2">
                 <InputLabel required>Plataforma o servicio</InputLabel>
                 <ComboboxServicio
@@ -1080,7 +1099,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
                   value={venta.correo}
                   onChange={handleChange}
                   placeholder="email de la cuenta (Netflix...)"
-                  className="w-full"
+                  className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
                 />
               </div>
 
@@ -1092,7 +1111,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
                   value={venta.contrasena}
                   onChange={handleChange}
                   placeholder="contraseña de la cuenta"
-                  className="w-full"
+                  className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 font-mono"
                   autoComplete="off"
                 />
               </div>
@@ -1102,12 +1121,14 @@ export default function VentasForm({ initialData }: VentasFormProps) {
                 <div className="sm:col-span-2">
                   <SelectorCuenta
                     proveedor={venta.plataforma}
+                    initialCuentaId={initialData?.cuentaId || cuentaId || undefined}
+                    initialPerfil={initialData?.perfilNombre || initialData?.perfil || perfilAsignado || undefined}
                     onCuentaSelected={handleCuentaSelected}
                   />
                   {cuentaId && venta.perfiles.some(p => p.nombre) && (
-                    <div className="mt-1 flex items-center gap-1.5 px-2 py-1 bg-indigo-50 rounded border border-indigo-100">
-                      <Check size={11} className="text-indigo-600 shrink-0" />
-                      <span className="text-xs text-indigo-700">
+                    <div className="mt-1 flex items-center gap-1.5 px-3 py-1.5 bg-indigo-950/40 rounded-lg border border-indigo-800/40">
+                      <Check size={14} className="text-indigo-400 shrink-0" />
+                      <span className="text-xs text-indigo-300">
                         {venta.plataforma} — {formatear(costoPorPerfil)}/perfil
                       </span>
                     </div>
@@ -1122,7 +1143,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
                   name="pantallas"
                   value={venta.pantallas}
                   onChange={handleChange}
-                  className="w-full"
+                  className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
                   min="1"
                   required
                 />
@@ -1135,7 +1156,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
                   name="fechaInicio"
                   value={venta.fechaInicio}
                   onChange={handleChange}
-                  className="w-full"
+                  className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
                   required
                 />
               </div>
@@ -1147,7 +1168,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
                   name="diasServicio"
                   value={venta.diasServicio}
                   onChange={handleChange}
-                  className="w-full"
+                  className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100"
                   min="1"
                   placeholder="Ej: 30"
                   required
@@ -1157,16 +1178,16 @@ export default function VentasForm({ initialData }: VentasFormProps) {
               <div>
                 <InputLabel required>Precio venta (por pantalla)</InputLabel>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">$</span>
                   <input
-                  type="number"
-                  name="precioVenta"
-                  value={venta.precioVenta}
-                  onChange={handleChange}
-                  className="w-full pl-7"
-                  min="0"
-                  step="0.01"
-                  required
+                    type="number"
+                    name="precioVenta"
+                    value={venta.precioVenta}
+                    onChange={handleChange}
+                    className="w-full pl-7 bg-slate-900/80 border border-slate-700/80 text-slate-100"
+                    min="0"
+                    step="0.01"
+                    required
                   />
                 </div>
               </div>
@@ -1174,32 +1195,32 @@ export default function VentasForm({ initialData }: VentasFormProps) {
               <div>
                 <InputLabel required>Costo del servicio</InputLabel>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">$</span>
                   <input
-                  type="number"
-                  name="costoServicio"
-                  value={venta.costoServicio}
-                  onChange={handleChange}
-                  className="w-full pl-7"
-                  min="0"
-                  step="0.01"
-                  required
+                    type="number"
+                    name="costoServicio"
+                    value={venta.costoServicio}
+                    onChange={handleChange}
+                    className="w-full pl-7 bg-slate-900/80 border border-slate-700/80 text-slate-100"
+                    min="0"
+                    step="0.01"
+                    required
                   />
                 </div>
               </div>
             </div>
 
             {/* Utilidad */}
-            <div className="flex items-center justify-between bg-indigo-50/80 rounded-lg px-3 py-2 border border-indigo-100">
-              <span className="text-xs font-semibold text-indigo-600">Utilidad estimada</span>
-              <span className="text-base font-bold text-indigo-700">
+            <div className="flex items-center justify-between bg-indigo-950/40 rounded-xl px-4 py-3 border border-indigo-800/40">
+              <span className="text-xs font-semibold text-indigo-300">Utilidad estimada</span>
+              <span className="text-base font-bold text-cyan-300">
                 {formatear(utilidad)}
               </span>
             </div>
 
             {/* Perfiles dinámicos por pantalla */}
             <div className="space-y-2">
-              <p className="text-xs font-semibold text-gray-500">
+              <p className="text-xs font-semibold text-slate-300">
                 Perfiles por pantalla {venta.pantallas > 1 && `(${venta.pantallas})`}
               </p>
               {Array.from({ length: venta.pantallas }, (_, i) => (
@@ -1215,7 +1236,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
                         setVenta({ ...venta, perfiles: p });
                       }}
                       placeholder="Principal"
-                      className="w-full"
+                      className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
                     />
                   </div>
                   <div>
@@ -1229,7 +1250,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
                         setVenta({ ...venta, perfiles: p });
                       }}
                       placeholder="1234"
-                      className="w-full"
+                      className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
                       maxLength={10}
                     />
                   </div>
@@ -1240,28 +1261,28 @@ export default function VentasForm({ initialData }: VentasFormProps) {
           </div>
         ) : (
           /* ─── MULTI SERVICE ─── */
-          <div className="space-y-2">
+          <div className="space-y-3">
             {servicios.map((s, i) => renderServicioCard(s, i))}
 
             <button
               type="button"
               onClick={agregarServicio}
-              className="w-full py-2 rounded-lg border-2 border-dashed border-gray-300 text-gray-500 hover:border-indigo-400 hover:text-indigo-600 font-semibold text-xs transition-all flex items-center justify-center gap-1.5"
+              className="w-full py-2.5 rounded-xl border border-dashed border-slate-700 hover:border-indigo-500 bg-slate-950/40 text-slate-300 hover:text-indigo-400 font-semibold text-xs transition-all flex items-center justify-center gap-1.5"
             >
               <Plus size={14} />
               Agregar otro servicio
             </button>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <InputLabel required>Precio total del combo</InputLabel>
                 <div className="relative">
-                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">$</span>
                   <input
                     type="number"
                     value={precioTotalCombo}
                     onChange={e => setPrecioTotalCombo(Number(e.target.value))}
-                    className="w-full pl-4 text-sm"
+                    className="w-full pl-7 text-sm bg-slate-900/80 border border-slate-700/80 text-slate-100"
                     min="0"
                     step="0.01"
                     placeholder="Ej: 18"
@@ -1271,12 +1292,12 @@ export default function VentasForm({ initialData }: VentasFormProps) {
               <div>
                 <InputLabel required>Costo total del combo</InputLabel>
                 <div className="relative">
-                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">$</span>
                   <input
                     type="number"
                     value={costoTotalCombo}
                     onChange={e => setCostoTotalCombo(Number(e.target.value))}
-                    className="w-full pl-4 text-sm"
+                    className="w-full pl-7 text-sm bg-slate-900/80 border border-slate-700/80 text-slate-100"
                     min="0"
                     step="0.01"
                     placeholder="Ej: 8"
@@ -1286,18 +1307,18 @@ export default function VentasForm({ initialData }: VentasFormProps) {
             </div>
 
             {Number(precioTotalCombo) > 0 && (
-              <div className="bg-indigo-50/80 rounded-lg px-3 py-2 border border-indigo-100 space-y-0.5">
+              <div className="bg-indigo-950/40 rounded-xl px-4 py-3 border border-indigo-800/40 space-y-1">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-600">Precio del combo</span>
-                  <span className="font-bold text-gray-900">{formatear(Number(precioTotalCombo))}</span>
+                  <span className="text-slate-300">Precio del combo</span>
+                  <span className="font-bold text-white">{formatear(Number(precioTotalCombo))}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-600">Costo del combo</span>
-                  <span className="font-bold text-gray-500">{formatear(Number(costoTotalCombo))}</span>
+                  <span className="text-slate-400">Costo del combo</span>
+                  <span className="font-bold text-slate-400">{formatear(Number(costoTotalCombo))}</span>
                 </div>
-                <div className="border-t border-indigo-200/50 pt-0.5 flex items-center justify-between text-xs">
-                  <span className="font-semibold text-indigo-600">Utilidad estimada</span>
-                  <span className="font-bold text-indigo-700">{formatear(utilidadCombo)}</span>
+                <div className="border-t border-indigo-800/50 pt-1.5 flex items-center justify-between text-xs">
+                  <span className="font-semibold text-indigo-300">Utilidad estimada</span>
+                  <span className="font-bold text-cyan-300">{formatear(utilidadCombo)}</span>
                 </div>
               </div>
             )}
@@ -1306,13 +1327,13 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       </div>
 
       {/* ═══════ Pago ═══════ */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
+      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-xl p-4">
         <SectionHeader icon={Layers} title="Estado de Pago" />
 
-        <div className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+        <div className="flex items-center justify-between bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3">
           <div>
-            <p className="text-sm font-medium text-gray-700">Pagó completo</p>
-            <p className="text-xs text-gray-400">El cliente ya pagó el total del servicio</p>
+            <p className="text-sm font-medium text-slate-200">Pagó completo</p>
+            <p className="text-xs text-slate-400">El cliente ya pagó el total del servicio</p>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
@@ -1323,7 +1344,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
               className="sr-only peer"
               aria-label="Pagó completo"
             />
-            <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-indigo-500 peer-checked:to-indigo-600" />
+            <div className="w-10 h-6 bg-slate-800 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600" />
           </label>
         </div>
 
@@ -1331,13 +1352,13 @@ export default function VentasForm({ initialData }: VentasFormProps) {
           <div className="mt-3">
             <InputLabel required>Saldo pendiente</InputLabel>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">$</span>
               <input
                 type="number"
                 name="saldoPendiente"
                 value={venta.saldoPendiente}
                 onChange={handleChange}
-                className="w-full pl-7"
+                className="w-full pl-7 bg-slate-900/80 border border-slate-700/80 text-slate-100"
                 min="0"
                 step="0.01"
                 placeholder="0.00"
@@ -1352,7 +1373,7 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       <button
         type="submit"
         disabled={submitting}
-        className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-semibold text-base shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="btn-primary w-full py-3.5 rounded-xl font-semibold text-base shadow-lg shadow-indigo-950/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {submitting
           ? 'Registrando...'

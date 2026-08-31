@@ -99,47 +99,47 @@ export default function AdminPlanes() {
 
   if (loading || configLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="flex items-center justify-center min-h-[60vh] text-slate-100">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
-          <p className="text-gray-600 font-medium">Cargando...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mb-4"></div>
+          <p className="text-slate-400 font-medium">Cargando...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in text-slate-100">
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
-          <AlertCircle className="text-red-500 shrink-0" size={20} />
-          <p className="text-sm text-red-700">{error}</p>
+        <div className="bg-rose-950/40 border border-rose-800/60 rounded-xl p-4 flex items-center gap-3 text-rose-300">
+          <AlertCircle className="text-rose-400 shrink-0" size={20} />
+          <p className="text-sm">{error}</p>
         </div>
       )}
 
       <div className="mb-6">
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
           Gestión de Planes
         </h1>
-        <p className="text-gray-600">Administra los planes de suscripción</p>
+        <p className="text-slate-400">Administra los planes de suscripción</p>
       </div>
 
       <div className="flex justify-end">
-        <button onClick={openCreate} className="btn-primary flex items-center gap-2">
+        <button onClick={openCreate} className="btn-primary flex items-center gap-2 shadow-lg shadow-indigo-950/50">
           <Plus size={20} />
           Crear Plan
         </button>
       </div>
 
       {/* Configuración General */}
-      <div className="card p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <MessageCircle className="text-green-600" size={24} />
-          <h2 className="text-xl font-bold text-gray-900">Configuración General</h2>
+      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-xl p-6">
+        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-800">
+          <MessageCircle className="text-emerald-400" size={24} />
+          <h2 className="text-xl font-bold text-white">Configuración General</h2>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
           <div className="flex-1 w-full">
-            <label htmlFor="whatsapp-admin" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="whatsapp-admin" className="block text-sm font-medium text-slate-300 mb-1">
               WhatsApp del Administrador
             </label>
             <input
@@ -148,16 +148,16 @@ export default function AdminPlanes() {
               value={whatsapp}
               onChange={(e) => setWhatsapp(e.target.value)}
               placeholder="Ej: +57 324 7349128"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-shadow"
+              className="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-slate-400 mt-1">
               Este número se usará en el botón "Actualizar plan" para que los clientes te contacten por WhatsApp.
             </p>
           </div>
           <button
             onClick={handleGuardarWhatsapp}
             disabled={guardandoWhatsapp}
-            className="btn-primary flex items-center gap-2 shrink-0 bg-green-600 hover:bg-green-700"
+            className="btn-primary flex items-center gap-2 shrink-0 bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-950/40"
           >
             <Save size={18} />
             {guardandoWhatsapp ? 'Guardando...' : 'Guardar'}
@@ -165,25 +165,25 @@ export default function AdminPlanes() {
         </div>
       </div>
 
-      <div className="card overflow-hidden p-0">
-        <div className="p-6 border-b border-gray-200">
+      <div className="bg-slate-900/80 rounded-2xl shadow-xl border border-slate-800 overflow-hidden text-slate-100">
+        <div className="p-6 border-b border-slate-800">
           <div className="flex items-center gap-2">
-            <Package className="text-indigo-600" size={24} />
-            <h2 className="text-xl font-bold text-gray-900">Planes de Suscripción</h2>
+            <Package className="text-indigo-400" size={24} />
+            <h2 className="text-xl font-bold text-white">Planes de Suscripción</h2>
           </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white">
-                <th className="px-4 py-4 text-left text-sm font-semibold">Nombre</th>
-                <th className="px-4 py-4 text-left text-sm font-semibold">Precio /mes</th>
-                <th className="px-4 py-4 text-center text-sm font-semibold">Duración</th>
-                <th className="px-4 py-4 text-center text-sm font-semibold">Características</th>
-                <th className="px-4 py-4 text-center text-sm font-semibold">Activo</th>
-                <th className="px-4 py-4 text-center text-sm font-semibold">Suscripciones</th>
-                <th className="px-4 py-4 text-center text-sm font-semibold">Ingreso Mensual</th>
-                <th className="px-4 py-4 text-center text-sm font-semibold">Acciones</th>
+              <tr className="bg-slate-900 border-b border-slate-800 text-slate-300 uppercase tracking-wider text-xs">
+                <th className="px-4 py-4 text-left font-semibold">Nombre</th>
+                <th className="px-4 py-4 text-left font-semibold">Precio /mes</th>
+                <th className="px-4 py-4 text-center font-semibold">Duración</th>
+                <th className="px-4 py-4 text-center font-semibold">Características</th>
+                <th className="px-4 py-4 text-center font-semibold">Activo</th>
+                <th className="px-4 py-4 text-center font-semibold">Suscripciones</th>
+                <th className="px-4 py-4 text-center font-semibold">Ingreso Mensual</th>
+                <th className="px-4 py-4 text-center font-semibold">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -195,67 +195,67 @@ export default function AdminPlanes() {
                     : 0;
 
                   return (
-                    <tr key={plan.id} className="border-b border-gray-100 hover:bg-indigo-50/30 transition-colors">
+                    <tr key={plan.id} className="border-b border-slate-800/60 hover:bg-slate-800/40 transition-colors">
                       <td className="px-4 py-4">
-                        <div className="font-semibold text-gray-900">{plan.nombre}</div>
+                        <div className="font-semibold text-white">{plan.nombre}</div>
                         {plan.descripcion && (
-                          <div className="text-xs text-gray-500 mt-1 line-clamp-1">{plan.descripcion}</div>
+                          <div className="text-xs text-slate-400 mt-1 line-clamp-1">{plan.descripcion}</div>
                         )}
                       </td>
-                      <td className="px-4 py-4 font-medium text-gray-900">
+                      <td className="px-4 py-4 font-semibold text-emerald-400">
                         {formatearDesdeBase(plan.precio)} /mes
                       </td>
-                      <td className="px-4 py-4 text-center text-gray-700">
+                      <td className="px-4 py-4 text-center text-slate-300">
                         {plan.duracionDias} días
                       </td>
                       <td className="px-4 py-4 text-center">
-                        <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-sm font-medium">
+                        <span className="px-2.5 py-1 rounded-full bg-indigo-950/50 text-indigo-300 border border-indigo-800/40 text-xs font-semibold">
                           {plan.features.length}
                         </span>
                       </td>
                       <td className="px-4 py-4 text-center">
-                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${plan.activo
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-red-100 text-red-700'
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${plan.activo
+                            ? 'bg-emerald-950/50 text-emerald-400 border-emerald-800/40'
+                            : 'bg-rose-950/50 text-rose-400 border-rose-800/40'
                           }`}>
                           {plan.activo ? 'Activo' : 'Inactivo'}
                         </span>
                       </td>
                       <td className="px-4 py-4 text-center">
-                        <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm font-medium">
+                        <span className="px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700 text-xs font-semibold">
                           {activeCount}
                         </span>
                       </td>
-                      <td className="px-4 py-4 text-center font-medium text-green-700">
+                      <td className="px-4 py-4 text-center font-semibold text-cyan-300">
                         {formatearDesdeBase(monthlyRevenue)}
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={() => openEdit(plan)}
-                            className="p-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors"
+                            className="p-2 rounded-lg bg-indigo-950/50 text-indigo-400 hover:bg-indigo-900/60 border border-indigo-800/40 transition-colors"
                             title="Editar plan"
                           >
-                            <Edit size={18} />
+                            <Edit size={16} />
                           </button>
                           <button
                             onClick={() => handleToggle(plan.id, plan.activo)}
                             disabled={togglingId === plan.id || deletingId === plan.id}
-                            className={`p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${plan.activo
-                                ? 'bg-orange-100 text-orange-600 hover:bg-orange-200'
-                                : 'bg-green-100 text-green-600 hover:bg-green-200'
+                            className={`p-2 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${plan.activo
+                                ? 'bg-amber-950/40 text-amber-400 border-amber-800/40 hover:bg-amber-900/60'
+                                : 'bg-emerald-950/40 text-emerald-400 border-emerald-800/40 hover:bg-emerald-900/60'
                               }`}
                             title={plan.activo ? 'Desactivar' : 'Activar'}
                           >
-                            <ToggleLeft size={18} />
+                            <ToggleLeft size={16} />
                           </button>
                           <button
                             onClick={() => handleDelete(plan.id)}
                             disabled={deletingId === plan.id}
-                            className="p-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors disabled:opacity-50"
+                            className="p-2 rounded-lg bg-rose-950/40 text-rose-400 border border-rose-800/40 hover:bg-rose-900/60 transition-colors disabled:opacity-50"
                             title="Eliminar plan"
                           >
-                            <Trash2 size={18} />
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       </td>
@@ -264,8 +264,8 @@ export default function AdminPlanes() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={8} className="text-center py-12 text-gray-500">
-                    <Package size={48} className="mx-auto mb-3 text-gray-300" />
+                  <td colSpan={8} className="text-center py-12 text-slate-500">
+                    <Package size={48} className="mx-auto mb-3 text-slate-700" />
                     <p className="font-medium">No hay planes creados</p>
                     <p className="text-sm mt-1">Creá tu primer plan para empezar</p>
                   </td>
