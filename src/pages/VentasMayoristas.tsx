@@ -31,35 +31,6 @@ export default function VentasMayoristas() {
   const [perfilesSeleccionados, setPerfilesSeleccionados] = useState<number[]>([]);
   const [generando, setGenerando] = useState(false);
   const selectCuentaRef = React.useRef<HTMLSelectElement>(null);
-  const formRef = React.useRef<HTMLDivElement>(null);
-
-  const handleHeaderButtonClick = () => {
-    if (tab === 'activas') {
-      setTab('nueva');
-      setLinkGenerado('');
-      setTimeout(() => {
-        selectCuentaRef.current?.focus();
-        formRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 50);
-      return;
-    }
-
-    if (linkGenerado) {
-      setLinkGenerado('');
-      setCuentaId('');
-      setNombreSub('');
-      setPerfilesSeleccionados([]);
-      setCantidad(1);
-      setTotalRecibido(0);
-      setTimeout(() => {
-        selectCuentaRef.current?.focus();
-        formRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 50);
-      return;
-    }
-
-    handleGenerarLink();
-  };
 
   const cuentasConIMAP = useMemo(() =>
     cuentas.filter(c => c.estado !== 'expirada'),
@@ -163,31 +134,11 @@ export default function VentasMayoristas() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
-            Ventas Mayoristas
-          </h1>
-          <p className="text-gray-600">Generá links de consulta y administrá accesos para revendedores</p>
-        </div>
-        <button
-          type="button"
-          onClick={handleHeaderButtonClick}
-          disabled={generando}
-          className="btn-primary inline-flex items-center gap-2 self-start sm:self-auto disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {generando ? (
-            <>
-              <Loader2 size={18} className="animate-spin" />
-              Generando venta...
-            </>
-          ) : (
-            <>
-              <PlusCircle size={18} />
-              Registrar Venta Mayorista
-            </>
-          )}
-        </button>
+      <div className="mb-6">
+        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+          Ventas Mayoristas
+        </h1>
+        <p className="text-gray-600">Generá links de consulta y administrá accesos para revendedores</p>
       </div>
 
       {/* Métricas rápidas */}
@@ -251,7 +202,7 @@ export default function VentasMayoristas() {
 
       {/* Contenido Pestaña 1: Nueva Venta Mayorista */}
       {tab === 'nueva' && (
-        <div ref={formRef} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Seleccionar cuenta <span className="text-red-500">*</span>

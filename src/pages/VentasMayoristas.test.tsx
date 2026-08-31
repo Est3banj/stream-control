@@ -90,6 +90,12 @@ describe('VentasMayoristas', () => {
     expect(screen.getByText('Revendedor Uno')).toBeTruthy();
     expect(screen.getByText('Netflix')).toBeTruthy();
     expect(screen.getByText('Activo')).toBeTruthy();
+
+    // Click on new sale tab
+    const nuevaTabBtn = screen.getByText('Nueva Venta Mayorista');
+    fireEvent.click(nuevaTabBtn);
+
+    expect(screen.getByText(/Seleccionar cuenta/i)).toBeTruthy();
   });
 
   it('shows account perfiles when account is selected in new sale tab', () => {
@@ -103,22 +109,7 @@ describe('VentasMayoristas', () => {
     expect(screen.getByText('Nombre del revendedor / sub-distribuidor')).toBeTruthy();
   });
 
-  it('header button switches from activas to nueva tab', () => {
-    render(<VentasMayoristas />);
-
-    // Switch to activas tab
-    fireEvent.click(screen.getByText(/Ventas Mayoristas Activas/i));
-    expect(screen.getByText('Revendedor Uno')).toBeTruthy();
-
-    // Click header button "Registrar Venta Mayorista"
-    const headerBtn = screen.getByRole('button', { name: /Registrar Venta Mayorista/i });
-    fireEvent.click(headerBtn);
-
-    // Should switch back to nueva tab
-    expect(screen.getByText(/Seleccionar cuenta/i)).toBeTruthy();
-  });
-
-  it('header button triggers submission when form is filled', async () => {
+  it('form submit button triggers submission when form is filled', async () => {
     const { callFunction } = await import('../lib/apiClient');
     render(<VentasMayoristas />);
 
@@ -134,9 +125,9 @@ describe('VentasMayoristas', () => {
     const nombreInput = screen.getByPlaceholderText(/Ej: Distribuidor Express/i);
     fireEvent.change(nombreInput, { target: { value: 'Revendedor Pro' } });
 
-    // Click header button to submit
-    const headerBtn = screen.getAllByRole('button', { name: /Registrar Venta Mayorista/i })[0];
-    fireEvent.click(headerBtn);
+    // Click form submit button
+    const submitBtn = screen.getByRole('button', { name: /Registrar Venta Mayorista/i });
+    fireEvent.click(submitBtn);
 
     expect(callFunction).toHaveBeenCalledWith('generarTokenSubdistribuidor', expect.objectContaining({
       cuentaId: 'cuenta-1',
