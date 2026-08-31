@@ -341,8 +341,8 @@ describe('enviarCorreoRecuperacion / enviarCorreoVerificacion (none + rate-limit
     expect(emailMocks.sendMail).not.toHaveBeenCalled();
 
     const loggedOutput = consoleSpy.mock.calls.map(call => call.join(' ')).join('\n');
-    expect(loggedOutput).toContain('🔗 [DEV MODE] Link de verificación para dev@example.com:');
-    expect(loggedOutput).toContain('/r/verificar-email?token=');
+    expect(loggedOutput).toContain('✉️  [DEV MODE EMAIL]');
+    expect(loggedOutput).toContain('To: dev@example.com');
 
     consoleSpy.mockRestore();
   });

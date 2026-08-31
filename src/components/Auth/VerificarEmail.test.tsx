@@ -5,7 +5,8 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import VerificarEmail from './VerificarEmail';
 
 const mockNavigate = vi.fn();
-const mockSendVerificationEmail = vi.fn();
+const mockEnviarCodigoOTP = vi.fn();
+const mockVerificarCodigo = vi.fn();
 const mockRefreshUser = vi.fn();
 const mockLogout = vi.fn();
 const mockUpdateUserEmail = vi.fn();
@@ -37,7 +38,8 @@ vi.mock('react-router-dom', async () => {
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
     user: mockUser,
-    sendVerificationEmail: mockSendVerificationEmail,
+    enviarCodigoOTP: mockEnviarCodigoOTP,
+    verificarCodigo: mockVerificarCodigo,
     refreshUser: mockRefreshUser,
     logout: mockLogout,
     updateUserEmail: mockUpdateUserEmail,
@@ -52,7 +54,7 @@ vi.mock('react-hot-toast', () => ({
   },
 }));
 
-describe('VerificarEmail Component Flow', () => {
+describe('VerificarEmail OTP Flow Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     sessionStorage.clear();
@@ -66,7 +68,7 @@ describe('VerificarEmail Component Flow', () => {
     };
   });
 
-  it('renders initial waiting verification state with user email and radar', () => {
+  it('renders OTP verification screen with 6 digit inputs and recipient badge', () => {
     render(
       <MemoryRouter>
         <VerificarEmail />
@@ -75,9 +77,10 @@ describe('VerificarEmail Component Flow', () => {
 
     expect(screen.getByText('Verificá tu correo')).toBeInTheDocument();
     expect(screen.getByText('ana@example.com')).toBeInTheDocument();
-    expect(screen.getByText(/Sondeo en tiempo real/i)).toBeInTheDocument();
-    expect(screen.getByText('Ya lo verifiqué (Comprobar)')).toBeInTheDocument();
-    expect(screen.getByText(/Reenviar correo de verificación/i)).toBeInTheDocument();
+    expect(screen.getByText(/Código de seguridad/i)).toBeInTheDocument();
+    expect(screen.getAllByRole('textbox')).toHaveLength(6);
+    expect(screen.getByText('Verificar código')).toBeInTheDocument();
+    expect(screen.getByText(/Reenviar código OTP/i)).toBeInTheDocument();
     expect(screen.getByText('Cerrar sesión')).toBeInTheDocument();
   });
 
@@ -117,8 +120,8 @@ describe('VerificarEmail Component Flow', () => {
     expect(screen.getByText('Dashboard Principal')).toBeInTheDocument();
   });
 
-  it('triggers sendVerificationEmail when clicking resend button and initiates cooldown', async () => {
-    mockSendVerificationEmail.mockResolvedValueOnce(undefined);
+  it('allows entering 6 digits and verifies automatically on completion', async () => {
+    mockVerificarCodigo.mockResolvedValueOnce(undefined);
 
     render(
       <MemoryRouter>
@@ -126,20 +129,66 @@ describe('VerificarEmail Component Flow', () => {
       </MemoryRouter>
     );
 
-    const resendBtn = screen.getByText(/Reenviar correo de verificación/i);
+    const inputs = screen.getAllByRole('textbox');
+    const digits = ['8', '3', '9', '2', '0', '1'];
+
+    digits.forEach((d, i) => {
+      fireEvent.change(inputs[i], { target: { value: d } });
+    });
+
+    await waitFor(() => {
+      expect(mockVerificarCodigo).toHaveBeenCalledWith('839201', 'ana@example.com');
+    });
+
+    expect(await screen.findByText('¡Tu cuenta está lista!')).toBeInTheDocument();
+  });
+
+  it('displays error message when verification fails with incorrect code', async () => {
+    mockVerificarCodigo.mockRejectedValueOnce(
+      new Error('Código incorrecto. Te quedan 4 intentos.')
+    );
+
+    render(
+      <MemoryRouter>
+        <VerificarEmail />
+      </MemoryRouter>
+    );
+
+    const inputs = screen.getAllByRole('textbox');
+    const digits = ['1', '1', '1', '2', '2', '2'];
+
+    digits.forEach((d, i) => {
+      fireEvent.change(inputs[i], { target: { value: d } });
+    });
+
+    await waitFor(() => {
+      expect(mockVerificarCodigo).toHaveBeenCalledWith('111222', 'ana@example.com');
+      expect(screen.getByText('Código incorrecto. Te quedan 4 intentos.')).toBeInTheDocument();
+    });
+  });
+
+  it('triggers enviarCodigoOTP when clicking resend button and initiates cooldown', async () => {
+    mockEnviarCodigoOTP.mockResolvedValueOnce(undefined);
+
+    render(
+      <MemoryRouter>
+        <VerificarEmail />
+      </MemoryRouter>
+    );
+
+    const resendBtn = screen.getByText(/Reenviar código OTP/i);
     fireEvent.click(resendBtn);
 
     await waitFor(() => {
-      expect(mockSendVerificationEmail).toHaveBeenCalledTimes(1);
+      expect(mockEnviarCodigoOTP).toHaveBeenCalledTimes(1);
     });
 
-    // Should now be disabled with countdown
-    expect(screen.getByText(/Reenviar correo de verificación \(\d+s\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/Reenviar código OTP \(\d+s\)/i)).toBeInTheDocument();
   });
 
   it('opens CambiarEmailModal when clicking edit and updates email on success', async () => {
     mockUpdateUserEmail.mockResolvedValueOnce(undefined);
-    mockSendVerificationEmail.mockResolvedValueOnce(undefined);
+    mockEnviarCodigoOTP.mockResolvedValueOnce(undefined);
 
     render(
       <MemoryRouter>
@@ -185,25 +234,5 @@ describe('VerificarEmail Component Flow', () => {
       expect(mockLogout).toHaveBeenCalledTimes(1);
       expect(mockNavigate).toHaveBeenCalledWith('/login', { replace: true });
     });
-  });
-
-  it('renders success celebration and allows instant navigation to dashboard', async () => {
-    mockRefreshUser.mockResolvedValueOnce(true);
-
-    render(
-      <MemoryRouter initialEntries={['/verificar-email?verified=true']}>
-        <VerificarEmail />
-      </MemoryRouter>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText('¡Tu cuenta está lista!')).toBeInTheDocument();
-    });
-
-    expect(screen.getByText('¡Verificación confirmada!')).toBeInTheDocument();
-    const enterBtn = screen.getByText('Entrar ahora');
-    fireEvent.click(enterBtn);
-
-    expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true });
   });
 });

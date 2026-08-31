@@ -30,6 +30,8 @@ export interface AuthFake {
   generateEmailVerificationLink: ReturnType<typeof vi.fn>;
   listUsers: ReturnType<typeof vi.fn>;
   deleteUser: ReturnType<typeof vi.fn>;
+  updateUser: ReturnType<typeof vi.fn>;
+  getUserByEmail: ReturnType<typeof vi.fn>;
 }
 
 function makeAuthFake(): AuthFake {
@@ -62,6 +64,12 @@ function makeAuthFake(): AuthFake {
       pageToken: undefined,
     })),
     deleteUser: vi.fn(async () => undefined),
+    updateUser: vi.fn(async (_uid: string, _data: Record<string, unknown>) => undefined),
+    getUserByEmail: vi.fn(async (email: string) => {
+      const user = users.find(u => (u as unknown as { email?: string }).email === email);
+      if (user) return { ...user };
+      return { uid: 'uid-test-email', email };
+    }),
   };
 
   return auth;
