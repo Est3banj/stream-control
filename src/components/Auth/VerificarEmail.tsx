@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { LogOut, Edit3, ShieldCheck, ArrowRight, Loader2, KeyRound } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import type { VerificationStep } from '../../types/authVerification';
+import AuthLayout from './AuthLayout';
 import OtpInput from './OtpInput';
 import CooldownButton from './CooldownButton';
 import SuccessCelebration from './SuccessCelebration';
@@ -115,138 +116,138 @@ export default function VerificarEmail() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center relative bg-gradient-to-tr from-indigo-950 via-indigo-900 to-violet-950 overflow-hidden px-4 font-sans text-white">
-      {/* Elementos ambientales de fondo */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 right-10 w-72 h-72 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
+    <AuthLayout
+      subtitle={
+        step === 'SUCCESS'
+          ? 'Confirmación de identidad completada'
+          : 'Verificación de seguridad requerida para continuar'
+      }
+      badge="Seguridad"
+    >
+      <AnimatePresence mode="wait">
+        {step === 'SUCCESS' ? (
+          <SuccessCelebration
+            key="success-celebration"
+            onContinue={handleSuccessRedirect}
+            redirectDelaySeconds={3}
+            userEmail={currentDisplayEmail}
+          />
+        ) : (
+          <motion.div
+            key="verification-card"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{ duration: 0.25 }}
+            className="flex flex-col items-center text-center"
+          >
+            {/* Isotipo / Badge animado */}
+            <div className="mb-4 w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center shadow-lg shadow-indigo-950/40 text-indigo-400">
+              <KeyRound className="w-7 h-7" />
+            </div>
 
-      {/* Contenedor Principal Glassmorphic */}
-      <div className="relative z-10 w-full max-w-lg bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl p-6 sm:p-10 transition-all duration-500">
-        <AnimatePresence mode="wait">
-          {step === 'SUCCESS' ? (
-            <SuccessCelebration
-              key="success-celebration"
-              onContinue={handleSuccessRedirect}
-              redirectDelaySeconds={3}
-              userEmail={currentDisplayEmail}
+            {/* Tag de Código de seguridad */}
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-3">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Código de seguridad</span>
+            </div>
+
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 tracking-tight">
+              Verificá tu correo
+            </h2>
+
+            <p className="text-slate-400 text-xs sm:text-sm mb-4 leading-relaxed max-w-sm">
+              Ingresá el código de 6 dígitos que enviamos a:
+            </p>
+
+            {/* Badge con el Correo Electrónico y Opción de Cambio */}
+            <div className="w-full bg-slate-950/70 border border-slate-800/90 rounded-2xl p-3.5 mb-3 flex items-center justify-between gap-2 text-left">
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] uppercase tracking-wider text-slate-500 block font-medium">
+                  Destinatario
+                </span>
+                <span className="text-xs sm:text-sm font-semibold text-slate-200 truncate block">
+                  {currentDisplayEmail || 'usuario@correo.com'}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(true)}
+                className="flex items-center gap-1.5 text-xs font-medium text-indigo-300 hover:text-white bg-slate-900 hover:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700/80 transition-colors flex-shrink-0"
+                title="Corregir correo"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>Editar</span>
+              </button>
+            </div>
+
+            {/* Entrada de 6 Dígitos OTP */}
+            <OtpInput
+              value={otpCode}
+              onChange={(val) => {
+                setOtpCode(val);
+                if (errorMessage) setErrorMessage(null);
+              }}
+              onComplete={(val) => {
+                handleVerify(val);
+              }}
+              disabled={isSubmitting}
+              hasError={Boolean(errorMessage)}
             />
-          ) : (
-            <motion.div
-              key="verification-card"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.3 }}
-              className="flex flex-col items-center text-center"
-            >
-              {/* Isotipo / Badge animado */}
-              <div className="mb-5 w-16 h-16 rounded-3xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center shadow-lg shadow-indigo-500/20 text-indigo-300">
-                <KeyRound className="w-8 h-8" />
+
+            {/* Mensaje de Error en línea si existe */}
+            {errorMessage && (
+              <div className="text-xs text-rose-300 bg-rose-500/10 border border-rose-500/30 rounded-2xl px-3.5 py-2.5 my-2 w-full text-center">
+                {errorMessage}
               </div>
+            )}
 
-              {/* Título y Estado */}
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 text-xs font-semibold uppercase tracking-wider mb-3">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Código de seguridad</span>
-              </div>
+            {/* Acciones Principales */}
+            <div className="w-full flex flex-col gap-2.5 mt-2">
+              {/* Botón de Validación Manual */}
+              <button
+                type="button"
+                onClick={() => handleVerify()}
+                disabled={otpCode.length !== 6 || isSubmitting}
+                className="w-full flex items-center justify-center gap-2 py-3.5 px-5 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 hover:from-indigo-500 hover:to-violet-500 border border-indigo-400/30 text-white font-semibold text-sm shadow-lg shadow-indigo-600/30 transition-all duration-200 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Verificando código...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Verificar código</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
 
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-2 tracking-tight">
-                Verificá tu correo
-              </h2>
-
-              <p className="text-white/70 text-sm mb-4 leading-relaxed max-w-md">
-                Ingresá el código de 6 dígitos que enviamos a:
-              </p>
-
-              {/* Badge con el Correo Electrónico y Opción de Cambio */}
-              <div className="w-full bg-white/10 border border-white/15 rounded-2xl p-3.5 mb-4 flex items-center justify-between gap-2 text-left backdrop-blur-md">
-                <div className="min-w-0 flex-1">
-                  <span className="text-[11px] uppercase tracking-wider text-white/50 block font-medium">
-                    Destinatario
-                  </span>
-                  <span className="text-sm font-semibold text-white truncate block">
-                    {currentDisplayEmail || 'usuario@correo.com'}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(true)}
-                  className="flex items-center gap-1 text-xs font-medium text-indigo-300 hover:text-indigo-100 bg-white/5 hover:bg-white/10 px-2.5 py-1.5 rounded-lg border border-white/10 transition-colors flex-shrink-0"
-                  title="Corregir correo"
-                >
-                  <Edit3 className="w-3.5 h-3.5" />
-                  <span>Editar</span>
-                </button>
-              </div>
-
-              {/* Entrada de 6 Dígitos OTP */}
-              <OtpInput
-                value={otpCode}
-                onChange={(val) => {
-                  setOtpCode(val);
-                  if (errorMessage) setErrorMessage(null);
-                }}
-                onComplete={(val) => {
-                  handleVerify(val);
-                }}
-                disabled={isSubmitting}
-                hasError={Boolean(errorMessage)}
+              {/* Botón de Reenvío con Cooldown de 60s */}
+              <CooldownButton
+                onClick={handleReenviar}
+                durationSeconds={60}
+                loading={enviando}
+                label="Reenviar código OTP"
               />
+            </div>
 
-              {/* Mensaje de Error en línea si existe */}
-              {errorMessage && (
-                <div className="text-xs text-red-300 bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2 my-2 w-full text-center">
-                  {errorMessage}
-                </div>
-              )}
-
-              {/* Acciones Principales */}
-              <div className="w-full flex flex-col gap-3 mt-3">
-                {/* Botón de Validación Manual */}
-                <button
-                  type="button"
-                  onClick={() => handleVerify()}
-                  disabled={otpCode.length !== 6 || isSubmitting}
-                  className="w-full flex items-center justify-center gap-2 py-3.5 px-5 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-violet-600 hover:to-indigo-600 border border-indigo-400/40 text-white font-semibold shadow-lg shadow-indigo-600/30 transition-all duration-300 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>Verificando código...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Verificar código</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
-
-                {/* Botón de Reenvío con Cooldown de 60s */}
-                <CooldownButton
-                  onClick={handleReenviar}
-                  durationSeconds={60}
-                  loading={enviando}
-                  label="Reenviar código OTP"
-                />
-              </div>
-
-              {/* Botón de Salida / Cerrar Sesión */}
-              <div className="mt-6 pt-5 border-t border-white/10 w-full flex items-center justify-between text-xs text-white/60">
-                <span>¿Problemas con el registro?</span>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="inline-flex items-center gap-1.5 text-white/70 hover:text-white font-medium transition-colors"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span>Cerrar sesión</span>
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+            {/* Botón de Salida / Cerrar Sesión */}
+            <div className="mt-6 pt-4 border-t border-slate-800/80 w-full flex items-center justify-between text-xs text-slate-400">
+              <span>¿Problemas con el registro?</span>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="inline-flex items-center gap-1.5 text-slate-300 hover:text-white font-medium transition-colors"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Cerrar sesión</span>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Modal de Corrección de Correo */}
       <CambiarEmailModal
@@ -260,10 +261,6 @@ export default function VerificarEmail() {
           toast.success('Correo actualizado y nuevo código enviado.');
         }}
       />
-
-      <footer className="relative z-10 mt-8 text-white/60 text-xs text-center font-light">
-        © StreamControl Pro — Plataforma de Gestión
-      </footer>
-    </div>
+    </AuthLayout>
   );
 }

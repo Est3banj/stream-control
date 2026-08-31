@@ -32,28 +32,28 @@ export const RadarPing: React.FC<RadarPingProps> = ({ isChecking = false, classN
           variants={ringVariants}
           initial="initial"
           animate="animate"
-          className="absolute inset-0 rounded-full border border-indigo-400/40 bg-indigo-500/10 pointer-events-none"
+          className="absolute inset-0 rounded-full border border-indigo-500/30 bg-indigo-500/10 pointer-events-none"
         />
       ))}
 
       {/* Resplandor ambiental de fondo */}
-      <div className="absolute inset-2 rounded-full bg-gradient-to-tr from-indigo-500/30 via-violet-500/30 to-purple-500/20 blur-md pointer-events-none" />
+      <div className="absolute inset-2 rounded-full bg-gradient-to-tr from-indigo-500/20 via-violet-500/20 to-purple-500/15 blur-md pointer-events-none" />
 
       {/* Núcleo central */}
       <motion.div
         animate={{
-          scale: isChecking ? [1, 1.08, 1] : 1,
+          scale: isChecking ? [1, 1.06, 1] : 1,
           boxShadow: isChecking
-            ? '0 0 25px rgba(99, 102, 241, 0.6)'
-            : '0 0 15px rgba(99, 102, 241, 0.3)',
+            ? '0 0 25px rgba(99, 102, 241, 0.5)'
+            : '0 0 15px rgba(99, 102, 241, 0.25)',
         }}
         transition={{ duration: 0.8, repeat: isChecking ? Infinity : 0 }}
-        className="relative z-10 w-20 h-20 rounded-full bg-gradient-to-tr from-indigo-600 via-indigo-500 to-violet-600 flex items-center justify-center shadow-xl border border-white/20 text-white"
+        className="relative z-10 w-18 h-18 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-violet-600 flex items-center justify-center shadow-xl border border-indigo-400/40 text-white"
       >
         {isChecking ? (
-          <RefreshCw className="w-9 h-9 animate-spin text-indigo-100" />
+          <RefreshCw className="w-8 h-8 animate-spin text-indigo-100" />
         ) : (
-          <Mail className="w-9 h-9 text-indigo-100 drop-shadow" />
+          <Mail className="w-8 h-8 text-indigo-100 drop-shadow" />
         )}
       </motion.div>
     </div>

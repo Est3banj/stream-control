@@ -84,34 +84,39 @@ export const OtpInput: React.FC<OtpInputProps> = ({
   };
 
   return (
-    <div className="flex items-center justify-center gap-2 sm:gap-3 my-4">
-      {Array.from({ length }).map((_, index) => (
-        <input
-          key={index}
-          ref={(el) => {
-            inputRefs.current[index] = el;
-          }}
-          type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          autoComplete="one-time-code"
-          maxLength={1}
-          aria-label={`Dígito ${index + 1}`}
-          value={digits[index] || ''}
-          onChange={(e) => handleChange(index, e.target.value)}
-          onKeyDown={(e) => handleKeyDown(index, e)}
-          onPaste={handlePaste}
-          disabled={disabled}
-          className={`w-11 h-14 sm:w-13 sm:h-16 text-center text-2xl font-mono font-bold rounded-2xl border bg-white/10 text-white placeholder-white/20 transition-all duration-200 outline-none
-            ${
-              hasError
-                ? 'border-red-500 bg-red-500/10 text-red-200 focus:ring-2 focus:ring-red-400'
-                : 'border-white/20 focus:border-indigo-400 focus:bg-white/20 focus:ring-2 focus:ring-indigo-400/50'
-            }
-            ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-white/40'}
-          `}
-        />
-      ))}
+    <div className="flex items-center justify-center gap-2 sm:gap-2.5 my-4 select-none">
+      {Array.from({ length }).map((_, index) => {
+        const isFilled = Boolean(digits[index]);
+        return (
+          <input
+            key={index}
+            ref={(el) => {
+              inputRefs.current[index] = el;
+            }}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            autoComplete="one-time-code"
+            maxLength={1}
+            aria-label={`Dígito ${index + 1}`}
+            value={digits[index] || ''}
+            onChange={(e) => handleChange(index, e.target.value)}
+            onKeyDown={(e) => handleKeyDown(index, e)}
+            onPaste={handlePaste}
+            disabled={disabled}
+            className={`w-11 h-14 sm:w-12 sm:h-16 text-center text-xl sm:text-2xl font-mono font-bold rounded-2xl border transition-all duration-200 outline-none shadow-sm
+              ${
+                hasError
+                  ? 'border-red-500 bg-red-500/10 text-red-200 focus:ring-2 focus:ring-red-400/30'
+                  : isFilled
+                  ? 'border-indigo-500/50 bg-slate-950/80 text-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/25'
+                  : 'border-slate-800 bg-slate-950/60 text-white placeholder-slate-600 hover:border-slate-700 focus:border-indigo-400 focus:bg-slate-950/80 focus:ring-2 focus:ring-indigo-500/25'
+              }
+              ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+            `}
+          />
+        );
+      })}
     </div>
   );
 };

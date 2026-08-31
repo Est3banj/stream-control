@@ -21,6 +21,7 @@ const ConsultaPublica = lazy(() => import('./pages/ConsultaPublica'));
 const ConsultaCodigos = lazy(() => import('./pages/ConsultaCodigos'));
 const VentasMayoristas = lazy(() => import('./pages/VentasMayoristas'));
 const VerificarEmailLink = lazy(() => import('./pages/VerificarEmailLink'));
+const RegisterPage = lazy(() => import('./pages/Register'));
 
 /** Handle public consultation route served via Firebase rewrite /r/** → /app/index.html */
 function PublicConsulta() {
@@ -60,8 +61,9 @@ export default function App() {
       <ErrorBoundary>
         <Suspense fallback={<div className="container">Cargando...</div>}>
           <Routes>
-          {/* Ruta pública */}
+          {/* Rutas públicas */}
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route path="/verificar-email" element={<VerificarEmail />} />
 
           {/* Rutas privadas */}

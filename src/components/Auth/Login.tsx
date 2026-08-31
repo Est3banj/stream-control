@@ -1,98 +1,96 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { callFunction } from '../../lib/apiClient';
 import toast from 'react-hot-toast';
-import { MONEDAS, MONEDA_POR_DEFECTO, TASA_POR_DEFECTO } from '../../types/usuario';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  Loader2,
+  KeyRound,
+  CheckCircle2,
+  AlertCircle,
+} from 'lucide-react';
+import AuthLayout from './AuthLayout';
+import Register from './Register';
 
 type Modo = 'login' | 'register';
 
-export default function Login(){
-  const { login, register, loginWithGoogle } = useAuth();
-  const nav = useNavigate();
-  const [modo, setModo] = useState<Modo>('login');
-  const [loading, setLoading] = useState(false);
+interface LoginProps {
+  initialModo?: Modo;
+}
 
-  // Login fields
+export default function Login({ initialModo = 'login' }: LoginProps) {
+  const { login, loginWithGoogle } = useAuth();
+  const nav = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const [modo, setModo] = useState<Modo>(() => {
+    const urlMode = searchParams.get('mode');
+    if (urlMode === 'register') return 'register';
+    return initialModo;
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  // Login form state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+
+  // Password Recovery state
   const [mostrarRecuperacion, setMostrarRecuperacion] = useState(false);
   const [emailRecuperacion, setEmailRecuperacion] = useState('');
   const [enviado, setEnviado] = useState(false);
   const [recuperando, setRecuperando] = useState(false);
 
-  // Register fields
-  const [regNombre, setRegNombre] = useState('');
-  const [regEmail, setRegEmail] = useState('');
-  const [regPassword, setRegPassword] = useState('');
-  const [regMoneda, setRegMoneda] = useState(MONEDA_POR_DEFECTO);
-  const [regTasa, setRegTasa] = useState(String(TASA_POR_DEFECTO));
-  const [showRegPassword, setShowRegPassword] = useState(false);
+  // Sync mode with query params if changed externally
+  useEffect(() => {
+    const urlMode = searchParams.get('mode');
+    if (urlMode === 'register') {
+      setModo('register');
+    } else if (urlMode === 'login') {
+      setModo('login');
+    }
+  }, [searchParams]);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!email.trim() || !password.trim()) {
-      toast.error('Por favor complete todos los campos');
+    const emailTrimmed = email.trim().toLowerCase();
+
+    if (!emailTrimmed || !password.trim()) {
+      toast.error('Por favor completá todos los campos');
       return;
     }
 
     setLoading(true);
     try {
-      await login(email, password);
-      toast.success('Bienvenido');
+      await login(emailTrimmed, password);
+      toast.success('¡Bienvenido!');
       nav('/');
-    } catch (error) {
-      console.error(error);
+    } catch (error: unknown) {
+      console.error('Error en login:', error);
       const err = error as { code?: string; message?: string };
-      if (err.message?.includes("inactivo")) {
-        toast.error("Tu cuenta está inactiva. Contacta al administrador.");
-      } else if (err.message?.includes("no registrado")) {
-        toast.error("Este usuario no está registrado en la base de datos.");
-      } else if (err.message?.includes("Verificá tu correo")) {
-        toast.error("Verificá tu correo antes de continuar. Revisá tu bandeja de entrada.");
+      if (err.message?.includes('inactivo')) {
+        toast.error('Tu cuenta está inactiva. Contactá al administrador.');
+      } else if (err.message?.includes('no registrado')) {
+        toast.error('Este usuario no está registrado en la base de datos.');
+      } else if (err.message?.includes('Verificá tu correo') || err.message?.includes('verificar')) {
+        toast.error('Verificá tu correo antes de continuar. Te redirigimos a la pantalla de verificación.');
         nav('/verificar-email');
-      } else if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password") {
-        toast.error("Correo o contraseña incorrectos.");
+      } else if (
+        err.code === 'auth/invalid-credential' ||
+        err.code === 'auth/wrong-password' ||
+        err.code === 'auth/user-not-found'
+      ) {
+        toast.error('Correo o contraseña incorrectos.');
       } else {
-        toast.error("Error al iniciar sesión. Inténtelo nuevamente.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!regNombre.trim() || !regEmail.trim() || !regPassword.trim()) {
-      toast.error('Todos los campos son obligatorios');
-      return;
-    }
-    if (regPassword.length < 6) {
-      toast.error('La contraseña debe tener al menos 6 caracteres');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await register({
-        nombre: regNombre.trim(),
-        correo: regEmail.trim(),
-        password: regPassword,
-        moneda: regMoneda,
-        tasa: Number(regTasa) || TASA_POR_DEFECTO,
-      });
-      toast.success('Cuenta creada. Revisá tu correo para verificar tu cuenta.');
-      nav('/verificar-email');
-    } catch (error) {
-      console.error(error);
-      const err = error as { code?: string; message?: string };
-      if (err.code === 'auth/email-already-in-use') {
-        toast.error('Este correo ya está registrado.');
-      } else if (err.code === 'auth/weak-password') {
-        toast.error('La contraseña es muy débil.');
-      } else {
-        toast.error('Error al crear la cuenta. Inténtelo nuevamente.');
+        toast.error(err.message || 'Error al iniciar sesión. Inténtelo nuevamente.');
       }
     } finally {
       setLoading(false);
@@ -101,20 +99,23 @@ export default function Login(){
 
   const handleRecuperar = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!emailRecuperacion.trim()) {
+    const emailTrimmed = emailRecuperacion.trim().toLowerCase();
+
+    if (!emailTrimmed) {
       toast.error('Ingresá tu correo electrónico');
       return;
     }
+
     setRecuperando(true);
     try {
-      await callFunction('enviarCorreoRecuperacion', { email: emailRecuperacion.trim() });
+      await callFunction('enviarCorreoRecuperacion', { email: emailTrimmed });
       setEnviado(true);
     } catch (err: unknown) {
       const error = err as { code?: string; message?: string };
       if (error.code === 'functions/resource-exhausted') {
         toast.error('Esperá un minuto antes de solicitar otro correo');
       } else {
-        toast.error(error.message || 'Error al enviar el correo');
+        toast.error(error.message || 'Error al enviar el correo de recuperación');
       }
     } finally {
       setRecuperando(false);
@@ -134,333 +135,344 @@ export default function Login(){
 
   const handleGoogleSignIn = async () => {
     try {
-      setLoading(true);
+      setGoogleLoading(true);
       await loginWithGoogle();
-      toast.success('Bienvenido');
+      toast.success('¡Bienvenido!');
       nav('/');
     } catch (error: unknown) {
-      const err = error as Error;
-      toast.error(err.message || 'Error al iniciar sesion con Google');
+      const err = error as { code?: string; message?: string };
+      if (err.code === 'auth/popup-closed-by-user') {
+        return;
+      }
+      toast.error(err.message || 'Error al iniciar sesión con Google');
     } finally {
-      setLoading(false);
+      setGoogleLoading(false);
     }
   };
 
-  const toggleModo = () => {
-    setModo(modo === 'login' ? 'register' : 'login');
-    setLoading(false);
-  };
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center relative bg-gradient-to-tr from-indigo-900 via-indigo-800 to-violet-900 overflow-hidden px-4 font-sans">
-      <svg className="absolute bottom-0 left-0 w-full h-48 md:h-64 opacity-30 animate-wave" viewBox="0 0 1440 320" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-        <path fill="url(#gradient)" fillOpacity="0.7" d="M0,64L48,80C96,96,192,128,288,160C384,192,480,224,576,213.3C672,203,768,149,864,117.3C960,85,1056,75,1152,90.7C1248,107,1344,149,1392,170.7L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
-        <defs>
-          <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#7e3ff2" />
-            <stop offset="100%" stopColor="#f43f5e" />
-          </linearGradient>
-        </defs>
-      </svg>
-
-      <div className="relative z-10 w-full max-w-md bg-white bg-opacity-15 backdrop-blur-lg rounded-3xl shadow-2xl p-10 animate-fadeInUp transition-all duration-700 ease-in-out">
-        <div className="flex justify-center mb-6">
-          <div className="w-32 h-32 md:w-36 md:h-36 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center p-3 shadow-lg">
-            <img 
-              src="/app/stream.webp" 
-              alt="StreamControl Pro"
-              onError={(e) => {
-                const target = e.currentTarget;
-                if (!target.src.endsWith('/stream.webp') || target.src.includes('/app/stream.webp')) {
-                  target.src = '/stream.webp';
-                }
-              }}
-              className="w-full h-full object-contain drop-shadow-2xl animate-fadeInUp"
-              style={{ animationDelay: '0.1s', animationFillMode: 'both' }}
-            />
-          </div>
-        </div>
-        <h2 className="text-3xl font-extrabold mb-8 text-white drop-shadow-lg text-center tracking-wide">StreamControl Pro</h2>
-
-        {modo === 'login' && !mostrarRecuperacion ? (
-          /* ═══ FORMULARIO DE INICIO DE SESIÓN ═══ */
-          <form onSubmit={handleLogin} className="flex flex-col gap-3">
-            <input 
-              type="email"
-              value={email} 
-              onChange={e => setEmail(e.target.value)} 
-              placeholder="Correo" 
-              className="rounded-2xl px-5 py-4 focus:outline-none focus:ring-4 focus:ring-indigo-500 transition-shadow duration-500 bg-white bg-opacity-70 text-gray-900 shadow-md placeholder-gray-500 text-lg font-medium animate-inputFade"
-              autoComplete="email"
-            />
-            <div className="relative">
-              <input 
-                type={showPassword ? 'text' : 'password'} 
-                value={password} 
-                onChange={e => setPassword(e.target.value)} 
-                placeholder="Contraseña" 
-                className="rounded-2xl w-full pr-24 px-5 py-4 focus:outline-none focus:ring-4 focus:ring-indigo-500 transition-shadow duration-500 bg-white bg-opacity-70 text-gray-900 shadow-md placeholder-gray-500 text-lg font-medium animate-inputFade"
-                autoComplete="current-password"
-              />
-              <button 
-                type="button" 
-                onClick={() => setShowPassword(!showPassword)} 
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-indigo-400 hover:text-indigo-600 font-semibold transition-colors duration-300 select-none text-sm md:text-base"
-                tabIndex={-1}
-              >
-                {showPassword ? 'Ocultar' : 'Mostrar'}
-              </button>
-            </div>
-            <div className="text-right -mt-4">
-              <button
-                type="button"
-                onClick={abrirRecuperacion}
-                className="text-white/60 hover:text-white text-xs transition-colors"
-              >
-                ¿Olvidaste tu contraseña?
-              </button>
-            </div>
-            <button 
-              className="btn rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-violet-600 hover:to-indigo-600 transition-colors duration-500 text-white font-semibold py-3 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-lg tracking-wide"
-              disabled={loading}
-            >
-              {loading ? 'Entrando...' : 'Entrar'}
-            </button>
-
-            <div className="relative my-3">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/10"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-3 bg-transparent text-white/40">o continua con</span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              disabled={loading}
-              className="btn rounded-2xl bg-white/10 border border-white/20 text-white hover:bg-white/20 font-semibold py-3 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-lg tracking-wide flex items-center justify-center gap-3 transition-colors"
-            >
-              <svg className="w-6 h-6" viewBox="0 0 24 24">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-              </svg>
-              Google
-            </button>
-
-            <div className="text-center mt-2">
-              <button type="button" onClick={toggleModo} className="text-white/70 hover:text-white text-sm transition-colors">
-                ¿No tenés cuenta? <span className="font-semibold underline">Crear cuenta</span>
-              </button>
-            </div>
-          </form>
-        ) : modo === 'login' && mostrarRecuperacion ? (
-          /* ═══ RECUPERAR CONTRASEÑA ═══ */
-          <div className="flex flex-col gap-3 animate-fadeInUp">
+    <AuthLayout
+      subtitle={
+        mostrarRecuperacion
+          ? 'Recuperación segura de acceso a tu cuenta'
+          : modo === 'login'
+          ? 'Ingresá a tu panel para gestionar tus ventas y suscripciones'
+          : 'Comenzá a potenciar tu negocio de servicios digitales'
+      }
+    >
+      <AnimatePresence initial={false}>
+        {mostrarRecuperacion ? (
+          /* ════════════════════════════════════════════════════════════════════════
+             VISTA: RECUPERACIÓN DE CONTRASEÑA
+             ════════════════════════════════════════════════════════════════════════ */
+          <motion.div
+            key="recovery-card"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="flex flex-col"
+          >
             {!enviado ? (
-              <form onSubmit={handleRecuperar} className="flex flex-col gap-3">
+              <form onSubmit={handleRecuperar} className="flex flex-col gap-4">
                 <div className="text-center mb-2">
-                  <div className="w-16 h-16 rounded-full bg-indigo-500/30 flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-8 h-8 text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                    </svg>
+                  <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center mx-auto mb-3 text-indigo-400">
+                    <KeyRound className="w-7 h-7" />
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-1">¿Olvidaste tu contraseña?</h3>
-                  <p className="text-sm text-white/60">Ingresá tu correo y te enviaremos un enlace para restablecerla.</p>
+                  <h2 className="text-xl font-bold text-white mb-1">
+                    ¿Olvidaste tu contraseña?
+                  </h2>
+                  <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
+                    Ingresá tu correo registrado y te enviaremos las instrucciones para restablecerla.
+                  </p>
                 </div>
-                <input
-                  type="email"
-                  value={emailRecuperacion}
-                  onChange={e => setEmailRecuperacion(e.target.value)}
-                  placeholder="Tu correo electrónico"
-                  className="rounded-2xl px-5 py-4 focus:outline-none focus:ring-4 focus:ring-indigo-500 transition-shadow duration-500 bg-white bg-opacity-70 text-gray-900 shadow-md placeholder-gray-500 text-lg font-medium"
-                  autoComplete="email"
-                  autoFocus
-                />
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1.5 ml-1">
+                    Correo electrónico registrado
+                  </label>
+                  <div className="relative flex items-center bg-slate-950/70 border border-slate-800 rounded-2xl transition-all duration-200 focus-within:border-indigo-500/80 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:bg-slate-950/90">
+                    <Mail className="w-4 h-4 text-slate-500 ml-3.5 mr-2 flex-shrink-0" />
+                    <input
+                      type="email"
+                      value={emailRecuperacion}
+                      onChange={(e) => setEmailRecuperacion(e.target.value)}
+                      placeholder="tu@correo.com"
+                      required
+                      autoFocus
+                      disabled={recuperando}
+                      className="w-full bg-transparent py-3 pr-4 text-sm font-medium text-white placeholder:text-slate-500 focus:outline-none disabled:opacity-50"
+                    />
+                  </div>
+                </div>
+
                 <button
                   type="submit"
                   disabled={recuperando}
-                  className="btn rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-violet-600 hover:to-indigo-600 transition-colors duration-500 text-white font-semibold py-3 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-lg tracking-wide mt-2"
+                  className="w-full flex items-center justify-center gap-2 py-3.5 px-5 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 hover:from-indigo-500 hover:to-violet-500 border border-indigo-400/30 text-white font-semibold text-sm shadow-lg shadow-indigo-600/30 transition-all duration-200 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {recuperando ? 'Enviando...' : 'Enviar enlace'}
+                  {recuperando ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Enviando instrucciones...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Enviar enlace de recuperación</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
                 </button>
+
                 <div className="text-center mt-2">
-                  <button type="button" onClick={cerrarRecuperacion} className="text-white/60 hover:text-white text-sm transition-colors">
+                  <button
+                    type="button"
+                    onClick={cerrarRecuperacion}
+                    className="text-xs text-slate-400 hover:text-white transition-colors"
+                  >
                     Volver al inicio de sesión
                   </button>
                 </div>
               </form>
             ) : (
-              /* ═══ CONFIRMACIÓN DE ENVÍO ═══ */
-              <div className="flex flex-col gap-4 text-center">
-                <div className="w-16 h-16 rounded-full bg-green-500/30 flex items-center justify-center mx-auto">
-                  <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+              /* ════════════════════════════════════════════════════════════════════════
+                 CONFIRMACIÓN DE ENVÍO DE RECUPERACIÓN
+                 ════════════════════════════════════════════════════════════════════════ */
+              <div className="flex flex-col items-center text-center gap-4 py-2">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-950/40">
+                  <CheckCircle2 className="w-7 h-7" />
                 </div>
-                <h3 className="text-xl font-bold text-white">Correo enviado</h3>
-                <p className="text-sm text-white/70 leading-relaxed">
-                  Te enviamos un enlace a <strong className="text-white">{emailRecuperacion}</strong>.
-                  Revisá tu bandeja de entrada y segui las instrucciones para restablecer tu contraseña.
-                </p>
-                <div className="bg-white/10 rounded-xl px-4 py-3 text-left">
-                  <p className="text-xs text-white/50">
-                    <strong className="text-white/70">¿No lo recibiste?</strong> Revisá la carpeta de
-                    spam o correo no deseado. Si pasaron varios minutos y no llega, intentá de nuevo.
+                <div>
+                  <h3 className="text-xl font-bold text-white mb-1">
+                    Correo de recuperación enviado
+                  </h3>
+                  <p className="text-xs text-slate-300 leading-relaxed max-w-sm">
+                    Enviamos las instrucciones a{' '}
+                    <strong className="text-white font-semibold">{emailRecuperacion}</strong>.
+                    Revisá tu bandeja de entrada o spam.
                   </p>
                 </div>
+
+                <div className="w-full bg-slate-950/60 border border-slate-800/80 rounded-2xl p-3.5 text-left text-xs text-slate-400 flex items-start gap-2.5">
+                  <AlertCircle className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5" />
+                  <p className="leading-relaxed">
+                    Si no encontrás el correo en unos minutos, verificá la carpeta de spam o correo no deseado.
+                  </p>
+                </div>
+
                 <button
                   type="button"
                   onClick={cerrarRecuperacion}
-                  className="btn rounded-2xl bg-white/10 border border-white/20 text-white hover:bg-white/20 font-semibold py-3 transition-colors text-base mt-2"
+                  className="w-full py-3 px-5 rounded-2xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-white font-medium text-sm transition-all"
                 >
                   Volver al inicio de sesión
                 </button>
               </div>
             )}
-          </div>
+          </motion.div>
         ) : (
-          /* ═══ FORMULARIO DE REGISTRO ═══ */
-          <form onSubmit={handleRegister} className="flex flex-col gap-3">
-            <input 
-              type="text"
-              value={regNombre} 
-              onChange={e => setRegNombre(e.target.value)} 
-              placeholder="Nombre completo" 
-              className="rounded-2xl px-5 py-4 focus:outline-none focus:ring-4 focus:ring-indigo-500 transition-shadow duration-500 bg-white bg-opacity-70 text-gray-900 shadow-md placeholder-gray-500 text-lg font-medium animate-inputFade"
-              autoComplete="name"
-            />
-            <input 
-              type="email"
-              value={regEmail} 
-              onChange={e => setRegEmail(e.target.value)} 
-              placeholder="Correo electrónico" 
-              className="rounded-2xl px-5 py-4 focus:outline-none focus:ring-4 focus:ring-indigo-500 transition-shadow duration-500 bg-white bg-opacity-70 text-gray-900 shadow-md placeholder-gray-500 text-lg font-medium animate-inputFade"
-              autoComplete="email"
-            />
-            <div className="relative">
-              <input 
-                type={showRegPassword ? 'text' : 'password'} 
-                value={regPassword} 
-                onChange={e => setRegPassword(e.target.value)} 
-                placeholder="Contraseña (mín. 6 caracteres)" 
-                className="rounded-2xl w-full pr-24 px-5 py-4 focus:outline-none focus:ring-4 focus:ring-indigo-500 transition-shadow duration-500 bg-white bg-opacity-70 text-gray-900 shadow-md placeholder-gray-500 text-lg font-medium animate-inputFade"
-                autoComplete="new-password"
-              />
-              <button 
-                type="button" 
-                onClick={() => setShowRegPassword(!showRegPassword)} 
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-indigo-400 hover:text-indigo-600 font-semibold transition-colors duration-300 select-none text-sm md:text-base"
-                tabIndex={-1}
+          /* ════════════════════════════════════════════════════════════════════════
+             VISTA: LOGIN / REGISTER CON SEGMENTED TABS
+             ════════════════════════════════════════════════════════════════════════ */
+          <motion.div
+            key="auth-main-card"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="w-full flex flex-col"
+          >
+            {/* Segmented Tab Switcher */}
+            <div className="grid grid-cols-2 p-1 bg-slate-950/70 border border-slate-800/80 rounded-2xl mb-5">
+              <button
+                type="button"
+                onClick={() => setModo('login')}
+                className={`relative py-2 text-xs font-semibold rounded-xl transition-all duration-200 select-none ${
+                  modo === 'login' ? 'text-white' : 'text-slate-400 hover:text-slate-200'
+                }`}
               >
-                {showRegPassword ? 'Ocultar' : 'Mostrar'}
+                {modo === 'login' && (
+                  <motion.div
+                    layoutId="auth-tab"
+                    className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-xl shadow-md"
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10">Iniciar sesión</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setModo('register')}
+                className={`relative py-2 text-xs font-semibold rounded-xl transition-all duration-200 select-none ${
+                  modo === 'register' ? 'text-white' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {modo === 'register' && (
+                  <motion.div
+                    layoutId="auth-tab"
+                    className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-xl shadow-md"
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10">Crear cuenta</span>
               </button>
             </div>
 
-            {/* Moneda */}
-            <div>
-              <label className="block text-sm font-semibold text-white/80 mb-1 ml-1">Moneda</label>
-              <select
-                value={regMoneda}
-                onChange={e => {
-                  const codigo = e.target.value;
-                  setRegMoneda(codigo);
-                  const sugerida = MONEDAS.find(m => m.codigo === codigo)?.defTasa ?? TASA_POR_DEFECTO;
-                  setRegTasa(String(sugerida));
-                }}
-                className="rounded-2xl w-full px-5 py-4 focus:outline-none focus:ring-4 focus:ring-indigo-500 transition-shadow duration-500 bg-white bg-opacity-70 text-gray-900 shadow-md text-lg font-medium"
+            {modo === 'login' ? (
+              /* ── Formulario de Login ── */
+              <motion.div
+                key="form-login"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                transition={{ duration: 0.2 }}
+                className="w-full"
               >
-                {MONEDAS.map(m => (
-                  <option key={m.codigo} value={m.codigo}>
-                    {m.codigo} — {m.pais} ({m.simbolo})
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-white/50 mt-1 ml-1">
-                Los precios de los planes se mostrarán en esta moneda
-              </p>
-            </div>
+                <form onSubmit={handleLogin} className="flex flex-col gap-3.5">
+                  {/* Correo */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-300 mb-1.5 ml-1">
+                      Correo electrónico
+                    </label>
+                    <div className="relative flex items-center bg-slate-950/70 border border-slate-800 rounded-2xl transition-all duration-200 focus-within:border-indigo-500/80 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:bg-slate-950/90">
+                      <Mail className="w-4 h-4 text-slate-500 ml-3.5 mr-2 flex-shrink-0" />
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="usuario@ejemplo.com"
+                        autoComplete="email"
+                        required
+                        disabled={loading || googleLoading}
+                        className="w-full bg-transparent py-3 pr-4 text-sm font-medium text-white placeholder:text-slate-500 focus:outline-none disabled:opacity-50"
+                      />
+                    </div>
+                  </div>
 
-            <button 
-              className="btn rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-emerald-600 hover:to-green-600 transition-colors duration-500 text-white font-semibold py-3 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-lg tracking-wide mt-2"
-              disabled={loading}
-            >
-              {loading ? 'Creando cuenta...' : 'Crear cuenta gratis'}
-            </button>
+                  {/* Contraseña */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5 ml-1 mr-1">
+                      <label className="text-xs font-medium text-slate-300">
+                        Contraseña
+                      </label>
+                      <button
+                        type="button"
+                        onClick={abrirRecuperacion}
+                        className="text-[11px] text-indigo-400 hover:text-indigo-300 transition-colors"
+                      >
+                        ¿Olvidaste tu contraseña?
+                      </button>
+                    </div>
+                    <div className="relative flex items-center bg-slate-950/70 border border-slate-800 rounded-2xl transition-all duration-200 focus-within:border-indigo-500/80 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:bg-slate-950/90">
+                      <Lock className="w-4 h-4 text-slate-500 ml-3.5 mr-2 flex-shrink-0" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        autoComplete="current-password"
+                        required
+                        disabled={loading || googleLoading}
+                        className="w-full bg-transparent py-3 pr-10 text-sm font-medium text-white placeholder:text-slate-500 focus:outline-none disabled:opacity-50"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        tabIndex={-1}
+                        aria-label={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
+                        className="absolute right-3 text-slate-400 hover:text-slate-200 p-1 transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
 
-            <div className="relative my-3">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/10"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-3 bg-transparent text-white/40">o registrate con</span>
-              </div>
-            </div>
+                  {/* Botón Principal Iniciar Sesión */}
+                  <button
+                    type="submit"
+                    disabled={loading || googleLoading}
+                    className="mt-2 w-full flex items-center justify-center gap-2 py-3.5 px-5 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 hover:from-indigo-500 hover:to-violet-500 border border-indigo-400/30 text-white font-semibold text-sm shadow-lg shadow-indigo-600/30 transition-all duration-200 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Iniciando sesión...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Entrar al panel</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
 
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              disabled={loading}
-              className="btn rounded-2xl bg-white/10 border border-white/20 text-white hover:bg-white/20 font-semibold py-3 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-lg tracking-wide flex items-center justify-center gap-3 transition-colors"
-            >
-              <svg className="w-6 h-6" viewBox="0 0 24 24">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-              </svg>
-              Google
-            </button>
+                  {/* Separador */}
+                  <div className="relative my-2">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-slate-800" />
+                    </div>
+                    <div className="relative flex justify-center text-xs">
+                      <span className="px-3 bg-slate-900/90 text-slate-500 font-medium uppercase tracking-wider">
+                        o continua con
+                      </span>
+                    </div>
+                  </div>
 
-            <div className="text-center mt-1">
-              <button type="button" onClick={toggleModo} className="text-white/70 hover:text-white text-sm transition-colors">
-                ¿Ya tenés cuenta? <span className="font-semibold underline">Iniciar sesión</span>
-              </button>
-            </div>
-          </form>
+                  {/* Botón de Google */}
+                  <button
+                    type="button"
+                    onClick={handleGoogleSignIn}
+                    disabled={loading || googleLoading}
+                    className="w-full flex items-center justify-center gap-3 py-3 px-5 rounded-2xl bg-slate-950/60 hover:bg-slate-800/80 border border-slate-800 hover:border-slate-700 text-slate-200 font-medium text-sm transition-all duration-200 shadow-sm active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {googleLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+                    ) : (
+                      <svg className="w-4 h-4" viewBox="0 0 24 24">
+                        <path
+                          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
+                          fill="#4285F4"
+                        />
+                        <path
+                          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                          fill="#34A853"
+                        />
+                        <path
+                          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                          fill="#FBBC05"
+                        />
+                        <path
+                          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                          fill="#EA4335"
+                        />
+                      </svg>
+                    )}
+                    <span>Continuar con Google</span>
+                  </button>
+
+                  {/* Switch to Register */}
+                  <div className="text-center mt-2">
+                    <button
+                      type="button"
+                      onClick={() => setModo('register')}
+                      className="text-xs text-slate-400 hover:text-white transition-colors"
+                    >
+                      ¿No tenés cuenta?{' '}
+                      <span className="font-semibold text-indigo-400 hover:text-indigo-300 underline underline-offset-4">
+                        Crear cuenta gratis
+                      </span>
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            ) : (
+              /* ── Formulario de Registro Modular ── */
+              <Register onSwitchToLogin={() => setModo('login')} />
+            )}
+          </motion.div>
         )}
-      </div>
-      <footer className="relative z-10 mt-8 text-white text-sm opacity-90 select-none font-light tracking-wide text-center">
-        © StreamControl 2025 — Todos los derechos reservados
-      </footer>
-
-      <style>{`
-        @keyframes wave {
-          0% { transform: translateX(0); }
-          50% { transform: translateX(-25%); }
-          100% { transform: translateX(0); }
-        }
-        .animate-wave {
-          animation: wave 15s ease-in-out infinite;
-        }
-        @keyframes fadeInUp {
-          0% { opacity: 0; transform: translateY(20px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fadeInUp {
-          animation: fadeInUp 0.8s ease forwards;
-        }
-        @keyframes inputFade {
-          0% { opacity: 0; transform: translateX(-10px); }
-          100% { opacity: 1; transform: translateX(0); }
-        }
-        .animate-inputFade {
-          animation: inputFade 0.7s ease forwards;
-        }
-        @media (max-width: 640px) {
-          .btn {
-            font-size: 1rem;
-            padding: 1rem 0;
-          }
-          input, select {
-            font-size: 1rem;
-            padding: 1rem 1.25rem;
-          }
-        }
-      `}</style>
-    </div>
-  )
+      </AnimatePresence>
+    </AuthLayout>
+  );
 }
