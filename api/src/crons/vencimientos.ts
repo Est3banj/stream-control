@@ -52,7 +52,7 @@ export async function generarNotificacionesVencimientos(): Promise<ResultadoVenc
   let notificacionesCreadas = 0;
   let telegramEnviados = 0;
   let morasNotificadas = 0;
-  const batch = db.batch();
+  let batch = db.batch();
   let batchCount = 0;
   const MAX_BATCH_SIZE = 500;
 
@@ -103,6 +103,7 @@ export async function generarNotificacionesVencimientos(): Promise<ResultadoVenc
 
           if (batchCount >= MAX_BATCH_SIZE) {
             await batch.commit();
+            batch = db.batch();
             batchCount = 0;
           }
         }
@@ -140,6 +141,7 @@ export async function generarNotificacionesVencimientos(): Promise<ResultadoVenc
 
         if (batchCount >= MAX_BATCH_SIZE) {
           await batch.commit();
+          batch = db.batch();
           batchCount = 0;
         }
       }
@@ -189,7 +191,7 @@ export async function generarNotificacionesVencimientos(): Promise<ResultadoVenc
         try {
           const enviado = await telegram.enviarNotificacionSuscripcion(
             {
-usuarioNombre: sus.usuarioNombre || '',
+              usuarioNombre: sus.usuarioNombre || '',
               planNombre: sus.planNombre || '',
               diasRestantes,
               fechaFin: sus.fechaFin as unknown as { toDate(): Date },
@@ -204,6 +206,7 @@ usuarioNombre: sus.usuarioNombre || '',
 
         if (batchCount >= MAX_BATCH_SIZE) {
           await batch.commit();
+          batch = db.batch();
           batchCount = 0;
         }
       }
@@ -262,6 +265,7 @@ usuarioNombre: sus.usuarioNombre || '',
 
         if (batchCount >= MAX_BATCH_SIZE) {
           await batch.commit();
+          batch = db.batch();
           batchCount = 0;
         }
       }
@@ -272,8 +276,8 @@ usuarioNombre: sus.usuarioNombre || '',
     await batch.commit();
   }
 
-  // ── Auto-cleanup: liberar perfiles de clientes vencidos hace +3 días ──
-  const perfilesLiberados = await limpiarPerfilesVencidos(3);
+  // ── Auto-cleanup: liberar perfiles de clientes vencidos (1 día de gracia / fechaVencimiento < hoy) ──
+  const perfilesLiberados = await limpiarPerfilesVencidos(0);
   if (perfilesLiberados > 0) {
     console.log(`${perfilesLiberados} perfil(es) liberado(s) automáticamente`);
   }

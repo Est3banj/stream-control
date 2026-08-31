@@ -120,7 +120,7 @@ export const generarNotificacionesVencimientos = onSchedule(
       let notificacionesCreadas = 0;
       let telegramEnviados = 0;
       let morasNotificadas = 0;
-      const batch = db.batch();
+      let batch = db.batch();
       let batchCount = 0;
       const MAX_BATCH_SIZE = 500;
 
@@ -173,6 +173,7 @@ export const generarNotificacionesVencimientos = onSchedule(
 
               if (batchCount >= MAX_BATCH_SIZE) {
                 await batch.commit();
+                batch = db.batch();
                 batchCount = 0;
               }
             }
@@ -212,6 +213,7 @@ export const generarNotificacionesVencimientos = onSchedule(
 
             if (batchCount >= MAX_BATCH_SIZE) {
               await batch.commit();
+              batch = db.batch();
               batchCount = 0;
             }
           }
@@ -277,6 +279,7 @@ export const generarNotificacionesVencimientos = onSchedule(
 
             if (batchCount >= MAX_BATCH_SIZE) {
               await batch.commit();
+              batch = db.batch();
               batchCount = 0;
             }
           }
@@ -334,6 +337,7 @@ export const generarNotificacionesVencimientos = onSchedule(
 
             if (batchCount >= MAX_BATCH_SIZE) {
               await batch.commit();
+              batch = db.batch();
               batchCount = 0;
             }
           }
@@ -344,8 +348,8 @@ export const generarNotificacionesVencimientos = onSchedule(
         await batch.commit();
       }
 
-      // ── Auto-cleanup: liberar perfiles de clientes vencidos hace +3 días ──
-      const perfilesLiberados = await limpiarPerfilesVencidos(3);
+      // ── Auto-cleanup: liberar perfiles de clientes vencidos (1 día de gracia / fechaVencimiento < hoy) ──
+      const perfilesLiberados = await limpiarPerfilesVencidos(0);
       if (perfilesLiberados > 0) {
         console.log(`${perfilesLiberados} perfil(es) liberado(s) automáticamente`);
       }
