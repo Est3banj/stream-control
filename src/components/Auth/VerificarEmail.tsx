@@ -257,31 +257,28 @@ export default function VerificarEmail() {
             </div>
 
             {/* Ayuda / Soporte y Salida */}
-            <div className="mt-6 pt-4 border-t border-slate-800/80 w-full flex flex-col gap-3 text-xs">
-              <div className="flex items-center justify-between text-slate-400">
-                <span>¿Problemas para recibir el código?</span>
+            <div className="mt-6 pt-4 border-t border-slate-800/80 w-full flex flex-col items-center gap-3 text-xs">
+              <div className="flex items-center justify-center gap-1.5 text-slate-400">
+                <span>¿Problemas con el registro?</span>
                 <a
                   href={whatsappSupportUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
+                  className="inline-flex items-center gap-1 text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
                 >
                   <MessageCircle className="w-3.5 h-3.5" />
                   <span>Contactar soporte</span>
                 </a>
               </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-slate-800/40 text-slate-400">
-                <span>¿Problemas con el registro?</span>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="inline-flex items-center gap-1.5 text-slate-300 hover:text-white font-medium transition-colors"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span>Cerrar sesión</span>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="inline-flex items-center gap-1.5 text-slate-500 hover:text-slate-300 font-medium transition-colors"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Cerrar sesión</span>
+              </button>
             </div>
           </motion.div>
         )}
