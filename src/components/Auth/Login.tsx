@@ -457,25 +457,11 @@ export default function Login({ initialModo = 'login' }: LoginProps) {
                     )}
                     <span>Continuar con Google</span>
                   </button>
-
-                  {/* Switch to Register */}
-                  <div className="text-center mt-2">
-                    <button
-                      type="button"
-                      onClick={() => setModo('register')}
-                      className="text-xs text-slate-400 hover:text-white transition-colors"
-                    >
-                      ¿No tenés cuenta?{' '}
-                      <span className="font-semibold text-indigo-400 hover:text-indigo-300 underline underline-offset-4">
-                        Crear cuenta gratis
-                      </span>
-                    </button>
-                  </div>
                 </form>
               </motion.div>
             ) : (
               /* ── Formulario de Registro Modular ── */
-              <Register onSwitchToLogin={() => setModo('login')} />
+              <Register />
             )}
           </motion.div>
         )}

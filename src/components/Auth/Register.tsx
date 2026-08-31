@@ -18,11 +18,10 @@ import { MONEDAS, MONEDA_POR_DEFECTO, TASA_POR_DEFECTO } from '../../types/usuar
 import toast from 'react-hot-toast';
 
 interface RegisterProps {
-  onSwitchToLogin?: () => void;
   onSuccess?: () => void;
 }
 
-export const Register: React.FC<RegisterProps> = ({ onSwitchToLogin, onSuccess }) => {
+export const Register: React.FC<RegisterProps> = ({ onSuccess }) => {
   const { register, loginWithGoogle } = useAuth();
   const nav = useNavigate();
 
@@ -337,33 +336,6 @@ export const Register: React.FC<RegisterProps> = ({ onSwitchToLogin, onSuccess }
           )}
           <span>Continuar con Google</span>
         </button>
-
-        {/* Enlace para volver a Iniciar Sesión */}
-        <div className="text-center mt-2">
-          {onSwitchToLogin ? (
-            <button
-              type="button"
-              onClick={onSwitchToLogin}
-              className="text-xs text-slate-400 hover:text-white transition-colors"
-            >
-              ¿Ya tenés cuenta?{' '}
-              <span className="font-semibold text-indigo-400 hover:text-indigo-300 underline underline-offset-4">
-                Iniciar sesión
-              </span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => nav('/login')}
-              className="text-xs text-slate-400 hover:text-white transition-colors"
-            >
-              ¿Ya tenés cuenta?{' '}
-              <span className="font-semibold text-indigo-400 hover:text-indigo-300 underline underline-offset-4">
-                Iniciar sesión
-              </span>
-            </button>
-          )}
-        </div>
       </form>
     </motion.div>
   );

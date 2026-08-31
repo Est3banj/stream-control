@@ -50,7 +50,6 @@ describe('Register Component', () => {
     expect(screen.getByRole('combobox')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Crear cuenta gratis/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Continuar con Google/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Iniciar sesión/i })).toBeInTheDocument();
   });
 
   it('shows error toast when attempting to submit with empty inputs', async () => {
@@ -134,20 +133,6 @@ describe('Register Component', () => {
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Este correo ya está registrado. Iniciá sesión con tu contraseña.');
     });
-  });
-
-  it('calls onSwitchToLogin callback when clicked', () => {
-    const handleSwitch = vi.fn();
-    render(
-      <MemoryRouter>
-        <Register onSwitchToLogin={handleSwitch} />
-      </MemoryRouter>
-    );
-
-    const switchBtn = screen.getByRole('button', { name: /Iniciar sesión/i });
-    fireEvent.click(switchBtn);
-
-    expect(handleSwitch).toHaveBeenCalledTimes(1);
   });
 
   it('toggles password visibility when clicking eye button', () => {
