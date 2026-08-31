@@ -89,7 +89,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        setUser({ ...firebaseUser, ...userData } as FirebaseUserWithData);
+        setUser({
+          ...firebaseUser,
+          ...userData,
+          emailVerified: firebaseUser.emailVerified || (userData.emailVerified === true),
+        } as FirebaseUserWithData);
       } else {
         setUser(null);
       }
@@ -130,13 +134,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Verificación de email obligatoria (excepto admins y Google)
-      if (!firebaseUser.emailVerified && userData.rol !== 'admin') {
-        setUser({ ...firebaseUser, ...userData } as FirebaseUserWithData);
+      const isEmailVerified = firebaseUser.emailVerified || userData.emailVerified === true;
+      if (!isEmailVerified && userData.rol !== 'admin') {
+        setUser({ ...firebaseUser, ...userData, emailVerified: false } as FirebaseUserWithData);
         setLoading(false);
         throw new Error("Verificá tu correo antes de continuar. Revisá tu bandeja de entrada.");
       }
 
-      setUser({ ...firebaseUser, ...userData } as FirebaseUserWithData);
+      setUser({
+        ...firebaseUser,
+        ...userData,
+        emailVerified: isEmailVerified,
+      } as FirebaseUserWithData);
       setLoading(false);
       return userCredential;
     } catch (error) {
@@ -151,7 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * Funciona incluso sin sesión activa, solo necesita el email.
    */
   const sendVerificationEmail = async (): Promise<void> => {
-    const email = auth.currentUser?.email;
+    const email = auth.currentUser?.email || user?.correo;
     const nombre = user?.nombre;
     if (!email) throw new Error('No hay correo asociado a la sesión');
     await callFunction('enviarCorreoVerificacion', { email, nombre });
@@ -163,12 +172,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshUser = async (): Promise<boolean> => {
     const current = auth.currentUser;
     if (!current) return false;
-    await current.reload();
-    const verified = auth.currentUser?.emailVerified ?? false;
-    if (verified && user) {
-      setUser({ ...user, emailVerified: verified } as FirebaseUserWithData);
+    try {
+      await current.reload();
+    } catch (err) {
+      console.warn('Error al recargar Firebase Auth user:', err);
     }
-    return verified;
+
+    let isVerified = auth.currentUser?.emailVerified ?? false;
+
+    // Backup: Si Firebase Auth aún no lo marca pero Firestore sí
+    if (!isVerified && current.uid) {
+      try {
+        const snap = await getDoc(doc(db, "usuarios", current.uid));
+        if (snap.exists() && (snap.data() as Record<string, unknown>)?.emailVerified === true) {
+          isVerified = true;
+        }
+      } catch (err) {
+        console.warn('Error consultando estado en Firestore:', err);
+      }
+    }
+
+    if (isVerified) {
+      setUser(prev => prev ? { ...prev, emailVerified: true } as FirebaseUserWithData : null);
+    }
+    return isVerified;
   };
 
   const loginWithGoogle = async (): Promise<void> => {
