@@ -13,6 +13,7 @@ import Paginador from '../components/Paginador';
 import ConsultaInterna from '../components/ConsultaInterna';
 import DropdownMenu from '../components/DropdownMenu';
 import TicketModal from '../components/TicketModal';
+import PlataformaBadge from '../components/PlataformaBadge';
 import toast from 'react-hot-toast';
 import { Search, Download, MessageCircle, Calendar, Users, TrendingUp, X, AlertCircle, Edit, Mail, DollarSign, CheckCircle, UserCheck, AlertTriangle, RefreshCw, Sparkles, Link, Key, Copy, ExternalLink, Shield, LogOut } from 'lucide-react';
 import type { Venta } from '../types/venta';
@@ -578,9 +579,7 @@ export default function GestionClientes() {
                       <div className="text-gray-700">{c.telefono}</div>
                     </td>
                     <td className="px-4 py-4">
-                      <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-sm font-medium">
-                        {c.plataforma || '—'}
-                      </span>
+                      <PlataformaBadge plataforma={c.plataforma} />
                     </td>
                     <td className="px-4 py-4">
                       {c.cuentaId ? (
@@ -872,7 +871,9 @@ export default function GestionClientes() {
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <div className="flex-1">
-                        <div className="font-semibold text-gray-900">{venta.plataforma}</div>
+                        <div className="mb-1">
+                          <PlataformaBadge plataforma={venta.plataforma} size="lg" />
+                        </div>
                         {venta.correo && (
                           <div className="text-sm text-indigo-600 mt-1 flex items-center gap-1">
                             <Mail size={14} />
