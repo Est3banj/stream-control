@@ -4,19 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>
-      StreamControl Pro — Sistema Inteligente para Revendedores de Streaming
+      StreamControl Pro — Sistema Inteligente para Gestión de Cuentas y Perfiles Digitales
     </title>
     <meta
       name="description"
-      content="Dejá de perder horas respondiendo códigos de Netflix y cobrando por WhatsApp. Automatizá entrega de perfiles, avisos por Telegram y extracción de códigos por IMAP."
+      content="Automatizá la entrega de perfiles, avisos de corte por Telegram y extracción de códigos de verificación por IMAP. Empezá gratis con hasta 20 clientes sin tarjeta."
     />
     <meta
       property="og:title"
-      content="StreamControl Pro — Sistema Inteligente para Revendedores de Streaming"
+      content="StreamControl Pro — Sistema Inteligente para Gestión de Cuentas y Perfiles Digitales"
     />
     <meta
       property="og:description"
-      content="Automatizá la entrega de perfiles, avisos de corte por Telegram y extracción de códigos de TV por IMAP. Empezá gratis con hasta 20 clientes sin tarjeta."
+      content="Automatizá la entrega de perfiles, avisos de corte por Telegram y extracción de códigos de acceso por IMAP. Empezá gratis con hasta 20 clientes sin tarjeta."
     />
     <meta
       property="og:image"
@@ -76,7 +76,7 @@
       @keyframes fi {
         from {
           opacity: 0;
-          transform: translateY(20px);
+          transform: translateY(16px);
         }
         to {
           opacity: 1;
@@ -84,68 +84,30 @@
         }
       }
       .fade-in {
-        animation: fi 0.7s ease forwards;
+        animation: fi 0.6s ease forwards;
         opacity: 0;
       }
       .fade-in-d2 {
-        animation: fi 0.7s ease 0.15s forwards;
+        animation: fi 0.6s ease 0.1s forwards;
         opacity: 0;
       }
       .fade-in-d4 {
-        animation: fi 0.7s ease 0.3s forwards;
+        animation: fi 0.6s ease 0.2s forwards;
         opacity: 0;
-      }
-
-      /* Range slider styling */
-      input[type="range"] {
-        -webkit-appearance: none;
-        appearance: none;
-        height: 10px;
-        border-radius: 9999px;
-        outline: none;
-        transition: background 0.2s ease;
-      }
-      input[type="range"]::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        background: #06b6d4;
-        cursor: pointer;
-        box-shadow: 0 0 16px rgba(6, 182, 212, 0.9), 0 0 0 3px #020617;
-        border: 2.5px solid #ffffff;
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
-      }
-      input[type="range"]::-webkit-slider-thumb:hover {
-        transform: scale(1.18);
-        box-shadow: 0 0 20px rgba(6, 182, 212, 1), 0 0 0 4px #020617;
-      }
-      input[type="range"]::-moz-range-thumb {
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        background: #06b6d4;
-        cursor: pointer;
-        box-shadow: 0 0 16px rgba(6, 182, 212, 0.9), 0 0 0 3px #020617;
-        border: 2.5px solid #ffffff;
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
       }
 
       /* Mockup Browser Container */
       .mockup-browser {
         background: rgba(15, 23, 42, 0.95);
         border-radius: 20px;
-        box-shadow: 0 35px 70px -15px rgba(0,0,0,0.8), 0 0 45px -10px rgba(6,182,212,0.2);
+        box-shadow: 0 30px 60px -15px rgba(0,0,0,0.8), 0 0 40px -10px rgba(6,182,212,0.15);
         overflow: hidden;
         border: 1px solid rgba(51, 65, 85, 0.85);
         backdrop-filter: blur(24px);
-        transform: perspective(1200px) rotateY(-1.5deg) rotateX(1deg);
-        transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.6s ease;
+        transition: transform 0.4s ease, box-shadow 0.4s ease;
       }
       .mockup-browser:hover {
-        transform: perspective(1200px) rotateY(0deg) rotateX(0deg);
-        box-shadow: 0 40px 80px -15px rgba(0,0,0,0.9), 0 0 55px -5px rgba(6,182,212,0.25);
+        box-shadow: 0 35px 70px -15px rgba(0,0,0,0.9), 0 0 50px -5px rgba(6,182,212,0.22);
       }
       .mockup-header {
         display: flex;
@@ -182,16 +144,10 @@
       /* Mockup Glow */
       .mockup-glow {
         position: absolute;
-        inset: -50px;
-        background: radial-gradient(ellipse at 50% 30%, rgba(6, 182, 212, 0.22), rgba(99, 102, 241, 0.15), transparent 70%);
+        inset: -40px;
+        background: radial-gradient(ellipse at 50% 30%, rgba(6, 182, 212, 0.18), rgba(99, 102, 241, 0.12), transparent 70%);
         pointer-events: none;
         z-index: -1;
-      }
-
-      @media (max-width: 768px) {
-        .mockup-browser {
-          transform: none;
-        }
       }
     </style>
   </head>
@@ -199,14 +155,14 @@
 
     <!-- Ambient Glow Lights -->
     <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      <div class="absolute -top-40 -left-40 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[140px]"></div>
-      <div class="absolute top-1/3 -right-40 w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[140px]"></div>
-      <div class="absolute -bottom-40 left-1/3 w-[600px] h-[600px] bg-violet-600/10 rounded-full blur-[140px]"></div>
+      <div class="absolute -top-40 -left-40 w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[140px]"></div>
+      <div class="absolute top-1/3 -right-40 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[140px]"></div>
+      <div class="absolute -bottom-40 left-1/3 w-[500px] h-[500px] bg-violet-600/10 rounded-full blur-[140px]"></div>
     </div>
 
     <!-- ═══ NAV ═══ -->
     <nav
-      class="fixed top-0 inset-x-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80"
+      class="fixed top-0 inset-x-0 z-50 bg-slate-950/85 backdrop-blur-md border-b border-slate-800/80"
     >
       <div
         class="max-w-6xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between"
@@ -219,34 +175,19 @@
         </a>
         <div class="hidden md:flex items-center gap-1">
           <a
-            href="#comparison"
-            class="px-3 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 rounded-lg hover:bg-slate-900/80 transition-all"
-            >Comparativa</a
-          >
-          <a
-            href="#calculator"
-            class="px-3 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 rounded-lg hover:bg-slate-900/80 transition-all"
-            >Calculadora</a
-          >
-          <a
             href="#demo"
             class="px-3 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 rounded-lg hover:bg-slate-900/80 transition-all"
             >Demo</a
           >
           <a
-            href="#features"
+            href="#comparison"
             class="px-3 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 rounded-lg hover:bg-slate-900/80 transition-all"
-            >Funciones</a
+            >Comparativa</a
           >
           <a
             href="#pricing"
             class="px-3 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 rounded-lg hover:bg-slate-900/80 transition-all"
             >Planes</a
-          >
-          <a
-            href="#testimonials"
-            class="px-3 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 rounded-lg hover:bg-slate-900/80 transition-all"
-            >Testimonios</a
           >
           <a
             href="#faq"
@@ -306,34 +247,19 @@
       >
         <div class="max-w-6xl mx-auto px-5 sm:px-8 py-4 space-y-1">
           <a
-            href="#comparison"
-            class="block px-4 py-3 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-900 rounded-xl transition-colors"
-            >Comparativa</a
-          >
-          <a
-            href="#calculator"
-            class="block px-4 py-3 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-900 rounded-xl transition-colors"
-            >Calculadora</a
-          >
-          <a
             href="#demo"
             class="block px-4 py-3 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-900 rounded-xl transition-colors"
             >Demo</a
           >
           <a
-            href="#features"
+            href="#comparison"
             class="block px-4 py-3 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-900 rounded-xl transition-colors"
-            >Funciones</a
+            >Comparativa</a
           >
           <a
             href="#pricing"
             class="block px-4 py-3 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-900 rounded-xl transition-colors"
             >Planes</a
-          >
-          <a
-            href="#testimonials"
-            class="block px-4 py-3 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-900 rounded-xl transition-colors"
-            >Testimonios</a
           >
           <a
             href="#faq"
@@ -356,37 +282,37 @@
     </nav>
 
     <main class="relative z-10">
-      <!-- ═══ 1. HERO SECTION (High-Impact Pain vs Relief Headline) ═══ -->
-      <section class="relative pt-28 pb-16 sm:pt-32 sm:pb-20 lg:pt-36 lg:pb-24 overflow-hidden">
+      <!-- ═══ 1. HERO SECTION ═══ -->
+      <section class="relative pt-28 pb-14 sm:pt-32 sm:pb-18 lg:pt-36 lg:pb-20 overflow-hidden">
         <div class="max-w-6xl mx-auto px-5 sm:px-8">
           <div class="grid lg:grid-cols-12 gap-10 lg:gap-12 items-center">
             
-            <!-- Left: High Impact Copy (7 cols) -->
+            <!-- Left: Hero Copy (7 cols) -->
             <div class="text-center lg:text-left lg:col-span-7 max-w-2xl mx-auto lg:mx-0">
-              <!-- Trust badge pill -->
+              <!-- Pill badge -->
               <div
-                class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-950/60 border border-emerald-800/50 text-emerald-300 text-xs sm:text-sm font-semibold mb-6 backdrop-blur-md shadow-inner shadow-emerald-500/10 fade-in"
+                class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-950/60 border border-cyan-800/50 text-cyan-300 text-xs sm:text-sm font-semibold mb-6 backdrop-blur-md shadow-inner shadow-cyan-500/10 fade-in"
               >
-                <span class="flex h-2.5 w-2.5 relative">
-                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
+                <span class="flex h-2 w-2 relative">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2 w-2 bg-cyan-400"></span>
                 </span>
-                <span>⚡ Más de 450 revendedores automatizan su negocio hoy</span>
+                <span>Automatización inteligente para tu negocio digital</span>
               </div>
 
               <!-- Main Headline -->
               <h1
-                class="text-[clamp(2rem,6vw,3.6rem)] font-extrabold leading-[1.12] tracking-tight mb-5 fade-in-d2"
+                class="text-[clamp(2.1rem,5.5vw,3.4rem)] font-extrabold leading-[1.12] tracking-tight mb-5 fade-in-d2"
               >
-                <span class="text-white">Dejá de perder horas respondiendo códigos de Netflix</span>
+                <span class="text-white">Dejá de perder horas enviando accesos</span>
                 <span class="bg-gradient-to-r from-cyan-400 via-indigo-400 to-violet-400 bg-clip-text text-transparent"> y cobrando por WhatsApp.</span>
               </h1>
 
-              <!-- Subheadline -->
+              <!-- Subheadline (Clear verification code value proposition) -->
               <p
-                class="text-base sm:text-lg lg:text-xl text-slate-300/90 leading-relaxed mb-8 fade-in-d2 font-normal"
+                class="text-base sm:text-lg text-slate-300/90 leading-relaxed mb-8 fade-in-d2 font-normal"
               >
-                El sistema inteligente que automatiza la entrega de perfiles, los avisos de corte por Telegram y la extracción de códigos de TV por IMAP. Empezá gratis con hasta 20 clientes sin tarjeta.
+                Automatización de códigos de inicio de sesión, verificación de hogar y códigos de viaje para que tus clientes los consulten solos sin interrumpirte a cada rato. Empezá gratis con hasta 20 clientes.
               </p>
 
               <!-- CTAs -->
@@ -424,21 +350,21 @@
               <div class="mt-6 flex flex-wrap items-center justify-center lg:justify-start gap-4 text-xs text-slate-400">
                 <div class="flex items-center gap-1.5">
                   <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                  <span>Sin tarjeta de crédito</span>
+                  <span>Sin tarjeta requerida</span>
                 </div>
                 <div class="flex items-center gap-1.5">
                   <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                  <span>Activación inmediata en 2 min</span>
+                  <span>Activación en 2 minutos</span>
                 </div>
                 <div class="flex items-center gap-1.5">
                   <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                  <span>Cancelá cuando quieras</span>
+                  <span>Plan gratis para siempre</span>
                 </div>
               </div>
             </div>
 
-            <!-- Right: 2. INTERACTIVE 3-TAB MOCKUP (5 cols) -->
-            <div class="lg:col-span-5 relative fade-in-d4">
+            <!-- Right: Interactive 3-Tab Mockup (5 cols) -->
+            <div id="demo" class="lg:col-span-5 relative fade-in-d4">
               <div class="mockup-glow"></div>
 
               <!-- Interactive Tabs Switcher Bar Above Mockup -->
@@ -446,23 +372,23 @@
                 <button
                   type="button"
                   data-tab="1"
-                  class="mockup-tab-btn flex-1 min-w-[100px] text-xs py-2 px-2.5 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 bg-cyan-500/20 border border-cyan-500/60 text-cyan-300 shadow-lg shadow-cyan-500/10 cursor-pointer"
+                  class="mockup-tab-btn flex-1 min-w-[95px] text-xs py-2 px-2.5 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 bg-cyan-500/20 border border-cyan-500/60 text-cyan-300 shadow-lg shadow-cyan-500/10 cursor-pointer"
                 >
-                  <span>⚡ Registro Venta</span>
+                  <span>⚡ Venta Express</span>
                 </button>
                 <button
                   type="button"
                   data-tab="2"
-                  class="mockup-tab-btn flex-1 min-w-[100px] text-xs py-2 px-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-1.5 bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-slate-200 cursor-pointer"
+                  class="mockup-tab-btn flex-1 min-w-[95px] text-xs py-2 px-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-1.5 bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-slate-200 cursor-pointer"
                 >
                   <span>🤖 Códigos TV</span>
                 </button>
                 <button
                   type="button"
                   data-tab="3"
-                  class="mockup-tab-btn flex-1 min-w-[100px] text-xs py-2 px-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-1.5 bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-slate-200 cursor-pointer"
+                  class="mockup-tab-btn flex-1 min-w-[95px] text-xs py-2 px-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-1.5 bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-slate-200 cursor-pointer"
                 >
-                  <span>✈️ Bot Telegram</span>
+                  <span>✈️ Telegram</span>
                 </button>
               </div>
 
@@ -476,14 +402,14 @@
                 </div>
 
                 <!-- Interactive Tab Screen Container -->
-                <div class="p-4 sm:p-5 bg-slate-950/90 min-h-[380px] flex flex-col justify-between">
+                <div class="p-4 sm:p-5 bg-slate-950/90 min-h-[370px] flex flex-col justify-between">
                   
                   <!-- TAB 1: ⚡ Registro de Venta Express -->
                   <div id="tab-content-1" class="mockup-tab-content space-y-3.5 transition-opacity duration-300">
                     <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
                       <div class="flex items-center gap-2">
-                        <span class="px-2 py-0.5 rounded-md bg-cyan-950/80 border border-cyan-800/60 text-[10px] font-bold text-cyan-300 uppercase tracking-wider">Auto-Asignación</span>
-                        <h4 class="text-xs font-bold text-white">Venta Express en 1 Clic</h4>
+                        <span class="px-2 py-0.5 rounded-md bg-cyan-950/80 border border-cyan-800/60 text-[10px] font-bold text-cyan-300 uppercase tracking-wider">Asignación Inmediata</span>
+                        <h4 class="text-xs font-bold text-white">Venta en 1 Clic</h4>
                       </div>
                       <span class="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Stock Libre: 4/5
@@ -494,8 +420,8 @@
                     <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 space-y-2">
                       <div class="flex items-center justify-between text-xs">
                         <div class="flex items-center gap-2">
-                          <span class="w-6 h-6 rounded-md bg-red-600/30 border border-red-500/40 flex items-center justify-center font-black text-red-400 text-[10px]">N</span>
-                          <span class="font-bold text-slate-200">Netflix Premium UHD 4K</span>
+                          <span class="w-6 h-6 rounded-md bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center font-black text-indigo-400 text-[10px]">SC</span>
+                          <span class="font-bold text-slate-200">Servicio Digital Premium UHD</span>
                         </div>
                         <span class="text-[11px] font-mono text-cyan-300 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800/40">Cuenta #04</span>
                       </div>
@@ -517,25 +443,24 @@
                         <span>💬 Ticket WhatsApp Listo</span>
                         <span>1 toque para enviar</span>
                       </div>
-                      <p class="text-slate-200 font-sans pt-1">🍿 ¡Hola Juan! Tu Netflix está listo:</p>
-                      <p class="text-slate-400">📧 cta4@streamcontrol.vip</p>
+                      <p class="text-slate-200 font-sans pt-1">🍿 ¡Hola Juan! Tu acceso está listo:</p>
+                      <p class="text-slate-400">📧 cuenta04@acceso-digital.com</p>
                       <p class="text-slate-400">🔑 Clave: ••••••••••</p>
                       <p class="text-cyan-300 font-bold">👤 Perfil 3 (PIN: 8492)</p>
-                      <p class="text-slate-400">🔗 Códigos TV: streamcontrolpro.app/c/j8492</p>
+                      <p class="text-slate-400">🔗 Códigos TV y Hogar: streamcontrolpro.app/c/j8492</p>
                     </div>
 
-                    <button class="w-full py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-950/50 flex items-center justify-center gap-1.5">
-                      <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-                      <span>Copiar Ticket y Enviar por WhatsApp</span>
-                    </button>
+                    <a href="/app/register" class="w-full py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-950/50 flex items-center justify-center gap-1.5 hover:opacity-95 transition-opacity">
+                      <span>Probar Panel y Registro Express</span>
+                    </a>
                   </div>
 
                   <!-- TAB 2: 🤖 Consulta Automática de Códigos -->
                   <div id="tab-content-2" class="mockup-tab-content space-y-3.5 transition-opacity duration-300 hidden opacity-0">
                     <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
                       <div class="flex items-center gap-2">
-                        <span class="px-2 py-0.5 rounded-md bg-indigo-950/80 border border-indigo-800/60 text-[10px] font-bold text-indigo-300 uppercase tracking-wider">Portal Cliente</span>
-                        <h4 class="text-xs font-bold text-white">Extracción de Código TV</h4>
+                        <span class="px-2 py-0.5 rounded-md bg-indigo-950/80 border border-indigo-800/60 text-[10px] font-bold text-indigo-300 uppercase tracking-wider">Autoservicio Cliente</span>
+                        <h4 class="text-xs font-bold text-white">Extracción de Códigos</h4>
                       </div>
                       <span class="text-[10px] text-cyan-400 font-semibold flex items-center gap-1">
                         <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span> IMAP Sync Activo
@@ -543,14 +468,14 @@
                     </div>
 
                     <div class="bg-gradient-to-b from-slate-900/95 to-slate-900/80 border border-slate-800 rounded-xl p-4 text-center space-y-2.5">
-                      <p class="text-xs text-slate-400">Código de inicio de sesión detectado en tu correo:</p>
+                      <p class="text-xs text-slate-400">Código de inicio de sesión o verificación de hogar detectado:</p>
                       
-                      <!-- Big 4-Digit Monospace Code Display -->
+                      <!-- 4-Digit Monospace Code Display -->
                       <div class="flex justify-center items-center gap-2.5 py-1">
-                        <div class="w-11 h-13 sm:w-12 sm:h-14 bg-slate-950 rounded-xl border border-cyan-500/70 shadow-lg shadow-cyan-500/20 flex items-center justify-center text-xl sm:text-2xl font-black text-cyan-300 font-mono">7</div>
-                        <div class="w-11 h-13 sm:w-12 sm:h-14 bg-slate-950 rounded-xl border border-cyan-500/70 shadow-lg shadow-cyan-500/20 flex items-center justify-center text-xl sm:text-2xl font-black text-cyan-300 font-mono">4</div>
-                        <div class="w-11 h-13 sm:w-12 sm:h-14 bg-slate-950 rounded-xl border border-cyan-500/70 shadow-lg shadow-cyan-500/20 flex items-center justify-center text-xl sm:text-2xl font-black text-cyan-300 font-mono">9</div>
-                        <div class="w-11 h-13 sm:w-12 sm:h-14 bg-slate-950 rounded-xl border border-cyan-500/70 shadow-lg shadow-cyan-500/20 flex items-center justify-center text-xl sm:text-2xl font-black text-cyan-300 font-mono">2</div>
+                        <div class="w-11 h-13 bg-slate-950 rounded-xl border border-cyan-500/70 shadow-lg shadow-cyan-500/20 flex items-center justify-center text-2xl font-black text-cyan-300 font-mono">7</div>
+                        <div class="w-11 h-13 bg-slate-950 rounded-xl border border-cyan-500/70 shadow-lg shadow-cyan-500/20 flex items-center justify-center text-2xl font-black text-cyan-300 font-mono">4</div>
+                        <div class="w-11 h-13 bg-slate-950 rounded-xl border border-cyan-500/70 shadow-lg shadow-cyan-500/20 flex items-center justify-center text-2xl font-black text-cyan-300 font-mono">9</div>
+                        <div class="w-11 h-13 bg-slate-950 rounded-xl border border-cyan-500/70 shadow-lg shadow-cyan-500/20 flex items-center justify-center text-2xl font-black text-cyan-300 font-mono">2</div>
                       </div>
 
                       <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/50 border border-emerald-800/40 text-emerald-300 text-[11px]">
@@ -560,7 +485,7 @@
                     </div>
 
                     <div class="bg-indigo-950/30 border border-indigo-800/40 rounded-xl p-2.5 text-center text-xs text-indigo-200">
-                      ✨ <strong>0 mensajes a tu WhatsApp:</strong> El cliente ingresa a su Smart TV por su cuenta sin molestarte a la medianoche.
+                      ✨ <strong>Cero mensajes en tu chat:</strong> Tu cliente activa su Smart TV o valida su viaje por su cuenta sin interrumpirte.
                     </div>
                   </div>
 
@@ -569,7 +494,7 @@
                     <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
                       <div class="flex items-center gap-2">
                         <span class="px-2 py-0.5 rounded-md bg-blue-950/80 border border-blue-800/60 text-[10px] font-bold text-blue-300 uppercase tracking-wider">Telegram 24/7</span>
-                        <h4 class="text-xs font-bold text-white">Alertas de Corte Preventivas</h4>
+                        <h4 class="text-xs font-bold text-white">Avisos Preventivos de Cobro</h4>
                       </div>
                       <span class="text-[10px] text-blue-400 font-semibold flex items-center gap-1">
                         <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> Bot Online
@@ -584,23 +509,23 @@
                         <span class="text-[10px] text-slate-500 ml-auto">Hoy 09:00 AM</span>
                       </div>
                       <div class="space-y-1 text-slate-300 text-[11px]">
-                        <p class="text-amber-400 font-bold">🔔 AVISO DE COBRO PREVENTIVO (3 Días Antes)</p>
+                        <p class="text-amber-400 font-bold">🔔 RECORDATORIO PREVENTIVO (3 Días Antes)</p>
                         <p>👤 <strong>Cliente:</strong> Marcos Gómez</p>
-                        <p>📺 <strong>Servicio:</strong> Disney+ Estándar (Perfil 2)</p>
+                        <p>📺 <strong>Servicio:</strong> Membresía Estándar (Perfil 2)</p>
                         <p>💰 <strong>Monto Renovación:</strong> $4.50 USD</p>
                       </div>
                       <div class="grid grid-cols-2 gap-2 pt-1">
-                        <button class="py-1.5 px-2 bg-blue-600/80 hover:bg-blue-600 text-white rounded-lg text-[10px] font-bold">
+                        <div class="py-1.5 px-2 bg-blue-600/80 text-white rounded-lg text-[10px] font-bold text-center">
                           📲 Recordar WhatsApp
-                        </button>
-                        <button class="py-1.5 px-2 bg-emerald-600/80 hover:bg-emerald-600 text-white rounded-lg text-[10px] font-bold">
+                        </div>
+                        <div class="py-1.5 px-2 bg-emerald-600/80 text-white rounded-lg text-[10px] font-bold text-center">
                           💳 Renovar en 1 Clic
-                        </button>
+                        </div>
                       </div>
                     </div>
 
                     <div class="bg-emerald-950/30 border border-emerald-800/40 rounded-xl p-2.5 text-center text-xs text-emerald-300">
-                      🛡️ <strong>Cobros a tiempo:</strong> Cero clientes perdidos por olvido de vencimientos.
+                      🛡️ <strong>Cobros a tiempo:</strong> Asegurá cada renovación antes de que caiga el servicio.
                     </div>
                   </div>
 
@@ -608,9 +533,9 @@
                   <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
                     <span class="flex items-center gap-1 text-slate-400">
                       <svg class="w-3.5 h-3.5 text-cyan-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                      100% Automatizado
+                      Operación Automatizada
                     </span>
-                    <a href="/app/register" class="text-cyan-400 font-semibold hover:underline">Ver panel en vivo &rarr;</a>
+                    <a href="/app/register" class="text-cyan-400 font-semibold hover:underline">Comenzar gratis &rarr;</a>
                   </div>
                 </div>
               </div>
@@ -620,60 +545,47 @@
         </div>
       </section>
 
-      <!-- ═══ 3. LIVE TRUST METRICS COUNTER BAR ═══ -->
+      <!-- ═══ 2. METRICS & VALUE PROMISES ═══ -->
       <section class="py-10 border-y border-slate-800/80 bg-slate-900/40 relative">
         <div class="max-w-6xl mx-auto px-5 sm:px-8">
-          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
             
             <!-- Metric 1 -->
-            <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-xl hover:border-slate-700 transition-all text-center sm:text-left">
+            <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-xl text-center sm:text-left">
               <p class="text-2xl sm:text-3xl lg:text-4xl font-black bg-gradient-to-r from-cyan-400 to-indigo-400 bg-clip-text text-transparent mb-1">
-                +18.000+
+                $0 USD
               </p>
               <p class="text-xs sm:text-sm font-bold text-slate-200">
-                Perfiles y Pantallas Gestionadas
+                Plan Starter Gratis Siempre
               </p>
-              <p class="text-[11px] text-slate-500 mt-1">
-                Monitoreo continuo en tiempo real
+              <p class="text-[11px] text-slate-400 mt-1">
+                Hasta 20 clientes sin tarjeta ni cargos ocultos.
               </p>
             </div>
 
             <!-- Metric 2 -->
-            <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-xl hover:border-slate-700 transition-all text-center sm:text-left">
+            <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-xl text-center sm:text-left">
               <p class="text-2xl sm:text-3xl lg:text-4xl font-black bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent mb-1">
-                +450+
+                2 Segundos
               </p>
               <p class="text-xs sm:text-sm font-bold text-slate-200">
-                Revendedores y Mayoristas Activos
+                Consulta de Códigos
               </p>
-              <p class="text-[11px] text-slate-500 mt-1">
-                En más de 12 países de LATAM
+              <p class="text-[11px] text-slate-400 mt-1">
+                Tiempo promedio que tarda tu cliente en consultar.
               </p>
             </div>
 
             <!-- Metric 3 -->
-            <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-xl hover:border-slate-700 transition-all text-center sm:text-left">
+            <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-xl text-center sm:text-left">
               <p class="text-2xl sm:text-3xl lg:text-4xl font-black bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent mb-1">
-                $0 USD
+                24/7
               </p>
               <p class="text-xs sm:text-sm font-bold text-slate-200">
-                Para Empezar (20 Clientes Gratis)
+                Automatización Continua
               </p>
-              <p class="text-[11px] text-slate-500 mt-1">
-                Sin tarjeta ni cargos ocultos
-              </p>
-            </div>
-
-            <!-- Metric 4 -->
-            <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-xl hover:border-slate-700 transition-all text-center sm:text-left">
-              <p class="text-2xl sm:text-3xl lg:text-4xl font-black bg-gradient-to-r from-amber-400 to-rose-400 bg-clip-text text-transparent mb-1">
-                99.9%
-              </p>
-              <p class="text-xs sm:text-sm font-bold text-slate-200">
-                Entregas Rápidas y Sin Errores
-              </p>
-              <p class="text-[11px] text-slate-500 mt-1">
-                Disponibilidad y soporte prioritario
+              <p class="text-[11px] text-slate-400 mt-1">
+                Avisos y consultas sin intervención manual.
               </p>
             </div>
 
@@ -681,7 +593,9 @@
         </div>
       </section>
 
-      <!-- ═══ 4. VISUAL COMPARISON: TU NEGOCIO CON EXCEL VS CON STREAMCONTROL PRO ═══ -->
+
+
+      <!-- ═══ 3. COMPARISON: TRADICIONAL VS STREAMCONTROL PRO ═══ -->
       <section id="comparison" class="py-16 sm:py-20 lg:py-24 relative">
         <div class="max-w-6xl mx-auto px-5 sm:px-8">
           <div class="text-center max-w-3xl mx-auto mb-14">
@@ -691,22 +605,22 @@
               Comparativa Directa
             </span>
             <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-4">
-              Tu Negocio con Excel / Cuaderno <span class="text-red-400">❌</span><br class="hidden sm:inline" /> vs con StreamControl Pro <span class="text-emerald-400">✅</span>
+              Método Tradicional <span class="text-rose-400">❌</span> vs StreamControl Pro <span class="text-emerald-400">✅</span>
             </h2>
             <p class="text-base sm:text-lg text-slate-400">
-              Mirá la diferencia entre pasar el día apagando incendios o tener tu negocio organizado y escalando en piloto automático.
+              Menos tiempo apagando incendios manuales. Más control y orden para hacer crecer tu negocio.
             </p>
           </div>
 
-          <div class="grid md:grid-cols-2 gap-8 items-stretch">
+          <div class="grid md:grid-cols-2 gap-6 sm:gap-8 items-stretch">
             
-            <!-- Card ❌ Excel / Cuaderno / Memoria -->
-            <div class="bg-gradient-to-b from-rose-950/20 via-slate-900/80 to-slate-950/90 border-2 border-rose-900/40 hover:border-rose-700/60 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl transition-all flex flex-col justify-between">
+            <!-- Card ❌ Método Tradicional -->
+            <div class="bg-gradient-to-b from-rose-950/20 via-slate-900/80 to-slate-950/90 border-2 border-rose-900/40 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl flex flex-col justify-between">
               <div>
                 <div class="flex items-center justify-between mb-6 pb-4 border-b border-rose-900/30">
                   <div>
                     <span class="inline-block px-2.5 py-1 rounded-md bg-rose-950/80 border border-rose-800/50 text-xs font-bold text-rose-300 uppercase tracking-wider mb-2">
-                      Método Tradicional Desordenado
+                      Gestión Manual
                     </span>
                     <h3 class="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2">
                       <span>Excel, Cuaderno y WhatsApp</span>
@@ -719,52 +633,44 @@
                   <li class="flex items-start gap-3 text-sm text-slate-300">
                     <div class="w-6 h-6 rounded-full bg-rose-950/80 border border-rose-800/60 flex items-center justify-center text-rose-400 font-bold shrink-0 mt-0.5 text-xs">✕</div>
                     <div>
-                      <strong class="text-white block font-semibold">Copiar y pegar contraseñas y PINs a mano en WhatsApp</strong>
-                      <span class="text-slate-400 text-xs">Errores al tipear, perfiles repetidos y clientes quejándose de perfiles ocupados.</span>
+                      <strong class="text-white block font-semibold">Copiar y pegar contraseñas y PINs a mano</strong>
+                      <span class="text-slate-400 text-xs">Errores al tipear, perfiles cruzados y clientes quejándose de accesos ocupados.</span>
                     </div>
                   </li>
 
                   <li class="flex items-start gap-3 text-sm text-slate-300">
                     <div class="w-6 h-6 rounded-full bg-rose-950/80 border border-rose-800/60 flex items-center justify-center text-rose-400 font-bold shrink-0 mt-0.5 text-xs">✕</div>
                     <div>
-                      <strong class="text-white block font-semibold">Responder códigos de TV de Netflix a la medianoche</strong>
-                      <span class="text-slate-400 text-xs">Estar pegado al celular 24/7 buscando códigos en tu correo mientras cenás o dormís.</span>
+                      <strong class="text-white block font-semibold">Buscar códigos de acceso a deshoras</strong>
+                      <span class="text-slate-400 text-xs">Estar atado al celular buscando códigos en tu correo mientras descansás.</span>
                     </div>
                   </li>
 
                   <li class="flex items-start gap-3 text-sm text-slate-300">
                     <div class="w-6 h-6 rounded-full bg-rose-950/80 border border-rose-800/60 flex items-center justify-center text-rose-400 font-bold shrink-0 mt-0.5 text-xs">✕</div>
                     <div>
-                      <strong class="text-white block font-semibold">Cuentas que se vencen sin avisar y clientes furiosos</strong>
-                      <span class="text-slate-400 text-xs">Cortes sorpresivos, pantallas caídas y pérdida de clientes por falta de anticipación.</span>
+                      <strong class="text-white block font-semibold">Olvidos de cobro y dinero perdido</strong>
+                      <span class="text-slate-400 text-xs">Cortes sorpresivos por falta de recordatorios anticipados y descontrol de deudas.</span>
                     </div>
                   </li>
 
                   <li class="flex items-start gap-3 text-sm text-slate-300">
                     <div class="w-6 h-6 rounded-full bg-rose-950/80 border border-rose-800/60 flex items-center justify-center text-rose-400 font-bold shrink-0 mt-0.5 text-xs">✕</div>
                     <div>
-                      <strong class="text-white block font-semibold">Cobros olvidados y dinero perdido todos los meses</strong>
-                      <span class="text-slate-400 text-xs">Te olvidás a quién le cobraste y quién te debe; fugas de dinero constantes en renovaciones.</span>
-                    </div>
-                  </li>
-
-                  <li class="flex items-start gap-3 text-sm text-slate-300">
-                    <div class="w-6 h-6 rounded-full bg-rose-950/80 border border-rose-800/60 flex items-center justify-center text-rose-400 font-bold shrink-0 mt-0.5 text-xs">✕</div>
-                    <div>
-                      <strong class="text-white block font-semibold">Desorden total en cuentas de 5 perfiles</strong>
-                      <span class="text-slate-400 text-xs">Hojas de cálculo infinitas, casillas desactualizadas y cero claridad de tu stock disponible.</span>
+                      <strong class="text-white block font-semibold">Planillas infinitas y desorden de stock</strong>
+                      <span class="text-slate-400 text-xs">Casillas desactualizadas, cuentas mezcladas y dificultad para saber tu ganancia real.</span>
                     </div>
                   </li>
                 </ul>
               </div>
 
               <div class="mt-8 pt-4 border-t border-rose-900/30 text-center">
-                <span class="text-xs text-rose-300/80 font-medium">Resultado: Horas de estrés, clientes perdidos y techo de ventas.</span>
+                <span class="text-xs text-rose-300/80 font-medium">Resultado: Estrés diario, clientes perdidos y techo para crecer.</span>
               </div>
             </div>
 
             <!-- Card ✅ StreamControl Pro -->
-            <div class="bg-gradient-to-b from-emerald-950/25 via-slate-900/90 to-cyan-950/25 border-2 border-emerald-500/60 hover:border-emerald-400 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl shadow-emerald-500/10 transition-all flex flex-col justify-between relative">
+            <div class="bg-gradient-to-b from-emerald-950/25 via-slate-900/90 to-cyan-950/25 border-2 border-emerald-500/60 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl shadow-emerald-500/10 flex flex-col justify-between relative">
               <div class="absolute -top-3.5 right-6 px-3.5 py-1 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 text-xs font-black uppercase tracking-wider shadow-lg">
                 Recomendado
               </div>
@@ -773,7 +679,7 @@
                 <div class="flex items-center justify-between mb-6 pb-4 border-b border-emerald-800/40">
                   <div>
                     <span class="inline-block px-2.5 py-1 rounded-md bg-emerald-950/80 border border-emerald-800/60 text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2">
-                      El Estándar de los Revendedores Pro
+                      Operación Inteligente
                     </span>
                     <h3 class="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2">
                       <span>StreamControl Pro</span>
@@ -786,40 +692,32 @@
                   <li class="flex items-start gap-3 text-sm text-slate-200">
                     <div class="w-6 h-6 rounded-full bg-emerald-950 border border-emerald-500/50 flex items-center justify-center text-emerald-400 font-bold shrink-0 mt-0.5 text-xs">✓</div>
                     <div>
-                      <strong class="text-white block font-semibold">Perfil y PIN auto-asignados al instante con ticket listo</strong>
-                      <span class="text-slate-300 text-xs">El sistema descuenta el perfil exacto y genera el mensaje formateado en 1 clic para WhatsApp.</span>
+                      <strong class="text-white block font-semibold">Perfil y PIN auto-asignados con ticket WhatsApp en 1 clic</strong>
+                      <span class="text-slate-300 text-xs">El sistema descuenta el perfil exacto y genera el mensaje formateado listo para enviar.</span>
                     </div>
                   </li>
 
                   <li class="flex items-start gap-3 text-sm text-slate-200">
                     <div class="w-6 h-6 rounded-full bg-emerald-950 border border-emerald-500/50 flex items-center justify-center text-emerald-400 font-bold shrink-0 mt-0.5 text-xs">✓</div>
                     <div>
-                      <strong class="text-white block font-semibold">El cliente consulta su código de TV solo en 2 segundos por link</strong>
-                      <span class="text-slate-300 text-xs">Extracción instantánea por IMAP; tu cliente entra sin pedirte permiso ni escribirte a tu chat.</span>
+                      <strong class="text-white block font-semibold">El cliente consulta sus códigos solo en 2 segundos</strong>
+                      <span class="text-slate-300 text-xs">Extracción instantánea por IMAP para inicio en Smart TV y verificación de hogar sin interrupciones.</span>
                     </div>
                   </li>
 
                   <li class="flex items-start gap-3 text-sm text-slate-200">
                     <div class="w-6 h-6 rounded-full bg-emerald-950 border border-emerald-500/50 flex items-center justify-center text-emerald-400 font-bold shrink-0 mt-0.5 text-xs">✓</div>
                     <div>
-                      <strong class="text-white block font-semibold">Bot de Telegram avisa al cliente 3 días antes de su vencimiento</strong>
-                      <span class="text-slate-300 text-xs">Recordatorios preventivos automáticos que aseguran la renovación antes de que caiga el servicio.</span>
+                      <strong class="text-white block font-semibold">Bot de Telegram avisa vencimientos 3 días antes</strong>
+                      <span class="text-slate-300 text-xs">Alertas preventivas automáticas que aseguran la renovación antes de que caiga el servicio.</span>
                     </div>
                   </li>
 
                   <li class="flex items-start gap-3 text-sm text-slate-200">
                     <div class="w-6 h-6 rounded-full bg-emerald-950 border border-emerald-500/50 flex items-center justify-center text-emerald-400 font-bold shrink-0 mt-0.5 text-xs">✓</div>
                     <div>
-                      <strong class="text-white block font-semibold">Control exacto de ingresos, egresos y utilidad neta</strong>
-                      <span class="text-slate-300 text-xs">Panel financiero en tiempo real con gráficos claros y exportación de reportes a Excel en 1 clic.</span>
-                    </div>
-                  </li>
-
-                  <li class="flex items-start gap-3 text-sm text-slate-200">
-                    <div class="w-6 h-6 rounded-full bg-emerald-950 border border-emerald-500/50 flex items-center justify-center text-emerald-400 font-bold shrink-0 mt-0.5 text-xs">✓</div>
-                    <div>
-                      <strong class="text-white block font-semibold">Organización milimétrica de perfiles disponibles y ocupados</strong>
-                      <span class="text-slate-300 text-xs">Visualización gráfica por cuenta, perfiles libres, PINs seguros y alertas automáticas de renovación.</span>
+                      <strong class="text-white block font-semibold">Control exacto de perfiles libres, ocupados y utilidad</strong>
+                      <span class="text-slate-300 text-xs">Inventario visual por cuenta maestra y cálculo de ganancia neta en tiempo real.</span>
                     </div>
                   </li>
                 </ul>
@@ -840,141 +738,17 @@
         </div>
       </section>
 
-      <!-- ═══ 5. INTERACTIVE TIME & MONEY SAVING CALCULATOR ═══ -->
-      <section id="calculator" class="py-16 sm:py-20 lg:py-24 bg-slate-900/40 border-y border-slate-800/80 relative">
-        <div class="max-w-5xl mx-auto px-5 sm:px-8">
-          
-          <div class="text-center max-w-2xl mx-auto mb-12">
-            <span
-              class="inline-block px-3 py-1 rounded-full bg-indigo-950/60 border border-indigo-800/50 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-3"
-            >
-              Calculadora de Retorno de Inversión
-            </span>
-            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-4">
-              Calculá cuánto tiempo y dinero ahorrás cada mes
-            </h2>
-            <p class="text-base sm:text-lg text-slate-400">
-              Deslizá para indicar cuántos clientes activos gestionás y mirá el impacto directo de la automatización en tu negocio.
-            </p>
-          </div>
-
-          <div class="bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-slate-800 rounded-3xl p-6 sm:p-10 backdrop-blur-xl shadow-2xl shadow-black/60">
-            
-            <!-- Slider Control Box -->
-            <div class="max-w-xl mx-auto mb-10 text-center">
-              <div class="flex items-center justify-between mb-3">
-                <label for="calc-slider" class="text-sm sm:text-base font-bold text-slate-200">
-                  ¿Cuántos clientes tenés hoy?
-                </label>
-                <div class="flex items-baseline gap-1 bg-cyan-950/80 border border-cyan-800/60 px-3.5 py-1 rounded-xl">
-                  <span id="calc-clients-val" class="text-2xl sm:text-3xl font-black text-cyan-300 font-mono">100</span>
-                  <span class="text-xs text-cyan-400 font-semibold">clientes</span>
-                </div>
-              </div>
-
-              <!-- Range Slider -->
-              <input
-                id="calc-slider"
-                type="range"
-                min="20"
-                max="500"
-                step="5"
-                value="100"
-                class="w-full cursor-pointer"
-                aria-label="Cantidad de clientes"
-              />
-
-              <div class="flex justify-between text-xs text-slate-500 font-mono mt-2">
-                <span>20 clientes</span>
-                <span>250 clientes</span>
-                <span>500+ clientes</span>
-              </div>
-            </div>
-
-            <!-- 3 Dynamic Metric Cards -->
-            <div class="grid sm:grid-cols-3 gap-5 mb-10">
-              
-              <!-- Metric 1: Horas ahorradas -->
-              <div class="bg-slate-950/70 border border-slate-800/90 rounded-2xl p-5 text-center sm:text-left hover:border-slate-700 transition-all">
-                <div class="w-10 h-10 rounded-xl bg-indigo-950/60 border border-indigo-800/50 text-indigo-400 flex items-center justify-center mb-3 mx-auto sm:mx-0">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                </div>
-                <p class="text-3xl sm:text-4xl font-extrabold text-white mb-1">
-                  <span id="calc-hours">25</span> <span class="text-lg font-bold text-indigo-400">h/mes</span>
-                </p>
-                <p class="text-xs sm:text-sm font-bold text-slate-200">
-                  Horas de soporte manual ahorradas
-                </p>
-                <p class="text-[11px] text-slate-400 mt-1">
-                  Menos tiempo enviando claves y revisando correos.
-                </p>
-              </div>
-
-              <!-- Metric 2: Mensajes de WhatsApp -->
-              <div class="bg-slate-950/70 border border-slate-800/90 rounded-2xl p-5 text-center sm:text-left hover:border-slate-700 transition-all">
-                <div class="w-10 h-10 rounded-xl bg-cyan-950/60 border border-cyan-800/50 text-cyan-400 flex items-center justify-center mb-3 mx-auto sm:mx-0">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                </div>
-                <p class="text-3xl sm:text-4xl font-extrabold text-cyan-300 mb-1">
-                  <span id="calc-messages">400</span> <span class="text-lg font-bold text-cyan-400">msgs</span>
-                </p>
-                <p class="text-xs sm:text-sm font-bold text-slate-200">
-                  Mensajes de WhatsApp ahorrados
-                </p>
-                <p class="text-[11px] text-slate-400 mt-1">
-                  Códigos de TV y recordatorios se envían solos.
-                </p>
-              </div>
-
-              <!-- Metric 3: Dinero recuperado -->
-              <div class="bg-slate-950/70 border border-slate-800/90 rounded-2xl p-5 text-center sm:text-left hover:border-slate-700 transition-all">
-                <div class="w-10 h-10 rounded-xl bg-emerald-950/60 border border-emerald-800/50 text-emerald-400 flex items-center justify-center mb-3 mx-auto sm:mx-0">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                </div>
-                <p class="text-3xl sm:text-4xl font-extrabold text-emerald-400 mb-1">
-                  <span id="calc-money">+$120 USD</span>
-                </p>
-                <p class="text-xs sm:text-sm font-bold text-slate-200">
-                  Dinero recuperado en cobros a tiempo
-                </p>
-                <p class="text-[11px] text-slate-400 mt-1">
-                  Evitá fugas por clientes morosos o vencidos.
-                </p>
-              </div>
-
-            </div>
-
-            <!-- Dynamic CTA -->
-            <div class="text-center pt-2">
-              <a
-                href="/app/register"
-                id="calc-cta-btn"
-                class="inline-flex items-center justify-center px-10 py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold text-base shadow-xl shadow-cyan-950/60 transition-all hover:scale-[1.02] active:scale-[0.98] gap-2"
-              >
-                <span>Automatizar mis <span id="calc-btn-clients">100</span> Clientes Gratis</span>
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-              </a>
-              <p class="text-xs text-slate-500 mt-3">
-                Plan Starter 100% gratis hasta 20 clientes • Escalá solo cuando tu negocio crezca
-              </p>
-            </div>
-
-          </div>
-
-        </div>
-      </section>
-
-      <!-- ═══ VIDEO DEMO ═══ -->
-      <section id="demo" class="py-16 sm:py-20 lg:py-24">
+      <!-- ═══ 4. VIDEO DEMO ═══ -->
+      <section class="py-14 sm:py-18 bg-slate-900/40 border-y border-slate-800/80">
         <div class="max-w-4xl mx-auto px-5 sm:px-8 text-center">
           <span class="inline-block px-3 py-1 rounded-full bg-indigo-950/60 border border-indigo-800/50 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-3">
-            Video Demostración
+            Demostración Rápida
           </span>
-          <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight mb-4 text-white">
-            Mirá cómo funciona en vivo
+          <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4 text-white">
+            Mirá cómo funciona el panel en vivo
           </h2>
-          <p class="text-base sm:text-lg text-slate-400 mb-10 max-w-2xl mx-auto">
-            En 3 minutos te mostramos el panel completo: clientes, cuentas, perfiles y extracción automática de códigos de verificación.
+          <p class="text-base sm:text-lg text-slate-400 mb-8 max-w-2xl mx-auto">
+            En 3 minutos te mostramos el panel completo: clientes, inventario de perfiles y extracción automática de códigos de verificación.
           </p>
           <div class="relative w-full rounded-2xl overflow-hidden shadow-2xl shadow-black/80 border border-slate-800 bg-slate-900/80 backdrop-blur-xl p-1" style="aspect-ratio: 16 / 9">
             <iframe
@@ -989,271 +763,9 @@
         </div>
       </section>
 
-      <!-- ═══ COMPATIBILIDAD ═══ -->
-      <section class="py-14 bg-slate-900/40 border-y border-slate-800/80">
-        <div class="max-w-6xl mx-auto px-5 sm:px-8">
-          <p
-            class="text-center text-xs font-semibold text-slate-500 uppercase tracking-[0.25em] mb-8"
-          >
-            Compatible con los principales servicios de streaming
-          </p>
-          <div
-            class="flex flex-wrap items-center justify-center gap-x-12 gap-y-5"
-          >
-            <span
-              class="text-xl sm:text-2xl font-black text-slate-500 hover:text-cyan-400 transition-colors cursor-default"
-              >NETFLIX</span
-            >
-            <span
-              class="text-xl sm:text-2xl font-black text-slate-500 hover:text-cyan-400 transition-colors cursor-default"
-              >max</span
-            >
-            <span
-              class="text-xl sm:text-2xl font-black text-slate-500 hover:text-cyan-400 transition-colors cursor-default"
-              >Disney+</span
-            >
-            <span
-              class="text-xl sm:text-2xl font-black text-slate-500 hover:text-cyan-400 transition-colors cursor-default"
-              >Prime Video</span
-            >
-            <span
-              class="text-xl sm:text-2xl font-black text-slate-500 hover:text-cyan-400 transition-colors cursor-default"
-              >Paramount+</span
-            >
-            <span
-              class="text-xl sm:text-2xl font-black text-slate-500 hover:text-cyan-400 transition-colors cursor-default"
-              >Crunchyroll</span
-            >
-          </div>
-        </div>
-      </section>
 
-      <!-- ═══ FEATURES ═══ -->
-      <section id="features" class="py-16 sm:py-20 lg:py-24">
-        <div class="max-w-6xl mx-auto px-5 sm:px-8">
-          <div class="max-w-2xl mb-14">
-            <span
-              class="inline-block px-3 py-1 rounded-full bg-indigo-950/60 border border-indigo-800/50 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-3"
-            >
-              Funciones Principales
-            </span>
-            <h2
-              class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight mb-4 text-white"
-            >
-              Todo lo que necesitás,<br /><span class="bg-gradient-to-r from-cyan-400 to-indigo-400 bg-clip-text text-transparent">nada que te complique</span>
-            </h2>
-            <p class="text-base sm:text-lg text-slate-400">
-              Dejaste el desorden atrás. StreamControl centraliza cada parte operativa y financiera de tu negocio.
-            </p>
-          </div>
-          <div
-            class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            <!-- Feature 1 -->
-            <div class="group bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 sm:p-7 backdrop-blur-xl hover:border-slate-700 hover:bg-slate-900/90 hover:shadow-2xl hover:shadow-cyan-500/5 transition-all duration-300">
-              <div
-                class="w-12 h-12 rounded-xl bg-indigo-950/50 border border-indigo-800/40 text-cyan-400 flex items-center justify-center mb-5 group-hover:scale-105 group-hover:border-cyan-500/50 group-hover:bg-cyan-950/30 transition-all"
-              >
-                <svg
-                  class="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                  />
-                </svg>
-              </div>
-              <h3 class="text-lg font-bold text-white mb-2 group-hover:text-cyan-300 transition-colors">Gestión de Clientes</h3>
-              <p class="text-sm text-slate-400 leading-relaxed">
-                Registrá ventas, cobrá, manejá vencimientos y saldos pendientes. Cada cliente con su historial de accesos y servicios activo.
-              </p>
-            </div>
-
-            <!-- Feature 2 -->
-            <div class="group bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 sm:p-7 backdrop-blur-xl hover:border-slate-700 hover:bg-slate-900/90 hover:shadow-2xl hover:shadow-indigo-500/5 transition-all duration-300">
-              <div
-                class="w-12 h-12 rounded-xl bg-indigo-950/50 border border-indigo-800/40 text-cyan-400 flex items-center justify-center mb-5 group-hover:scale-105 group-hover:border-cyan-500/50 group-hover:bg-cyan-950/30 transition-all"
-              >
-                <svg
-                  class="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                  />
-                </svg>
-              </div>
-              <h3 class="text-lg font-bold text-white mb-2 group-hover:text-cyan-300 transition-colors">Control de Cuentas y Perfiles</h3>
-              <p class="text-sm text-slate-400 leading-relaxed">
-                Administrá cuentas maestras de 1 a 5 perfiles. Asignación inmediata con PIN, visualización de stock y renovación en 1 clic.
-              </p>
-            </div>
-
-            <!-- Feature 3 -->
-            <div class="group bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 sm:p-7 backdrop-blur-xl hover:border-slate-700 hover:bg-slate-900/90 hover:shadow-2xl hover:shadow-emerald-500/5 transition-all duration-300">
-              <div
-                class="w-12 h-12 rounded-xl bg-indigo-950/50 border border-indigo-800/40 text-cyan-400 flex items-center justify-center mb-5 group-hover:scale-105 group-hover:border-cyan-500/50 group-hover:bg-cyan-950/30 transition-all"
-              >
-                <svg
-                  class="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                  />
-                </svg>
-              </div>
-              <h3 class="text-lg font-bold text-white mb-2 group-hover:text-cyan-300 transition-colors">Extracción de Códigos IMAP</h3>
-              <p class="text-sm text-slate-400 leading-relaxed">
-                Consulta automática vía IMAP. Tus clientes ven sus códigos de TV desde un link seguro, sin interrumpirte durante el día ni la noche.
-              </p>
-            </div>
-
-            <!-- Feature 4 -->
-            <div class="group bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 sm:p-7 backdrop-blur-xl hover:border-slate-700 hover:bg-slate-900/90 hover:shadow-2xl hover:shadow-amber-500/5 transition-all duration-300">
-              <div
-                class="w-12 h-12 rounded-xl bg-indigo-950/50 border border-indigo-800/40 text-cyan-400 flex items-center justify-center mb-5 group-hover:scale-105 group-hover:border-cyan-500/50 group-hover:bg-cyan-950/30 transition-all"
-              >
-                <svg
-                  class="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-                  />
-                </svg>
-              </div>
-              <h3 class="text-lg font-bold text-white mb-2 group-hover:text-cyan-300 transition-colors">Alertas por Telegram 24/7</h3>
-              <p class="text-sm text-slate-400 leading-relaxed">
-                Recibí notificaciones preventivas de vencimientos, clientes en mora y cuentas por expirar. Asegurá cada renovación a tiempo.
-              </p>
-            </div>
-
-            <!-- Feature 5 -->
-            <div class="group bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 sm:p-7 backdrop-blur-xl hover:border-slate-700 hover:bg-slate-900/90 hover:shadow-2xl hover:shadow-rose-500/5 transition-all duration-300">
-              <div
-                class="w-12 h-12 rounded-xl bg-indigo-950/50 border border-indigo-800/40 text-cyan-400 flex items-center justify-center mb-5 group-hover:scale-105 group-hover:border-cyan-500/50 group-hover:bg-cyan-950/30 transition-all"
-              >
-                <svg
-                  class="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                  />
-                </svg>
-              </div>
-              <h3 class="text-lg font-bold text-white mb-2 group-hover:text-cyan-300 transition-colors">Panel Financiero & Utilidad</h3>
-              <p class="text-sm text-slate-400 leading-relaxed">
-                Visualizá tus ingresos brutos, costos de proveedores y tu utilidad neta real en gráficos limpios con exportación a Excel en un clic.
-              </p>
-            </div>
-
-            <!-- Feature 6 -->
-            <div class="group bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 sm:p-7 backdrop-blur-xl hover:border-slate-700 hover:bg-slate-900/90 hover:shadow-2xl hover:shadow-cyan-500/5 transition-all duration-300">
-              <div
-                class="w-12 h-12 rounded-xl bg-indigo-950/50 border border-indigo-800/40 text-cyan-400 flex items-center justify-center mb-5 group-hover:scale-105 group-hover:border-cyan-500/50 group-hover:bg-cyan-950/30 transition-all"
-              >
-                <svg
-                  class="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                  />
-                </svg>
-              </div>
-              <h3 class="text-lg font-bold text-white mb-2 group-hover:text-cyan-300 transition-colors">Módulo de Mayoristas</h3>
-              <p class="text-sm text-slate-400 leading-relaxed">
-                Vendé lotes completos de perfiles a sub-distribuidores mediante tokens de consulta protegidos. Escalá tu red sin perder el orden.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ═══ CÓMO FUNCIONA ═══ -->
-      <section class="py-16 sm:py-20 lg:py-24">
-        <div class="max-w-6xl mx-auto px-5 sm:px-8">
-          <div class="max-w-2xl mb-14">
-            <span
-              class="inline-block px-3 py-1 rounded-full bg-indigo-950/60 border border-indigo-800/50 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-3"
-            >
-              Paso a Paso
-            </span>
-            <h2
-              class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight mb-4 text-white"
-            >
-              Empezá en 3 simples pasos
-            </h2>
-            <p class="text-base sm:text-lg text-slate-400">
-              Sin curvas de aprendizaje complejas. Todo diseñado para máxima agilidad desde tu celular o computadora.
-            </p>
-          </div>
-          <div class="grid md:grid-cols-3 gap-6">
-            <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-7 backdrop-blur-xl hover:border-slate-700 transition-all duration-300">
-              <p class="text-5xl font-black bg-gradient-to-br from-cyan-400/40 to-indigo-500/20 bg-clip-text text-transparent mb-4 font-mono">01</p>
-              <h3 class="text-lg font-bold text-white mb-2">
-                Creás tu cuenta gratis
-              </h3>
-              <p class="text-slate-400 text-sm leading-relaxed">
-                Registrate en segundos y accedé al panel. Sin tarjeta de crédito requerida, sin permanencia.
-              </p>
-            </div>
-            <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-7 backdrop-blur-xl hover:border-slate-700 transition-all duration-300">
-              <p class="text-5xl font-black bg-gradient-to-br from-cyan-400/40 to-indigo-500/20 bg-clip-text text-transparent mb-4 font-mono">02</p>
-              <h3 class="text-lg font-bold text-white mb-2">
-                Cargás tus cuentas y clientes
-              </h3>
-              <p class="text-slate-400 text-sm leading-relaxed">
-                Agregás tus servicios de streaming, vinculás tu correo IMAP y registrás tus clientes en un panel limpio.
-              </p>
-            </div>
-            <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-7 backdrop-blur-xl hover:border-slate-700 transition-all duration-300">
-              <p class="text-5xl font-black bg-gradient-to-br from-cyan-400/40 to-indigo-500/20 bg-clip-text text-transparent mb-4 font-mono">03</p>
-              <h3 class="text-lg font-bold text-white mb-2">
-                Vendés en piloto automático
-              </h3>
-              <p class="text-slate-400 text-sm leading-relaxed">
-                El sistema asigna perfiles, extrae códigos de TV y avisa cobros por Telegram. Todo sin que tengas que intervenir.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ═══ PRECIOS ═══ -->
-      <section id="pricing" class="py-16 sm:py-20 lg:py-24">
+      <!-- ═══ 5. PRECIOS ═══ -->
+      <section id="pricing" class="py-16 sm:py-20 lg:py-24 bg-slate-900/30 border-y border-slate-800/80">
         <div class="max-w-6xl mx-auto px-5 sm:px-8">
           <div class="max-w-2xl mb-14">
             <span
@@ -1267,19 +779,19 @@
               Elegí el plan para tu negocio
             </h2>
             <p class="text-base sm:text-lg text-slate-400">
-              Sin contratos forzados, cancelá o cambiá de plan cuando quieras con total libertad.
+              Sin contratos forzados ni letra chica. Empezá gratis o escalá cuando lo necesites.
             </p>
           </div>
           <div class="grid md:grid-cols-3 gap-6 items-stretch">
             
             <!-- Starter -->
             <div
-              class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl shadow-black/50 hover:border-slate-700 transition-all duration-300 flex flex-col justify-between"
+              class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-8 backdrop-blur-xl shadow-xl flex flex-col justify-between"
             >
               <div>
                 <span class="inline-block px-2.5 py-1 rounded-md bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300 uppercase tracking-wider mb-3">Plan Base</span>
                 <h3 class="text-xl font-bold text-white">Starter</h3>
-                <p class="text-sm text-slate-400 mt-1">Gratis / Para siempre</p>
+                <p class="text-sm text-slate-400 mt-1">Gratis para siempre</p>
                 <div class="mt-6 flex items-baseline gap-1">
                   <span class="text-4xl font-extrabold text-white">$0</span>
                   <span class="text-sm font-normal text-slate-400">/mes</span>
@@ -1384,9 +896,9 @@
                 MÁS POPULAR
               </div>
               <div>
-                <span class="inline-block px-2.5 py-1 rounded-md bg-cyan-950/80 border border-cyan-800/60 text-xs font-semibold text-cyan-300 uppercase tracking-wider mb-3">Revendedor Pro</span>
+                <span class="inline-block px-2.5 py-1 rounded-md bg-cyan-950/80 border border-cyan-800/60 text-xs font-semibold text-cyan-300 uppercase tracking-wider mb-3">Recomendado</span>
                 <h3 class="text-xl font-bold text-white">Professional</h3>
-                <p class="text-sm text-slate-400 mt-1">Para revendedores en pleno crecimiento</p>
+                <p class="text-sm text-slate-400 mt-1">Para negocios en pleno crecimiento</p>
                 <div class="mt-6 flex items-baseline gap-1">
                   <span class="text-4xl font-extrabold text-white">$8,99</span>
                   <span class="text-sm font-normal text-slate-400">/mes</span>
@@ -1406,7 +918,7 @@
                         d="M5 13l4 4L19 7"
                       />
                     </svg>
-                    <span>Clientes y Cuentas <strong class="font-semibold text-cyan-300">100% ILIMITADOS</strong></span>
+                    <span>Clientes y Cuentas <strong class="font-semibold text-cyan-300">ILIMITADOS</strong></span>
                   </li>
                   <li class="flex items-start gap-3 text-sm text-slate-200">
                     <svg
@@ -1422,7 +934,7 @@
                         d="M5 13l4 4L19 7"
                       />
                     </svg>
-                    <span><strong class="font-semibold text-white">Bot de Telegram 24/7</strong> con avisos automáticos de corte</span>
+                    <span><strong class="font-semibold text-white">Bot de Telegram 24/7</strong> con avisos de corte</span>
                   </li>
                   <li class="flex items-start gap-3 text-sm text-slate-200">
                     <svg
@@ -1483,12 +995,12 @@
 
             <!-- Enterprise -->
             <div
-              class="bg-slate-900/80 border border-amber-500/30 hover:border-amber-500/60 rounded-2xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl shadow-black/50 hover:shadow-amber-500/10 transition-all duration-300 flex flex-col justify-between"
+              class="bg-slate-900/80 border border-amber-500/30 hover:border-amber-500/60 rounded-2xl p-6 sm:p-8 backdrop-blur-xl shadow-xl transition-all duration-300 flex flex-col justify-between"
             >
               <div>
-                <span class="inline-block px-2.5 py-1 rounded-md bg-amber-950/60 border border-amber-800/50 text-xs font-semibold text-amber-300 uppercase tracking-wider mb-3">Mayoristas & Agencias</span>
+                <span class="inline-block px-2.5 py-1 rounded-md bg-amber-950/60 border border-amber-800/50 text-xs font-semibold text-amber-300 uppercase tracking-wider mb-3">Mayoristas & Redes</span>
                 <h3 class="text-xl font-bold text-white">Enterprise</h3>
-                <p class="text-sm text-slate-400 mt-1">Para grandes volúmenes y revendedores</p>
+                <p class="text-sm text-slate-400 mt-1">Para grandes volúmenes de cuentas</p>
                 <div class="mt-6 flex items-baseline gap-1">
                   <span class="text-4xl font-extrabold text-white">$9,99</span>
                   <span class="text-sm font-normal text-slate-400">/mes</span>
@@ -1524,7 +1036,7 @@
                         d="M5 13l4 4L19 7"
                       />
                     </svg>
-                    <span><strong class="font-semibold text-amber-300">Consulta Automática IMAP</strong> (Netflix/Disney Hogar TV)</span>
+                    <span><strong class="font-semibold text-amber-300">Consulta Automática IMAP</strong> (Códigos de acceso y verificación hogar TV)</span>
                   </li>
                   <li class="flex items-start gap-3 text-sm text-slate-300">
                     <svg
@@ -1586,215 +1098,81 @@
         </div>
       </section>
 
-      <!-- ═══ SOCIAL PROOF — TWEET GRID ═══ -->
+      <!-- ═══ 6. SOCIAL PROOF ═══ -->
       <section id="testimonials" class="py-16 sm:py-20 lg:py-24">
         <div class="max-w-6xl mx-auto px-5 sm:px-8">
           <div class="text-center mb-12">
             <span
               class="inline-block px-3 py-1 rounded-full bg-indigo-950/60 border border-indigo-800/50 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-3"
             >
-              Testimonios Reales
+              Experiencias Reales
             </span>
             <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
-              Opiniones de revendedores activos
+              Lo que opinan los usuarios
             </h2>
           </div>
-          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
-            <!-- Col 1 -->
-            <div class="flex flex-col gap-4">
-              <div
-                class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl shadow-black/40 backdrop-blur-xl hover:border-slate-700 hover:shadow-indigo-500/10 transition-all duration-300"
-              >
-                <div class="flex items-center gap-2.5 mb-2.5">
-                  <div
-                    class="w-8 h-8 rounded-full bg-indigo-950 border border-indigo-700/50 flex items-center justify-center text-indigo-300 font-bold text-xs shrink-0"
-                  >
-                    CL
-                  </div>
-                  <div class="min-w-0">
-                    <p class="text-sm font-bold text-slate-100 truncate">
-                      Carlos L.
-                    </p>
-                    <p class="text-xs text-slate-500 truncate">@carlosl</p>
-                  </div>
+          <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <!-- Testimonial 1 -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl hover:border-slate-700 transition-all">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-9 h-9 rounded-full bg-indigo-950 border border-indigo-700/50 flex items-center justify-center text-indigo-300 font-bold text-xs">CL</div>
+                <div>
+                  <p class="text-sm font-bold text-slate-100">Carlos L.</p>
+                  <p class="text-xs text-slate-500">Distribuidor Digital</p>
                 </div>
-                <p class="text-sm text-slate-300 leading-relaxed">
-                  "Manejaba todo en Excel y era un quilombo. StreamControl me
-                  ordenó los clientes, las cuentas y los códigos. Ahora no puedo
-                  laburar sin esto."
-                </p>
               </div>
-              <div
-                class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl shadow-black/40 backdrop-blur-xl hover:border-slate-700 hover:shadow-indigo-500/10 transition-all duration-300"
-              >
-                <div class="flex items-center gap-2.5 mb-2.5">
-                  <div
-                    class="w-8 h-8 rounded-full bg-emerald-950 border border-emerald-700/50 flex items-center justify-center text-emerald-300 font-bold text-xs shrink-0"
-                  >
-                    AR
-                  </div>
-                  <div class="min-w-0">
-                    <p class="text-sm font-bold text-slate-100 truncate">
-                      Andrés R.
-                    </p>
-                    <p class="text-xs text-slate-500 truncate">@andresr</p>
-                  </div>
-                </div>
-                <p class="text-sm text-slate-300 leading-relaxed">
-                  "Arranqué con el plan gratis y a las dos semanas ya estaba
-                  pagando. Los reportes y las alertas de Telegram me ayudan a no
-                  perder clientes."
-                </p>
-              </div>
+              <p class="text-sm text-slate-300 leading-relaxed">
+                "Manejaba todo en Excel y era un desorden. StreamControl me ordenó los clientes, las cuentas y la entrega de códigos. No vuelvo al método manual."
+              </p>
             </div>
-            <!-- Col 2 -->
-            <div class="flex flex-col gap-4 mt-8 sm:mt-0 lg:mt-6">
-              <div
-                class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl shadow-black/40 backdrop-blur-xl hover:border-slate-700 hover:shadow-indigo-500/10 transition-all duration-300"
-              >
-                <div class="flex items-center gap-2.5 mb-2.5">
-                  <div
-                    class="w-8 h-8 rounded-full bg-violet-950 border border-violet-700/50 flex items-center justify-center text-violet-300 font-bold text-xs shrink-0"
-                  >
-                    MG
-                  </div>
-                  <div class="min-w-0">
-                    <p class="text-sm font-bold text-slate-100 truncate">
-                      María G.
-                    </p>
-                    <p class="text-xs text-slate-500 truncate">@mariag</p>
-                  </div>
+
+            <!-- Testimonial 2 -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl hover:border-slate-700 transition-all">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-9 h-9 rounded-full bg-emerald-950 border border-emerald-700/50 flex items-center justify-center text-emerald-300 font-bold text-xs">MG</div>
+                <div>
+                  <p class="text-sm font-bold text-slate-100">María G.</p>
+                  <p class="text-xs text-slate-500">Servicios Digitales</p>
                 </div>
-                <p class="text-sm text-slate-300 leading-relaxed">
-                  "La consulta de códigos por IMAP me salvó la vida. Mis clientes ya no
-                  me escriben cada 5 minutos pidiendo el código, lo ven ellos
-                  solos al instante."
-                </p>
               </div>
-              <div
-                class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl shadow-black/40 backdrop-blur-xl hover:border-slate-700 hover:shadow-indigo-500/10 transition-all duration-300"
-              >
-                <div class="flex items-center gap-2.5 mb-2.5">
-                  <div
-                    class="w-8 h-8 rounded-full bg-amber-950 border border-amber-700/50 flex items-center justify-center text-amber-300 font-bold text-xs shrink-0"
-                  >
-                    DM
-                  </div>
-                  <div class="min-w-0">
-                    <p class="text-sm font-bold text-slate-100 truncate">
-                      Diego M.
-                    </p>
-                    <p class="text-xs text-slate-500 truncate">@diegom</p>
-                  </div>
-                </div>
-                <p class="text-sm text-slate-300 leading-relaxed">
-                  "Probé varias herramientas y ninguna se compara. La gestión de
-                  perfiles y PINs es exactamente lo que necesitaba para escalar."
-                </p>
-              </div>
+              <p class="text-sm text-slate-300 leading-relaxed">
+                "La consulta de códigos por IMAP es lo mejor. Mis clientes ven su código en 2 segundos por link y ya no me escriben a medianoche."
+              </p>
             </div>
-            <!-- Col 3 -->
-            <div class="flex flex-col gap-4 mt-8 sm:mt-0 lg:mt-3">
-              <div
-                class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl shadow-black/40 backdrop-blur-xl hover:border-slate-700 hover:shadow-indigo-500/10 transition-all duration-300"
-              >
-                <div class="flex items-center gap-2.5 mb-2.5">
-                  <div
-                    class="w-8 h-8 rounded-full bg-cyan-950 border border-cyan-700/50 flex items-center justify-center text-cyan-300 font-bold text-xs shrink-0"
-                  >
-                    LP
-                  </div>
-                  <div class="min-w-0">
-                    <p class="text-sm font-bold text-slate-100 truncate">
-                      Laura P.
-                    </p>
-                    <p class="text-xs text-slate-500 truncate">@laurap</p>
-                  </div>
+
+            <!-- Testimonial 3 -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl hover:border-slate-700 transition-all">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-9 h-9 rounded-full bg-violet-950 border border-violet-700/50 flex items-center justify-center text-violet-300 font-bold text-xs">AR</div>
+                <div>
+                  <p class="text-sm font-bold text-slate-100">Andrés R.</p>
+                  <p class="text-xs text-slate-500">Revendedor</p>
                 </div>
-                <p class="text-sm text-slate-300 leading-relaxed">
-                  "Mis clientes reciben sus códigos automáticamente. Ya no tengo
-                  que estar pendiente del correo todo el día. StreamControl
-                  labura por mí."
-                </p>
               </div>
-              <div
-                class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl shadow-black/40 backdrop-blur-xl hover:border-slate-700 hover:shadow-indigo-500/10 transition-all duration-300"
-              >
-                <div class="flex items-center gap-2.5 mb-2.5">
-                  <div
-                    class="w-8 h-8 rounded-full bg-rose-950 border border-rose-700/50 flex items-center justify-center text-rose-300 font-bold text-xs shrink-0"
-                  >
-                    FS
-                  </div>
-                  <div class="min-w-0">
-                    <p class="text-sm font-bold text-slate-100 truncate">
-                      Federico S.
-                    </p>
-                    <p class="text-xs text-slate-500 truncate">@fedex</p>
-                  </div>
-                </div>
-                <p class="text-sm text-slate-300 leading-relaxed">
-                  "Pasé de tener 20 clientes a más de 120 en 3 meses.
-                  StreamControl me dio la estructura para escalar sin volverme
-                  loco."
-                </p>
-              </div>
-            </div>
-            <!-- Col 4 -->
-            <div class="flex flex-col gap-4 mt-8 sm:mt-0 lg:mt-8">
-              <div
-                class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl shadow-black/40 backdrop-blur-xl hover:border-slate-700 hover:shadow-indigo-500/10 transition-all duration-300"
-              >
-                <div class="flex items-center gap-2.5 mb-2.5">
-                  <div
-                    class="w-8 h-8 rounded-full bg-orange-950 border border-orange-700/50 flex items-center justify-center text-orange-300 font-bold text-xs shrink-0"
-                  >
-                    PJ
-                  </div>
-                  <div class="min-w-0">
-                    <p class="text-sm font-bold text-slate-100 truncate">
-                      Pablo J.
-                    </p>
-                    <p class="text-xs text-slate-500 truncate">@pabloj</p>
-                  </div>
-                </div>
-                <p class="text-sm text-slate-300 leading-relaxed">
-                  "Los reportes en Excel me ahorran horas de laburo cada semana.
-                  Veo exactamente cuánto gané, gasté y mi utilidad en segundos."
-                </p>
-              </div>
+              <p class="text-sm text-slate-300 leading-relaxed">
+                "Las alertas de Telegram me aseguran las renovaciones 3 días antes del vencimiento. Dejé de perder clientes por olvidos."
+              </p>
             </div>
           </div>
-        </div>
-        <div class="text-center mt-12">
-          <p class="text-sm text-slate-400 mb-4">¿Usás StreamControl y querés compartir tu experiencia?</p>
-          <a
-            href="https://wa.me/573247349128?text=Hola%2C%20quiero%20dejar%20mi%20rese%C3%B1a%20sobre%20StreamControl%20Pro%3A%0A%0A%E2%80%A2%20Mi%20nombre%3A%0A%E2%80%A2%20Hace%20cu%C3%A1nto%20lo%20uso%3A%0A%E2%80%A2%20Mi%20opini%C3%B3n%3A"
-            target="_blank"
-            class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 hover:border-slate-700 font-medium text-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-            Dejar mi reseña
-          </a>
         </div>
       </section>
 
-      <!-- ═══ FAQ ═══ -->
-      <section id="faq" class="py-16 sm:py-20 lg:py-24">
+      <!-- ═══ 7. FAQ ═══ -->
+      <section id="faq" class="py-16 sm:py-20 lg:py-24 bg-slate-900/30 border-t border-slate-800/80">
         <div class="max-w-2xl mx-auto px-5 sm:px-8">
           <div class="mb-12 text-center">
             <span
               class="inline-block px-3 py-1 rounded-full bg-indigo-950/60 border border-indigo-800/50 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-3"
             >
-              FAQ
+              Preguntas Frecuentes
             </span>
             <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
-              Preguntas frecuentes
+              Todo lo que necesitás saber
             </h2>
           </div>
           <div class="space-y-4">
             <details
-              class="group bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 rounded-2xl p-5 sm:p-6 cursor-pointer open:bg-slate-900/90 open:border-slate-700/90 transition-all duration-200 backdrop-blur-xl shadow-lg shadow-black/20"
+              class="group bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 rounded-2xl p-5 sm:p-6 cursor-pointer open:bg-slate-900/90 open:border-slate-700/90 transition-all duration-200 backdrop-blur-xl"
             >
               <summary
                 class="flex items-center justify-between text-base font-bold text-slate-100 list-none gap-4 group-hover:text-cyan-300 transition-colors"
@@ -1814,16 +1192,16 @@
                 </svg>
               </summary>
               <p class="mt-4 text-sm text-slate-400 leading-relaxed border-t border-slate-800/60 pt-3">
-                No. Si sabés usar WhatsApp y una planilla básica, podés usar StreamControl sin inconvenientes. Todo está pensado para que registres ventas y entregues accesos con 1 solo clic.
+                No. El panel está pensado para que registres ventas y envíes accesos con 1 solo clic desde tu celular o computadora.
               </p>
             </details>
             <details
-              class="group bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 rounded-2xl p-5 sm:p-6 cursor-pointer open:bg-slate-900/90 open:border-slate-700/90 transition-all duration-200 backdrop-blur-xl shadow-lg shadow-black/20"
+              class="group bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 rounded-2xl p-5 sm:p-6 cursor-pointer open:bg-slate-900/90 open:border-slate-700/90 transition-all duration-200 backdrop-blur-xl"
             >
               <summary
                 class="flex items-center justify-between text-base font-bold text-slate-100 list-none gap-4 group-hover:text-cyan-300 transition-colors"
               >
-                ¿Qué plataformas de streaming funcionan?<svg
+                ¿Con qué servicios digitales funciona?<svg
                   class="w-5 h-5 text-slate-400 shrink-0 group-open:rotate-180 group-open:text-cyan-400 transition-transform duration-200"
                   fill="none"
                   stroke="currentColor"
@@ -1838,16 +1216,16 @@
                 </svg>
               </summary>
               <p class="mt-4 text-sm text-slate-400 leading-relaxed border-t border-slate-800/60 pt-3">
-                Netflix, Max, Disney+, Amazon Prime Video, Paramount+, Crunchyroll y cualquier servicio que envíe correos con códigos de verificación para inicio en TV o cambios de hogar.
+                Es compatible con cuentas completas y perfiles individuales de servicios de entretenimiento digital que envíen códigos de verificación, acceso a TV o validación de hogar a tu casilla de correo.
               </p>
             </details>
             <details
-              class="group bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 rounded-2xl p-5 sm:p-6 cursor-pointer open:bg-slate-900/90 open:border-slate-700/90 transition-all duration-200 backdrop-blur-xl shadow-lg shadow-black/20"
+              class="group bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 rounded-2xl p-5 sm:p-6 cursor-pointer open:bg-slate-900/90 open:border-slate-700/90 transition-all duration-200 backdrop-blur-xl"
             >
               <summary
                 class="flex items-center justify-between text-base font-bold text-slate-100 list-none gap-4 group-hover:text-cyan-300 transition-colors"
               >
-                ¿Cómo me ayuda el sistema a saber si mi negocio es rentable?<svg
+                ¿Cómo calculo la rentabilidad de mi negocio?<svg
                   class="w-5 h-5 text-slate-400 shrink-0 group-open:rotate-180 group-open:text-cyan-400 transition-transform duration-200"
                   fill="none"
                   stroke="currentColor"
@@ -1862,13 +1240,11 @@
                 </svg>
               </summary>
               <p class="mt-4 text-sm text-slate-400 leading-relaxed border-t border-slate-800/60 pt-3">
-                Olvidate de hacer cuentas en cuadernos. Cada vez que registrás una venta, el sistema
-                <strong class="text-cyan-300 font-semibold">calcula automáticamente tu utilidad neta</strong>
-                restando el costo de compra de la cuenta. Además, contás con un panel financiero con gráficos limpios para ver tus ganancias reales del mes y saber con exactitud cuánto dinero estás ganando.
+                Al registrar cada venta, el sistema descuenta automáticamente el costo de la cuenta maestra y muestra tu utilidad neta real con gráficos claros y exportación de reportes.
               </p>
             </details>
             <details
-              class="group bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 rounded-2xl p-5 sm:p-6 cursor-pointer open:bg-slate-900/90 open:border-slate-700/90 transition-all duration-200 backdrop-blur-xl shadow-lg shadow-black/20"
+              class="group bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 rounded-2xl p-5 sm:p-6 cursor-pointer open:bg-slate-900/90 open:border-slate-700/90 transition-all duration-200 backdrop-blur-xl"
             >
               <summary
                 class="flex items-center justify-between text-base font-bold text-slate-100 list-none gap-4 group-hover:text-cyan-300 transition-colors"
@@ -1888,14 +1264,14 @@
                 </svg>
               </summary>
               <p class="mt-4 text-sm text-slate-400 leading-relaxed border-t border-slate-800/60 pt-3">
-                100% sí. Sin contratos ni letra chica. Si no renovás tu suscripción, tu cuenta vuelve al plan gratis automáticamente sin perder tus datos de clientes registrados.
+                100% sí. Sin contratos ni letra chica. Si no renovás tu suscripción, tu cuenta vuelve al plan gratis automáticamente sin perder tus datos de clientes.
               </p>
             </details>
           </div>
         </div>
       </section>
 
-      <!-- ═══ FINAL CTA ═══ -->
+      <!-- ═══ 8. FINAL CTA ═══ -->
       <section class="py-16 sm:py-20 lg:py-24">
         <div class="max-w-4xl mx-auto px-5 sm:px-8">
           <div class="relative overflow-hidden bg-gradient-to-b from-slate-900/90 via-slate-900 to-indigo-950/50 border border-slate-800/90 rounded-3xl p-8 sm:p-14 text-center shadow-2xl shadow-cyan-500/5 backdrop-blur-2xl">
@@ -1907,10 +1283,10 @@
             <h2
               class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight mb-4 text-white"
             >
-              ¿Listo para dejar atrás el Excel y escalar?
+              ¿Listo para ordenar tu negocio y escalar?
             </h2>
             <p class="text-base sm:text-lg text-slate-300 mb-8 max-w-xl mx-auto">
-              Más de 450 revendedores ya gestionan su negocio de streaming de forma profesional con StreamControl. Creá tu cuenta gratis en 2 minutos.
+              Gestioná tus clientes, cuentas y códigos de verificación en piloto automático. Creá tu cuenta gratis en 2 minutos.
             </p>
             <a
               href="/app/register"
@@ -1932,7 +1308,7 @@
               </svg>
             </a>
             <p class="text-slate-500 text-xs sm:text-sm mt-4">
-              Sin tarjeta requerida • Hasta 20 clientes gratis • Configuración guiada
+              Sin tarjeta de crédito requerida • Plan gratis hasta 20 clientes
             </p>
           </div>
         </div>
@@ -1950,18 +1326,9 @@
             StreamControl Pro
           </div>
           <div class="flex items-center gap-6 text-sm text-slate-400">
-            <a href="#comparison" class="hover:text-slate-100 transition-colors"
-              >Comparativa</a
-            >
-            <a href="#calculator" class="hover:text-slate-100 transition-colors"
-              >Calculadora</a
-            >
-            <a href="#features" class="hover:text-slate-100 transition-colors"
-              >Funciones</a
-            >
-            <a href="#pricing" class="hover:text-slate-100 transition-colors"
-              >Planes</a
-            >
+            <a href="#demo" class="hover:text-slate-100 transition-colors">Demo</a>
+            <a href="#comparison" class="hover:text-slate-100 transition-colors">Comparativa</a>
+            <a href="#pricing" class="hover:text-slate-100 transition-colors">Planes</a>
             <a href="#faq" class="hover:text-slate-100 transition-colors">FAQ</a>
           </div>
           <p class="text-xs text-slate-500">&copy; 2026 StreamControl Pro. Todos los derechos reservados.</p>
@@ -2005,7 +1372,7 @@
         var urlDisplay = document.getElementById("mockup-url-display");
         var tabUrls = {
           "1": "streamcontrolpro.app/panel/ventas-express",
-          "2": "streamcontrolpro.app/c/juan-perez-netflix",
+          "2": "streamcontrolpro.app/c/juan-perez-acceso",
           "3": "t.me/StreamControlBot/alerts"
         };
         if (!tabButtons.length) return;
@@ -2018,9 +1385,9 @@
           tabButtons.forEach(function (btn) {
             var tabId = parseInt(btn.getAttribute("data-tab"), 10);
             if (tabId === num) {
-              btn.className = "mockup-tab-btn flex-1 min-w-[100px] text-xs py-2 px-2.5 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 bg-cyan-500/20 border border-cyan-500/60 text-cyan-300 shadow-lg shadow-cyan-500/10 cursor-pointer";
+              btn.className = "mockup-tab-btn flex-1 min-w-[95px] text-xs py-2 px-2.5 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 bg-cyan-500/20 border border-cyan-500/60 text-cyan-300 shadow-lg shadow-cyan-500/10 cursor-pointer";
             } else {
-              btn.className = "mockup-tab-btn flex-1 min-w-[100px] text-xs py-2 px-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-1.5 bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-slate-200 cursor-pointer";
+              btn.className = "mockup-tab-btn flex-1 min-w-[95px] text-xs py-2 px-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-1.5 bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-slate-200 cursor-pointer";
             }
           });
 
@@ -2054,42 +1421,6 @@
           var next = currentTab >= 3 ? 1 : currentTab + 1;
           setTab(next);
         }, 6500);
-      })();
-
-      // ═══════════════════════════════════════════
-      // TIME & MONEY SAVINGS ROI CALCULATOR
-      // ═══════════════════════════════════════════
-      (function () {
-        var slider = document.getElementById("calc-slider");
-        var clientsVal = document.getElementById("calc-clients-val");
-        var hoursVal = document.getElementById("calc-hours");
-        var messagesVal = document.getElementById("calc-messages");
-        var moneyVal = document.getElementById("calc-money");
-        var btnClients = document.getElementById("calc-btn-clients");
-
-        if (!slider) return;
-
-        function updateCalculations() {
-          var clientes = parseInt(slider.value, 10) || 100;
-          var horas = Math.round(clientes * 0.25);
-          var mensajes = clientes * 4;
-          var dinero = Math.round(clientes * 1.2);
-
-          if (clientsVal) clientsVal.textContent = clientes;
-          if (hoursVal) hoursVal.textContent = horas;
-          if (messagesVal) messagesVal.textContent = mensajes.toLocaleString();
-          if (moneyVal) moneyVal.textContent = "+$" + dinero + " USD";
-          if (btnClients) btnClients.textContent = clientes;
-
-          // Track fill color styling
-          var min = parseInt(slider.min, 10) || 20;
-          var max = parseInt(slider.max, 10) || 500;
-          var percentage = ((clientes - min) / (max - min)) * 100;
-          slider.style.background = "linear-gradient(to right, #06b6d4 0%, #6366f1 " + percentage + "%, #1e293b " + percentage + "%, #1e293b 100%)";
-        }
-
-        slider.addEventListener("input", updateCalculations);
-        updateCalculations();
       })();
     </script>
   </body>
