@@ -267,7 +267,23 @@ describe('consultarCodigo (auth none, rate-limit AD-8 transaccional)', () => {
 });
 
 describe('guardarCredenciales', () => {
+  it('requiere plan Enterprise (sin suscripción / plan básico)', async () => {
+    backend.seed('usuarios', 'uid-1', { nombre: 'Ana' });
+    backend.seed('suscripciones', 's1', { usuarioId: 'uid-1', estado: 'activa', planNombre: 'Starter' });
+    seedCuenta();
+
+    const res = await request(app)
+      .post('/api/guardarCredenciales')
+      .set('Authorization', `Bearer ${TK}`)
+      .send({ data: { cuentaId: 'c1', correo: 'imap@example.com', contrasena: 'pass' } });
+
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe('permission-denied');
+  });
+
   it('éxito → guarda en cuentas_secretos con defaults IMAP', async () => {
+    backend.seed('usuarios', 'uid-1', { nombre: 'Ana' });
+    seedSuscripcionEnterprise();
     seedCuenta();
 
     const res = await request(app)
@@ -285,6 +301,8 @@ describe('guardarCredenciales', () => {
   });
 
   it('cuenta inexistente → 404; ajena → 403; faltan campos → 400', async () => {
+    backend.seed('usuarios', 'uid-1', { nombre: 'Ana' });
+    seedSuscripcionEnterprise();
     seedCuenta('c2', 'uid-otro');
 
     expect((await request(app)
@@ -344,7 +362,23 @@ describe('toggleToken', () => {
 });
 
 describe('consultarCodigoDirecto (bearer + rate-limit uid 10/cuenta 5 por 60s)', () => {
+  it('requiere plan Enterprise', async () => {
+    backend.seed('usuarios', 'uid-1', { nombre: 'Ana' });
+    backend.seed('suscripciones', 's1', { usuarioId: 'uid-1', estado: 'activa', planNombre: 'Professional' });
+    seedCuenta();
+
+    const res = await request(app)
+      .post('/api/consultarCodigoDirecto')
+      .set('Authorization', `Bearer ${TK}`)
+      .send({ data: { cuentaId: 'c1', caso: 'viajenet' } });
+
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe('permission-denied');
+  });
+
   it('éxito → encontrado', async () => {
+    backend.seed('usuarios', 'uid-1', { nombre: 'Ana' });
+    seedSuscripcionEnterprise();
     seedCuenta();
     backend.seed('cuentas_secretos', 'c1', { correo: 'imap@example.com', contrasena: 'x' });
 
@@ -358,6 +392,8 @@ describe('consultarCodigoDirecto (bearer + rate-limit uid 10/cuenta 5 por 60s)',
   });
 
   it('sin secretos IMAP → 404 "Credenciales IMAP no configuradas"', async () => {
+    backend.seed('usuarios', 'uid-1', { nombre: 'Ana' });
+    seedSuscripcionEnterprise();
     seedCuenta();
     const res = await request(app)
       .post('/api/consultarCodigoDirecto')
@@ -369,6 +405,8 @@ describe('consultarCodigoDirecto (bearer + rate-limit uid 10/cuenta 5 por 60s)',
   });
 
   it('cuenta ajena → 403; inexistente → 404; faltan campos → 400', async () => {
+    backend.seed('usuarios', 'uid-1', { nombre: 'Ana' });
+    seedSuscripcionEnterprise();
     seedCuenta('c2', 'uid-otro');
     expect((await request(app)
       .post('/api/consultarCodigoDirecto')
@@ -387,6 +425,8 @@ describe('consultarCodigoDirecto (bearer + rate-limit uid 10/cuenta 5 por 60s)',
   });
 
   it('rate-limit cuenta 5/60s → 6ta consulta 429', async () => {
+    backend.seed('usuarios', 'uid-1', { nombre: 'Ana' });
+    seedSuscripcionEnterprise();
     seedCuenta();
     backend.seed('cuentas_secretos', 'c1', { correo: 'imap@example.com', contrasena: 'x' });
 

@@ -297,6 +297,11 @@ export default function GestionClientes() {
 
   const generarLinkCodigos = async (cliente: Cliente) => {
     if (!user || !cliente.cuentaId) return;
+    if (!permisos.puedeGenerarTokens) {
+      toast.error('La generación de links de códigos es exclusiva del plan Enterprise. Actualizá tu plan.');
+      showUpgradeModal();
+      return;
+    }
     setTokenGenerando(true);
     try {
       const linkData = {
@@ -340,6 +345,11 @@ export default function GestionClientes() {
   };
 
   const abrirConsultaCodigo = (cliente: Cliente) => {
+    if (!permisos.puedeGenerarTokens) {
+      toast.error('La consulta de códigos de verificación es exclusiva del plan Enterprise. Actualizá tu plan.');
+      showUpgradeModal();
+      return;
+    }
     const tokenCliente = todosLosTokens.find(
       t => t.clienteId === cliente.id && t.activo
     );
@@ -702,7 +712,7 @@ export default function GestionClientes() {
                                 setMostrarTicket(true);
                               },
                             },
-                            ...(c.cuentaId ? [{
+                            ...(c.cuentaId && permisos.puedeGenerarTokens ? [{
                               label: 'Consultar código',
                               icon: <Shield size={16} />,
                               onClick: () => abrirConsultaCodigo(c),
@@ -941,7 +951,7 @@ export default function GestionClientes() {
       )}
 
       {/* Modal de link de códigos */}
-      {mostrarTokenModal && (
+      {mostrarTokenModal && permisos.puedeGenerarTokens && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full p-6 text-slate-100 animate-scale-in">
             <div className="flex items-center justify-between mb-6">
@@ -1007,7 +1017,7 @@ export default function GestionClientes() {
       )}
 
       {/* Modal de consulta de código */}
-      {mostrarConsultaCodigo && consultaData && (
+      {mostrarConsultaCodigo && consultaData && permisos.puedeGenerarTokens && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 text-slate-100 animate-scale-in">
             <ConsultaInterna

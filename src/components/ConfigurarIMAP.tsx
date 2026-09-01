@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import { callFunction } from '../lib/apiClient';
 import { Key, Mail, Server, Shield } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext';
+import usePermisos from '../hooks/usePermisos';
+import { useUpgradeModal } from '../contexts/UpgradeModalContext';
+import FeatureBlocked from './FeatureBlocked';
 import type { Cuenta } from '../types/cuenta';
 
 interface ConfigurarIMAPProps {
@@ -17,12 +21,25 @@ const PROVEEDORES_IMAP = [
 ];
 
 export default function ConfigurarIMAP({ cuenta, onClose, onSuccess }: ConfigurarIMAPProps) {
+  const { user } = useAuth();
+  const permisos = usePermisos(user);
+  const { show: showUpgradeModal } = useUpgradeModal();
   const [correo, setCorreo] = useState(cuenta.correoCuenta);
   const [contrasena, setContrasena] = useState('');
   const [proveedorIMAP, setProveedorIMAP] = useState('gmail');
   const [imapHost, setImapHost] = useState('imap.gmail.com');
   const [imapPort, setImapPort] = useState('993');
   const [guardando, setGuardando] = useState(false);
+
+  if (!permisos.puedeGenerarTokens) {
+    return (
+      <FeatureBlocked
+        feature="Credenciales IMAP"
+        description="La configuración de correos IMAP para la extracción automática de códigos de verificación es exclusiva del plan Enterprise."
+        plan="Enterprise"
+      />
+    );
+  }
 
   const handleProveedorChange = (value: string) => {
     setProveedorIMAP(value);
@@ -35,6 +52,12 @@ export default function ConfigurarIMAP({ cuenta, onClose, onSuccess }: Configura
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!permisos.puedeGenerarTokens) {
+      toast.error('La configuración IMAP es exclusiva del plan Enterprise');
+      showUpgradeModal();
+      return;
+    }
 
     if (!correo.trim()) {
       toast.error('El correo es obligatorio');

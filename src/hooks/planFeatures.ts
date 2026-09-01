@@ -8,7 +8,7 @@ export const FEATURE_LABELS: Record<string, string> = {
   tieneSoportePrioritario: 'Soporte Prioritario',
   tieneSoporte247: 'Soporte 24/7',
   puedeGestionarCuentas: 'Gestión de Cuentas Streaming',
-  puedeGenerarTokens: 'Sistema de Códigos de Verificación',
+  puedeGenerarTokens: 'Extracción de Códigos e IMAP',
 };
 
 export const PLAN_LABELS: Record<string, string> = {

@@ -676,6 +676,11 @@ export default function GestionCuentas() {
                               label: c.imapConfigurado ? 'Ver IMAP' : 'Configurar IMAP',
                               icon: <Key size={16} />,
                               onClick: () => {
+                                if (!permisos.puedeGenerarTokens) {
+                                  toast.error('La configuración IMAP y extracción automática de códigos es exclusiva del plan Enterprise. Actualizá tu plan.');
+                                  showUpgradeModal();
+                                  return;
+                                }
                                 setCuentaSeleccionada(c);
                                 setMostrarIMAP(true);
                               },
@@ -805,7 +810,7 @@ export default function GestionCuentas() {
       )}
 
       {/* Modal: Configurar IMAP */}
-      {mostrarIMAP && cuentaSeleccionada && (
+      {mostrarIMAP && cuentaSeleccionada && permisos.puedeGenerarTokens && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 text-slate-100 animate-scale-in">
             <div className="flex items-center justify-between mb-6">

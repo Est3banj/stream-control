@@ -23,29 +23,21 @@ function dataOf(req: AuthedReq): Record<string, unknown> {
   return (req.data ?? {}) as Record<string, unknown>;
 }
 
-export async function generarToken(req: AuthedReq): Promise<unknown> {
-  if (!req.auth) {
-    throw new APIError('unauthenticated', 'Debes iniciar sesión');
-  }
-
-  const uid = req.auth.uid;
-
-  // Validar que el usuario existe en la colección usuarios
+async function verificarPlanEnterprise(uid: string, mensajeError = 'Se requiere plan Enterprise para esta funcionalidad'): Promise<void> {
   const userDoc = await db.collection('usuarios').doc(uid).get();
-  if (!userDoc.exists) {
-    throw new APIError('permission-denied', 'Usuario no encontrado');
+  if (userDoc.exists && userDoc.data()?.rol === 'admin') {
+    return;
   }
 
-  // Verificar suscripción Enterprise
   const suscripcionSnapshot = await db.collection('suscripciones').get();
   const suscripcionActiva = suscripcionSnapshot.docs
-    .map(d => d.data() as any)
+    .map(d => d.data() as Record<string, unknown>)
     .find(s => s.usuarioId === uid && s.estado === 'activa');
 
   if (!suscripcionActiva) {
     throw new APIError(
       'permission-denied',
-      'Se requiere plan Enterprise para generar tokens'
+      mensajeError
     );
   }
 
@@ -53,9 +45,25 @@ export async function generarToken(req: AuthedReq): Promise<unknown> {
   if (!plan.includes('enterprise')) {
     throw new APIError(
       'permission-denied',
-      'Se requiere plan Enterprise para generar tokens'
+      mensajeError
     );
   }
+}
+
+export async function generarToken(req: AuthedReq): Promise<unknown> {
+  if (!req.auth) {
+    throw new APIError('unauthenticated', 'Debes iniciar sesión');
+  }
+
+  const uid = req.auth.uid;
+
+  // Validar que el usuario existe y verificar plan Enterprise
+  const userDoc = await db.collection('usuarios').doc(uid).get();
+  if (!userDoc.exists) {
+    throw new APIError('permission-denied', 'Usuario no encontrado');
+  }
+
+  await verificarPlanEnterprise(uid, 'Se requiere plan Enterprise para generar tokens');
 
   const { cuentaId, perfilNombre, clienteId, clienteNombre, expiraEn } = dataOf(req);
 
@@ -337,6 +345,10 @@ export async function guardarCredenciales(req: AuthedReq): Promise<unknown> {
   }
 
   const uid = req.auth.uid;
+
+  // Validar suscripción Enterprise o admin
+  await verificarPlanEnterprise(uid, 'Se requiere plan Enterprise para configurar credenciales IMAP');
+
   const { cuentaId, correo, contrasena, imapHost, imapPort, proveedorIMAP } = dataOf(req);
 
   if (!cuentaId || !correo || !contrasena) {
@@ -420,6 +432,10 @@ export async function consultarCodigoDirecto(req: AuthedReq): Promise<unknown> {
   }
 
   const uid = req.auth.uid;
+
+  // Validar suscripción Enterprise o admin
+  await verificarPlanEnterprise(uid, 'Se requiere plan Enterprise para consultar códigos directamente');
+
   const { cuentaId, caso } = dataOf(req);
 
   if (!cuentaId || !caso) {
@@ -485,31 +501,13 @@ export async function generarTokenSubdistribuidor(req: AuthedReq): Promise<unkno
     throw new APIError('invalid-argument', 'expiraEn debe ser una fecha futura');
   }
 
-  // Verificar suscripción Enterprise
+  // Verificar usuario y suscripción Enterprise
   const userDoc = await db.collection('usuarios').doc(uid).get();
   if (!userDoc.exists) {
     throw new APIError('permission-denied', 'Usuario no encontrado');
   }
 
-  const suscripcionSnapshot = await db.collection('suscripciones').get();
-  const suscripcionActiva = suscripcionSnapshot.docs
-    .map(d => d.data())
-    .find((s: any) => s.usuarioId === uid && s.estado === 'activa');
-
-  if (!suscripcionActiva) {
-    throw new APIError(
-      'permission-denied',
-      'Se requiere plan Enterprise para generar links para sub-distribuidores'
-    );
-  }
-
-  const plan = ((suscripcionActiva as any).planNombre as string)?.toLowerCase() || '';
-  if (!plan.includes('enterprise')) {
-    throw new APIError(
-      'permission-denied',
-      'Se requiere plan Enterprise para generar links para sub-distribuidores'
-    );
-  }
+  await verificarPlanEnterprise(uid, 'Se requiere plan Enterprise para generar links para sub-distribuidores');
 
   const token = uuidv4();
 
