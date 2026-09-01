@@ -145,7 +145,7 @@
       .mockup-glow {
         position: absolute;
         inset: -40px;
-        background: radial-gradient(ellipse at 50% 30%, rgba(6, 182, 212, 0.18), rgba(99, 102, 241, 0.12), transparent 70%);
+        background: radial-gradient(ellipse at 50% 30%, rgba(6, 182, 212, 0.15), rgba(6, 182, 212, 0.05), transparent 70%);
         pointer-events: none;
         z-index: -1;
       }
@@ -155,9 +155,9 @@
 
     <!-- Ambient Glow Lights -->
     <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      <div class="absolute -top-40 -left-40 w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[140px]"></div>
-      <div class="absolute top-1/3 -right-40 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[140px]"></div>
-      <div class="absolute -bottom-40 left-1/3 w-[500px] h-[500px] bg-violet-600/10 rounded-full blur-[140px]"></div>
+      <div class="absolute -top-40 -left-40 w-[500px] h-[500px] bg-cyan-500/8 rounded-full blur-[140px]"></div>
+      <div class="absolute top-1/3 -right-40 w-[500px] h-[500px] bg-cyan-600/6 rounded-full blur-[140px]"></div>
+      <div class="absolute -bottom-40 left-1/3 w-[500px] h-[500px] bg-cyan-500/5 rounded-full blur-[140px]"></div>
     </div>
 
     <!-- ═══ NAV ═══ -->
@@ -305,7 +305,7 @@
                 class="text-[clamp(2.1rem,5.5vw,3.4rem)] font-extrabold leading-[1.12] tracking-tight mb-5 fade-in-d2"
               >
                 <span class="text-white">Dejá de perder horas enviando accesos</span>
-                <span class="bg-gradient-to-r from-cyan-400 via-indigo-400 to-violet-400 bg-clip-text text-transparent"> y cobrando por WhatsApp.</span>
+                <span class="bg-gradient-to-r from-cyan-400 to-cyan-300 bg-clip-text text-transparent"> y cobrando por WhatsApp.</span>
               </h1>
 
               <!-- Subheadline (Clear verification code value proposition) -->
@@ -552,7 +552,7 @@
             
             <!-- Metric 1 -->
             <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-xl text-center sm:text-left">
-              <p class="text-2xl sm:text-3xl lg:text-4xl font-black bg-gradient-to-r from-cyan-400 to-indigo-400 bg-clip-text text-transparent mb-1">
+              <p class="text-2xl sm:text-3xl lg:text-4xl font-black bg-gradient-to-r from-cyan-400 to-cyan-300 bg-clip-text text-transparent mb-1">
                 $0 USD
               </p>
               <p class="text-xs sm:text-sm font-bold text-slate-200">
@@ -565,7 +565,7 @@
 
             <!-- Metric 2 -->
             <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-xl text-center sm:text-left">
-              <p class="text-2xl sm:text-3xl lg:text-4xl font-black bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent mb-1">
+              <p class="text-2xl sm:text-3xl lg:text-4xl font-black bg-gradient-to-r from-emerald-400 to-emerald-300 bg-clip-text text-transparent mb-1">
                 2 Segundos
               </p>
               <p class="text-xs sm:text-sm font-bold text-slate-200">
@@ -578,7 +578,7 @@
 
             <!-- Metric 3 -->
             <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-xl text-center sm:text-left">
-              <p class="text-2xl sm:text-3xl lg:text-4xl font-black bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent mb-1">
+              <p class="text-2xl sm:text-3xl lg:text-4xl font-black bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent mb-1">
                 24/7
               </p>
               <p class="text-xs sm:text-sm font-bold text-slate-200">
@@ -600,32 +600,29 @@
         <div class="max-w-6xl mx-auto px-5 sm:px-8">
           <div class="text-center max-w-3xl mx-auto mb-14">
             <span
-              class="inline-block px-3 py-1 rounded-full bg-indigo-950/60 border border-indigo-800/50 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-3"
+              class="inline-block px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-800/50 text-cyan-300 text-xs font-semibold uppercase tracking-wider mb-3"
             >
               Comparativa Directa
             </span>
             <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-4">
-              Método Tradicional <span class="text-rose-400">vs</span> StreamControl Pro <span class="text-emerald-400">✓</span>
+              Antes <span class="text-rose-400">vs</span> Después
             </h2>
             <p class="text-base sm:text-lg text-slate-400">
-              Menos tiempo apagando incendios manuales. Más control y orden para hacer crecer tu negocio.
+              Mismo negocio, misma cantidad de clientes. La diferencia es el sistema.
             </p>
           </div>
 
           <div class="grid md:grid-cols-2 gap-6 sm:gap-8 items-stretch">
             
-            <!-- Card - Método Tradicional -->
+            <!-- Card - Sin StreamControl -->
             <div class="bg-gradient-to-b from-rose-950/20 via-slate-900/80 to-slate-950/90 border-2 border-rose-900/40 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl flex flex-col justify-between">
               <div>
                 <div class="flex items-center justify-between mb-6 pb-4 border-b border-rose-900/30">
                   <div>
                     <span class="inline-block px-2.5 py-1 rounded-md bg-rose-950/80 border border-rose-800/50 text-xs font-bold text-rose-300 uppercase tracking-wider mb-2">
-                      Gestión Manual
+                      Sin StreamControl
                     </span>
-                    <h3 class="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2">
-                      <span>Excel, Cuaderno y WhatsApp</span>
-                      <span class="text-rose-400 text-lg">×</span>
-                    </h3>
+                    <h3 class="text-xl sm:text-2xl font-extrabold text-white">WhatsApp + Excel + Correo</h3>
                   </div>
                 </div>
 
@@ -633,32 +630,32 @@
                   <li class="flex items-start gap-3 text-sm text-slate-300">
                     <div class="w-6 h-6 rounded-full bg-rose-950/80 border border-rose-800/60 flex items-center justify-center text-rose-400 font-bold shrink-0 mt-0.5 text-xs">×</div>
                     <div>
-                      <strong class="text-white block font-semibold">Copiar y pegar contraseñas y PINs a mano</strong>
-                      <span class="text-slate-400 text-xs">Errores al tipear, perfiles cruzados y clientes quejándose de accesos ocupados.</span>
+                      <strong class="text-white block font-semibold">Te escriben a las 11pm buscando un código</strong>
+                      <span class="text-slate-400 text-xs">Abrís tu correo, buscás el email, copiás el código, lo pegás en WhatsApp. Cada vez.</span>
                     </div>
                   </li>
 
                   <li class="flex items-start gap-3 text-sm text-slate-300">
                     <div class="w-6 h-6 rounded-full bg-rose-950/80 border border-rose-800/60 flex items-center justify-center text-rose-400 font-bold shrink-0 mt-0.5 text-xs">×</div>
                     <div>
-                      <strong class="text-white block font-semibold">Buscar códigos de acceso a deshoras</strong>
-                      <span class="text-slate-400 text-xs">Estar atado al celular buscando códigos en tu correo mientras descansás.</span>
+                      <strong class="text-white block font-semibold">Asignás perfiles a mano y te equivocás</strong>
+                      <span class="text-slate-400 text-xs">Le das el PIN de Perfil 2 a quien tenía el 3. Se queja el cliente. Vos perdés tiempo arreglando.</span>
                     </div>
                   </li>
 
                   <li class="flex items-start gap-3 text-sm text-slate-300">
                     <div class="w-6 h-6 rounded-full bg-rose-950/80 border border-rose-800/60 flex items-center justify-center text-rose-400 font-bold shrink-0 mt-0.5 text-xs">×</div>
                     <div>
-                      <strong class="text-white block font-semibold">Olvidos de cobro y dinero perdido</strong>
-                      <span class="text-slate-400 text-xs">Cortes sorpresivos por falta de recordatorios anticipados y descontrol de deudas.</span>
+                      <strong class="text-white block font-semibold">Se te vencen clientes sin avisarte</strong>
+                      <span class="text-slate-400 text-xs">Un cliente se te vence el martes. Te enterás cuando te escribe molesto porque ya no le funciona.</span>
                     </div>
                   </li>
 
                   <li class="flex items-start gap-3 text-sm text-slate-300">
                     <div class="w-6 h-6 rounded-full bg-rose-950/80 border border-rose-800/60 flex items-center justify-center text-rose-400 font-bold shrink-0 mt-0.5 text-xs">×</div>
                     <div>
-                      <strong class="text-white block font-semibold">Planillas infinitas y desorden de stock</strong>
-                      <span class="text-slate-400 text-xs">Casillas desactualizadas, cuentas mezcladas y dificultad para saber tu ganancia real.</span>
+                      <strong class="text-white block font-semibold">No sabés cuánto ganás realmente</strong>
+                      <span class="text-slate-400 text-xs">Tenés 40 clientes pero no sabés cuánto te queda después de pagar las cuentas maestras.</span>
                     </div>
                   </li>
                 </ul>
@@ -669,7 +666,7 @@
               </div>
             </div>
 
-            <!-- Card - StreamControl Pro -->
+            <!-- Card - Con StreamControl -->
             <div class="bg-gradient-to-b from-emerald-950/25 via-slate-900/90 to-cyan-950/25 border-2 border-emerald-500/60 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl shadow-emerald-500/10 flex flex-col justify-between relative">
               <div class="absolute -top-3.5 right-6 px-3.5 py-1 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 text-xs font-black uppercase tracking-wider shadow-lg">
                 Recomendado
@@ -679,12 +676,9 @@
                 <div class="flex items-center justify-between mb-6 pb-4 border-b border-emerald-800/40">
                   <div>
                     <span class="inline-block px-2.5 py-1 rounded-md bg-emerald-950/80 border border-emerald-800/60 text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2">
-                      Operación Inteligente
+                      Con StreamControl
                     </span>
-                    <h3 class="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2">
-                      <span>StreamControl Pro</span>
-                      <span class="text-emerald-400 text-lg">✓</span>
-                    </h3>
+                    <h3 class="text-xl sm:text-2xl font-extrabold text-white">Tu sistema automatizado</h3>
                   </div>
                 </div>
 
@@ -692,32 +686,32 @@
                   <li class="flex items-start gap-3 text-sm text-slate-200">
                     <div class="w-6 h-6 rounded-full bg-emerald-950 border border-emerald-500/50 flex items-center justify-center text-emerald-400 font-bold shrink-0 mt-0.5 text-xs">✓</div>
                     <div>
-                      <strong class="text-white block font-semibold">Perfil y PIN auto-asignados con ticket WhatsApp en 1 clic</strong>
-                      <span class="text-slate-300 text-xs">El sistema descuenta el perfil exacto y genera el mensaje formateado listo para enviar.</span>
+                      <strong class="text-white block font-semibold">Tu cliente abre un link y ve su código solo</strong>
+                      <span class="text-slate-300 text-xs">Generás un link tipo streamcontrol.pro/c/8492. Tu cliente lo abre, ve su código de TV en 2 segundos. Vos dormís.</span>
                     </div>
                   </li>
 
                   <li class="flex items-start gap-3 text-sm text-slate-200">
                     <div class="w-6 h-6 rounded-full bg-emerald-950 border border-emerald-500/50 flex items-center justify-center text-emerald-400 font-bold shrink-0 mt-0.5 text-xs">✓</div>
                     <div>
-                      <strong class="text-white block font-semibold">El cliente consulta sus códigos solo en 2 segundos</strong>
-                      <span class="text-slate-300 text-xs">Extracción instantánea por IMAP para inicio en Smart TV y verificación de hogar sin interrupciones.</span>
+                      <strong class="text-white block font-semibold">Escribís el nombre, elegís la cuenta, listo</strong>
+                      <span class="text-slate-300 text-xs">Seleccionás "Juan Pérez", Cuenta #04, Perfil 3. El sistema asigna el PIN, genera el ticket con email y clave enmascarada. Copiás y pegás en WhatsApp.</span>
                     </div>
                   </li>
 
                   <li class="flex items-start gap-3 text-sm text-slate-200">
                     <div class="w-6 h-6 rounded-full bg-emerald-950 border border-emerald-500/50 flex items-center justify-center text-emerald-400 font-bold shrink-0 mt-0.5 text-xs">✓</div>
                     <div>
-                      <strong class="text-white block font-semibold">Bot de Telegram avisa vencimientos 3 días antes</strong>
-                      <span class="text-slate-300 text-xs">Alertas preventivas automáticas que aseguran la renovación antes de que caiga el servicio.</span>
+                      <strong class="text-white block font-semibold">Telegram te avisa 3 días antes de cada vencimiento</strong>
+                      <span class="text-slate-300 text-xs">"Cliente Marcos Gómez vence el viernes — Monto: $4.50 USD". Recordás, cobrás, renovás. Sin sorpresas.</span>
                     </div>
                   </li>
 
                   <li class="flex items-start gap-3 text-sm text-slate-200">
                     <div class="w-6 h-6 rounded-full bg-emerald-950 border border-emerald-500/50 flex items-center justify-center text-emerald-400 font-bold shrink-0 mt-0.5 text-xs">✓</div>
                     <div>
-                      <strong class="text-white block font-semibold">Control exacto de perfiles libres, ocupados y utilidad</strong>
-                      <span class="text-slate-300 text-xs">Inventario visual por cuenta maestra y cálculo de ganancia neta en tiempo real.</span>
+                      <strong class="text-white block font-semibold">Ves tu ganancia neta en tiempo real</strong>
+                      <span class="text-slate-300 text-xs">Cuenta #04: 3 perfiles ocupados, 2 libres. Costo de la cuenta: $8.99. Ingresos del mes: $45. Utilidad: $36.01. Todo visible.</span>
                     </div>
                   </li>
                 </ul>
@@ -728,7 +722,7 @@
                   href="/app/register"
                   class="w-full inline-flex items-center justify-center py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-bold text-sm shadow-xl shadow-emerald-950/60 transition-all hover:scale-[1.01] active:scale-[0.99] gap-2"
                 >
-                  <span>Empezar con StreamControl Pro Gratis</span>
+                  <span>Empezar Gratis</span>
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                 </a>
               </div>
@@ -741,7 +735,7 @@
       <!-- ═══ 4. VIDEO DEMO ═══ -->
       <section class="py-14 sm:py-18 bg-slate-900/40 border-y border-slate-800/80">
         <div class="max-w-4xl mx-auto px-5 sm:px-8 text-center">
-          <span class="inline-block px-3 py-1 rounded-full bg-indigo-950/60 border border-indigo-800/50 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-3">
+          <span class="inline-block px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-800/50 text-cyan-300 text-xs font-semibold uppercase tracking-wider mb-3">
             Demostración Rápida
           </span>
           <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4 text-white">
@@ -769,7 +763,7 @@
         <div class="max-w-6xl mx-auto px-5 sm:px-8">
           <div class="max-w-2xl mb-14">
             <span
-              class="inline-block px-3 py-1 rounded-full bg-indigo-950/60 border border-indigo-800/50 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-3"
+              class="inline-block px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-800/50 text-cyan-300 text-xs font-semibold uppercase tracking-wider mb-3"
             >
               Planes Transparentes
             </span>
@@ -1103,7 +1097,7 @@
         <div class="max-w-6xl mx-auto px-5 sm:px-8">
           <div class="text-center mb-12">
             <span
-              class="inline-block px-3 py-1 rounded-full bg-indigo-950/60 border border-indigo-800/50 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-3"
+              class="inline-block px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-800/50 text-cyan-300 text-xs font-semibold uppercase tracking-wider mb-3"
             >
               Experiencias Reales
             </span>
@@ -1143,7 +1137,7 @@
             <!-- Testimonial 3 -->
             <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl hover:border-slate-700 transition-all">
               <div class="flex items-center gap-3 mb-3">
-                <div class="w-9 h-9 rounded-full bg-violet-950 border border-violet-700/50 flex items-center justify-center text-violet-300 font-bold text-xs">AR</div>
+                <div class="w-9 h-9 rounded-full bg-emerald-950 border border-emerald-700/50 flex items-center justify-center text-emerald-300 font-bold text-xs">AR</div>
                 <div>
                   <p class="text-sm font-bold text-slate-100">Andrés R.</p>
                   <p class="text-xs text-slate-500">Revendedor</p>
@@ -1162,7 +1156,7 @@
         <div class="max-w-2xl mx-auto px-5 sm:px-8">
           <div class="mb-12 text-center">
             <span
-              class="inline-block px-3 py-1 rounded-full bg-indigo-950/60 border border-indigo-800/50 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-3"
+              class="inline-block px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-800/50 text-cyan-300 text-xs font-semibold uppercase tracking-wider mb-3"
             >
               Preguntas Frecuentes
             </span>
@@ -1276,7 +1270,7 @@
         <div class="max-w-4xl mx-auto px-5 sm:px-8">
           <div class="relative overflow-hidden bg-gradient-to-b from-slate-900/90 via-slate-900 to-indigo-950/50 border border-slate-800/90 rounded-3xl p-8 sm:p-14 text-center shadow-2xl shadow-cyan-500/5 backdrop-blur-2xl">
             <span
-              class="inline-block px-3.5 py-1 rounded-full bg-indigo-950/60 border border-indigo-800/50 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-4"
+              class="inline-block px-3.5 py-1 rounded-full bg-cyan-950/60 border border-cyan-800/50 text-cyan-300 text-xs font-semibold uppercase tracking-wider mb-4"
             >
               Empezá Hoy Mismo
             </span>
