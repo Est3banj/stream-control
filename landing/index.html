@@ -74,81 +74,68 @@
         color: #020617;
       }
       @keyframes fi {
-        from {
-          opacity: 0;
-          transform: translateY(16px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
       }
-      .fade-in {
-        animation: fi 0.6s ease forwards;
-        opacity: 0;
+      @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
       }
-      .fade-in-d2 {
-        animation: fi 0.6s ease 0.1s forwards;
-        opacity: 0;
-      }
-      .fade-in-d4 {
-        animation: fi 0.6s ease 0.2s forwards;
-        opacity: 0;
-      }
+      .fade-in { animation: fi 0.7s ease forwards; opacity: 0; }
+      .fade-in-d2 { animation: fi 0.7s ease 0.1s forwards; opacity: 0; }
+      .fade-in-d4 { animation: fi 0.7s ease 0.2s forwards; opacity: 0; }
+      .fade-in-d6 { animation: fi 0.7s ease 0.3s forwards; opacity: 0; }
 
-      /* Mockup Browser Container */
+      /* Mockup Browser */
       .mockup-browser {
         background: rgba(15, 23, 42, 0.95);
-        border-radius: 20px;
-        box-shadow: 0 30px 60px -15px rgba(0,0,0,0.8), 0 0 40px -10px rgba(6,182,212,0.15);
+        border-radius: 16px;
+        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(51, 65, 85, 0.5);
         overflow: hidden;
-        border: 1px solid rgba(51, 65, 85, 0.85);
-        backdrop-filter: blur(24px);
-        transition: transform 0.4s ease, box-shadow 0.4s ease;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
       }
       .mockup-browser:hover {
-        box-shadow: 0 35px 70px -15px rgba(0,0,0,0.9), 0 0 50px -5px rgba(6,182,212,0.22);
+        transform: translateY(-2px);
+        box-shadow: 0 30px 60px -12px rgba(0,0,0,0.8), 0 0 0 1px rgba(6, 182, 212, 0.3);
       }
       .mockup-header {
         display: flex;
         align-items: center;
         gap: 8px;
-        padding: 12px 18px;
+        padding: 12px 16px;
         background: rgba(2, 6, 23, 0.98);
-        border-bottom: 1px solid rgba(51, 65, 85, 0.8);
+        border-bottom: 1px solid rgba(51, 65, 85, 0.6);
       }
-      .mockup-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        flex-shrink: 0;
-      }
-      .mockup-dot-red { background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,0.5); }
-      .mockup-dot-yellow { background: #eab308; box-shadow: 0 0 6px rgba(234,179,8,0.5); }
-      .mockup-dot-green { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.5); }
+      .mockup-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+      .mockup-dot-red { background: #ef4444; }
+      .mockup-dot-yellow { background: #eab308; }
+      .mockup-dot-green { background: #22c55e; }
       .mockup-url {
         flex: 1;
         text-align: center;
-        font-size: 11.5px;
-        color: #94a3b8;
-        background: rgba(15, 23, 42, 0.8);
-        border: 1px solid rgba(51, 65, 85, 0.6);
-        padding: 5px 14px;
-        border-radius: 8px;
+        font-size: 11px;
+        color: #64748b;
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(51, 65, 85, 0.4);
+        padding: 4px 12px;
+        border-radius: 6px;
         font-family: ui-monospace, monospace;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
       }
 
-      /* Mockup Glow */
+      /* Glow */
       .mockup-glow {
         position: absolute;
-        inset: -40px;
-        background: radial-gradient(ellipse at 50% 30%, rgba(6, 182, 212, 0.15), rgba(6, 182, 212, 0.05), transparent 70%);
+        inset: -60px;
+        background: radial-gradient(ellipse at 50% 30%, rgba(6, 182, 212, 0.12), transparent 60%);
         pointer-events: none;
         z-index: -1;
       }
+
+      /* Glass card effect */
+      .glass { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
     </style>
   </head>
   <body class="bg-slate-950 text-slate-100 font-sans antialiased selection:bg-cyan-500 selection:text-slate-950 min-h-screen relative overflow-x-hidden">
@@ -283,81 +270,71 @@
 
     <main class="relative z-10">
       <!-- ═══ 1. HERO SECTION ═══ -->
-      <section class="relative pt-28 pb-14 sm:pt-32 sm:pb-18 lg:pt-36 lg:pb-20 overflow-hidden">
+      <section class="relative pt-32 pb-16 sm:pt-36 sm:pb-20 lg:pt-40 lg:pb-24 overflow-hidden">
         <div class="max-w-6xl mx-auto px-5 sm:px-8">
-          <div class="grid lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+          <div class="grid lg:grid-cols-12 gap-12 lg:gap-16 items-center">
             
             <!-- Left: Hero Copy (7 cols) -->
             <div class="text-center lg:text-left lg:col-span-7 max-w-2xl mx-auto lg:mx-0">
               <!-- Pill badge -->
               <div
-                class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-950/60 border border-cyan-800/50 text-cyan-300 text-xs sm:text-sm font-semibold mb-6 backdrop-blur-md shadow-inner shadow-cyan-500/10 fade-in"
+                class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-950/50 border border-cyan-800/40 text-cyan-300 text-xs sm:text-sm font-semibold mb-8 fade-in"
               >
                 <span class="flex h-2 w-2 relative">
                   <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
                   <span class="relative inline-flex rounded-full h-2 w-2 bg-cyan-400"></span>
                 </span>
-                <span>Automatización inteligente para tu negocio digital</span>
+                <span>Gestión de cuentas digitales para revendedores</span>
               </div>
 
               <!-- Main Headline -->
               <h1
-                class="text-[clamp(2.1rem,5.5vw,3.4rem)] font-extrabold leading-[1.12] tracking-tight mb-5 fade-in-d2"
+                class="text-[clamp(2.2rem,5.5vw,3.6rem)] font-extrabold leading-[1.1] tracking-tight mb-6 fade-in-d2"
               >
-                <span class="text-white">Dejá de perder horas enviando accesos</span>
-                <span class="bg-gradient-to-r from-cyan-400 to-cyan-300 bg-clip-text text-transparent"> y cobrando por WhatsApp.</span>
+                <span class="text-white">Tu negocio de cuentas,</span><br/>
+                <span class="bg-gradient-to-r from-cyan-400 to-cyan-300 bg-clip-text text-transparent">funcionando solo.</span>
               </h1>
 
-              <!-- Subheadline (Clear verification code value proposition) -->
+              <!-- Subheadline -->
               <p
-                class="text-base sm:text-lg text-slate-300/90 leading-relaxed mb-8 fade-in-d2 font-normal"
+                class="text-base sm:text-lg text-slate-400 leading-relaxed mb-8 fade-in-d4 max-w-xl mx-auto lg:mx-0"
               >
-                Automatización de códigos de inicio de sesión, verificación de hogar y códigos de viaje para que tus clientes los consulten solos sin interrumpirte a cada rato. Empezá gratis con hasta 20 clientes.
+                Registrate, asigná perfiles, entregá accesos y cobrá renovaciones — todo automatizado. Tus clientes consultan sus códigos de verificación sin interrumpirte.
               </p>
 
               <!-- CTAs -->
               <div
-                class="flex flex-col sm:flex-row items-center lg:items-start gap-3.5 fade-in-d4"
+                class="flex flex-col sm:flex-row items-center lg:items-start gap-4 fade-in-d6"
               >
                 <a
                   href="/app/register"
-                  class="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold text-sm sm:text-base shadow-xl shadow-cyan-950/70 transition-all hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto gap-2.5 group"
+                  class="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-400 hover:from-cyan-400 hover:to-cyan-300 text-slate-950 font-bold text-sm sm:text-base shadow-xl shadow-cyan-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto gap-2.5 group"
                 >
-                  <span>Crear Cuenta Gratis (Sin Tarjeta)</span>
-                  <svg
-                    class="w-4 h-4 group-hover:translate-x-1 transition-transform"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2.5"
-                      d="M17 8l4 4m0 0l-4 4m4-4H3"
-                    />
+                  <span>Crear Cuenta Gratis</span>
+                  <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
                   </svg>
                 </a>
                 <a
                   href="#pricing"
-                  class="inline-flex items-center justify-center px-7 py-4 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700 hover:border-slate-600 font-semibold text-sm sm:text-base transition-all hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto"
+                  class="inline-flex items-center justify-center px-7 py-4 rounded-xl bg-slate-800/50 hover:bg-slate-800 text-slate-300 border border-slate-700/50 hover:border-slate-600 font-semibold text-sm sm:text-base transition-all w-full sm:w-auto"
                 >
-                  Ver Planes y Precios
+                  Ver planes
                 </a>
               </div>
 
-              <!-- Quick safety badges -->
-              <div class="mt-6 flex flex-wrap items-center justify-center lg:justify-start gap-4 text-xs text-slate-400">
+              <!-- Safety badges -->
+              <div class="mt-8 flex flex-wrap items-center justify-center lg:justify-start gap-5 text-xs text-slate-500">
                 <div class="flex items-center gap-1.5">
-                  <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                  <span>Sin tarjeta requerida</span>
+                  <svg class="w-3.5 h-3.5 text-cyan-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                  <span>Sin tarjeta</span>
                 </div>
                 <div class="flex items-center gap-1.5">
-                  <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                  <span>Activación en 2 minutos</span>
+                  <svg class="w-3.5 h-3.5 text-cyan-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                  <span>Setup en 2 minutos</span>
                 </div>
                 <div class="flex items-center gap-1.5">
-                  <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                  <svg class="w-3.5 h-3.5 text-cyan-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
                   <span>Plan gratis para siempre</span>
                 </div>
               </div>
@@ -381,7 +358,7 @@
                   data-tab="2"
                   class="mockup-tab-btn flex-1 min-w-[95px] text-xs py-2 px-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-1.5 bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-slate-200 cursor-pointer"
                 >
-                  <span>Códigos TV</span>
+                  <span>Códigos</span>
                 </button>
                 <button
                   type="button"
@@ -398,7 +375,7 @@
                   <div class="mockup-dot mockup-dot-red"></div>
                   <div class="mockup-dot mockup-dot-yellow"></div>
                   <div class="mockup-dot mockup-dot-green"></div>
-                  <div class="mockup-url" id="mockup-url-display">streamcontrolpro.app/panel/ventas-express</div>
+                  <div class="mockup-url" id="mockup-url-display">streamcontrol.pro/panel/ventas</div>
                 </div>
 
                 <!-- Interactive Tab Screen Container -->
@@ -447,7 +424,7 @@
                       <p class="text-slate-400">cuenta04@acceso-digital.com</p>
                       <p class="text-slate-400">Clave: ••••••••••</p>
                       <p class="text-cyan-300 font-bold">Perfil 3 (PIN: 8492)</p>
-                      <p class="text-slate-400">Códigos TV y Hogar: streamcontrolpro.app/c/j8492</p>
+                      <p class="text-slate-400">Códigos de verificación: streamcontrol.pro/c/8492</p>
                     </div>
 
                     <a href="/app/register" class="w-full py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-950/50 flex items-center justify-center gap-1.5 hover:opacity-95 transition-opacity">
@@ -459,7 +436,7 @@
                   <div id="tab-content-2" class="mockup-tab-content space-y-3.5 transition-opacity duration-300 hidden opacity-0">
                     <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
                       <div class="flex items-center gap-2">
-                        <span class="px-2 py-0.5 rounded-md bg-indigo-950/80 border border-indigo-800/60 text-[10px] font-bold text-indigo-300 uppercase tracking-wider">Autoservicio Cliente</span>
+                        <span class="px-2 py-0.5 rounded-md bg-cyan-950/80 border border-cyan-800/60 text-[10px] font-bold text-cyan-300 uppercase tracking-wider">Extracción Automática</span>
                         <h4 class="text-xs font-bold text-white">Extracción de Códigos</h4>
                       </div>
                       <span class="text-[10px] text-cyan-400 font-semibold flex items-center gap-1">
@@ -485,7 +462,7 @@
                     </div>
 
                     <div class="bg-indigo-950/30 border border-indigo-800/40 rounded-xl p-2.5 text-center text-xs text-indigo-200">
-                      ✨ <strong>Cero mensajes en tu chat:</strong> Tu cliente activa su Smart TV o valida su viaje por su cuenta sin interrumpirte.
+                      <strong>Cero mensajes en tu chat:</strong> Tu cliente consulta sus códigos de verificación sin interrumpirte.
                     </div>
                   </div>
 
@@ -569,10 +546,10 @@
                 2 Segundos
               </p>
               <p class="text-xs sm:text-sm font-bold text-slate-200">
-                Consulta de Códigos
+                Consulta de Verificación
               </p>
               <p class="text-[11px] text-slate-400 mt-1">
-                Tiempo promedio que tarda tu cliente en consultar.
+                Tus clientes obtienen sus códigos en segundos.
               </p>
             </div>
 
@@ -627,11 +604,11 @@
                 </div>
 
                 <ul class="space-y-4">
-                  <li class="flex items-start gap-3 text-sm text-slate-300">
+                    <li class="flex items-start gap-3 text-sm text-slate-300">
                     <div class="w-6 h-6 rounded-full bg-rose-950/80 border border-rose-800/60 flex items-center justify-center text-rose-400 font-bold shrink-0 mt-0.5 text-xs">×</div>
                     <div>
                       <strong class="text-white block font-semibold">Te escriben a las 11pm buscando un código</strong>
-                      <span class="text-slate-400 text-xs">Abrís tu correo, buscás el email, copiás el código, lo pegás en WhatsApp. Cada vez.</span>
+                      <span class="text-slate-400 text-xs">Abrís tu correo, buscás el email, copiás el código de verificación, lo pegás en WhatsApp. Cada vez.</span>
                     </div>
                   </li>
 
@@ -683,11 +660,11 @@
                 </div>
 
                 <ul class="space-y-4">
-                  <li class="flex items-start gap-3 text-sm text-slate-200">
+                    <li class="flex items-start gap-3 text-sm text-slate-200">
                     <div class="w-6 h-6 rounded-full bg-emerald-950 border border-emerald-500/50 flex items-center justify-center text-emerald-400 font-bold shrink-0 mt-0.5 text-xs">✓</div>
                     <div>
-                      <strong class="text-white block font-semibold">Tu cliente abre un link y ve su código solo</strong>
-                      <span class="text-slate-300 text-xs">Generás un link tipo streamcontrol.pro/c/8492. Tu cliente lo abre, ve su código de TV en 2 segundos. Vos dormís.</span>
+                      <strong class="text-white block font-semibold">Tu cliente abre un link y ve sus códigos solo</strong>
+                      <span class="text-slate-300 text-xs">Generás un link tipo streamcontrol.pro/c/8492. Tu cliente lo abre, ve su código de verificación en 2 segundos. Vos dormís.</span>
                     </div>
                   </li>
 
@@ -736,13 +713,13 @@
       <section class="py-14 sm:py-18 bg-slate-900/40 border-y border-slate-800/80">
         <div class="max-w-4xl mx-auto px-5 sm:px-8 text-center">
           <span class="inline-block px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-800/50 text-cyan-300 text-xs font-semibold uppercase tracking-wider mb-3">
-            Demostración Rápida
+            Demo en Vivo
           </span>
           <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4 text-white">
-            Mirá cómo funciona el panel en vivo
+            Mirá cómo funciona
           </h2>
           <p class="text-base sm:text-lg text-slate-400 mb-8 max-w-2xl mx-auto">
-            En 3 minutos te mostramos el panel completo: clientes, inventario de perfiles y extracción automática de códigos de verificación.
+            3 minutos para ver el panel completo: clientes, inventario de cuentas y consulta automática de códigos de verificación.
           </p>
           <div class="relative w-full rounded-2xl overflow-hidden shadow-2xl shadow-black/80 border border-slate-800 bg-slate-900/80 backdrop-blur-xl p-1" style="aspect-ratio: 16 / 9">
             <iframe
@@ -1030,7 +1007,7 @@
                         d="M5 13l4 4L19 7"
                       />
                     </svg>
-                    <span><strong class="font-semibold text-amber-300">Consulta Automática IMAP</strong> (Códigos de acceso y verificación hogar TV)</span>
+                    <span><strong class="font-semibold text-amber-300">Consulta Automática IMAP</strong> (Códigos de verificación y acceso)</span>
                   </li>
                   <li class="flex items-start gap-3 text-sm text-slate-300">
                     <svg
@@ -1092,66 +1069,7 @@
         </div>
       </section>
 
-      <!-- ═══ 6. SOCIAL PROOF ═══ -->
-      <section id="testimonials" class="py-16 sm:py-20 lg:py-24">
-        <div class="max-w-6xl mx-auto px-5 sm:px-8">
-          <div class="text-center mb-12">
-            <span
-              class="inline-block px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-800/50 text-cyan-300 text-xs font-semibold uppercase tracking-wider mb-3"
-            >
-              Experiencias Reales
-            </span>
-            <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
-              Lo que opinan los usuarios
-            </h2>
-          </div>
-          <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            <!-- Testimonial 1 -->
-            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl hover:border-slate-700 transition-all">
-              <div class="flex items-center gap-3 mb-3">
-                <div class="w-9 h-9 rounded-full bg-indigo-950 border border-indigo-700/50 flex items-center justify-center text-indigo-300 font-bold text-xs">CL</div>
-                <div>
-                  <p class="text-sm font-bold text-slate-100">Carlos L.</p>
-                  <p class="text-xs text-slate-500">Distribuidor Digital</p>
-                </div>
-              </div>
-              <p class="text-sm text-slate-300 leading-relaxed">
-                "Manejaba todo en Excel y era un desorden. StreamControl me ordenó los clientes, las cuentas y la entrega de códigos. No vuelvo al método manual."
-              </p>
-            </div>
-
-            <!-- Testimonial 2 -->
-            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl hover:border-slate-700 transition-all">
-              <div class="flex items-center gap-3 mb-3">
-                <div class="w-9 h-9 rounded-full bg-emerald-950 border border-emerald-700/50 flex items-center justify-center text-emerald-300 font-bold text-xs">MG</div>
-                <div>
-                  <p class="text-sm font-bold text-slate-100">María G.</p>
-                  <p class="text-xs text-slate-500">Servicios Digitales</p>
-                </div>
-              </div>
-              <p class="text-sm text-slate-300 leading-relaxed">
-                "La consulta de códigos por IMAP es lo mejor. Mis clientes ven su código en 2 segundos por link y ya no me escriben a medianoche."
-              </p>
-            </div>
-
-            <!-- Testimonial 3 -->
-            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl hover:border-slate-700 transition-all">
-              <div class="flex items-center gap-3 mb-3">
-                <div class="w-9 h-9 rounded-full bg-emerald-950 border border-emerald-700/50 flex items-center justify-center text-emerald-300 font-bold text-xs">AR</div>
-                <div>
-                  <p class="text-sm font-bold text-slate-100">Andrés R.</p>
-                  <p class="text-xs text-slate-500">Revendedor</p>
-                </div>
-              </div>
-              <p class="text-sm text-slate-300 leading-relaxed">
-                "Las alertas de Telegram me aseguran las renovaciones 3 días antes del vencimiento. Dejé de perder clientes por olvidos."
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ═══ 7. FAQ ═══ -->
+      <!-- ═══ 6. FAQ ═══ -->
       <section id="faq" class="py-16 sm:py-20 lg:py-24 bg-slate-900/30 border-t border-slate-800/80">
         <div class="max-w-2xl mx-auto px-5 sm:px-8">
           <div class="mb-12 text-center">
@@ -1210,7 +1128,7 @@
                 </svg>
               </summary>
               <p class="mt-4 text-sm text-slate-400 leading-relaxed border-t border-slate-800/60 pt-3">
-                Es compatible con cuentas completas y perfiles individuales de servicios de entretenimiento digital que envíen códigos de verificación, acceso a TV o validación de hogar a tu casilla de correo.
+                Es compatible con cuentas completas y perfiles individuales de plataformas de entretenimiento digital que envíen códigos de verificación o acceso a tu casilla de correo.
               </p>
             </details>
             <details
@@ -1234,7 +1152,7 @@
                 </svg>
               </summary>
               <p class="mt-4 text-sm text-slate-400 leading-relaxed border-t border-slate-800/60 pt-3">
-                Al registrar cada venta, el sistema descuenta automáticamente el costo de la cuenta maestra y muestra tu utilidad neta real con gráficos claros y exportación de reportes.
+                Al registrar cada venta, el sistema descuenta automáticamente el costo de la cuenta maestra y muestra tu utilidad neta real con reportes claros.
               </p>
             </details>
             <details
@@ -1272,21 +1190,21 @@
             <span
               class="inline-block px-3.5 py-1 rounded-full bg-cyan-950/60 border border-cyan-800/50 text-cyan-300 text-xs font-semibold uppercase tracking-wider mb-4"
             >
-              Empezá Hoy Mismo
+              Empezá Hoy
             </span>
             <h2
               class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight mb-4 text-white"
             >
-              ¿Listo para ordenar tu negocio y escalar?
+              ¿Listo para automatizar tu negocio?
             </h2>
-            <p class="text-base sm:text-lg text-slate-300 mb-8 max-w-xl mx-auto">
-              Gestioná tus clientes, cuentas y códigos de verificación en piloto automático. Creá tu cuenta gratis en 2 minutos.
+            <p class="text-base sm:text-lg text-slate-400 mb-8 max-w-xl mx-auto">
+              Gestioná clientes, cuentas y códigos de verificación en un solo lugar. Creá tu cuenta gratis en 2 minutos.
             </p>
             <a
               href="/app/register"
-              class="inline-flex items-center justify-center px-10 py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold text-base shadow-xl shadow-cyan-950/60 transition-all hover:scale-[1.02] active:scale-[0.98] gap-2"
+              class="inline-flex items-center justify-center px-10 py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-400 hover:from-cyan-400 hover:to-cyan-300 text-slate-950 font-bold text-base shadow-xl shadow-cyan-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] gap-2"
             >
-              <span>Crear Cuenta Gratis (Sin Tarjeta)</span>
+              <span>Crear Cuenta Gratis</span>
               <svg
                 class="w-5 h-5"
                 fill="none"
@@ -1296,13 +1214,13 @@
                 <path
                   stroke-linecap="round"
                   stroke-linejoin="round"
-                  stroke-width="2"
+                  stroke-width="2.5"
                   d="M17 8l4 4m0 0l-4 4m4-4H3"
                 />
               </svg>
             </a>
             <p class="text-slate-500 text-xs sm:text-sm mt-4">
-              Sin tarjeta de crédito requerida • Plan gratis hasta 20 clientes
+              Sin tarjeta de crédito • Plan gratis hasta 20 clientes
             </p>
           </div>
         </div>
@@ -1365,9 +1283,9 @@
         var tabButtons = document.querySelectorAll(".mockup-tab-btn");
         var urlDisplay = document.getElementById("mockup-url-display");
         var tabUrls = {
-          "1": "streamcontrolpro.app/panel/ventas-express",
-          "2": "streamcontrolpro.app/c/juan-perez-acceso",
-          "3": "t.me/StreamControlBot/alerts"
+          "1": "streamcontrol.pro/panel/ventas",
+          "2": "streamcontrol.pro/c/j8492",
+          "3": "t.me/StreamControlBot"
         };
         if (!tabButtons.length) return;
 
