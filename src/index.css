@@ -93,22 +93,36 @@ input:-webkit-autofill:active {
   }
 }
 
-/* Scrollbar personalizado */
+/* Scrollbar personalizado — delgado y discreto */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-slate-900;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gradient-to-b from-indigo-600 to-violet-600 rounded-full;
+  @apply bg-slate-700 rounded-full;
+  opacity: 0.4;
+  transition: opacity 0.2s;
 }
 
+::-webkit-scrollbar:hover::-webkit-scrollbar-thumb,
 ::-webkit-scrollbar-thumb:hover {
-  @apply from-indigo-500 to-violet-500;
+  @apply bg-slate-500;
+  opacity: 1;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.3) transparent;
+}
+
+*:hover {
+  scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
 }
 
 /* Animaciones */
