@@ -5,6 +5,7 @@ import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { callFunction } from '../lib/apiClient';
 import { db } from '../firebase';
 import usePermisos from '../hooks/usePermisos';
+import { useUpgradeModal } from '../contexts/UpgradeModalContext';
 import useClientes from '../hooks/useClientes';
 import { useMoneda } from '../hooks/useMoneda';
 import CuentaForm from '../components/CuentaForm';
@@ -24,6 +25,7 @@ export default function GestionCuentas() {
   const { user } = useAuth();
   const { cuentas: todasLasCuentas, loading, error } = useCuentas(user);
   const permisos = usePermisos(user);
+  const { show: showUpgradeModal } = useUpgradeModal();
   const { clientes: todosLosClientes, loading: loadingClientes } = useClientes(user);
   const { formatear } = useMoneda();
 
@@ -83,6 +85,11 @@ export default function GestionCuentas() {
 
   const handleCrearCuenta = async (data: CreateCuentaInput | Partial<Cuenta>) => {
     if (!user) return;
+    if (user.rol !== 'admin' && permisos.cuentaLimit !== Infinity && todasLasCuentas.length >= permisos.cuentaLimit) {
+      toast.error(`Alcanzaste el límite de ${permisos.cuentaLimit} cuentas streaming del plan Starter. Actualizá a Professional para cuentas ilimitadas.`);
+      showUpgradeModal();
+      return;
+    }
     setGuardando(true);
     try {
       const input = data as CreateCuentaInput & { contrasena?: string };
@@ -365,12 +372,42 @@ export default function GestionCuentas() {
           <p className="text-slate-400">Administrá tus cuentas de streaming</p>
         </div>
         <button
-          onClick={() => setMostrarRegistrar(true)}
+          onClick={() => {
+            if (user?.rol !== 'admin' && permisos.cuentaLimit !== Infinity && todasLasCuentas.length >= permisos.cuentaLimit) {
+              toast.error(`Alcanzaste el límite de ${permisos.cuentaLimit} cuentas streaming del plan Starter. Actualizá a Professional para cuentas ilimitadas.`);
+              showUpgradeModal();
+              return;
+            }
+            setMostrarRegistrar(true);
+          }}
           className="btn-primary"
         >
           + Registrar Cuenta
         </button>
       </div>
+
+      {/* Banner de cuota para Starter */}
+      {user?.rol !== 'admin' && permisos.planNombre === 'Starter' && (
+        <div className="bg-gradient-to-r from-indigo-950/40 to-violet-950/40 border border-indigo-800/50 rounded-2xl p-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Film className="text-indigo-400 shrink-0" size={20} />
+            <div>
+              <p className="text-sm font-medium text-indigo-300">
+                Plan Starter — <strong>{todasLasCuentas.length}</strong> de {permisos.cuentaLimit} cuentas registradas
+              </p>
+              <p className="text-xs text-indigo-400/80 mt-0.5">
+                Actualizá a Professional para inventario de cuentas y perfiles ilimitados.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => showUpgradeModal()}
+            className="btn-primary text-xs py-2 px-4 whitespace-nowrap"
+          >
+            Desbloquear Ilimitado
+          </button>
+        </div>
+      )}
 
       {/* Controles */}
       <div className="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-xl p-6 text-slate-100">

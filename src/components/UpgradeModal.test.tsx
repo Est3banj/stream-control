@@ -29,37 +29,46 @@ vi.mock('../hooks/useAdminConfig', () => ({
 const starterPermisos = {
   planNombre: 'Starter',
   loading: false,
-  clienteLimit: 30,
+  clienteLimit: 20,
+  cuentaLimit: 5,
   puedeUsarTelegram: false,
   puedeVerReportesAvanzados: false,
   puedeExportarExcel: true,
-  puedeVerDashboardEjecutivo: false,
+  puedeVerDashboardEjecutivo: true,
   tieneSoportePrioritario: false,
   tieneSoporte247: false,
+  puedeGestionarCuentas: true,
+  puedeGenerarTokens: false,
 };
 
 const professionalPermisos = {
   planNombre: 'Professional',
   loading: false,
   clienteLimit: Infinity,
+  cuentaLimit: Infinity,
   puedeUsarTelegram: true,
   puedeVerReportesAvanzados: true,
   puedeExportarExcel: true,
-  puedeVerDashboardEjecutivo: false,
+  puedeVerDashboardEjecutivo: true,
   tieneSoportePrioritario: true,
   tieneSoporte247: false,
+  puedeGestionarCuentas: true,
+  puedeGenerarTokens: false,
 };
 
 const enterprisePermisos = {
   planNombre: 'Enterprise',
   loading: false,
   clienteLimit: Infinity,
+  cuentaLimit: Infinity,
   puedeUsarTelegram: true,
   puedeVerReportesAvanzados: true,
   puedeExportarExcel: true,
   puedeVerDashboardEjecutivo: true,
   tieneSoportePrioritario: true,
   tieneSoporte247: true,
+  puedeGestionarCuentas: true,
+  puedeGenerarTokens: true,
 };
 
 vi.mock('../hooks/useMoneda', () => ({
@@ -153,14 +162,15 @@ describe('UpgradeModal', () => {
       expect(screen.getAllByText('Soporte 24/7').length).toBeGreaterThanOrEqual(1);
     });
 
-    it('clienteLimit shows "30 clientes" vs "Ilimitado" across plans', async () => {
+    it('clienteLimit and cuentaLimit show "20 clientes" and "5 cuentas" vs "Ilimitado" across plans', async () => {
       mockUsePermisos.mockReturnValue(starterPermisos);
       const UpgradeModal = (await import('./UpgradeModal')).default;
       render(<UpgradeModal user={{ uid: 'test-uid' }} onClose={vi.fn()} />);
 
-      expect(screen.getByText('30 clientes')).toBeInTheDocument();
-      // Ilimitado appears twice (Professional + Enterprise)
-      expect(screen.getAllByText('Ilimitado').length).toBeGreaterThanOrEqual(2);
+      expect(screen.getByText('20 clientes')).toBeInTheDocument();
+      expect(screen.getByText('5 cuentas')).toBeInTheDocument();
+      // Ilimitado appears across Professional + Enterprise
+      expect(screen.getAllByText('Ilimitado').length).toBeGreaterThanOrEqual(4);
     });
   });
 

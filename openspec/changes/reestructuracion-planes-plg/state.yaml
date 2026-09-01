@@ -1,0 +1,22 @@
+change: reestructuracion-planes-plg
+status: in_progress
+mode: openspec
+created_at: "2026-09-01T08:24:00-05:00"
+updated_at: "2026-09-01T08:30:00-05:00"
+dependencies: []
+artifacts:
+  explore: openspec/changes/reestructuracion-planes-plg/explore.md
+  proposal: openspec/changes/reestructuracion-planes-plg/proposal.md
+  specs: openspec/changes/reestructuracion-planes-plg/specs.md
+  design: openspec/changes/reestructuracion-planes-plg/design.md
+  tasks: openspec/changes/reestructuracion-planes-plg/tasks.md
+phase_progress:
+  explore: completed
+  proposal: completed
+  specs: completed
+  design: completed
+  tasks: completed
+  apply: not_started
+  verify: not_started
+  archive: not_started
+next_recommended: /sdd-apply reestructuracion-planes-plg

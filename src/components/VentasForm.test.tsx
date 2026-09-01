@@ -16,6 +16,8 @@ const mockDoc = vi.fn((...args: any[]) => ({
   _id: args[1] === 'clientes' ? (args.slice(2) as string[]).join('_') : args[2] as string,
 }));
 
+const mockGetDocs = vi.fn((...args: any[]) => Promise.resolve({ empty: true, docs: [] as any[], size: 0 }));
+
 vi.mock('../firebase', () => ({
   db: { _mock: true },
 }));
@@ -27,7 +29,7 @@ vi.mock('firebase/firestore', () => ({
   setDoc: (...args: any[]) => mockSetDoc(...args),
   updateDoc: (...args: any[]) => mockUpdateDoc(...args),
   getDoc: (...args: any[]) => mockGetDoc(...args),
-  getDocs: () => Promise.resolve({ empty: true, docs: [], size: 0 }),
+  getDocs: (...args: any[]) => mockGetDocs(...args),
   query: (...args: any[]) => ({ _query: true, args }),
   where: (...args: any[]) => ({ _where: true, args }),
   serverTimestamp: () => ({ _methodName: 'serverTimestamp' }),
@@ -37,19 +39,25 @@ vi.mock('firebase/firestore', () => ({
 }));
 
 const mockUser = { uid: 'test-uid-123', email: 'test@streamcontrol.com' };
+const mockPermisos = {
+  planNombre: 'Starter',
+  loading: false,
+  clienteLimit: Infinity,
+  cuentaLimit: 5,
+  puedeUsarTelegram: false,
+  puedeVerReportesAvanzados: false,
+  puedeExportarExcel: true,
+  puedeVerDashboardEjecutivo: true,
+  tieneSoportePrioritario: false,
+  tieneSoporte247: false,
+  puedeGestionarCuentas: true,
+  puedeGenerarTokens: false,
+};
+
+const mockUsePermisos = vi.fn(() => mockPermisos);
 
 vi.mock('../hooks/usePermisos', () => ({
-  default: () => ({
-    planNombre: 'Starter',
-    loading: false,
-    clienteLimit: Infinity,
-    puedeUsarTelegram: false,
-    puedeVerReportesAvanzados: false,
-    puedeExportarExcel: true,
-    puedeVerDashboardEjecutivo: false,
-    tieneSoportePrioritario: false,
-    tieneSoporte247: false,
-  }),
+  default: () => mockUsePermisos(),
 }));
 
 vi.mock('../contexts/AuthContext', () => ({
@@ -455,5 +463,87 @@ describe('VentasForm — Renovación con initialData', () => {
     await waitFor(() => {
       expect(screen.getByText('$12.000')).toBeInTheDocument();
     });
+  });
+});
+
+describe('VentasForm — Cuota de Clientes PLG', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAddDoc.mockResolvedValue({ id: 'new-venta-id' });
+    mockSetDoc.mockResolvedValue(undefined);
+    mockUpdateDoc.mockResolvedValue(undefined);
+  });
+
+  it('rechaza el cliente #21 cuando un usuario Starter alcanza el límite de 20 clientes', async () => {
+    mockUsePermisos.mockReturnValue({
+      ...mockPermisos,
+      clienteLimit: 20,
+    });
+    // Cliente nuevo no existe
+    mockGetDoc.mockResolvedValue(createDocSnapshot('no-existe', null, false));
+    // Conteo actual en 20 clientes
+    mockGetDocs.mockResolvedValue({ empty: false, docs: Array(20).fill({}), size: 20 });
+
+    const { container } = render(<VentasForm />);
+    const user = userEvent.setup();
+
+    await fillRequiredFields(user, container);
+    await user.click(screen.getByRole('button', { name: /registrar venta/i }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        'Alcanzaste el límite de 20 clientes del plan Starter. Actualizá a Professional para clientes ilimitados.',
+      );
+    });
+
+    // NO debe escribir en Firestore
+    expect(mockAddDoc).not.toHaveBeenCalled();
+    expect(mockSetDoc).not.toHaveBeenCalled();
+  });
+
+  it('permite la venta si el cliente ya existe aunque haya 20 clientes registrados', async () => {
+    mockUsePermisos.mockReturnValue({
+      ...mockPermisos,
+      clienteLimit: 20,
+    });
+    // Cliente existente en Firestore
+    mockGetDoc.mockResolvedValue(createDocSnapshot('test-uid-123_Cliente Test', {
+      nombre: 'Cliente Test',
+      telefono: '+573001234567',
+      correo: 'test@example.com',
+      plataforma: 'Netflix',
+    }, true));
+    // Conteo actual en 20 clientes y query por teléfono retorna el mismo cliente
+    mockGetDocs.mockImplementation(() =>
+      Promise.resolve({
+        empty: false,
+        docs: [
+          createDocSnapshot('test-uid-123_Cliente Test', {
+            nombre: 'Cliente Test',
+            telefono: '+573001234567',
+          }),
+        ],
+        size: 20,
+      })
+    );
+
+    const { container } = render(<VentasForm />);
+
+    fireEvent.change(screen.getByPlaceholderText('Ej: Juan Pérez'), { target: { value: 'Cliente Test' } });
+    fireEvent.change(screen.getByPlaceholderText('Ej: +573104567890 o @usuario'), { target: { value: '+573001234567' } });
+    fireEvent.change(screen.getByPlaceholderText('Ej: Netflix, Disney+, Spotify...'), { target: { value: 'Netflix' } });
+    fireEvent.change(getInput(container, 'pantallas'), { target: { value: '2' } });
+    fireEvent.change(getInput(container, 'fechaInicio'), { target: { value: '2026-07-01' } });
+    fireEvent.change(getInput(container, 'diasServicio'), { target: { value: '30' } });
+    fireEvent.change(getInput(container, 'precioVenta'), { target: { value: '15000' } });
+    fireEvent.change(getInput(container, 'costoServicio'), { target: { value: '5000' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /registrar venta/i }));
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith('Venta registrada correctamente');
+    });
+
+    expect(mockAddDoc).toHaveBeenCalled();
   });
 });

@@ -9,6 +9,8 @@ export interface Permisos {
   loading: boolean;
   /** Clientes máximos permitidos (Infinity = ilimitado) */
   clienteLimit: number;
+  /** Cuentas máximas de streaming permitidas en inventario (Infinity = ilimitado) */
+  cuentaLimit: number;
   /** Puede usar Telegram */
   puedeUsarTelegram: boolean;
   /** Puede ver reportes avanzados */
@@ -29,22 +31,24 @@ export interface Permisos {
 
 export const PLAN_FEATURES: Record<string, Partial<Permisos>> = {
   Starter: {
-    clienteLimit: 30,
+    clienteLimit: 20,
+    cuentaLimit: 5,
     puedeUsarTelegram: false,
     puedeVerReportesAvanzados: false,
     puedeExportarExcel: true,
-    puedeVerDashboardEjecutivo: false,
+    puedeVerDashboardEjecutivo: true,
     tieneSoportePrioritario: false,
     tieneSoporte247: false,
-    puedeGestionarCuentas: false,
+    puedeGestionarCuentas: true,
     puedeGenerarTokens: false,
   },
   Professional: {
     clienteLimit: Infinity,
+    cuentaLimit: Infinity,
     puedeUsarTelegram: true,
     puedeVerReportesAvanzados: true,
     puedeExportarExcel: true,
-    puedeVerDashboardEjecutivo: false,
+    puedeVerDashboardEjecutivo: true,
     tieneSoportePrioritario: true,
     tieneSoporte247: false,
     puedeGestionarCuentas: true,
@@ -52,6 +56,7 @@ export const PLAN_FEATURES: Record<string, Partial<Permisos>> = {
   },
   Enterprise: {
     clienteLimit: Infinity,
+    cuentaLimit: Infinity,
     puedeUsarTelegram: true,
     puedeVerReportesAvanzados: true,
     puedeExportarExcel: true,
@@ -66,14 +71,15 @@ export const PLAN_FEATURES: Record<string, Partial<Permisos>> = {
 const DEFAULT_PERMISOS: Permisos = {
   planNombre: null,
   loading: true,
-  clienteLimit: 0,
+  clienteLimit: 20,
+  cuentaLimit: 5,
   puedeUsarTelegram: false,
   puedeVerReportesAvanzados: false,
-  puedeExportarExcel: false,
-  puedeVerDashboardEjecutivo: false,
+  puedeExportarExcel: true,
+  puedeVerDashboardEjecutivo: true,
   tieneSoportePrioritario: false,
   tieneSoporte247: false,
-  puedeGestionarCuentas: false,
+  puedeGestionarCuentas: true,
   puedeGenerarTokens: false,
 };
 
@@ -110,6 +116,7 @@ export default function usePermisos(
         planNombre: 'Admin',
         loading: false,
         clienteLimit: Infinity,
+        cuentaLimit: Infinity,
         puedeUsarTelegram: true,
         puedeVerReportesAvanzados: true,
         puedeExportarExcel: true,
@@ -133,7 +140,12 @@ export default function usePermisos(
       if (import.meta.env.DEV) {
         console.log('[usePermisos] Sin suscripción activa para', user.uid, '- plan Starter');
       }
-      return { ...DEFAULT_PERMISOS, loading: false, planNombre: 'Starter' };
+      return {
+        ...DEFAULT_PERMISOS,
+        ...PLAN_FEATURES.Starter,
+        loading: false,
+        planNombre: 'Starter',
+      };
     }
 
     const familia = detectarFamilia(activa.planNombre);
@@ -147,6 +159,7 @@ export default function usePermisos(
       planNombre: activa.planNombre,
       loading: false,
       clienteLimit: features.clienteLimit ?? Infinity,
+      cuentaLimit: features.cuentaLimit ?? Infinity,
       puedeUsarTelegram: features.puedeUsarTelegram ?? false,
       puedeVerReportesAvanzados: features.puedeVerReportesAvanzados ?? false,
       puedeExportarExcel: features.puedeExportarExcel ?? false,

@@ -6,6 +6,7 @@ import {
 } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import usePermisos from '../hooks/usePermisos';
+import { useUpgradeModal } from '../contexts/UpgradeModalContext';
 import useCuentas from '../hooks/useCuentas';
 import SelectorCuenta from '../components/SelectorCuenta';
 import { Check, Plus, X, Layers } from 'lucide-react';
@@ -132,11 +133,52 @@ function ComboboxServicio({
   );
 }
 
+async function validarCuotaCliente(
+  userUid: string,
+  clienteNombre: string,
+  clienteLimit: number
+): Promise<{ permitido: boolean; mensajeError?: string }> {
+  if (clienteLimit === Infinity) return { permitido: true };
+
+  const nombreNormalizado = clienteNombre.trim();
+  if (!nombreNormalizado) return { permitido: true };
+
+  try {
+    // 1. Verificar si el cliente ya existe en la base de datos
+    const clienteRef = doc(db, 'clientes', `${userUid}_${nombreNormalizado}`);
+    const clienteSnap = await getDoc(clienteRef);
+    if (clienteSnap.exists()) {
+      // Cliente existente: no consume nueva cuota
+      return { permitido: true };
+    }
+
+    // 2. Si es cliente nuevo, verificar el conteo total actual
+    const countQuery = query(
+      collection(db, 'clientes'),
+      where('propietarioId', '==', userUid)
+    );
+    const countSnap = await getDocs(countQuery);
+
+    if (countSnap.size >= clienteLimit) {
+      return {
+        permitido: false,
+        mensajeError: `Alcanzaste el límite de ${clienteLimit} clientes del plan Starter. Actualizá a Professional para clientes ilimitados.`,
+      };
+    }
+
+    return { permitido: true };
+  } catch (error) {
+    console.warn('[validarCuotaCliente] Error verificando cuota:', error);
+    return { permitido: true }; // Fallback tolerante en fallos de red
+  }
+}
+
 // ─── Component ───────────────────────────────────────────────────────────
 
 export default function VentasForm({ initialData }: VentasFormProps) {
   const { user } = useAuth();
   const permisos = usePermisos(user);
+  const { show: showUpgradeModal } = useUpgradeModal();
   const { cuentas } = useCuentas(user);
   const { formatear, moneda, tasa } = useMoneda();
 
@@ -497,16 +539,12 @@ export default function VentasForm({ initialData }: VentasFormProps) {
       }
     } catch { console.warn('No se pudo verificar teléfono duplicado'); }
 
-    // Hard-block: cliente limit
-    if (permisos.clienteLimit !== Infinity) {
-      try {
-        const countQuery = query(collection(db, 'clientes'), where('propietarioId', '==', user.uid));
-        const countSnap = await getDocs(countQuery);
-        if (countSnap.size >= permisos.clienteLimit) {
-          setSubmitting(false);
-          return toast.error(`Alcanzaste el límite de ${permisos.clienteLimit} clientes del plan Starter. Actualizá a Professional para clientes ilimitados.`);
-        }
-      } catch { console.warn('No se pudo verificar límite de clientes'); }
+    // Quota check (solo si es cliente nuevo)
+    const cuota = await validarCuotaCliente(user.uid, venta.nombre, permisos.clienteLimit);
+    if (!cuota.permitido) {
+      setSubmitting(false);
+      showUpgradeModal();
+      return toast.error(cuota.mensajeError || 'Límite de clientes alcanzado');
     }
 
     try {
@@ -662,6 +700,31 @@ export default function VentasForm({ initialData }: VentasFormProps) {
     if (cantServicios === 0) { toast.error('Completá al menos un servicio con plataforma y fecha.'); return; }
 
     setSubmitting(true);
+
+    // Duplicate phone check
+    try {
+      const dupQuery = query(
+        collection(db, 'clientes'),
+        where('propietarioId', '==', user.uid),
+        where('telefono', '==', venta.telefono.trim()),
+      );
+      const dupSnap = await getDocs(dupQuery);
+      if (!dupSnap.empty) {
+        const existingName = dupSnap.docs[0].data().nombre as string;
+        if (existingName !== venta.nombre.trim()) {
+          setSubmitting(false);
+          return toast.error(`El teléfono ${venta.telefono} ya está registrado con "${existingName}". Usá otro teléfono o editá el cliente existente.`);
+        }
+      }
+    } catch { console.warn('No se pudo verificar teléfono duplicado'); }
+
+    // Quota check (solo si es cliente nuevo)
+    const cuota = await validarCuotaCliente(user.uid, venta.nombre, permisos.clienteLimit);
+    if (!cuota.permitido) {
+      setSubmitting(false);
+      showUpgradeModal();
+      return toast.error(cuota.mensajeError || 'Límite de clientes alcanzado');
+    }
 
     try {
       // Preparar datos de cada servicio con sus fechas de vencimiento

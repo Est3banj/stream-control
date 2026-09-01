@@ -7,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import useClientes from '../hooks/useClientes';
 import useTokens, { generarToken, revocarToken } from '../hooks/useTokens';
 import usePermisos from '../hooks/usePermisos';
+import { useUpgradeModal } from '../contexts/UpgradeModalContext';
 import useCuentas from '../hooks/useCuentas';
 import { useMoneda } from '../hooks/useMoneda';
 import Paginador from '../components/Paginador';
@@ -24,6 +25,7 @@ export default function GestionClientes() {
   const { user } = useAuth();
   const { clientes: todosLosClientes, loading, error } = useClientes(user);
   const permisos = usePermisos(user);
+  const { show: showUpgradeModal } = useUpgradeModal();
   const { tokens: todosLosTokens } = useTokens(user);
   const { cuentas } = useCuentas(user);
   const { formatear, formatearDesdeVenta } = useMoneda();
@@ -519,16 +521,24 @@ export default function GestionClientes() {
 
       {/* Banner de límite para Starter */}
       {user?.rol !== 'admin' && permisos.planNombre === 'Starter' && (
-        <div className="bg-gradient-to-r from-amber-950/40 to-orange-950/40 border border-amber-800/50 rounded-2xl p-4 flex items-center gap-3">
-          <Sparkles className="text-amber-400 shrink-0" size={20} />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-amber-300">
-              Plan Starter — <strong>{clientes.todos.length}</strong> de {permisos.clienteLimit} clientes usados
-            </p>
-            <p className="text-xs text-amber-400/80 mt-0.5">
-              Actualizá a Professional para clientes ilimitados.
-            </p>
+        <div className="bg-gradient-to-r from-amber-950/40 to-orange-950/40 border border-amber-800/50 rounded-2xl p-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Sparkles className="text-amber-400 shrink-0" size={20} />
+            <div>
+              <p className="text-sm font-medium text-amber-300">
+                Plan Starter — <strong>{clientes.todos.length}</strong> de {permisos.clienteLimit} clientes usados
+              </p>
+              <p className="text-xs text-amber-400/80 mt-0.5">
+                Actualizá a Professional para clientes ilimitados y alertas automáticas por Telegram.
+              </p>
+            </div>
           </div>
+          <button
+            onClick={() => showUpgradeModal()}
+            className="btn-primary text-xs py-2 px-4 whitespace-nowrap"
+          >
+            Actualizar a Pro
+          </button>
         </div>
       )}
 

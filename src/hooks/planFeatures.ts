@@ -1,5 +1,6 @@
 export const FEATURE_LABELS: Record<string, string> = {
   clienteLimit: 'Límite de clientes',
+  cuentaLimit: 'Límite de cuentas streaming',
   puedeUsarTelegram: 'Notificaciones Telegram',
   puedeVerReportesAvanzados: 'Reportes Avanzados',
   puedeExportarExcel: 'Exportar a Excel',

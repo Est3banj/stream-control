@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import useCuentas, { crearCuenta } from '../hooks/useCuentas';
 import usePermisos from '../hooks/usePermisos';
+import { useUpgradeModal } from '../contexts/UpgradeModalContext';
 import type { Cuenta, PerfilCuenta } from '../types/cuenta';
 import { Plus, X, Check, Save, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -36,6 +37,7 @@ export function calcularCostoPorPerfil(cuenta: Cuenta): number {
 export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCuentaId, initialPerfil }: SelectorCuentaProps) {
   const { user } = useAuth();
   const permisos = usePermisos(user);
+  const { show: showUpgradeModal } = useUpgradeModal();
   const { cuentas, loading } = useCuentas(user);
   const { formatear } = useMoneda();
 
@@ -100,6 +102,11 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
   if (!proveedor || !permisos.puedeGestionarCuentas) return null;
 
   const cambiarModo = (nuevo: 'existente' | 'nueva') => {
+    if (nuevo === 'nueva' && user?.rol !== 'admin' && permisos.cuentaLimit !== Infinity && cuentas.length >= permisos.cuentaLimit) {
+      toast.error(`Alcanzaste el límite de ${permisos.cuentaLimit} cuentas streaming del plan Starter. Actualizá a Professional para cuentas ilimitadas.`);
+      showUpgradeModal();
+      return;
+    }
     setModo(nuevo);
     if (nuevo === 'existente') {
       setCuentaSeleccionadaId(initialCuentaId || '');
@@ -124,6 +131,11 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
 
   const guardarCuentaNueva = async () => {
     if (!user) return;
+    if (user.rol !== 'admin' && permisos.cuentaLimit !== Infinity && cuentas.length >= permisos.cuentaLimit) {
+      toast.error(`Alcanzaste el límite de ${permisos.cuentaLimit} cuentas streaming del plan Starter. Actualizá a Professional para cuentas ilimitadas.`);
+      showUpgradeModal();
+      return;
+    }
     if (!nuevaCorreo.trim()) return toast.error('El correo de la cuenta es obligatorio');
     if (nuevaCosto <= 0) return toast.error('El costo debe ser mayor a 0');
     if (nuevaPerfiles.some(p => !p.nombre.trim())) return toast.error('Todos los perfiles deben tener un nombre');

@@ -15,14 +15,15 @@ interface UpgradeModalProps {
 
 const ALL_FEATURE_KEYS: (keyof Omit<Permisos, 'planNombre' | 'loading'>)[] = [
   'clienteLimit',
-  'puedeUsarTelegram',
-  'puedeVerReportesAvanzados',
+  'cuentaLimit',
+  'puedeGestionarCuentas',
   'puedeExportarExcel',
   'puedeVerDashboardEjecutivo',
+  'puedeUsarTelegram',
+  'puedeVerReportesAvanzados',
+  'puedeGenerarTokens',
   'tieneSoportePrioritario',
   'tieneSoporte247',
-  'puedeGestionarCuentas',
-  'puedeGenerarTokens',
 ];
 
 const ALL_FAMILIAS = ['Starter', 'Professional', 'Enterprise'] as const;
@@ -62,6 +63,10 @@ function formatFeatureValue(
   if (key === 'clienteLimit') {
     if (value === Infinity) return 'Ilimitado';
     return `${value} clientes`;
+  }
+  if (key === 'cuentaLimit') {
+    if (value === Infinity) return 'Ilimitado';
+    return `${value} cuentas`;
   }
   return value ? 'Sí' : 'No';
 }
@@ -343,11 +348,11 @@ export default function UpgradeModal({ user, onClose }: UpgradeModalProps) {
                   const val = plan.features[key];
                   return (
                     <li key={key} className="flex items-start gap-2 text-sm">
-                      {key === 'clienteLimit' ? (
+                      {key === 'clienteLimit' || key === 'cuentaLimit' ? (
                         <span className="text-slate-200 font-medium">
                           <Check size={18} className="text-emerald-400 mt-0.5 shrink-0 inline mr-1" />
                           <span className="text-slate-400">{FEATURE_LABELS[key]}:</span>{' '}
-                          {val === Infinity ? 'Ilimitado' : `${val} clientes`}
+                          {val === Infinity ? 'Ilimitado' : (key === 'clienteLimit' ? `${val} clientes` : `${val} cuentas`)}
                         </span>
                       ) : (
                         <>

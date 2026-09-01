@@ -5,7 +5,6 @@ import useClientes from '../hooks/useClientes';
 import useSuscripciones from '../hooks/useSuscripciones';
 import usePermisos from '../hooks/usePermisos';
 import { useMoneda } from '../hooks/useMoneda';
-import FeatureBlocked from '../components/FeatureBlocked';
 import { DollarSign, TrendingUp, TrendingDown, Users, Tv, ShoppingCart, AlertCircle, CreditCard } from 'lucide-react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { collection, getDocs } from 'firebase/firestore';
@@ -152,24 +151,6 @@ export default function Dashboard() {
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mb-4"></div>
           <p className="text-slate-400 font-medium">Cargando datos...</p>
         </div>
-      </div>
-    );
-  }
-
-  if (!permisos.puedeVerDashboardEjecutivo) {
-    return (
-      <div className="space-y-6 animate-fade-in text-slate-100">
-        <div className="mb-6">
-          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
-            Dashboard
-          </h1>
-          <p className="text-slate-400">Panel ejecutivo con métricas y reportes</p>
-        </div>
-        <FeatureBlocked
-          feature="Dashboard Ejecutivo"
-          description="Accedé a métricas avanzadas, indicadores y gráficos de tu negocio."
-          plan="Enterprise"
-        />
       </div>
     );
   }
