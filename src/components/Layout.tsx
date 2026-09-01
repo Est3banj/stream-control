@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
-  Menu,
   X,
   LayoutDashboard,
   DollarSign,
@@ -18,8 +17,8 @@ import {
   CreditCard,
   Key,
 } from 'lucide-react';
+import TopBar from './TopBar';
 import PWAInstallButton from './PWAInstallButton';
-import NotificationsPanel from './NotificationsPanel';
 import UpgradeModal from './UpgradeModal';
 import UpgradeModalContext from '../contexts/UpgradeModalContext';
 import usePermisos from '../hooks/usePermisos';
@@ -224,29 +223,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           }`}
           aria-label="Menú móvil"
         >
-          {/* Drawer Header */}
-          <div className="p-4 border-b border-slate-800/80 flex items-center justify-between shrink-0">
-            <Link to="/" onClick={() => setSidebarOpen(false)} className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center p-1 shadow-inner shrink-0">
-                <img
-                  src="/app/stream.webp"
-                  alt="StreamControl"
-                  onError={(e) => {
-                    const target = e.currentTarget;
-                    if (!target.src.endsWith('/stream.webp') || target.src.includes('/app/stream.webp')) {
-                      target.src = '/stream.webp';
-                    }
-                  }}
-                  className="w-full h-full object-contain"
-                />
-              </div>
-              <div className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300 tracking-wide">
-                StreamControl <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">Pro</span>
-              </div>
-            </Link>
+          {/* Close button */}
+          <div className="flex justify-end p-3 shrink-0">
             <button
               onClick={() => setSidebarOpen(false)}
-              className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
               aria-label="Cerrar menú"
             >
               <X size={20} />
@@ -338,45 +319,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="flex-1 min-w-0 min-h-screen flex flex-col bg-slate-950 text-slate-100">
           <BroadcastBanner />
 
-          {/* Mobile Top Header Bar (< lg) */}
-          <header className="h-14 px-4 flex items-center justify-between border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md lg:hidden sticky top-0 z-30">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-indigo-950/60 border border-indigo-800/50 flex items-center justify-center p-1">
-                <img
-                  src="/app/stream.webp"
-                  alt="StreamControl"
-                  onError={(e) => {
-                    const target = e.currentTarget;
-                    if (!target.src.endsWith('/stream.webp') || target.src.includes('/app/stream.webp')) {
-                      target.src = '/stream.webp';
-                    }
-                  }}
-                  className="w-full h-full object-contain"
-                />
-              </div>
-              <span className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-300">
-                StreamControl <span className="text-indigo-400">Pro</span>
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <NotificationsPanel />
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="p-2 rounded-xl hover:bg-slate-800/60 text-slate-300 transition-colors"
-                aria-label="Abrir menú"
-              >
-                <Menu size={22} className="text-slate-300" />
-              </button>
-            </div>
-          </header>
-
-          {/* Desktop Top Bar (>= lg) */}
-          <header className="hidden lg:flex items-center justify-end px-8 py-3 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/80 sticky top-0 z-30">
-            <div className="flex items-center gap-3">
-              <NotificationsPanel />
-            </div>
-          </header>
+          {/* TopBar unificado (mobile: logo+notif+hamburger | desktop: notif only) */}
+          <TopBar onMenuToggle={() => setSidebarOpen(true)} />
 
           {/* Main Content Area */}
           <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
