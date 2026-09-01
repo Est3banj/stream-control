@@ -94,17 +94,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <aside
           className={`
             fixed lg:static inset-y-0 left-0 z-50
-            w-64 p-6
+            w-64
             bg-slate-900/90 backdrop-blur-xl border-r border-slate-800/80
             text-slate-200 shadow-2xl
-            flex flex-col justify-between
+            flex flex-col h-full max-h-screen
             transform transition-transform duration-300 ease-in-out
             ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
           `}
         >
           {/* Header del sidebar */}
-          <div>
-            <div className="flex items-center mb-8">
+          <div className="p-6 pb-2 shrink-0">
+            <div className="flex items-center mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center p-1.5 shadow-inner">
                   <img 
@@ -124,8 +124,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Navegación */}
+          {/* Navegación con scroll */}
+          <div className="flex-1 overflow-y-auto overscroll-contain px-6 py-2">
             <nav className="flex flex-col gap-2">
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -175,20 +177,27 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </nav>
           </div>
 
-          {/* Información del usuario */}
-          <div className="mt-8 border-t border-slate-800/80 pt-4 space-y-3">
+          {/* Información del usuario fija al fondo */}
+          <div className="sticky bottom-0 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 p-4 mt-auto shrink-0 space-y-3">
             <div className="flex items-center gap-3 px-2">
-              <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700/60 text-slate-300 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700/60 text-slate-300 flex items-center justify-center shrink-0">
                 <User size={20} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-xs text-slate-400 truncate">Conectado como</div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-slate-400 truncate">Conectado como</span>
+                  {permisos.planNombre && (
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-950/80 text-indigo-300 border border-indigo-800/60">
+                      {permisos.planNombre}
+                    </span>
+                  )}
+                </div>
                 <div className="text-sm font-semibold text-slate-200 truncate">{user?.email}</div>
               </div>
             </div>
             <button
               onClick={logout}
-              className="w-full flex items-center justify-center gap-2 bg-slate-800/60 hover:bg-rose-950/40 hover:text-rose-300 hover:border-rose-800/40 border border-slate-700/50 text-slate-300 px-4 py-2.5 rounded-xl transition-all font-medium"
+              className="w-full flex items-center justify-center gap-2 bg-slate-800/60 hover:bg-rose-950/40 hover:text-rose-300 hover:border-rose-800/40 border border-slate-700/50 text-slate-300 px-4 py-2.5 rounded-xl transition-all font-medium text-sm"
             >
               <LogOut size={18} />
               Cerrar sesión

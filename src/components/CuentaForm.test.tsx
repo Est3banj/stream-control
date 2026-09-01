@@ -9,6 +9,14 @@ vi.mock('react-hot-toast', () => ({
   toast: { error: vi.fn(), success: vi.fn() },
 }));
 
+vi.mock('../hooks/useMoneda', () => ({
+  useMoneda: () => ({
+    simbolo: '$',
+    moneda: 'COP',
+    formatear: (v: number) => `$${v}`,
+  }),
+}));
+
 describe('CuentaForm', () => {
   const mockSubmit = vi.fn();
   const mockCancel = vi.fn();

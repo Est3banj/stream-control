@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import { Plus, Trash2, Calendar, Eye, EyeOff } from 'lucide-react';
+import { useMoneda } from '../hooks/useMoneda';
 import type { Cuenta, PerfilCuenta, CreateCuentaInput } from '../types/cuenta';
 
 const PROVEEDORES = ['Netflix', 'Max', 'Disney+', 'Prime Video', 'ChatGPT', 'Win Sports+', 'Universal+', 'Paramount+', 'Otro'];
@@ -13,6 +14,7 @@ interface CuentaFormProps {
 }
 
 export default function CuentaForm({ initialData, onSubmit, onCancel, loading }: CuentaFormProps) {
+  const { simbolo } = useMoneda();
   const isEdit = !!initialData;
   const [proveedor, setProveedor] = useState(initialData?.proveedor || '');
   const [nombreProveedor, setNombreProveedor] = useState(initialData?.nombreProveedor || '');
@@ -269,7 +271,7 @@ export default function CuentaForm({ initialData, onSubmit, onCancel, loading }:
           Costo de la cuenta <span className="text-rose-400">*</span>
         </label>
         <div className="relative">
-          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-mono text-sm pointer-events-none">$</span>
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-mono text-sm pointer-events-none">{simbolo}</span>
           <input
             type="number"
             value={costo}

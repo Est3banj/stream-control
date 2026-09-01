@@ -74,9 +74,13 @@ vi.mock('../hooks/useClientes', () => ({
   }),
 }));
 
+const mockFormatear = vi.fn((v: number) => `USD ${v}`);
+
 vi.mock('../hooks/useMoneda', () => ({
   useMoneda: () => ({
-    formatear: (v: number) => `$${v}`,
+    formatear: mockFormatear,
+    moneda: 'USD',
+    simbolo: 'USD$',
   }),
 }));
 
@@ -217,5 +221,12 @@ describe('GestionCuentas — Sub-feature Gating & IMAP Lock', () => {
     expect(mockToastError).toHaveBeenCalledWith(
       expect.stringContaining('Alcanzaste el límite de 1 cuentas streaming del plan Starter')
     );
+  });
+
+  it('renders account costs dynamically formatted with useMoneda', () => {
+    render(<GestionCuentas />);
+
+    expect(mockFormatear).toHaveBeenCalledWith(30000);
+    expect(screen.getByText('USD 30000')).toBeTruthy();
   });
 });

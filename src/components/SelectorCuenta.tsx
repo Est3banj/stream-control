@@ -39,7 +39,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
   const permisos = usePermisos(user);
   const { show: showUpgradeModal } = useUpgradeModal();
   const { cuentas, loading } = useCuentas(user);
-  const { formatear } = useMoneda();
+  const { formatear, simbolo } = useMoneda();
 
   const cuentasDisponibles = useMemo(() => {
     if (!proveedor) return [];
@@ -295,7 +295,7 @@ export default function SelectorCuenta({ proveedor, onCuentaSelected, initialCue
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1.5">Costo total *</label>
               <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-mono text-sm pointer-events-none">$</span>
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-mono text-sm pointer-events-none">{simbolo}</span>
                 <input
                   type="number"
                   value={nuevaCosto}
