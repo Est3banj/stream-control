@@ -55,6 +55,11 @@ export function parseDate(val: unknown): Date | null {
       return isNaN(d.getTime()) ? null : d;
     }
 
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      const d = new Date(`${trimmed}T00:00:00`);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
     const d = new Date(trimmed);
     return isNaN(d.getTime()) ? null : d;
   }

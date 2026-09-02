@@ -55,6 +55,7 @@ export default function Paginador({ currentPage, totalItems, itemsPerPage, onPag
             className="w-auto text-sm px-2.5 py-1 rounded-xl border border-slate-800 bg-slate-900 text-slate-200 cursor-pointer focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
             aria-label="Registros por página"
           >
+            <option value={5} className="bg-slate-900 text-slate-200">5 / pág</option>
             <option value={10} className="bg-slate-900 text-slate-200">10 / pág</option>
             <option value={20} className="bg-slate-900 text-slate-200">20 / pág</option>
             <option value={50} className="bg-slate-900 text-slate-200">50 / pág</option>

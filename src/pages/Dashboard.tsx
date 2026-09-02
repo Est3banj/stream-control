@@ -38,6 +38,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import PlataformaBadge from '../components/PlataformaBadge';
+import Paginador from '../components/Paginador';
 import AdminDashboard from './AdminDashboard';
 import { parseDate } from '../utils/dateUtils';
 import type { Venta } from '../types/venta';
@@ -74,8 +75,10 @@ export default function Dashboard() {
   const { cuentas, loading: loadingCuentas, error: errorCuentas } = useCuentas(user);
   const { formatear, convertirVenta, simbolo } = useMoneda();
 
-  // Action Center cohort filter
-  const [cohortFilter, setCohortFilter] = useState<'todos' | 'urgentes' | 'vencidos'>('todos');
+  // Action Center cohort filter & pagination
+  const [cohortFilter, setCohortFilter] = useState<'proximos' | 'urgentes' | 'mora'>('proximos');
+  const [actionPage, setActionPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
 
   const loading = loadingVentas || loadingClientes || loadingCuentas;
   const error = errorVentas || errorClientes || errorCuentas;
@@ -108,11 +111,13 @@ export default function Dashboard() {
 
     ventas.forEach((v) => {
       const parsed = parseDate(v.fechaVenta || v.fechaInicio || v.fechaRegistro);
-      const precioTotal = (v.precioVenta * (v.pantallas || 1)) || v.precioVenta || 0;
+      const pantallas = Number(v.pantallas) > 0 ? Number(v.pantallas) : 1;
+      const precioUnitario = Number(v.precioVenta) || 0;
+      const precioTotal = precioUnitario * pantallas;
       const ingreso = convertirVenta(precioTotal, v.monedaVenta, v.tasaVenta);
       const costo = convertirVenta(Number(v.costoServicio) || 0, v.monedaVenta, v.tasaVenta);
-      const utilidad = v.utilidad !== undefined
-        ? convertirVenta(Number(v.utilidad) || 0, v.monedaVenta, v.tasaVenta)
+      const utilidad = v.utilidad != null
+        ? convertirVenta(Number(v.utilidad), v.monedaVenta, v.tasaVenta)
         : (ingreso - costo);
 
       totIngHist += ingreso;
@@ -142,35 +147,54 @@ export default function Dashboard() {
   // 2. Clientes Metrics
   const {
     clientesActivos,
-    clientesEnMora,
+    clientesConDeuda,
     vencimientosCriticos,
+    vencimientosProximos,
+    vencidosRecientes,
+    clientesEnMora,
     totalSaldoPendiente,
   } = useMemo(() => {
     const activos: Cliente[] = [];
-    const mora: Cliente[] = [];
+    const conDeuda: Cliente[] = [];
     const criticos: Cliente[] = [];
+    const proximos: Cliente[] = [];
+    const vencidosRec: Cliente[] = [];
+    const mora: Cliente[] = [];
     let saldoPend = 0;
 
     clientes.forEach((c) => {
-      const dias = c.diasRestantes ?? 0;
+      const tieneDias = c.diasRestantes !== null && c.diasRestantes !== undefined;
+      const dias = c.diasRestantes;
       const saldo = Number(c.saldoPendiente) || 0;
       saldoPend += saldo;
 
-      if (dias > 0) {
+      if ((tieneDias && dias! > 0) || (!tieneDias && c.estado === 'activo')) {
         activos.push(c);
       }
-      if (saldo > 0 || dias <= 0) {
-        mora.push(c);
+      if (saldo > 0) {
+        conDeuda.push(c);
       }
-      if (dias >= 0 && dias <= 3) {
+      if (tieneDias && dias! >= 0 && dias! <= 3) {
         criticos.push(c);
+      }
+      if (tieneDias && dias! >= 0 && dias! <= 7) {
+        proximos.push(c);
+      }
+      if (tieneDias && dias! < 0 && dias! >= -30) {
+        vencidosRec.push(c);
+      }
+      if (saldo > 0 || (tieneDias && dias! < 0 && dias! >= -30)) {
+        mora.push(c);
       }
     });
 
     return {
       clientesActivos: activos,
-      clientesEnMora: mora,
+      clientesConDeuda: conDeuda,
       vencimientosCriticos: criticos,
+      vencimientosProximos: proximos,
+      vencidosRecientes: vencidosRec,
+      clientesEnMora: mora,
       totalSaldoPendiente: saldoPend,
     };
   }, [clientes]);
@@ -191,8 +215,12 @@ export default function Dashboard() {
 
     cuentas.forEach((c) => {
       const perfiles = Array.isArray(c.perfiles) ? c.perfiles : [];
-      const count = perfiles.length > 0 ? perfiles.length : ((c as any).maxPerfiles || 1);
-      const asig = perfiles.filter((p) => p.estado === 'asignado').length;
+      const count = perfiles.length > 0 ? perfiles.length : (Number((c as any).maxPerfiles) || 1);
+      let asig = perfiles.filter((p) => p.estado === 'asignado').length;
+      if (perfiles.length === 0 && c.estado === 'asignada') {
+        asig = count;
+      }
+      asig = Math.min(count, Math.max(0, asig));
 
       tPerfiles += count;
       pAsignados += asig;
@@ -220,25 +248,58 @@ export default function Dashboard() {
     };
   }, [cuentas]);
 
-  // 4. Action Center Cohorts
+  // 4. Action Center Cohorts & Pagination
+  const { conteoProximos, conteoUrgentes, conteoMora } = useMemo(() => {
+    let proximos = 0;
+    let urgentes = 0;
+    let mora = 0;
+    clientes.forEach((c) => {
+      const tieneDias = c.diasRestantes !== null && c.diasRestantes !== undefined;
+      const dias = c.diasRestantes;
+      const saldo = Number(c.saldoPendiente) || 0;
+      if (tieneDias && dias! >= 0 && dias! <= 7) proximos++;
+      if (tieneDias && dias! >= 0 && dias! <= 3) urgentes++;
+      if (saldo > 0 || (tieneDias && dias! < 0 && dias! >= -30)) mora++;
+    });
+    return { conteoProximos: proximos, conteoUrgentes: urgentes, conteoMora: mora };
+  }, [clientes]);
+
   const clientesActionCenter = useMemo(() => {
     return clientes
       .filter((c) => {
-        const dias = c.diasRestantes ?? 0;
+        const tieneDias = c.diasRestantes !== null && c.diasRestantes !== undefined;
+        const dias = c.diasRestantes;
         const saldo = Number(c.saldoPendiente) || 0;
-        if (cohortFilter === 'todos') {
-          return dias <= 7 || saldo > 0;
+        if (cohortFilter === 'proximos') {
+          return tieneDias && dias! >= 0 && dias! <= 7;
         }
         if (cohortFilter === 'urgentes') {
-          return dias >= 0 && dias <= 3;
+          return tieneDias && dias! >= 0 && dias! <= 3;
         }
-        if (cohortFilter === 'vencidos') {
-          return dias <= 0 || saldo > 0;
+        if (cohortFilter === 'mora') {
+          return saldo > 0 || (tieneDias && dias! < 0 && dias! >= -30);
         }
         return true;
       })
-      .sort((a, b) => (a.diasRestantes ?? 0) - (b.diasRestantes ?? 0));
+      .sort((a, b) => {
+        const diasA = a.diasRestantes ?? 9999;
+        const diasB = b.diasRestantes ?? 9999;
+        if (diasA !== diasB) {
+          return diasA - diasB;
+        }
+        const saldoA = Number(a.saldoPendiente) || 0;
+        const saldoB = Number(b.saldoPendiente) || 0;
+        if (saldoA !== saldoB) {
+          return saldoB - saldoA;
+        }
+        return (a.nombre || '').localeCompare(b.nombre || '');
+      });
   }, [clientes, cohortFilter]);
+
+  const paginatedActionCenter = useMemo(() => {
+    const start = (actionPage - 1) * itemsPerPage;
+    return clientesActionCenter.slice(start, start + itemsPerPage);
+  }, [clientesActionCenter, actionPage, itemsPerPage]);
 
   // 5. 6-Month Timeline for AreaChart
   const timelineData = useMemo(() => {
@@ -263,11 +324,12 @@ export default function Dashboard() {
       const key = `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}`;
       const item = months.find((m) => m.mesKey === key);
       if (item) {
-        const precioTotal = (v.precioVenta * (v.pantallas || 1)) || v.precioVenta || 0;
+        const pantallas = Number(v.pantallas) > 0 ? Number(v.pantallas) : 1;
+        const precioTotal = (Number(v.precioVenta) || 0) * pantallas;
         const ing = convertirVenta(precioTotal, v.monedaVenta, v.tasaVenta);
         const costo = convertirVenta(Number(v.costoServicio) || 0, v.monedaVenta, v.tasaVenta);
-        const ut = v.utilidad !== undefined
-          ? convertirVenta(Number(v.utilidad) || 0, v.monedaVenta, v.tasaVenta)
+        const ut = v.utilidad != null
+          ? convertirVenta(Number(v.utilidad), v.monedaVenta, v.tasaVenta)
           : (ing - costo);
 
         item.ingresos += ing;
@@ -286,8 +348,8 @@ export default function Dashboard() {
       if (!map[plat]) {
         map[plat] = { name: plat, value: 0, ingresos: 0 };
       }
-      const pantallas = v.pantallas || 1;
-      const precioTotal = (v.precioVenta * pantallas) || v.precioVenta || 0;
+      const pantallas = Number(v.pantallas) > 0 ? Number(v.pantallas) : 1;
+      const precioTotal = (Number(v.precioVenta) || 0) * pantallas;
       const ing = convertirVenta(precioTotal, v.monedaVenta, v.tasaVenta);
       map[plat].value += pantallas;
       map[plat].ingresos += ing;
@@ -299,22 +361,25 @@ export default function Dashboard() {
   const topClientesVIP = useMemo(() => {
     const map: Record<string, { nombre: string; telefono: string; totalGastado: number; totalVentas: number; plataformas: Set<string> }> = {};
     ventas.forEach((v) => {
-      const name = v.nombre?.trim() || 'Cliente';
-      if (!map[name]) {
-        const clientObj = clientes.find((c) => c.nombre?.trim().toLowerCase() === name.toLowerCase());
-        map[name] = {
-          nombre: name,
+      const rawName = v.nombre?.trim() || 'Cliente';
+      const key = rawName.toLowerCase();
+      if (!map[key]) {
+        const clientObj = clientes.find((c) => (c.nombre || '').trim().toLowerCase() === key);
+        map[key] = {
+          nombre: clientObj?.nombre || rawName,
           telefono: v.telefono || clientObj?.telefono || '',
           totalGastado: 0,
           totalVentas: 0,
           plataformas: new Set(),
         };
       }
-      const precioTotal = (v.precioVenta * (v.pantallas || 1)) || v.precioVenta || 0;
+      const pantallas = Number(v.pantallas) > 0 ? Number(v.pantallas) : 1;
+      const precioTotal = (Number(v.precioVenta) || 0) * pantallas;
       const ing = convertirVenta(precioTotal, v.monedaVenta, v.tasaVenta);
-      map[name].totalGastado += ing;
-      map[name].totalVentas += 1;
-      if (v.plataforma) map[name].plataformas.add(v.plataforma);
+      map[key].totalGastado += ing;
+      map[key].totalVentas += 1;
+      if (v.plataforma) map[key].plataformas.add(v.plataforma);
+      if (!map[key].telefono && v.telefono) map[key].telefono = v.telefono;
     });
 
     return Object.values(map)
@@ -334,12 +399,12 @@ export default function Dashboard() {
       if (!map[plat]) {
         map[plat] = { plataforma: plat, ventasCount: 0, pantallasCount: 0, ingresos: 0, utilidad: 0 };
       }
-      const pantallas = v.pantallas || 1;
-      const precioTotal = (v.precioVenta * pantallas) || v.precioVenta || 0;
+      const pantallas = Number(v.pantallas) > 0 ? Number(v.pantallas) : 1;
+      const precioTotal = (Number(v.precioVenta) || 0) * pantallas;
       const ing = convertirVenta(precioTotal, v.monedaVenta, v.tasaVenta);
       const costo = convertirVenta(Number(v.costoServicio) || 0, v.monedaVenta, v.tasaVenta);
-      const ut = v.utilidad !== undefined
-        ? convertirVenta(Number(v.utilidad) || 0, v.monedaVenta, v.tasaVenta)
+      const ut = v.utilidad != null
+        ? convertirVenta(Number(v.utilidad), v.monedaVenta, v.tasaVenta)
         : (ing - costo);
 
       map[plat].ventasCount += 1;
@@ -551,8 +616,10 @@ export default function Dashboard() {
             {formatear(totalSaldoPendiente)}
           </p>
           <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-400 border-t border-slate-800/80 pt-2.5">
-            <span className="text-amber-400 font-semibold">{clientesEnMora.length}</span>
-            <span>cobros por gestionar</span>
+            <span className={clientesConDeuda.length > 0 ? "text-amber-400 font-semibold" : "text-emerald-400 font-semibold"}>
+              {clientesConDeuda.length}
+            </span>
+            <span>{clientesConDeuda.length === 1 ? 'cliente con saldo pendiente' : 'clientes con saldo pendiente'}</span>
           </div>
         </div>
       </div>
@@ -759,34 +826,43 @@ export default function Dashboard() {
 
           <div className="flex items-center gap-1.5 bg-slate-950/70 p-1 rounded-xl border border-slate-800">
             <button
-              onClick={() => setCohortFilter('todos')}
+              onClick={() => {
+                setCohortFilter('proximos');
+                setActionPage(1);
+              }}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                cohortFilter === 'todos'
+                cohortFilter === 'proximos'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              Todos (≤7d)
+              Próximos (≤7d) ({conteoProximos})
             </button>
             <button
-              onClick={() => setCohortFilter('urgentes')}
+              onClick={() => {
+                setCohortFilter('urgentes');
+                setActionPage(1);
+              }}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 cohortFilter === 'urgentes'
                   ? 'bg-amber-600 text-white shadow-md'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              Urgentes (≤3d)
+              Urgentes (≤3d) ({conteoUrgentes})
             </button>
             <button
-              onClick={() => setCohortFilter('vencidos')}
+              onClick={() => {
+                setCohortFilter('mora');
+                setActionPage(1);
+              }}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                cohortFilter === 'vencidos'
+                cohortFilter === 'mora'
                   ? 'bg-rose-600 text-white shadow-md'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              En Mora / Vencidos
+              En Mora / Vencidos ({conteoMora})
             </button>
           </div>
         </div>
@@ -803,8 +879,8 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-sm">
-              {clientesActionCenter.length > 0 ? (
-                clientesActionCenter.map((cliente) => {
+              {paginatedActionCenter.length > 0 ? (
+                paginatedActionCenter.map((cliente) => {
                   const dias = cliente.diasRestantes ?? 0;
                   const saldo = Number(cliente.saldoPendiente) || 0;
                   const mensajeWA = getMensajeWhatsApp(cliente);
@@ -871,7 +947,7 @@ export default function Dashboard() {
                         ) : (
                           <button
                             disabled
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 text-slate-500 text-xs font-medium cursor-not-allowed border border-slate-700/50"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800 text-slate-500 text-xs font-medium cursor-not-allowed border border-slate-700/50"
                           >
                             <MessageCircle size={14} />
                             <span>Sin WhatsApp</span>
@@ -897,6 +973,21 @@ export default function Dashboard() {
             </tbody>
           </table>
         </div>
+
+        {clientesActionCenter.length > 0 && (
+          <div className="p-4 sm:p-5 border-t border-slate-800 bg-slate-900/40">
+            <Paginador
+              currentPage={actionPage}
+              totalItems={clientesActionCenter.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setActionPage}
+              onItemsPerPageChange={(val: number) => {
+                setItemsPerPage(val);
+                setActionPage(1);
+              }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Leaderboards: Top Clientes VIP & Plataformas Rentables */}
