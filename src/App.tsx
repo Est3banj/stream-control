@@ -6,6 +6,7 @@ import Login from './components/Auth/Login';
 import VerificarEmail from './components/Auth/VerificarEmail';
 import ErrorBoundary from './components/ErrorBoundary';
 import AnalyticsTracker from './components/AnalyticsTracker';
+import LoadingScreen from './components/LoadingScreen';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Ventas = lazy(() => import('./pages/Ventas'));
@@ -42,7 +43,7 @@ export default function App() {
   ) {
     return (
       <ErrorBoundary>
-        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-950"><div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin" /></div>}>
+        <Suspense fallback={<LoadingScreen minHeight="min-h-screen" mensaje="Cargando..." />}>
           <ResetPassword />
         </Suspense>
       </ErrorBoundary>
@@ -53,7 +54,7 @@ export default function App() {
   if (pathname === '/r/verificar-email') {
     return (
       <ErrorBoundary>
-        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-950"><div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin" /></div>}>
+        <Suspense fallback={<LoadingScreen minHeight="min-h-screen" mensaje="Cargando..." />}>
           <VerificarEmailLink />
         </Suspense>
       </ErrorBoundary>
@@ -65,7 +66,7 @@ export default function App() {
   if (pathname.startsWith('/r/')) {
     return (
       <ErrorBoundary>
-        <Suspense fallback={<div className="container">Cargando...</div>}>
+        <Suspense fallback={<LoadingScreen minHeight="min-h-screen" mensaje="Cargando..." />}>
           <PublicConsulta />
         </Suspense>
       </ErrorBoundary>
@@ -76,7 +77,7 @@ export default function App() {
     <BrowserRouter basename="/app">
       <AnalyticsTracker />
       <ErrorBoundary>
-        <Suspense fallback={<div className="container">Cargando...</div>}>
+        <Suspense fallback={<LoadingScreen minHeight="min-h-screen" mensaje="Cargando..." />}>
           <Routes>
           {/* Rutas públicas */}
           <Route path="/login" element={<Login />} />

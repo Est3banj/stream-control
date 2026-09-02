@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import LoadingScreen from '../LoadingScreen';
 import VerificarEmail from './VerificarEmail';
 
 interface PrivateRouteProps {
@@ -12,11 +13,7 @@ export default function PrivateRoute({ children, roles }: PrivateRouteProps) {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen text-gray-700 dark:text-gray-200">
-        Verificando sesión...
-      </div>
-    );
+    return <LoadingScreen minHeight="h-screen" mensaje="Verificando sesión..." />;
   }
 
   if (!user) return <Navigate to="/login" replace />;
@@ -28,11 +25,7 @@ export default function PrivateRoute({ children, roles }: PrivateRouteProps) {
   }
 
   if (roles && !user.rol) {
-    return (
-      <div className="flex items-center justify-center h-screen text-gray-700 dark:text-gray-200">
-        Cargando permisos...
-      </div>
-    );
+    return <LoadingScreen minHeight="h-screen" mensaje="Cargando permisos..." />;
   }
 
   if (roles && user.rol && !roles.includes(user.rol)) {

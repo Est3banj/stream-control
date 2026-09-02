@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '../firebase';
 import VentasForm from '../components/VentasForm';
+import LoadingScreen from '../components/LoadingScreen';
 import type { Cliente } from '../types/cliente';
 import type { Venta } from '../types/venta';
 
@@ -89,10 +90,7 @@ export default function Ventas() {
         </p>
       </div>
       {loading ? (
-        <div className="flex items-center justify-center min-h-[40vh]">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mb-4"></div>
-          <p className="ml-3 text-slate-400 font-medium">Cargando datos del cliente...</p>
-        </div>
+        <LoadingScreen mensaje="Cargando datos..." />
       ) : (
         <VentasForm initialData={initialData} />
       )}

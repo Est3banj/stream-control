@@ -14,6 +14,7 @@ import ConfigurarIMAP from '../components/ConfigurarIMAP';
 import FeatureBlocked from '../components/FeatureBlocked';
 import Paginador from '../components/Paginador';
 import DropdownMenu from '../components/DropdownMenu';
+import LoadingScreen from '../components/LoadingScreen';
 import toast from 'react-hot-toast';
 import { Search, Eye, Edit, EyeOff, Users, CheckCircle, AlertCircle, AlertTriangle, Film, X, Download, Key, Link, Check, RefreshCw, Copy, Ticket } from 'lucide-react';
 import type { Cuenta, CreateCuentaInput } from '../types/cuenta';
@@ -317,41 +318,7 @@ export default function GestionCuentas() {
   }
 
   if (loading) {
-    return (
-      <div className="space-y-6 animate-fade-in text-slate-100">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <div className="h-10 w-64 bg-slate-800 rounded-xl animate-pulse mb-2" />
-            <div className="h-4 w-48 bg-slate-800 rounded animate-pulse" />
-          </div>
-          <div className="h-10 w-36 bg-slate-800 rounded-xl animate-pulse" />
-        </div>
-        <div className="bg-slate-900/80 rounded-2xl shadow-xl border border-slate-800 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-slate-900 border-b border-slate-800">
-                  {['Proveedor', 'Correo', 'Perfiles', 'Costo', 'Estado', 'Acciones'].map(h => (
-                    <th key={h} className="px-4 py-4 text-left text-sm font-semibold text-slate-300">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {[1, 2, 3, 4, 5].map(i => (
-                  <tr key={i} className="border-b border-slate-800/60">
-                    {[1, 2, 3, 4, 5, 6].map(j => (
-                      <td key={j} className="px-4 py-4">
-                        <div className="h-4 bg-slate-800 rounded animate-pulse" style={{ width: j === 3 ? '3rem' : j === 4 ? '5rem' : '7rem' }} />
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    );
+    return <LoadingScreen mensaje="Cargando cuentas..." />;
   }
 
   return (

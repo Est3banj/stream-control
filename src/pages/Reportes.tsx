@@ -5,6 +5,7 @@ import { useMoneda } from '../hooks/useMoneda';
 import usePermisos from '../hooks/usePermisos';
 import FeatureBlocked from '../components/FeatureBlocked';
 import Paginador from '../components/Paginador';
+import LoadingScreen from '../components/LoadingScreen';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { Search, Download, DollarSign, TrendingUp, TrendingDown, Calendar, Filter, X, AlertCircle, Users, UserPlus, Layers } from 'lucide-react';
@@ -93,14 +94,7 @@ export default function Reportes() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh] text-slate-100">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mb-4"></div>
-          <p className="text-slate-400 font-medium">Cargando reportes...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen mensaje="Cargando reportes..." />;
   }
 
   if (!permisos.puedeVerReportesAvanzados) {

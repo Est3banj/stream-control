@@ -4,6 +4,7 @@ import usePlanes, { crearPlan, actualizarPlan, togglePlanActive, eliminarPlan } 
 import useSuscripciones from '../hooks/useSuscripciones';
 import { useAdminConfig, updateAdminConfig, sanitizarWhatsApp } from '../hooks/useAdminConfig';
 import PlanForm from '../components/PlanForm';
+import LoadingScreen from '../components/LoadingScreen';
 import { useMoneda } from '../hooks/useMoneda';
 import { Package, Plus, Edit, ToggleLeft, Trash2, AlertCircle, MessageCircle, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -98,14 +99,7 @@ export default function AdminPlanes() {
   };
 
   if (loading || configLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh] text-slate-100">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mb-4"></div>
-          <p className="text-slate-400 font-medium">Cargando...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen mensaje="Cargando..." />;
   }
 
   return (

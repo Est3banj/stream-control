@@ -15,6 +15,7 @@ import ConsultaInterna from '../components/ConsultaInterna';
 import DropdownMenu from '../components/DropdownMenu';
 import TicketModal from '../components/TicketModal';
 import PlataformaBadge from '../components/PlataformaBadge';
+import LoadingScreen from '../components/LoadingScreen';
 import toast from 'react-hot-toast';
 import { Search, Download, MessageCircle, Calendar, Users, TrendingUp, X, AlertCircle, Edit, Mail, DollarSign, CheckCircle, UserCheck, AlertTriangle, RefreshCw, Sparkles, Link, Key, Copy, ExternalLink, Shield, LogOut } from 'lucide-react';
 import type { Venta } from '../types/venta';
@@ -412,14 +413,7 @@ export default function GestionClientes() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
-          <p className="text-gray-600 font-medium">Cargando clientes...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen mensaje="Cargando clientes..." />;
   }
 
   return (
