@@ -11,6 +11,8 @@ export interface TokenCliente {
   expiraEn: string;
   activo: boolean;
   createdAt: Timestamp;
+  esMayorista?: boolean;
+  esSubdistribuidor?: boolean;
 }
 
 export type CreateTokenInput = Pick<TokenCliente, 'cuentaId' | 'perfilNombre' | 'clienteId' | 'clienteNombre' | 'expiraEn'>;

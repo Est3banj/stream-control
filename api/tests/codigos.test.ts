@@ -445,7 +445,7 @@ describe('consultarCodigoDirecto (bearer + rate-limit uid 10/cuenta 5 por 60s)',
 });
 
 describe('generarTokenSubdistribuidor', () => {
-  it('éxito → token + venta + movimiento + perfiles asignados', async () => {
+  it('éxito → token + venta + movimiento + perfiles asignados + sync clientes CRM', async () => {
     backend.seed('usuarios', 'uid-1', { nombre: 'Ana' });
     seedSuscripcionEnterprise();
     seedCuenta('c1', 'uid-1', [
@@ -462,6 +462,7 @@ describe('generarTokenSubdistribuidor', () => {
           cuentaId: 'c1',
           expiraEn,
           clienteNombre: 'Sub A',
+          telefono: '+57 300 123 4567',
           cantidad: 2,
           totalRecibido: 200,
           precioPorPerfil: 100,
@@ -471,8 +472,38 @@ describe('generarTokenSubdistribuidor', () => {
       });
 
     expect(res.status).toBe(200);
-    expect(res.body.result.url).toMatch(/^\/r\//);
-    expect(backend.getCollection('ventas').length).toBe(1);
+    const { token, url } = res.body.result as { token: string; url: string };
+    expect(url).toBe(`/r/${token}`);
+
+    // Verificar sincronización en colección clientes
+    const clienteDoc = backend.getData('clientes', 'uid-1_Sub A')!;
+    expect(clienteDoc).toBeDefined();
+    expect(clienteDoc.nombre).toBe('Sub A');
+    expect(clienteDoc.telefono).toBe('+57 300 123 4567');
+    expect(clienteDoc.esMayorista).toBe(true);
+    expect(clienteDoc.pantallas).toBe(2);
+    expect(clienteDoc.cuentaId).toBe('c1');
+    expect(clienteDoc.plataforma).toBe('Netflix');
+    expect(clienteDoc.propietarioId).toBe('uid-1');
+    expect(clienteDoc.estado).toBe('activo');
+    expect(clienteDoc.tokenGenerado).toBe(token);
+
+    // Verificar documento en tokens
+    const tokenDoc = backend.getData('tokens', token)!;
+    expect(tokenDoc.clienteId).toBe('uid-1_Sub A');
+    expect(tokenDoc.clienteNombre).toBe('Sub A');
+    expect(tokenDoc.esMayorista).toBe(true);
+    expect(tokenDoc.esSubdistribuidor).toBe(true);
+
+    // Verificar documento en ventas
+    const ventas = backend.getCollection('ventas');
+    expect(ventas.length).toBe(1);
+    const [, ventaDoc] = ventas[0];
+    expect(ventaDoc.clienteId).toBe('uid-1_Sub A');
+    expect(ventaDoc.telefono).toBe('+57 300 123 4567');
+    expect(ventaDoc.esMayorista).toBe(true);
+    expect(ventaDoc.esSubdistribuidor).toBe(true);
+
     expect(backend.getCollection('movimientos').length).toBe(1);
     const cuenta = backend.getData('cuentas', 'c1')!;
     expect((cuenta.perfiles as Array<{ estado: string }>)[0].estado).toBe('asignado');

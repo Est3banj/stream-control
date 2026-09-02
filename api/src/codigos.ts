@@ -489,6 +489,7 @@ export async function generarTokenSubdistribuidor(req: AuthedReq): Promise<unkno
     cuentaId, perfilNombre, expiraEn, clienteNombre,
     cantidad, totalRecibido, precioPorPerfil, totalCosto, utilidad,
     diasAcceso, perfilesSeleccionados, proveedor, costoServicio,
+    telefono,
   } = data;
 
   if (!cuentaId || !expiraEn) {
@@ -525,14 +526,35 @@ export async function generarTokenSubdistribuidor(req: AuthedReq): Promise<unkno
       throw new APIError('permission-denied', 'No tienes permisos sobre esta cuenta');
     }
 
+    const nombreLimpio = ((clienteNombre as string) || 'Sub-distribuidor').trim();
+    const clienteId = `${uid}_${nombreLimpio}`;
+    const clienteRef = db.collection('clientes').doc(clienteId);
+    transaction.set(clienteRef, {
+      nombre: nombreLimpio,
+      telefono: (telefono as string)?.trim() || '',
+      correo: '',
+      estado: 'activo',
+      plataforma: (proveedor as string) || '',
+      propietarioId: uid,
+      usuarioEmail: userEmail,
+      fechaVencimiento: expiraDate.toISOString().split('T')[0],
+      esMayorista: true,
+      pantallas: (cantidad as number) || 1,
+      cuentaId: (cuentaId as string) || '',
+      tokenGenerado: token,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+
     // Crear token
     const tokenRef = db.collection('tokens').doc(token);
     transaction.set(tokenRef, {
       token,
       cuentaId,
       perfilNombre: perfilNombre || null,
-      clienteId: '',
-      clienteNombre: clienteNombre || '',
+      clienteId,
+      clienteNombre: nombreLimpio,
+      esMayorista: true,
+      esSubdistribuidor: true,
       vendedorId: uid,
       expiraEn: expiraDate.toISOString(),
       activo: true,
@@ -544,8 +566,9 @@ export async function generarTokenSubdistribuidor(req: AuthedReq): Promise<unkno
     if ((totalRecibido as number) > 0) {
       const ventaRef = db.collection('ventas').doc();
       transaction.set(ventaRef, {
-        nombre: clienteNombre || 'Sub-distribuidor',
-        telefono: '0000000000',
+        clienteId,
+        nombre: nombreLimpio,
+        telefono: (telefono as string)?.trim() || '',
         correo: '',
         plataforma: proveedor || '',
         pantallas: cantidad || 1,
@@ -568,6 +591,7 @@ export async function generarTokenSubdistribuidor(req: AuthedReq): Promise<unkno
         tokenGenerado: token,
         costoPorPerfil: costoServicio || 0,
         esSubdistribuidor: true,
+        esMayorista: true,
       });
 
       const movRef = db.collection('movimientos').doc();
@@ -591,7 +615,7 @@ export async function generarTokenSubdistribuidor(req: AuthedReq): Promise<unkno
           perfiles[idx] = {
             ...perfiles[idx],
             estado: 'asignado' as const,
-            clienteNombre: clienteNombre || 'Sub-distribuidor',
+            clienteNombre: nombreLimpio,
             fechaAsignacion: hoy,
           };
         }

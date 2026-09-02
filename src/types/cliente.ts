@@ -12,4 +12,7 @@ export interface Cliente {
   diasRestantes?: number | null;
   cuentaId?: string;
   perfilAsignado?: string;
+  esMayorista?: boolean;
+  pantallas?: number;
+  tokenGenerado?: string;
 }

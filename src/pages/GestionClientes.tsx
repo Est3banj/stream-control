@@ -185,19 +185,26 @@ export default function GestionClientes() {
 
   // 📱 Enviar WhatsApp
   const enviarWhatsApp = (cliente: Cliente) => {
+    if (!cliente.telefono || !cliente.telefono.trim()) {
+      toast.error('El cliente no tiene un número de teléfono registrado');
+      return;
+    }
+    const tel = cliente.telefono.trim();
     const dias = Math.abs(cliente.diasRestantes ?? 0);
     const mensaje = (cliente.diasRestantes ?? 0) > 0
       ? `Hola ${cliente.nombre}, tu servicio de ${cliente.plataforma || 'streaming'} vence en ${dias} día(s). Te invitamos a renovarlo para seguir disfrutando sin interrupciones.`
       : `Hola ${cliente.nombre}, te informamos que tu servicio de ${cliente.plataforma || 'streaming'} finalizó hace ${dias} días. Para seguir accediendo a tus series y películas favoritas sin interrupciones, podés renovar tu plan. Si no deseas continuar, no es necesario que hagas nada. ¡Gracias por confiar en nosotros!`;
 
     // Usuario de WhatsApp (@...): los enlaces wa.me no lo soportan, copiar al portapapeles
-    if (cliente.telefono.startsWith('@')) {
-      navigator.clipboard.writeText(cliente.telefono);
-      toast.success(`Usuario ${cliente.telefono} copiado — buscálo en WhatsApp`, { duration: 4000 });
+    if (tel.startsWith('@')) {
+      navigator.clipboard.writeText(tel);
+      toast.success(`Usuario ${tel} copiado — buscálo en WhatsApp`, { duration: 4000 });
       return;
     }
 
-    const url = `https://wa.me/${cliente.telefono.startsWith('+') ? cliente.telefono.replace(/[^0-9]/g, '') : `57${cliente.telefono}`}?text=${encodeURIComponent(mensaje)}`;
+    const numLimpio = tel.replace(/[^0-9+]/g, '');
+    const numParaUrl = numLimpio.startsWith('+') ? numLimpio.replace(/[^0-9]/g, '') : `57${numLimpio}`;
+    const url = `https://wa.me/${numParaUrl}?text=${encodeURIComponent(mensaje)}`;
     window.open(url, '_blank');
   };
 
@@ -585,7 +592,14 @@ export default function GestionClientes() {
                     className="border-b border-slate-800/60 hover:bg-slate-800/40 transition-colors"
                   >
                     <td className="px-4 py-4">
-                      <div className="font-semibold text-white">{c.nombre}</div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <div className="font-semibold text-white">{c.nombre}</div>
+                        {(c.esMayorista === true || (Boolean(c.pantallas) && (c.pantallas as number) > 1)) && (
+                          <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-amber-950/60 border border-amber-800/50 text-amber-300">
+                            Mayorista ({c.pantallas || 1} pantallas)
+                          </span>
+                        )}
+                      </div>
                       {c.correo && (
                         <div className="text-xs text-slate-400 mt-1">{c.correo}</div>
                       )}

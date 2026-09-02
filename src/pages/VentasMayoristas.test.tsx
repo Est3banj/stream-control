@@ -109,7 +109,7 @@ describe('VentasMayoristas', () => {
     expect(screen.getByText('Nombre del revendedor / sub-distribuidor')).toBeTruthy();
   });
 
-  it('form submit button triggers submission when form is filled', async () => {
+  it('form submit button triggers submission when form is filled with phone', async () => {
     const { callFunction } = await import('../lib/apiClient');
     render(<VentasMayoristas />);
 
@@ -125,6 +125,10 @@ describe('VentasMayoristas', () => {
     const nombreInput = screen.getByPlaceholderText(/Ej: Distribuidor Express/i);
     fireEvent.change(nombreInput, { target: { value: 'Revendedor Pro' } });
 
+    // Enter WhatsApp phone
+    const telInput = screen.getByPlaceholderText(/Ej: \+57 300 123 4567/i);
+    fireEvent.change(telInput, { target: { value: '+57 300 123 4567' } });
+
     // Click form submit button
     const submitBtn = screen.getByRole('button', { name: /Registrar Venta Mayorista/i });
     fireEvent.click(submitBtn);
@@ -132,6 +136,7 @@ describe('VentasMayoristas', () => {
     expect(callFunction).toHaveBeenCalledWith('generarTokenSubdistribuidor', expect.objectContaining({
       cuentaId: 'cuenta-1',
       clienteNombre: 'Revendedor Pro',
+      telefono: '+57 300 123 4567',
       cantidad: 1,
     }));
   });

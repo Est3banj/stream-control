@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import useCuentas from '../hooks/useCuentas';
+import useClientes from '../hooks/useClientes';
 import useTokens, { revocarToken, reactivarToken } from '../hooks/useTokens';
 import usePermisos from '../hooks/usePermisos';
 import FeatureBlocked from '../components/FeatureBlocked';
@@ -16,6 +17,7 @@ import toast from 'react-hot-toast';
 export default function VentasMayoristas() {
   const { user } = useAuth();
   const { cuentas } = useCuentas(user);
+  const { clientes } = useClientes(user);
   const { tokens } = useTokens(user);
   const permisos = usePermisos(user);
   const { formatear } = useMoneda();
@@ -28,6 +30,7 @@ export default function VentasMayoristas() {
   const [totalRecibido, setTotalRecibido] = useState(0);
   const [cantidad, setCantidad] = useState(1);
   const [nombreSub, setNombreSub] = useState('');
+  const [telefonoSub, setTelefonoSub] = useState('');
   const [perfilesSeleccionados, setPerfilesSeleccionados] = useState<number[]>([]);
   const [generando, setGenerando] = useState(false);
   const selectCuentaRef = React.useRef<HTMLSelectElement>(null);
@@ -50,10 +53,10 @@ export default function VentasMayoristas() {
   const precioPorPerfil = cantidad > 0 ? Math.round(totalRecibido / cantidad) : 0;
   const utilidad = totalRecibido - totalCosto;
 
-  // Tokens para mayoristas / sub-distribuidores (sin clienteId asociado)
+  // Tokens para mayoristas / sub-distribuidores
   const tokensMayoristas = useMemo(() =>
     tokens
-      .filter(t => !t.clienteId)
+      .filter(t => t.esMayorista || t.esSubdistribuidor || !t.clienteId || !t.perfilNombre)
       .sort((a, b) => new Date(b.createdAt as unknown as string).getTime() - new Date(a.createdAt as unknown as string).getTime()),
   [tokens]);
 
@@ -85,6 +88,7 @@ export default function VentasMayoristas() {
         cuentaId,
         expiraEn,
         clienteNombre: nombreSub.trim(),
+        telefono: telefonoSub.trim(),
         cantidad,
         totalRecibido,
         precioPorPerfil,
@@ -318,18 +322,77 @@ export default function VentasMayoristas() {
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                    Nombre del revendedor / sub-distribuidor <span className="text-rose-400">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-medium text-slate-300">
+                      Nombre del revendedor / sub-distribuidor <span className="text-rose-400">*</span>
+                    </label>
+                  </div>
                   <input
                     type="text"
+                    list="clientes-sub-datalist"
                     value={nombreSub}
-                    onChange={e => setNombreSub(e.target.value)}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setNombreSub(val);
+                      const clienteEncontrado = clientes.find(c => c.nombre.toLowerCase() === val.trim().toLowerCase());
+                      if (clienteEncontrado && clienteEncontrado.telefono) {
+                        setTelefonoSub(clienteEncontrado.telefono);
+                      }
+                    }}
                     className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150"
                     placeholder="Ej: Distribuidor Express, Juan Pérez"
                     required
                   />
+                  <datalist id="clientes-sub-datalist">
+                    {clientes.map(c => (
+                      <option key={c.id} value={c.nombre}>
+                        {c.telefono ? `${c.telefono} ${c.esMayorista ? '(Mayorista)' : ''}` : ''}
+                      </option>
+                    ))}
+                  </datalist>
                 </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                    Teléfono / WhatsApp del Revendedor
+                  </label>
+                  <input
+                    type="text"
+                    value={telefonoSub}
+                    onChange={e => setTelefonoSub(e.target.value)}
+                    className="w-full h-11 px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 text-sm font-normal text-slate-100 placeholder:text-slate-500/70 placeholder:font-normal caret-cyan-400 transition-all duration-150"
+                    placeholder="Ej: +57 300 123 4567"
+                  />
+                </div>
+              </div>
+
+              {clientes.length > 0 && (
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                    O seleccionar cliente existente:
+                  </label>
+                  <select
+                    value=""
+                    onChange={e => {
+                      const clienteEncontrado = clientes.find(c => c.id === e.target.value);
+                      if (clienteEncontrado) {
+                        setNombreSub(clienteEncontrado.nombre);
+                        setTelefonoSub(clienteEncontrado.telefono || '');
+                      }
+                    }}
+                    className="w-full h-10 px-3 rounded-xl bg-slate-950/40 border border-slate-800/80 text-xs text-slate-400 hover:text-slate-200 hover:border-slate-700 cursor-pointer"
+                  >
+                    <option value="">Seleccionar de la lista de clientes...</option>
+                    {clientes.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.nombre} {c.telefono ? `(${c.telefono})` : ''} {c.esMayorista ? '— [Mayorista]' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-300 mb-1.5">
                     Cantidad de perfiles

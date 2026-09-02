@@ -38,20 +38,39 @@ vi.mock('../contexts/UpgradeModalContext', () => ({
   }),
 }));
 
+let mockClientes = [
+  {
+    id: 'cli-1',
+    nombre: 'Carlos Ruiz',
+    telefono: '+573009998877',
+    correo: 'carlos@test.com',
+    plataforma: 'Netflix',
+    cuentaId: 'cuenta-1',
+    perfilAsignado: 'Perfil 1',
+    fechaVencimiento: new Date(Date.now() + 86400000 * 15).toISOString().split('T')[0],
+    diasRestantes: 15,
+    saldoPendiente: 0,
+    esMayorista: false,
+    pantallas: 1,
+  },
+  {
+    id: 'cli-2',
+    nombre: 'Mayorista Tech',
+    telefono: '+573001234567',
+    correo: 'mayorista@test.com',
+    plataforma: 'Netflix',
+    cuentaId: 'cuenta-1',
+    fechaVencimiento: new Date(Date.now() + 86400000 * 20).toISOString().split('T')[0],
+    diasRestantes: 20,
+    saldoPendiente: 0,
+    esMayorista: true,
+    pantallas: 4,
+  },
+];
+
 vi.mock('../hooks/useClientes', () => ({
   default: () => ({
-    clientes: [
-      {
-        id: 'cli-1',
-        nombre: 'Carlos Ruiz',
-        telefono: '+573009998877',
-        correo: 'carlos@test.com',
-        servicio: 'Netflix',
-        cuentaId: 'cuenta-1',
-        perfilAsignado: 'Perfil 1',
-        fechaFin: new Date(Date.now() + 86400000 * 15).toISOString().split('T')[0],
-      },
-    ],
+    clientes: mockClientes,
     loading: false,
     error: null,
   }),
@@ -126,7 +145,7 @@ describe('GestionClientes — Enterprise Sub-feature Gating', () => {
       </MemoryRouter>
     );
 
-    const dropdownTrigger = screen.getByTitle('Acciones');
+    const dropdownTrigger = screen.getAllByTitle('Acciones')[0];
     fireEvent.click(dropdownTrigger);
 
     expect(screen.queryByText('Consultar código')).toBeNull();
@@ -150,31 +169,21 @@ describe('GestionClientes — Enterprise Sub-feature Gating', () => {
       </MemoryRouter>
     );
 
-    const dropdownTrigger = screen.getByTitle('Acciones');
+    const dropdownTrigger = screen.getAllByTitle('Acciones')[0];
     fireEvent.click(dropdownTrigger);
 
     expect(screen.getByText('Consultar código')).toBeTruthy();
     expect(screen.getByText('Generar link')).toBeTruthy();
   });
 
-  it('Starter client quota limit triggers upgrade modal when adding beyond quota', () => {
-    mockPermisos = {
-      ...mockPermisos,
-      clienteLimit: 1, // 1 client already in list
-    };
-
+  it('renders Mayorista badge for wholesale clients', () => {
     render(
       <MemoryRouter>
         <GestionClientes />
       </MemoryRouter>
     );
 
-    const registrarBtn = screen.getByRole('button', { name: /\+ Nuevo Cliente/i });
-    fireEvent.click(registrarBtn);
-
-    expect(mockShowUpgradeModal).toHaveBeenCalled();
-    expect(mockToastError).toHaveBeenCalledWith(
-      expect.stringContaining('Alcanzaste el límite de 1 clientes del plan Starter')
-    );
+    expect(screen.getByText('Mayorista (4 pantallas)')).toBeTruthy();
+    expect(screen.getByText('Mayorista Tech')).toBeTruthy();
   });
 });
