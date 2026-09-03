@@ -425,12 +425,24 @@ export default function Dashboard() {
   const getMensajeWhatsApp = (c: Cliente) => {
     const dias = c.diasRestantes ?? 0;
     const plat = c.plataforma || 'streaming';
+    const detalles: string[] = [];
+    if (c.correo) {
+      detalles.push(`Cuenta: ${c.correo}`);
+    }
+    if (c.esMayorista || (c.pantallas && c.pantallas > 1)) {
+      detalles.push(`${c.pantallas || 1} pantallas`);
+    } else if (c.perfilAsignado) {
+      detalles.push(`Perfil: ${c.perfilAsignado}`);
+    }
+    const infoDetalle = detalles.join(' - ');
+    const platTexto = infoDetalle ? `${plat} (${infoDetalle})` : plat;
+
     if (dias > 0) {
-      return `Hola ${c.nombre}, te recordamos que tu servicio de ${plat} vence en ${dias} día${dias > 1 ? 's' : ''}. Para renovar tu cuenta y seguir disfrutando sin interrupciones, estamos atentos a tu respuesta. ¡Muchas gracias!`;
+      return `Hola ${c.nombre}, te recordamos que tu servicio de ${platTexto} vence en ${dias} día${dias > 1 ? 's' : ''}. Para renovar tu cuenta y seguir disfrutando sin interrupciones, estamos atentos a tu respuesta. ¡Muchas gracias!`;
     } else if (dias === 0) {
-      return `Hola ${c.nombre}, tu servicio de ${plat} vence el día de hoy. Te invitamos a realizar tu renovación para mantener tu perfil activo y sin cortes.`;
+      return `Hola ${c.nombre}, tu servicio de ${platTexto} vence el día de hoy. Te invitamos a realizar tu renovación para mantener tu perfil activo y sin cortes.`;
     } else {
-      return `Hola ${c.nombre}, tu servicio de ${plat} finalizó hace ${Math.abs(dias)} día${Math.abs(dias) > 1 ? 's' : ''}. Si deseas reactivar tu cuenta y continuar con tu contenido favorito, avísanos con gusto.`;
+      return `Hola ${c.nombre}, tu servicio de ${platTexto} finalizó hace ${Math.abs(dias)} día${Math.abs(dias) > 1 ? 's' : ''}. Si deseas reactivar tu cuenta y continuar con tu contenido favorito, avísanos con gusto.`;
     }
   };
 

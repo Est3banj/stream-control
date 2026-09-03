@@ -93,7 +93,15 @@ export async function generarNotificacionesVencimientos(): Promise<ResultadoVenc
 
           try {
             const enviado = await telegram.enviarNotificacionVencimiento(
-              { ...notificacion, telefono: cliente.telefono || '' },
+              {
+                ...notificacion,
+                telefono: cliente.telefono || '',
+                correo: cliente.correo || '',
+                perfilAsignado: cliente.perfilAsignado || '',
+                pantallas: cliente.pantallas || 1,
+                saldoPendiente: Number(cliente.saldoPendiente) || 0,
+                esMayorista: Boolean(cliente.esMayorista),
+              },
               { appUrl: APP_URL() }
             );
             if (enviado) telegramEnviados++;
@@ -133,7 +141,10 @@ export async function generarNotificacionesVencimientos(): Promise<ResultadoVenc
         batchCount++;
 
         try {
-          const enviado = await telegram.enviarNotificacionMora(cliente, { appUrl: APP_URL() });
+          const enviado = await telegram.enviarNotificacionMora(
+            { id: clienteDoc.id, ...cliente },
+            { appUrl: APP_URL() }
+          );
           if (enviado) morasNotificadas++;
         } catch (err) {
           console.error(`Error enviando mora Telegram para ${cliente.nombre}:`, err);

@@ -186,4 +186,32 @@ describe('GestionClientes — Enterprise Sub-feature Gating', () => {
     expect(screen.getByText('Mayorista (4 pantallas)')).toBeTruthy();
     expect(screen.getByText('Mayorista Tech')).toBeTruthy();
   });
+
+  it('formats WhatsApp message with account email and profile details', () => {
+    const originalOpen = window.open;
+    const mockOpen = vi.fn();
+    window.open = mockOpen;
+
+    render(
+      <MemoryRouter>
+        <GestionClientes />
+      </MemoryRouter>
+    );
+
+    const dropdownTrigger = screen.getAllByTitle('Acciones')[0];
+    fireEvent.click(dropdownTrigger);
+
+    const waOption = screen.getByText('WhatsApp');
+    fireEvent.click(waOption);
+
+    expect(mockOpen).toHaveBeenCalled();
+    const openedUrl = mockOpen.mock.calls[0][0] as string;
+    expect(openedUrl).toContain('https://wa.me/573009998877');
+    const decodedUrl = decodeURIComponent(openedUrl);
+    expect(decodedUrl).toContain('Hola Carlos Ruiz');
+    expect(decodedUrl).toContain('Netflix (Cuenta: carlos@test.com - Perfil: Perfil 1)');
+    expect(decodedUrl).toContain('vence en 15 día(s)');
+
+    window.open = originalOpen;
+  });
 });

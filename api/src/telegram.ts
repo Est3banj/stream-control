@@ -27,7 +27,7 @@ interface UpdateResult {
   success?: boolean;
 }
 
-interface NotificacionPayload {
+export interface NotificacionPayload {
   clienteId: string;
   nombreCliente: string;
   plataforma: string;
@@ -35,6 +35,19 @@ interface NotificacionPayload {
   fechaVencimiento?: string;
   propietarioId: string;
   telefono?: string;
+  correo?: string;
+  perfilAsignado?: string;
+  pantallas?: number;
+  saldoPendiente?: number;
+  esMayorista?: boolean;
+}
+
+function escapeHtml(raw: string): string {
+  if (!raw) return '';
+  return String(raw)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 interface NotificacionOptions {
@@ -279,6 +292,26 @@ export async function handleUpdate(update: Record<string, unknown>): Promise<Upd
 // NOTIFICACIONES
 // ============================================================
 
+export function formatearPlataformaConDetalles(
+  plataforma?: string,
+  correo?: string,
+  perfilAsignado?: string,
+  pantallas?: number,
+  esMayorista?: boolean
+): string {
+  const plat = plataforma || 'streaming';
+  const detalles: string[] = [];
+  if (correo) {
+    detalles.push(`Cuenta: ${correo}`);
+  }
+  if (esMayorista || (pantallas && pantallas > 1)) {
+    detalles.push(`${pantallas || 1} pantallas`);
+  } else if (perfilAsignado) {
+    detalles.push(`Perfil: ${perfilAsignado}`);
+  }
+  return detalles.length > 0 ? `${plat} (${detalles.join(' - ')})` : plat;
+}
+
 export async function enviarNotificacionVencimiento(notificacion: NotificacionPayload, options: NotificacionOptions = {}): Promise<boolean> {
   try {
     const chatId = await getChatIdPorUid(notificacion.propietarioId);
@@ -287,23 +320,56 @@ export async function enviarNotificacionVencimiento(notificacion: NotificacionPa
     const estadoVencido = notificacion.diasRestantes <= 0;
     const diasTexto = estadoVencido
       ? `⚠️ <b>VENCIDO</b> hace ${Math.abs(notificacion.diasRestantes)} día(s)`
-      : `📅 Vence en <b>${notificacion.diasRestantes}</b> día(s)`;
+      : `⏱️ Vence en <b>${notificacion.diasRestantes}</b> día(s)`;
 
-    const mensaje =
-      `<b>⏰ Recordatorio de servicio</b>\n\n` +
-      `👤 <b>Cliente:</b> ${notificacion.nombreCliente}\n` +
-      `📺 <b>Servicio:</b> ${notificacion.plataforma || '—'}\n` +
-      `📅 <b>Vence:</b> ${notificacion.fechaVencimiento || '—'}\n` +
-      `${diasTexto}\n\n` +
-      `<i>Contactá al cliente para consultar si desea renovar. Si no renueva, marcalo como inactivo desde la app.</i>`;
+    const lines: string[] = [
+      `<b>⏰ Recordatorio de servicio</b>\n`,
+      `👤 <b>Cliente:</b> ${escapeHtml(notificacion.nombreCliente)}`,
+    ];
 
-    const saludo = `Hola ${notificacion.nombreCliente}, me comunico de StreamControl.`;
-    const motivo = estadoVencido
-      ? `Le recuerdo que su servicio de ${notificacion.plataforma || 'streaming'} se encuentra VENCIDO desde el ${notificacion.fechaVencimiento}.`
-      : `Le recuerdo que su servicio de ${notificacion.plataforma || 'streaming'} está próximo a vencer el ${notificacion.fechaVencimiento}.`;
-    const cierre = `Quedo atento a su confirmación. Si no desea renovar, puede ignorar este mensaje sin problema. Saludos.`;
+    if (notificacion.telefono) {
+      lines.push(`📞 <b>Teléfono:</b> ${escapeHtml(notificacion.telefono)}`);
+    }
 
-    const waTexto = encodeURIComponent(`${saludo}\n\n${motivo}\n\n¿Desea renovarlo?\n\n${cierre}`);
+    lines.push(`📺 <b>Servicio:</b> ${escapeHtml(notificacion.plataforma || '—')}`);
+
+    if (notificacion.correo) {
+      lines.push(`📧 <b>Cuenta:</b> <code>${escapeHtml(notificacion.correo)}</code>`);
+    }
+
+    if (notificacion.esMayorista || (notificacion.pantallas && notificacion.pantallas > 1)) {
+      lines.push(`📦 <b>Lote:</b> ${notificacion.pantallas || 1} pantallas (Mayorista)`);
+    } else if (notificacion.perfilAsignado) {
+      lines.push(`📌 <b>Perfil:</b> ${escapeHtml(notificacion.perfilAsignado)}`);
+    }
+
+    if (notificacion.fechaVencimiento) {
+      lines.push(`📅 <b>Vence:</b> ${escapeHtml(notificacion.fechaVencimiento)}`);
+    }
+
+    lines.push(diasTexto);
+
+    if (notificacion.saldoPendiente && notificacion.saldoPendiente > 0) {
+      lines.push(`💵 <b>Saldo pendiente:</b> <b>$${Number(notificacion.saldoPendiente).toLocaleString('es-CO')}</b>`);
+    }
+
+    lines.push(`\n<i>Contactá al cliente para consultar si desea renovar. Si no renueva, marcalo como inactivo desde la app.</i>`);
+
+    const mensaje = lines.join('\n');
+
+    const platConDetalles = formatearPlataformaConDetalles(
+      notificacion.plataforma,
+      notificacion.correo,
+      notificacion.perfilAsignado,
+      notificacion.pantallas,
+      notificacion.esMayorista
+    );
+
+    const waMensaje = estadoVencido
+      ? `Hola ${notificacion.nombreCliente},\n\nTe recordamos que tu servicio de *${platConDetalles}* se encuentra VENCIDO desde el *${notificacion.fechaVencimiento || ''}*.\n\n¿Deseas reactivar tu cuenta para mantener tu perfil y servicio activo?\n\nQuedamos atentos a tu confirmación. Saludos.`
+      : `Hola ${notificacion.nombreCliente},\n\nTe recordamos que tu servicio de *${platConDetalles}* está próximo a vencer el *${notificacion.fechaVencimiento || ''}*.\n\n¿Deseas renovarlo para seguir disfrutando sin interrupciones?\n\nQuedamos atentos a tu confirmación. ¡Muchas gracias!`;
+
+    const waTexto = encodeURIComponent(waMensaje);
 
     const reply_markup = {
       inline_keyboard: [
@@ -429,18 +495,57 @@ export async function enviarNotificacionMora(cliente: Record<string, unknown>, o
     const chatId = await getChatIdPorUid(cliente.propietarioId as string);
     if (!chatId) return false;
 
-    const mensaje =
-      `<b>💰 Alerta de pago pendiente</b>\n\n` +
-      `👤 <b>Cliente:</b> ${cliente.nombre as string}\n` +
-      `📺 <b>Servicio:</b> ${(cliente.plataforma as string) || '—'}\n` +
-      `💵 <b>Saldo pendiente:</b> <b>$${Number(cliente.saldoPendiente).toLocaleString('es-CO')}</b>\n\n` +
-      `<i>Contactá al cliente para gestionar el cobro. Una vez pagado, registralo desde la app.</i>`;
+    const nombre = (cliente.nombre || cliente.nombreCliente || '') as string;
+    const telefono = (cliente.telefono || '') as string;
+    const plataforma = (cliente.plataforma || '') as string;
+    const correo = (cliente.correo || '') as string;
+    const perfilAsignado = (cliente.perfilAsignado || '') as string;
+    const pantallas = Number(cliente.pantallas) || 1;
+    const esMayorista = Boolean(cliente.esMayorista);
+    const saldoPendiente = Number(cliente.saldoPendiente) || 0;
+    const fechaVencimiento = (cliente.fechaVencimiento || '') as string;
 
-    const waTexto = encodeURIComponent(
-      `Hola ${cliente.nombre as string}, me comunico de StreamControl para recordarle que tiene un saldo pendiente de $${Number(cliente.saldoPendiente).toLocaleString('es-CO')} por el servicio de ${(cliente.plataforma as string) || 'streaming'}.\n\n` +
-      `Le agradecería realizar el pago para evitar la suspensión del servicio. Si ya realizó el pago, por favor ignore este mensaje.\n\n` +
-      `Quedo atento. Saludos.`
+    const lines: string[] = [
+      `<b>💰 Alerta de pago pendiente</b>\n`,
+      `👤 <b>Cliente:</b> ${escapeHtml(nombre)}`,
+    ];
+
+    if (telefono) {
+      lines.push(`📞 <b>Teléfono:</b> ${escapeHtml(telefono)}`);
+    }
+
+    lines.push(`📺 <b>Servicio:</b> ${escapeHtml(plataforma || '—')}`);
+
+    if (correo) {
+      lines.push(`📧 <b>Cuenta:</b> <code>${escapeHtml(correo)}</code>`);
+    }
+
+    if (esMayorista || pantallas > 1) {
+      lines.push(`📦 <b>Lote:</b> ${pantallas} pantallas (Mayorista)`);
+    } else if (perfilAsignado) {
+      lines.push(`📌 <b>Perfil:</b> ${escapeHtml(perfilAsignado)}`);
+    }
+
+    if (fechaVencimiento) {
+      lines.push(`📅 <b>Vence:</b> ${escapeHtml(fechaVencimiento)}`);
+    }
+
+    lines.push(`💵 <b>Saldo pendiente:</b> <b>$${saldoPendiente.toLocaleString('es-CO')}</b>`);
+    lines.push(`\n<i>Contactá al cliente para gestionar el cobro. Una vez pagado, registralo desde la app.</i>`);
+
+    const mensaje = lines.join('\n');
+
+    const platConDetalles = formatearPlataformaConDetalles(
+      plataforma,
+      correo,
+      perfilAsignado,
+      pantallas,
+      esMayorista
     );
+
+    const waMensaje = `Hola ${nombre},\n\nTe recordamos que tienes un saldo pendiente de *$${saldoPendiente.toLocaleString('es-CO')}* correspondiente a tu servicio de *${platConDetalles}*.\n\n¿Deseas realizar el pago para mantener tu cuenta activa y sin cortes?\n\nQuedamos atentos. Saludos.`;
+
+    const waTexto = encodeURIComponent(waMensaje);
 
     const reply_markup = {
       inline_keyboard: [

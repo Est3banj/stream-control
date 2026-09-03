@@ -192,9 +192,22 @@ export default function GestionClientes() {
     }
     const tel = cliente.telefono.trim();
     const dias = Math.abs(cliente.diasRestantes ?? 0);
+    const plat = cliente.plataforma || 'streaming';
+    const detalles: string[] = [];
+    if (cliente.correo) {
+      detalles.push(`Cuenta: ${cliente.correo}`);
+    }
+    if (cliente.esMayorista || (cliente.pantallas && cliente.pantallas > 1)) {
+      detalles.push(`${cliente.pantallas || 1} pantallas`);
+    } else if (cliente.perfilAsignado) {
+      detalles.push(`Perfil: ${cliente.perfilAsignado}`);
+    }
+    const infoDetalle = detalles.join(' - ');
+    const platTexto = infoDetalle ? `${plat} (${infoDetalle})` : plat;
+
     const mensaje = (cliente.diasRestantes ?? 0) > 0
-      ? `Hola ${cliente.nombre}, tu servicio de ${cliente.plataforma || 'streaming'} vence en ${dias} día(s). Te invitamos a renovarlo para seguir disfrutando sin interrupciones.`
-      : `Hola ${cliente.nombre}, te informamos que tu servicio de ${cliente.plataforma || 'streaming'} finalizó hace ${dias} días. Para seguir accediendo a tus series y películas favoritas sin interrupciones, podés renovar tu plan. Si no deseas continuar, no es necesario que hagas nada. ¡Gracias por confiar en nosotros!`;
+      ? `Hola ${cliente.nombre}, tu servicio de ${platTexto} vence en ${dias} día(s). Te invitamos a renovarlo para seguir disfrutando sin interrupciones.`
+      : `Hola ${cliente.nombre}, te informamos que tu servicio de ${platTexto} finalizó hace ${dias} días. Para seguir accediendo a tus series y películas favoritas sin interrupciones, podés renovar tu plan. Si no deseas continuar, no es necesario que hagas nada. ¡Gracias por confiar en nosotros!`;
 
     // Usuario de WhatsApp (@...): los enlaces wa.me no lo soportan, copiar al portapapeles
     if (tel.startsWith('@')) {

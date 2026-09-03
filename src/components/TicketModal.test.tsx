@@ -7,9 +7,11 @@ vi.mock('../firebase', () => ({
   db: {},
 }));
 
+const mockUser = { uid: 'user-test-123', email: 'vendedor@streamcontrol.com' };
+
 vi.mock('../contexts/AuthContext', () => ({
   useAuth: () => ({
-    user: { uid: 'user-test-123', email: 'vendedor@streamcontrol.com' },
+    user: mockUser,
   }),
 }));
 

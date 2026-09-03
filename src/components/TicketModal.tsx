@@ -276,7 +276,7 @@ export default function TicketModal({ cliente, onClose }: TicketModalProps) {
 
     cargarDatos(user.uid);
     return () => { cancel = true; };
-  }, [cliente, user]);
+  }, [cliente, user?.uid]);
 
   // ── Generar texto plano para WhatsApp y portapapeles ──
   const generarTexto = useCallback((): string => {

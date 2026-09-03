@@ -85,6 +85,8 @@ let mockClientes: any[] = [
     id: 'c-1',
     nombre: 'Juan Pérez',
     telefono: '3001234567',
+    correo: 'juan@test.com',
+    perfilAsignado: 'Perfil 2',
     plataforma: 'Netflix',
     diasRestantes: 2 as number | null,
     saldoPendiente: 5000,
@@ -194,6 +196,8 @@ describe('Dashboard — Modern Dark SaaS Elite Retail Experience', () => {
         id: 'c-1',
         nombre: 'Juan Pérez',
         telefono: '3001234567',
+        correo: 'juan@test.com',
+        perfilAsignado: 'Perfil 2',
         plataforma: 'Netflix',
         diasRestantes: 2,
         saldoPendiente: 5000,
@@ -279,7 +283,12 @@ describe('Dashboard — Modern Dark SaaS Elite Retail Experience', () => {
 
     const waLinks = screen.getAllByRole('link', { name: /cobrar whatsapp/i });
     expect(waLinks.length).toBeGreaterThan(0);
-    expect(waLinks[0]).toHaveAttribute('href', expect.stringContaining('wa.me/573001234567'));
+    const href = waLinks[0].getAttribute('href') || '';
+    expect(href).toContain('wa.me/573001234567');
+    const decoded = decodeURIComponent(href);
+    expect(decoded).toContain('Hola Juan Pérez');
+    expect(decoded).toContain('Netflix (Cuenta: juan@test.com - Perfil: Perfil 2)');
+    expect(decoded).toContain('vence en 2 días');
   });
 
   it('renders Action Center cohort buttons with count badges', () => {
