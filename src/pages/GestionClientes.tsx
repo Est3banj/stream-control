@@ -17,9 +17,11 @@ import TicketModal from '../components/TicketModal';
 import PlataformaBadge from '../components/PlataformaBadge';
 import LoadingScreen from '../components/LoadingScreen';
 import toast from 'react-hot-toast';
-import { Search, Download, MessageCircle, Calendar, Users, TrendingUp, X, AlertCircle, Edit, Mail, DollarSign, CheckCircle, UserCheck, AlertTriangle, RefreshCw, Sparkles, Link, Key, Copy, ExternalLink, Shield, LogOut } from 'lucide-react';
+import { Search, Download, MessageCircle, Calendar, Users, TrendingUp, X, AlertCircle, Edit, Mail, DollarSign, CheckCircle, UserCheck, AlertTriangle, RefreshCw, Sparkles, Link, Key, Copy, ExternalLink, Shield, LogOut, PlayCircle } from 'lucide-react';
 import type { Venta } from '../types/venta';
 import type { Cliente } from '../types/cliente';
+import { getTutorialById } from '../data/tutoriales';
+import VideoTutorialModal from '../components/VideoTutorialModal';
 
 export default function GestionClientes() {
   const navigate = useNavigate();
@@ -62,6 +64,8 @@ export default function GestionClientes() {
   const [mostrarTicket, setMostrarTicket] = useState(false);
   const [clienteTicket, setClienteTicket] = useState<Cliente | null>(null);
   const [liberando, setLiberando] = useState(false);
+  const [mostrarTutorial, setMostrarTutorial] = useState(false);
+  const tutorialClientes = getTutorialById('gestion-clientes');
 
   // Clasificar clientes cuando cambian los datos (incluye array vacío)
   useEffect(() => {
@@ -438,11 +442,21 @@ export default function GestionClientes() {
         </div>
       )}
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
-          {user?.rol === 'admin' ? 'Gestión de Clientes — Plataforma' : 'Gestión de Clientes'}
-        </h1>
-        <p className="text-slate-400">Administra y contacta a tus clientes</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
+            {user?.rol === 'admin' ? 'Gestión de Clientes — Plataforma' : 'Gestión de Clientes'}
+          </h1>
+          <p className="text-slate-400">Administra y contacta a tus clientes</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setMostrarTutorial(true)}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-500/10 hover:bg-indigo-500/20 text-cyan-300 border border-indigo-500/30 transition-all hover:scale-[1.02] shadow-sm cursor-pointer self-start sm:self-auto"
+        >
+          <PlayCircle size={15} className="text-cyan-400" />
+          <span>Guía CRM</span>
+        </button>
       </div>
 
       {/* Controles */}
@@ -1210,6 +1224,13 @@ export default function GestionClientes() {
             setMostrarTicket(false);
             setClienteTicket(null);
           }}
+        />
+      )}
+
+      {mostrarTutorial && tutorialClientes && (
+        <VideoTutorialModal
+          tutorial={tutorialClientes}
+          onClose={() => setMostrarTutorial(false)}
         />
       )}
     </div>

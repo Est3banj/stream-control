@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { callFunction } from '../lib/apiClient';
-import { Key, Mail, Server, Shield } from 'lucide-react';
+import { Key, Mail, Server, Shield, PlayCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import usePermisos from '../hooks/usePermisos';
 import { useUpgradeModal } from '../contexts/UpgradeModalContext';
 import FeatureBlocked from './FeatureBlocked';
 import type { Cuenta } from '../types/cuenta';
+import { getTutorialById } from '../data/tutoriales';
+import VideoTutorialModal from './VideoTutorialModal';
 
 interface ConfigurarIMAPProps {
   cuenta: Cuenta;
@@ -30,6 +32,8 @@ export default function ConfigurarIMAP({ cuenta, onClose, onSuccess }: Configura
   const [imapHost, setImapHost] = useState('imap.gmail.com');
   const [imapPort, setImapPort] = useState('993');
   const [guardando, setGuardando] = useState(false);
+  const [mostrarTutorial, setMostrarTutorial] = useState(false);
+  const tutorialIMAP = getTutorialById('cuentas-imap');
 
   if (!permisos.puedeGenerarTokens) {
     return (
@@ -96,12 +100,22 @@ export default function ConfigurarIMAP({ cuenta, onClose, onSuccess }: Configura
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 text-slate-100">
-      <div className="flex items-center gap-3 p-4 bg-amber-950/30 rounded-xl border border-amber-800/40">
-        <Shield size={20} className="text-amber-400 shrink-0" />
-        <p className="text-sm text-amber-300">
-          Las credenciales se guardan de forma segura y solo son accesibles
-          por el sistema para la consulta automática de códigos de verificación.
-        </p>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-amber-950/30 rounded-xl border border-amber-800/40">
+        <div className="flex items-center gap-3">
+          <Shield size={20} className="text-amber-400 shrink-0" />
+          <p className="text-sm text-amber-300">
+            Las credenciales se guardan de forma segura y solo son accesibles
+            por el sistema para la consulta automática de códigos de verificación.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setMostrarTutorial(true)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-500/15 hover:bg-indigo-500/25 text-cyan-300 border border-indigo-500/30 transition-all whitespace-nowrap cursor-pointer shrink-0"
+        >
+          <PlayCircle size={15} className="text-cyan-400" />
+          <span>Video Tutorial</span>
+        </button>
       </div>
 
       <div>
@@ -194,6 +208,13 @@ export default function ConfigurarIMAP({ cuenta, onClose, onSuccess }: Configura
           {guardando ? 'Guardando...' : 'Guardar Credenciales'}
         </button>
       </div>
+
+      {mostrarTutorial && tutorialIMAP && (
+        <VideoTutorialModal
+          tutorial={tutorialIMAP}
+          onClose={() => setMostrarTutorial(false)}
+        />
+      )}
     </form>
   );
 }

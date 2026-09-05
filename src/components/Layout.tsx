@@ -16,6 +16,7 @@ import {
   Settings,
   CreditCard,
   Key,
+  GraduationCap,
 } from 'lucide-react';
 import TopBar from './TopBar';
 import PWAInstallButton from './PWAInstallButton';
@@ -80,6 +81,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           { to: '/admin/suscripciones', icon: CreditCard, label: 'Suscripciones & Cobranzas' },
           { to: '/admin/planes', icon: Package, label: 'Planes & Cuotas' },
           { to: '/telegram', icon: Send, label: 'Telegram' },
+          { to: '/tutoriales', icon: GraduationCap, label: 'Tutoriales' },
           { to: '/ajustes', icon: Settings, label: 'Ajustes' },
         ]
       : [
@@ -90,6 +92,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           { to: '/cuentas', icon: CreditCard, label: 'Cuentas' },
           { to: '/mayoristas', icon: UserPlus, label: 'Mayoristas' },
           { to: '/consulta-codigos', icon: Key, label: 'Códigos' },
+          { to: '/tutoriales', icon: GraduationCap, label: 'Tutoriales' },
           { to: '/ajustes', icon: Settings, label: 'Ajustes' },
         ];
 

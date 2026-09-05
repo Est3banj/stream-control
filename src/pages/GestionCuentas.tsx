@@ -16,9 +16,11 @@ import Paginador from '../components/Paginador';
 import DropdownMenu from '../components/DropdownMenu';
 import LoadingScreen from '../components/LoadingScreen';
 import toast from 'react-hot-toast';
-import { Search, Eye, Edit, EyeOff, Users, CheckCircle, AlertCircle, AlertTriangle, Film, X, Download, Key, Link, Check, RefreshCw, Copy, Ticket } from 'lucide-react';
+import { Search, Eye, Edit, EyeOff, Users, CheckCircle, AlertCircle, AlertTriangle, Film, X, Download, Key, Link, Check, RefreshCw, Copy, Ticket, PlayCircle } from 'lucide-react';
 import type { Cuenta, CreateCuentaInput } from '../types/cuenta';
 import { ESTADO_BADGES, maskEmail } from '../constants';
+import { getTutorialById } from '../data/tutoriales';
+import VideoTutorialModal from '../components/VideoTutorialModal';
 
 const PROVEEDORES = ['Todos', 'Netflix', 'Max', 'Disney+', 'Prime Video', 'ChatGPT', 'Win Sports+', 'Universal+', 'Paramount+', 'Otro'];
 
@@ -56,6 +58,8 @@ export default function GestionCuentas() {
   const [renovarFechaInicio, setRenovarFechaInicio] = useState('');
   const [renovarDiasServicio, setRenovarDiasServicio] = useState('30');
   const [renovando, setRenovando] = useState(false);
+  const [mostrarTutorial, setMostrarTutorial] = useState(false);
+  const tutorialIMAP = getTutorialById('cuentas-imap');
 
   useEffect(() => {
     setPaginaActual(1);
@@ -331,26 +335,36 @@ export default function GestionCuentas() {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
             Gestión de Cuentas
           </h1>
           <p className="text-slate-400">Administrá tus cuentas de streaming</p>
         </div>
-        <button
-          onClick={() => {
-            if (user?.rol !== 'admin' && permisos.cuentaLimit !== Infinity && todasLasCuentas.length >= permisos.cuentaLimit) {
-              toast.error(`Alcanzaste el límite de ${permisos.cuentaLimit} cuentas streaming del plan Starter. Actualizá a Professional para cuentas ilimitadas.`);
-              showUpgradeModal();
-              return;
-            }
-            setMostrarRegistrar(true);
-          }}
-          className="btn-primary"
-        >
-          + Registrar Cuenta
-        </button>
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setMostrarTutorial(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-500/10 hover:bg-indigo-500/20 text-cyan-300 border border-indigo-500/30 transition-all hover:scale-[1.02] shadow-sm cursor-pointer"
+          >
+            <PlayCircle size={15} className="text-cyan-400" />
+            <span>Guía IMAP</span>
+          </button>
+          <button
+            onClick={() => {
+              if (user?.rol !== 'admin' && permisos.cuentaLimit !== Infinity && todasLasCuentas.length >= permisos.cuentaLimit) {
+                toast.error(`Alcanzaste el límite de ${permisos.cuentaLimit} cuentas streaming del plan Starter. Actualizá a Professional para cuentas ilimitadas.`);
+                showUpgradeModal();
+                return;
+              }
+              setMostrarRegistrar(true);
+            }}
+            className="btn-primary"
+          >
+            + Registrar Cuenta
+          </button>
+        </div>
       </div>
 
       {/* Banner de cuota para Starter */}
@@ -1134,6 +1148,13 @@ export default function GestionCuentas() {
             </div>
           </div>
         </div>
+      )}
+
+      {mostrarTutorial && tutorialIMAP && (
+        <VideoTutorialModal
+          tutorial={tutorialIMAP}
+          onClose={() => setMostrarTutorial(false)}
+        />
       )}
     </div>
   );

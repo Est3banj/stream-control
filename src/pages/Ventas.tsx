@@ -7,12 +7,17 @@ import VentasForm from '../components/VentasForm';
 import LoadingScreen from '../components/LoadingScreen';
 import type { Cliente } from '../types/cliente';
 import type { Venta } from '../types/venta';
+import { PlayCircle } from 'lucide-react';
+import { getTutorialById } from '../data/tutoriales';
+import VideoTutorialModal from '../components/VideoTutorialModal';
 
 export default function Ventas() {
   const { user } = useAuth();
   const location = useLocation();
   const [initialData, setInitialData] = useState<Record<string, unknown> | undefined>(undefined);
   const [loading, setLoading] = useState(false);
+  const [mostrarTutorial, setMostrarTutorial] = useState(false);
+  const tutorialVentas = getTutorialById('registro-ventas');
 
   useEffect(() => {
     const cliente = (location.state as { cliente?: Cliente })?.cliente;
@@ -79,20 +84,37 @@ export default function Ventas() {
 
   return (
     <div className="space-y-6 animate-fade-in text-slate-100">
-      <div className="mb-6">
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
-          Registrar Venta
-        </h1>
-        <p className="text-slate-400">
-          {initialData
-            ? 'Datos del cliente precargados — ajustá lo necesario'
-            : 'Completa el formulario para registrar una nueva venta'}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
+            Registrar Venta
+          </h1>
+          <p className="text-slate-400">
+            {initialData
+              ? 'Datos del cliente precargados — ajustá lo necesario'
+              : 'Completa el formulario para registrar una nueva venta'}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setMostrarTutorial(true)}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-500/10 hover:bg-indigo-500/20 text-cyan-300 border border-indigo-500/30 transition-all hover:scale-[1.02] shadow-sm cursor-pointer self-start sm:self-auto"
+        >
+          <PlayCircle size={15} className="text-cyan-400" />
+          <span>Guía de Ventas</span>
+        </button>
       </div>
       {loading ? (
         <LoadingScreen mensaje="Cargando datos..." />
       ) : (
         <VentasForm initialData={initialData} />
+      )}
+
+      {mostrarTutorial && tutorialVentas && (
+        <VideoTutorialModal
+          tutorial={tutorialVentas}
+          onClose={() => setMostrarTutorial(false)}
+        />
       )}
     </div>
   );

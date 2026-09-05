@@ -3,10 +3,12 @@ import { db } from '../firebase';
 import { doc, setDoc, collection, Timestamp, query, where, getDocs, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
 import { callFunction } from '../lib/apiClient';
 import { useAuth } from '../contexts/AuthContext';
-import { MessageCircle, Link2, Unlink, Copy, Check, RefreshCw, ExternalLink, Calendar, DollarSign, Bell, AlertTriangle } from 'lucide-react';
+import { MessageCircle, Link2, Unlink, Copy, Check, RefreshCw, ExternalLink, Calendar, DollarSign, Bell, AlertTriangle, PlayCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import usePermisos from '../hooks/usePermisos';
 import FeatureBlocked from '../components/FeatureBlocked';
+import { getTutorialById } from '../data/tutoriales';
+import VideoTutorialModal from '../components/VideoTutorialModal';
 
 export default function TelegramConfig() {
   const { user } = useAuth();
@@ -40,6 +42,8 @@ function TelegramConfigContent({ user }: { user: ReturnType<typeof useAuth>['use
   const [copiado, setCopiado] = useState(false);
   const [desvinculando, setDesvinculando] = useState(false);
   const [expiraEn, setExpiraEn] = useState<number | null>(null);
+  const [mostrarTutorial, setMostrarTutorial] = useState(false);
+  const tutorialTelegram = getTutorialById('configuracion-telegram');
 
   // Verificar si el usuario ya tiene Telegram vinculado
   useEffect(() => {
@@ -158,11 +162,21 @@ function TelegramConfigContent({ user }: { user: ReturnType<typeof useAuth>['use
   return (
     <div className="space-y-6 animate-fade-in text-slate-100">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
-          Telegram
-        </h1>
-        <p className="text-slate-400">Conectá tu cuenta de Telegram para recibir notificaciones</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
+            Telegram
+          </h1>
+          <p className="text-slate-400">Conectá tu cuenta de Telegram para recibir notificaciones</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setMostrarTutorial(true)}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-500/10 hover:bg-indigo-500/20 text-cyan-300 border border-indigo-500/30 transition-all hover:scale-[1.02] shadow-sm cursor-pointer self-start sm:self-auto"
+        >
+          <PlayCircle size={15} className="text-cyan-400" />
+          <span>Guía de Conexión</span>
+        </button>
       </div>
 
       {/* Estado actual */}
@@ -314,6 +328,13 @@ function TelegramConfigContent({ user }: { user: ReturnType<typeof useAuth>['use
           </li>
         </ul>
       </div>
+
+      {mostrarTutorial && tutorialTelegram && (
+        <VideoTutorialModal
+          tutorial={tutorialTelegram}
+          onClose={() => setMostrarTutorial(false)}
+        />
+      )}
     </div>
   );
 }

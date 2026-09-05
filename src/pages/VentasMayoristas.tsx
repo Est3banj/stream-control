@@ -10,9 +10,12 @@ import { useMoneda } from '../hooks/useMoneda';
 import {
   Copy, Loader2, Monitor, Calendar, X, RefreshCw,
   PlusCircle, List, Check, TrendingUp, Users, ShieldAlert,
+  PlayCircle,
 } from 'lucide-react';
 import DropdownMenu from '../components/DropdownMenu';
 import toast from 'react-hot-toast';
+import { getTutorialById } from '../data/tutoriales';
+import VideoTutorialModal from '../components/VideoTutorialModal';
 
 export default function VentasMayoristas() {
   const { user } = useAuth();
@@ -33,6 +36,8 @@ export default function VentasMayoristas() {
   const [telefonoSub, setTelefonoSub] = useState('');
   const [perfilesSeleccionados, setPerfilesSeleccionados] = useState<number[]>([]);
   const [generando, setGenerando] = useState(false);
+  const [mostrarTutorial, setMostrarTutorial] = useState(false);
+  const tutorialMayoristas = getTutorialById('ventas-mayoristas');
   const selectCuentaRef = React.useRef<HTMLSelectElement>(null);
 
   const cuentasConIMAP = useMemo(() =>
@@ -138,11 +143,21 @@ export default function VentasMayoristas() {
 
   return (
     <div className="space-y-6 animate-fade-in text-slate-100">
-      <div className="mb-6">
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
-          Ventas Mayoristas
-        </h1>
-        <p className="text-slate-400">Generá links de consulta y administrá accesos para revendedores</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">
+            Ventas Mayoristas
+          </h1>
+          <p className="text-slate-400">Generá links de consulta y administrá accesos para revendedores</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setMostrarTutorial(true)}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-500/10 hover:bg-indigo-500/20 text-cyan-300 border border-indigo-500/30 transition-all hover:scale-[1.02] shadow-sm cursor-pointer self-start sm:self-auto"
+        >
+          <PlayCircle size={15} className="text-cyan-400" />
+          <span>Guía Mayoristas</span>
+        </button>
       </div>
 
       {/* Métricas rápidas */}
@@ -639,6 +654,13 @@ export default function VentasMayoristas() {
             </div>
           )}
         </div>
+      )}
+
+      {mostrarTutorial && tutorialMayoristas && (
+        <VideoTutorialModal
+          tutorial={tutorialMayoristas}
+          onClose={() => setMostrarTutorial(false)}
+        />
       )}
     </div>
   );

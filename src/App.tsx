@@ -24,6 +24,7 @@ const VentasMayoristas = lazy(() => import('./pages/VentasMayoristas'));
 const VerificarEmailLink = lazy(() => import('./pages/VerificarEmailLink'));
 const RegisterPage = lazy(() => import('./pages/Register'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const Tutoriales = lazy(() => import('./pages/Tutoriales'));
 
 /** Handle public consultation route served via Firebase rewrite /r/** → /app/index.html */
 function PublicConsulta() {
@@ -221,6 +222,17 @@ export default function App() {
             }
           />
           <Route path="/revendedores" element={<Navigate to="/mayoristas" replace />} />
+
+          <Route
+            path="/tutoriales"
+            element={
+              <PrivateRoute roles={['admin', 'usuario']}>
+                <Layout>
+                  <Tutoriales />
+                </Layout>
+              </PrivateRoute>
+            }
+          />
 
           {/* Catch-all: redirigir a dashboard */}
           <Route path="*" element={<Navigate to="/" replace />} />
