@@ -1,7 +1,6 @@
 // Patrones para extraer CÓDIGOS NUMÉRICOS del cuerpo del email
 export const CODE_PATTERNS: Record<string, RegExp> = {
-  // viajenet NO va acá — Netflix manda un link, no código numérico
-  hogarnet: /(?:\b(?:c[oó]digo|code|verification)\b)[\s\S]*?(\b\d{4,8}\b)/i,
+  // viajenet y hogarnet NO van acá — Netflix manda un link, no código numérico
   resetnet: /(?:\b(?:c[oó]digo|code|reset|restablecer|redefinir)\b)[\s\S]*?(\b\d{4,8}\b)/i,
   ininet: /(?:\b(?:c[oó]digo|code|inicio sesi[oó]n|iniciar sesi[oó]n|sign in)\b)[\s\S]*?(\b\d{4,6}\b)/i,
   wincode: /(?:\b(?:c[oó]digo|code)\b)[\s\S]*?(\b\d{4,8}\b)/i,

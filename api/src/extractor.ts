@@ -8,8 +8,9 @@
  *   ManageAccountAccess, /password, /youraccount y links con LKID de soporte/seguridad/términos.
  * - Normalización y regex de botones insensible a mayúsculas/minúsculas con soporte para tags HTML anidados
  *   (<span>, <strong>, etc.) y variantes multilingües (ES / EN / PT), incluyendo "Sí, la envié yo", "Obtener código", etc.
- * - Fallback inteligente de hogarnet: busca PIN numérico primero; si no existe, inspecciona todos los
- *   <a> priorizando coincidencia de botón de acción y URLs preferidas.
+ * - Extracción estricta de links para Netflix: hogarnet y viajenet extraen ESTRICTAMENTE URLs de acción
+ *   (tipo: 'link') buscando el botón de acción correspondiente ("Sí, la envié yo", "Actualizar Hogar", "Obtener código", etc.).
+ *   Nunca extraen PINs numéricos para evitar falsos positivos con números de dirección, IDs o códigos postales.
  */
 
 // ── Tabla de decode de entidades HTML ──────────────────────────────────────
@@ -416,34 +417,14 @@ export interface ExtractedCode {
 export function extractCode(body: string, caso: string, html?: string): ExtractedCode | null {
   if (!body && !html) return null;
 
-  // 1. "Estoy de viaje" (viajenet): Netflix siempre envía botón/link
-  if (caso === 'viajenet') {
-    const linkResult = extractLink(body, html, caso);
-    if (linkResult) return linkResult;
-
-    // Fallback por si viniese un código numérico
-    const numFallback = extractNumericCode(body || html || '', caso);
-    if (numFallback) return numFallback;
-
-    return null;
+  // 1. Netflix "Estoy de viaje" (viajenet) y "Código Hogar" (hogarnet):
+  // Netflix SIEMPRE envía un enlace/URL de confirmación (botón de acción). NUNCA un PIN numérico.
+  // Se busca estrictamente el botón / enlace de acción sin intentar extraer números basura del texto.
+  if (caso === 'viajenet' || caso === 'hogarnet') {
+    return extractLink(body, html, caso);
   }
 
-  // 2. "Código Hogar" (hogarnet): busca PIN numérico primero; si no hay, busca enlace de acción
-  if (caso === 'hogarnet') {
-    const numResult = extractNumericCode(body, caso) || (html ? extractNumericCode(html, caso) : null);
-    if (numResult) return numResult;
-
-    const linkResult = extractLink(body, html, caso);
-    if (linkResult) return linkResult;
-
-    // Fallback a código genérico
-    const genericFallback = extractGenericCode(body || html || '');
-    if (genericFallback) return genericFallback;
-
-    return null;
-  }
-
-  // 3. Resto de casos (resetnet, ininet, wincode, etc.): buscar código numérico primero
+  // 2. Resto de casos (resetnet, ininet, wincode, etc.): buscar código numérico primero
   const numResult = extractNumericCode(body, caso) || (html ? extractNumericCode(html, caso) : null);
   if (numResult) return numResult;
 
@@ -605,7 +586,6 @@ function extractUrlFromText(text: string): string | null {
 // ── Extracción de código numérico ────────────────────────────────────────
 
 const CODE_PATTERNS: Record<string, RegExp> = {
-  hogarnet: /(?:\b(?:c[oó]digo|code|verification)\b)[\s\S]*?(\b\d{4,8}\b)/i,
   resetnet: /(?:\b(?:c[oó]digo|code|reset|restablecer|redefinir)\b)[\s\S]*?(\b\d{4,8}\b)/i,
   ininet:   /(?:\b(?:c[oó]digo|code|inicio sesi[oó]n|iniciar sesi[oó]n|sign in)\b)[\s\S]*?(\b\d{4,6}\b)/i,
   wincode:  /(?:\b(?:c[oó]digo|code)\b)[\s\S]*?(\b\d{4,8}\b)/i,

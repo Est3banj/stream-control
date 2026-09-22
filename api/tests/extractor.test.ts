@@ -11,8 +11,9 @@
  *   2. Email de actualizar hogar con botón "Sí, la envié yo" / "Sí, fui yo" / "Actualizar Hogar" y footer de seguridad con ManageAccountAccess.
  *   3. Email de viaje con botón "Obtener código" y footer de seguridad con ManageAccountAccess.
  *   4. Fallback de inspección genérica que descarta ManageAccountAccess y prioriza URLs de acción legítimas.
- *   5. Email con PIN tradicional numérico.
- *   6. Descarte de URLs inválidas (logo, Centro de Ayuda, etc.).
+ *   5. Extracción estricta de links para hogarnet y viajenet descartando números aleatorios del cuerpo (direcciones, códigos postales, IDs, fechas).
+ *   6. Extracción de PIN numérico para ininet.
+ *   7. Descarte de URLs inválidas (logo, Centro de Ayuda, etc.).
  * - Verificación de SUBJECT_KEYWORDS para Netflix.
  */
 
@@ -404,28 +405,78 @@ describe('extractCode — Fixtures reales de Netflix', () => {
     expect(result!.codigo).toBe('https://www.netflix.com/household/update?token=PT_TOKEN_777');
   });
 
-  it('Caso: Email con PIN tradicional numérico para Netflix (hogarnet)', () => {
+  it('Caso: Email de actualizar hogar (hogarnet) con dirección, código postal (CA 95032) e ID de solicitud (24853) extrae estrictamente URL del botón', () => {
     const TEXT_BODY = `
       Netflix
-      Tu código de verificación para configurar tu Hogar con Netflix es:
+      Cómo actualizar tu Hogar con Netflix
+      Un dispositivo en tu red solicitó actualizar tu Hogar con Netflix.
+      Código de solicitud: 24853
+      Ubicación: Los Gatos, CA 95032
+      Fecha: 22 de septiembre de 2026 a las 15:30:00
+      Dispositivo: Samsung Smart TV (ID 839104)
 
-      849201
-
-      Este código vence en 15 minutos. No lo compartas con nadie.
+      Si enviaste esta solicitud, confirma tu hogar haciendo clic en el enlace.
     `;
     const HTML_BODY = `
       <html><body>
         <a href="https://www.netflix.com/"><img src="logo.png"></a>
-        <p>Tu código de verificación para configurar tu Hogar con Netflix es:</p>
-        <h1>849201</h1>
+        <p>Un dispositivo en tu red solicitó actualizar tu Hogar con Netflix.</p>
+        <p>Ubicación: Los Gatos, CA 95032. Código: 24853</p>
+        <a href="https://account.netflix.com/account/update-primary-location?token=VALID_PRIMARY_TOKEN_456&amp;lkid=URL_UPDATE_PRIMARY_LOCATION">
+          <span><strong>Sí, la envié yo</strong></span>
+        </a>
+        <p>Si no fuiste tú, visita <a href="https://www.netflix.com/ManageAccountAccess?nftoken=noise">Administrar dispositivos</a>.</p>
       </body></html>
     `;
 
     const result = extractCode(TEXT_BODY, 'hogarnet', HTML_BODY);
     expect(result).not.toBeNull();
-    expect(result!.tipo).toBe('numerico');
-    expect(result!.codigo).toBe('849201');
-    expect(result!.expiraEn).toBeUndefined();
+    expect(result!.tipo).toBe('link');
+    expect(result!.codigo).toBe('https://account.netflix.com/account/update-primary-location?token=VALID_PRIMARY_TOKEN_456&lkid=URL_UPDATE_PRIMARY_LOCATION');
+    expect(result!.expiraEn).toBe(15);
+    expect(result!.codigo).not.toContain('24853');
+    expect(result!.codigo).not.toContain('95032');
+  });
+
+  it('Caso: Email de viaje (viajenet) con números en texto plano / HTML extrae estrictamente URL del botón', () => {
+    const TEXT_BODY = `
+      Netflix
+      Solicitud de código de acceso temporal.
+      Recibimos una solicitud desde Los Gatos, CA 95032 (Código ref: 83921).
+      Válido por 15 minutos (17:08 hs).
+    `;
+    const HTML_BODY = `
+      <html><body>
+        <p>Código ref: 83921 en CA 95032.</p>
+        <a href="https://account.netflix.com/account/travel/verify?nftoken=TRAVEL_TOKEN_888&amp;lkid=URL_TRAVEL_VERIFY">
+          <span><strong>Obtener código</strong></span>
+        </a>
+      </body></html>
+    `;
+
+    const result = extractCode(TEXT_BODY, 'viajenet', HTML_BODY);
+    expect(result).not.toBeNull();
+    expect(result!.tipo).toBe('link');
+    expect(result!.codigo).toBe('https://account.netflix.com/account/travel/verify?nftoken=TRAVEL_TOKEN_888&lkid=URL_TRAVEL_VERIFY');
+    expect(result!.expiraEn).toBe(15);
+    expect(result!.codigo).not.toContain('83921');
+    expect(result!.codigo).not.toContain('95032');
+  });
+
+  it('Caso: Email de hogarnet en texto plano con URL de acción y números en el cuerpo', () => {
+    const TEXT_BODY = `
+      Netflix
+      Actualizar tu Hogar con Netflix
+      Código: 99482. Ubicación: CA 95032.
+      Para confirmar tu hogar, visita el enlace:
+      https://account.netflix.com/account/update-primary-location?token=TEXT_ONLY_TOKEN_777&lkid=URL_UPDATE_PRIMARY_LOCATION
+    `;
+
+    const result = extractCode(TEXT_BODY, 'hogarnet');
+    expect(result).not.toBeNull();
+    expect(result!.tipo).toBe('link');
+    expect(result!.codigo).toBe('https://account.netflix.com/account/update-primary-location?token=TEXT_ONLY_TOKEN_777&lkid=URL_UPDATE_PRIMARY_LOCATION');
+    expect(result!.expiraEn).toBe(15);
   });
 
   it('Caso: Descarte de URLs inválidas (logo, ayuda, browse) cuando no hay botón de acción ni PIN', () => {
