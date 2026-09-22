@@ -13,8 +13,8 @@ export const CODE_PATTERNS: Record<string, RegExp> = {
 // Patrones para extraer LINKS del HTML del email
 export const LINK_PATTERNS: Record<string, RegExp> = {
   // "Estoy de viaje": Netflix manda un botón de acción
-  viajenet: /<a\s+(?:[^>]*?\s+)?href=(?:"([^"]*)"|'([^']*)'|([^\s>]+))[^>]*>[\s\S]*?(?:obtener c[oó]digo|get code|obter c[oó]digo)[\s\S]*?<\/a>/i,
-  hogarnet: /<a\s+(?:[^>]*?\s+)?href=(?:"([^"]*)"|'([^']*)'|([^\s>]+))[^>]*>[\s\S]*?(?:actualizar hogar|confirmar hogar|s[íi], fui yo|update.*household|sim, fui eu)[\s\S]*?<\/a>/i,
+  viajenet: /<a\s+(?:[^>]*?\s+)?href=(?:"([^"]*)"|'([^']*)'|([^\s>]+))[^>]*>[\s\S]*?(?:obtener\s*(?:tu\s*)?c[oó]digo(?:\s*de\s*acceso)?|get\s*(?:your\s*)?(?:access\s*)?code|obter\s*(?:o\s*|seu\s*)?c[oó]digo|tu\s*c[oó]digo\s*de\s*acceso(?:\s*temporal)?)[\s\S]*?<\/a>/i,
+  hogarnet: /<a\s+(?:[^>]*?\s+)?href=(?:"([^"]*)"|'([^']*)'|([^\s>]+))[^>]*>[\s\S]*?(?:actualiza(?:r)?\s*(?:tu\s*|mi\s*)?hogar(?:\s*con\s*netflix)?|confirma(?:r)?\s*(?:tu\s*|mi\s*)?hogar|s[íi],\s*(?:la|lo|fui)\s*(?:envi[ée]|yo)|update\s*(?:netflix\s*)?household|confirm\s*household|yes,\s*(?:i\s*sent\s*this|this\s*was\s*me)|sim,\s*(?:fui\s*eu|enviei\s*eu|foi\s*eu))[\s\S]*?<\/a>/i,
 };
 
 // Patrones para extraer URLs en texto plano (fallback cuando no hay HTML)

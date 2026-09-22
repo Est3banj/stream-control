@@ -4,11 +4,12 @@
  * Resuelve:
  * - Decodificación exhaustiva de entidades HTML (&amp;, &quot;, &#39;, entidades numéricas dec/hex, etc.).
  * - Detección de URLs de acción de Netflix (isActionUrl) con rutas y parámetros específicos.
- * - Filtro de ruido y exclusión (isNoiseUrl) para descartar logos, enlaces de ayuda, browse, login, etc.
+ * - Filtro de ruido y exclusión (isNoiseUrl) para descartar logos, enlaces de ayuda, browse, login,
+ *   ManageAccountAccess, /password, /youraccount y links con LKID de soporte/seguridad/términos.
  * - Normalización y regex de botones insensible a mayúsculas/minúsculas con soporte para tags HTML anidados
- *   (<span>, <strong>, etc.) y variantes multilingües (ES / EN / PT).
+ *   (<span>, <strong>, etc.) y variantes multilingües (ES / EN / PT), incluyendo "Sí, la envié yo", "Obtener código", etc.
  * - Fallback inteligente de hogarnet: busca PIN numérico primero; si no existe, inspecciona todos los
- *   <a> buscando la URL de acción real en lugar del logo.
+ *   <a> priorizando coincidencia de botón de acción y URLs preferidas.
  */
 
 // ── Tabla de decode de entidades HTML ──────────────────────────────────────
@@ -114,12 +115,22 @@ const NOISE_HOSTS = [
   'customercare.netflix.com',
 ];
 
+const NOISE_LKIDS = [
+  'URL_MANAGE_ACCOUNT_ACCESS',
+  'URL_HELP',
+  'URL_TERMS',
+  'URL_PRIVACY',
+  'URL_SECURITY',
+  'URL_SIGN_OUT_ALL_DEVICES',
+];
+
 const NOISE_PATH_PATTERNS = [
   /^\/?$/, // root '/' o vacío (logo)
+  /manageaccountaccess/i,
+  /\/password/i,
+  /^\/youraccount(?!\/travel|travel)/i, // /youraccount, /youraccount/payment, /youraccount/..., pero no travel
   /^\/login/i,
   /^\/browse/i,
-  /^\/youraccount\/?$/i,
-  /^\/youraccount\/payment/i,
   /^\/gift-cards/i,
   /^\/privacy/i,
   /^\/termsofuse/i,
@@ -131,17 +142,29 @@ const NOISE_PATH_PATTERNS = [
   /^\/title\//i,
 ];
 
-const ACTION_PATH_KEYWORDS = [
-  '/account/travel/verify',
+const PREFERRED_ACTION_LKIDS = [
+  'URL_UPDATE_PRIMARY_LOCATION',
+  'URL_TRAVEL_VERIFY',
+  'URL_TEMP_ACCESS',
+  'URL_SET_PRIMARY_LOCATION',
+  'URL_HOUSEHOLD_UPDATE',
+];
+
+const PREFERRED_ACTION_PATH_KEYWORDS = [
   '/account/update-primary-location',
+  '/account/travel/verify',
+  '/update-primary-location',
   '/account/set-primary-location',
+  '/set-primary-location',
   '/household/update',
   '/youraccounttravel',
+];
+
+const ACTION_PATH_KEYWORDS = [
+  ...PREFERRED_ACTION_PATH_KEYWORDS,
   '/verify',
   '/email/click',
   '/account/travel',
-  '/update-primary-location',
-  '/set-primary-location',
   '/household',
 ];
 
@@ -149,33 +172,67 @@ const ACTION_PARAM_NAMES = ['token', 'nftoken', 'nftok'];
 
 /**
  * Determina si una URL corresponde a enlaces genéricos o informativos que deben ignorarse
- * (logo de Netflix, centro de ayuda, términos, login, etc.).
+ * (logo de Netflix, centro de ayuda, términos, login, ManageAccountAccess, /password, /youraccount, etc.).
  */
 export function isNoiseUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
     const host = parsed.hostname.toLowerCase();
 
-    // Subdominios de ayuda, dispositivos o soporte
+    // 1. Subdominios de ayuda, dispositivos o soporte
     if (NOISE_HOSTS.some((h) => host === h || host.endsWith('.' + h))) {
       return true;
     }
 
     const path = parsed.pathname;
-    const hasActionParam = ACTION_PARAM_NAMES.some((p) => parsed.searchParams.has(p));
+    const lkid = (parsed.searchParams.get('lkid') || '').toUpperCase();
 
-    // Si tiene parámetros de acción explícitos o rutas de acción conocidas, no es ruido
-    if (hasActionParam) return false;
-    if (ACTION_PATH_KEYWORDS.some((kw) => path.toLowerCase().includes(kw))) return false;
+    // 2. Parámetros lkid de ruido explícito (ManageAccountAccess, Help, Terms, Privacy, Security, etc.)
+    if (NOISE_LKIDS.some((n) => lkid === n || lkid.includes(n))) {
+      return true;
+    }
 
-    // Rutas genéricas sin tokens (ej: '/' -> logo, '/browse', '/privacy')
+    // 3. Rutas de ruido explícitas (/ManageAccountAccess, /password, /youraccount, /login, /browse, etc.)
     if (NOISE_PATH_PATTERNS.some((re) => re.test(path))) {
       return true;
     }
 
+    // 4. Si la URL contiene ManageAccountAccess en el path o search
+    if (/manageaccountaccess/i.test(path) || /manageaccountaccess/i.test(parsed.search)) {
+      return true;
+    }
+
+    // 5. Si tiene parámetros de acción explícitos o rutas de acción conocidas, no es ruido
+    const hasActionParam = ACTION_PARAM_NAMES.some((p) => parsed.searchParams.has(p));
+    if (hasActionParam) return false;
+    if (ACTION_PATH_KEYWORDS.some((kw) => path.toLowerCase().includes(kw))) return false;
+
     return false;
   } catch {
     return true; // URLs no parseables son tratadas como ruido
+  }
+}
+
+/**
+ * Detecta si una URL es una URL de acción de alta prioridad (update-primary-location, travel/verify, etc.).
+ */
+export function isPreferredActionUrl(url: string): boolean {
+  if (!isTrustedHost(url) || isNoiseUrl(url)) return false;
+
+  try {
+    const parsed = new URL(url);
+    const path = parsed.pathname.toLowerCase();
+    const lkid = (parsed.searchParams.get('lkid') || '').toUpperCase();
+
+    if (PREFERRED_ACTION_LKIDS.some((ak) => lkid === ak || lkid.includes(ak))) {
+      return true;
+    }
+    if (PREFERRED_ACTION_PATH_KEYWORDS.some((kw) => path.includes(kw))) {
+      return true;
+    }
+    return false;
+  } catch {
+    return false;
   }
 }
 
@@ -190,13 +247,19 @@ export function isActionUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
     const path = parsed.pathname.toLowerCase();
+    const lkid = (parsed.searchParams.get('lkid') || '').toUpperCase();
 
-    // 1. Verificación por ruta de acción
+    // 1. Verificación por LKID de acción preferido
+    if (PREFERRED_ACTION_LKIDS.some((ak) => lkid === ak || lkid.includes(ak))) {
+      return true;
+    }
+
+    // 2. Verificación por ruta de acción
     if (ACTION_PATH_KEYWORDS.some((kw) => path.includes(kw))) {
       return true;
     }
 
-    // 2. Verificación por parámetros de token o acción
+    // 3. Verificación por parámetros de token o acción
     if (ACTION_PARAM_NAMES.some((p) => parsed.searchParams.has(p))) {
       return true;
     }
@@ -207,13 +270,51 @@ export function isActionUrl(url: string): boolean {
   }
 }
 
-// ── Patrones normalizados del texto del botón de acción ─────────────────
+// ── Regex de botones de acción (ES / EN / PT) ───────────────────────────
+
+export const ACTION_BUTTON_TEXT_REGEX = new RegExp(
+  [
+    // Español: "Sí, la envié yo", "Si, la envie yo", "Sí, lo envié yo", "Sí, fui yo", "Si, fui yo", etc.
+    /s[íi],\s*(?:la|lo|fui|era)\s*(?:envi[ée]|yo)(?:\s*yo)?/.source,
+    /actualiza(?:r)?\s*(?:tu\s*|mi\s*)?hogar(?:\s*con\s*netflix)?/.source,
+    /confirma(?:r)?\s*(?:tu\s*|mi\s*)?hogar(?:\s*con\s*netflix)?/.source,
+    /configurar\s*hogar/.source,
+    /obtener\s*(?:tu\s*)?c[óo]digo(?:\s*de\s*acceso)?/.source,
+    /tu\s*c[óo]digo\s*de\s*acceso(?:\s*temporal)?/.source,
+    /ver\s*(?:tu\s*)?(?:c[óo]digo|enlace|link)/.source,
+    /obtener\s*(?:enlace|link)/.source,
+    /continuar\s*con\s*la\s*solicitud/.source,
+    /confirmar\s*solicitud/.source,
+
+    // English: "Yes, I sent this", "Yes, this was me", "Update Netflix Household", "Get code", etc.
+    /yes,\s*(?:i\s*sent\s*this|this\s*was\s*me|it\s*was\s*me|that\s*was\s*me)/.source,
+    /get\s*(?:your\s*)?(?:access\s*)?code/.source,
+    /update\s*(?:netflix\s*)?household/.source,
+    /confirm\s*household/.source,
+    /set\s*primary\s*location/.source,
+    /update\s*primary\s*location/.source,
+    /view\s*code/.source,
+    /see\s*code/.source,
+    /\bverify\b/.source,
+
+    // Português: "Sim, fui eu", "Sim, enviei eu", "Sim, foi eu", "Atualizar residência", "Obter código", etc.
+    /sim,\s*(?:fui\s*eu|enviei\s*eu|foi\s*eu|fui\s*eu\s*mesmo)/.source,
+    /atualizar\s*(?:sua\s*)?resid[eê]ncia(?:\s*netflix)?/.source,
+    /confirmar\s*resid[eê]ncia/.source,
+    /obter\s*(?:o\s*|seu\s*)?c[oó]digo/.source,
+    /obtenha\s*o\s*c[oó]digo/.source,
+  ].join('|'),
+  'i'
+);
+
+// ── Patrones normalizados del texto del botón de acción (fallback) ──────
 
 const ANCHOR_TEXT_PATTERNS = [
   // Obtener código variants (ES / EN / PT)
   'obtener codigo',
   'obtener tu codigo',
   'obtener codigo de acceso',
+  'tu codigo de acceso temporal',
   'get code',
   'get your code',
   'get access code',
@@ -241,12 +342,18 @@ const ANCHOR_TEXT_PATTERNS = [
   'atualizar sua residencia',
   'confirmar residencia',
 
-  // "Sí, fui yo" / "Yes, was me" variants (ES / EN / PT)
+  // "Sí, la envié yo" / "Sí, fui yo" / "Yes, was me" variants (ES / EN / PT)
+  'si, la envie yo',
+  'si la envie yo',
+  'si, lo envie yo',
+  'si lo envie yo',
   'si, fui yo',
   'si fui yo',
   'si, era yo',
   'si era yo',
   'fui yo',
+  'yes, i sent this',
+  'yes i sent this',
   'yes, this was me',
   'yes this was me',
   'yes, it was me',
@@ -257,6 +364,10 @@ const ANCHOR_TEXT_PATTERNS = [
   'it was me',
   'sim, fui eu',
   'sim fui eu',
+  'sim, enviei eu',
+  'sim enviei eu',
+  'sim, foi eu',
+  'sim foi eu',
   'sim, fui eu mesmo',
   'fui eu',
 
@@ -277,6 +388,14 @@ const ANCHOR_TEXT_PATTERNS = [
   'verificar',
   'verify',
 ];
+
+function isButtonMatch(rawText: string, normalizedText: string): boolean {
+  return (
+    ACTION_BUTTON_TEXT_REGEX.test(rawText) ||
+    ACTION_BUTTON_TEXT_REGEX.test(normalizedText) ||
+    ANCHOR_TEXT_PATTERNS.some((p) => normalizedText.includes(p))
+  );
+}
 
 // ── Resultado del extractor ──────────────────────────────────────────────
 
@@ -382,10 +501,15 @@ function extractLink(body: string, html: string | undefined, caso: string): Extr
 
 /**
  * Inspecciona todos los tags <a> del HTML buscando:
- * 1. Anchors cuyo texto coincida con los patrones de botón de acción y apunten a host confiable no ruidoso.
- * 2. Anchors cuyo href sea explícitamente una URL de acción (isActionUrl).
- * 3. Anchors que apunten a host confiable descartando ruido (logo, help, etc.).
+ * 1. Anchors cuyo texto coincida con ACTION_BUTTON_TEXT_REGEX (SIEMPRE máxima prioridad).
+ * 2. Anchors cuyo href sea una URL de acción preferida (isPreferredActionUrl).
+ * 3. Anchors cuyo href sea explícitamente una URL de acción legítima (isActionUrl).
+ * 4. Anchors que apunten a host confiable descartando ruido (ManageAccountAccess, logo, help, etc.).
  */
+export function extractActionUrlFromHtml(html: string, caso = 'hogarnet'): ExtractedCode | null {
+  return extractLinkFromAnchors(html, caso);
+}
+
 function extractLinkFromAnchors(html: string, _caso: string): ExtractedCode | null {
   const anchorRe = /<a\s+(?:[^>]*?\s+)?href=(?:"([^"]*)"|'([^']*)'|([^\s>]+))[^>]*>([\s\S]*?)<\/a>/gi;
 
@@ -394,6 +518,7 @@ function extractLinkFromAnchors(html: string, _caso: string): ExtractedCode | nu
     text: string;
     normalizedText: string;
     isButtonTextMatch: boolean;
+    isPreferredAction: boolean;
     isAction: boolean;
   }
 
@@ -410,7 +535,8 @@ function extractLinkFromAnchors(html: string, _caso: string): ExtractedCode | nu
     if (!isTrustedHost(href) || isNoiseUrl(href)) continue;
 
     const normalizedText = normalizeAnchorText(rawInner);
-    const isButtonTextMatch = ANCHOR_TEXT_PATTERNS.some((p) => normalizedText.includes(p));
+    const isButtonTextMatch = isButtonMatch(rawInner, normalizedText);
+    const isPreferredAction = isPreferredActionUrl(href);
     const isAction = isActionUrl(href);
 
     candidates.push({
@@ -418,23 +544,30 @@ function extractLinkFromAnchors(html: string, _caso: string): ExtractedCode | nu
       text: rawInner,
       normalizedText,
       isButtonTextMatch,
+      isPreferredAction,
       isAction,
     });
   }
 
-  // Prioridad 1: Coincidencia de texto de botón de acción
+  // Prioridad 1: Coincidencia de texto de botón de acción (SIEMPRE tiene prioridad)
   const buttonMatch = candidates.find((c) => c.isButtonTextMatch);
   if (buttonMatch) {
     return { codigo: buttonMatch.href, tipo: 'link', expiraEn: 15 };
   }
 
-  // Prioridad 2: URL de acción detectada (ej. /account/travel/verify o con token)
+  // Prioridad 2: URL de acción preferida (paths / LKIDs específicos)
+  const preferredActionMatch = candidates.find((c) => c.isPreferredAction);
+  if (preferredActionMatch) {
+    return { codigo: preferredActionMatch.href, tipo: 'link', expiraEn: 15 };
+  }
+
+  // Prioridad 3: URL de acción genérica detectada (ej. con token / nftoken)
   const actionMatch = candidates.find((c) => c.isAction);
   if (actionMatch) {
     return { codigo: actionMatch.href, tipo: 'link', expiraEn: 15 };
   }
 
-  // Prioridad 3: Primer candidato confiable que sobrevivió al filtro de ruido
+  // Prioridad 4: Primer candidato confiable que sobrevivió al filtro de ruido
   if (candidates.length > 0) {
     return { codigo: candidates[0].href, tipo: 'link', expiraEn: 15 };
   }
@@ -453,14 +586,18 @@ function extractUrlFromText(text: string): string | null {
 
   let match: RegExpExecArray | null;
   while ((match = urlRe.exec(decoded)) !== null) {
-    let url = cleanTrailingPunctuation(match[0]);
+    const url = cleanTrailingPunctuation(match[0]);
     if (isTrustedHost(url) && !isNoiseUrl(url)) {
-      if (isActionUrl(url)) {
-        return url; // Prioridad inmediata si es URL de acción
+      if (isPreferredActionUrl(url)) {
+        return url; // Prioridad inmediata si es URL de acción preferida
       }
       validUrls.push(url);
     }
   }
+
+  // Si hay alguna que sea actionUrl, devolverla primero
+  const actionUrl = validUrls.find((u) => isActionUrl(u));
+  if (actionUrl) return actionUrl;
 
   return validUrls.length > 0 ? validUrls[0] : null;
 }
