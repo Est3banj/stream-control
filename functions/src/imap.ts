@@ -1,6 +1,6 @@
 import { ImapFlow } from 'imapflow';
 import { simpleParser } from 'mailparser';
-import { CODE_PATTERNS, LINK_PATTERNS, URL_PATTERNS, GENERIC_CODE } from './regex';
+import { extractCode } from './extractor';
 
 export interface IMAPConfig {
   correo: string;
@@ -30,24 +30,21 @@ const SENDER_MAP: Record<string, string[]> = {
 
 // Palabras clave en el ASUNTO para filtrar por tipo de código
 // Basado en asuntos reales de los emails de cada servicio
-const SUBJECT_KEYWORDS: Record<string, RegExp> = {
-  viajenet: /viaje|travel|acceso temporal|código.*acceso|dispositivo nuevo|nuevo dispositivo|estás viajando|fuera|solicitud.*código/i,
-  hogarnet: /hogar|home|tv en casa|código hogar|confirmación.*hogar|confirma.*hogar/i,
-  resetnet: /reset|restablecer|cambiar contraseña|password|restablecimiento/i,
-  ininet: /inicio.*sesi[óo]n|sign in|iniciar sesi[óo]n|código.*sesi[óo]n|código.*verificación/i,
-  wincode: /código|win/i,
-  cgptcode: /verification|código|chatgpt|openai/i,
-  univer1: /código|universal/i,
-  accmax: /max|acceso|código/i,
+export const SUBJECT_KEYWORDS: Record<string, RegExp> = {
+  viajenet: /viaje|viajando|travel|travelling|traveling|acceso temporal|temporary access|acesso tempor[aá]rio|access code|c[oó]digo.*(?:acceso|acesso|temporal|viaje|travel)|(?:temporary|travel|access).*code|dispositivo nuevo|novo dispositivo|nuevo dispositivo|new device|est[aá]s viajando|est[aá]s de viaje|voc[eê] est[aá] viajando|solicitud.*c[oó]digo|c[oó]digo.*solicitado|importante.*(?:c[oó]digo|code)|important.*code/i,
+  hogarnet: /hogar|household|resid[eê]ncia|home|tv en casa|c[oó]digo.*hogar|confirmaci[oó]n.*hogar|confirma.*hogar|actualiz.*hogar|actualizar.*hogar|update.*household|confirm.*household|primary location/i,
+  resetnet: /reset|restablecer|cambiar contrase[ñn]a|redefinir senha|password|restablecimiento|actualizar contrase[ñn]a/i,
+  ininet: /inicio.*sesi[oó]n|sign in|iniciar sesi[oó]n|c[oó]digo.*sesi[oó]n|c[oó]digo.*verificaci[oó]n|verification code|c[oó]digo de acesso|c[oó]digo de acceso/i,
+  wincode: /c[oó]digo|code|win/i,
+  cgptcode: /verification|c[oó]digo|code|chatgpt|openai/i,
+  univer1: /c[oó]digo|code|universal/i,
+  accmax: /max|acceso|c[oó]digo|code/i,
 };
 
 const CONNECTION_TIMEOUT = 10_000;
 
 /**
- * Extrae el valor del email según el caso:
- * - viajenet → busca un LINK (Netflix manda "Obtener código" con href)
- * - hogarnet → busca código numérico primero, link como fallback
- * - resto → busca código numérico
+ * Extrae el valor del email usando el extractor puro (extractor.ts).
  */
 async function extractFromBody(
   parsed: any,
@@ -56,57 +53,10 @@ async function extractFromBody(
   const textBody = parsed.text || '';
   const htmlBody = parsed.html || '';
 
-  // ── "Estoy de viaje" → Netflix manda un LINK, no código numérico ──
-  if (caso === 'viajenet') {
-    // 1. Buscar link del botón "Obtener código" en el HTML
-    const linkMatch = htmlBody.match(LINK_PATTERNS.viajenet);
-    if (linkMatch?.[1]) {
-      const href = linkMatch[1];
-      return { codigo: href.startsWith('http') ? href : `https://www.netflix.com${href}`, tipo: 'link' };
-    }
-    // 2. Fallback: URL directa en texto plano
-    const urlMatch = textBody.match(URL_PATTERNS.viajenet);
-    if (urlMatch) {
-      return { codigo: urlMatch[0], tipo: 'link' };
-    }
-    return null;
-  }
+  const result = extractCode(textBody, caso, htmlBody);
+  if (!result) return null;
 
-  // ── "Código Hogar" → puede ser código numérico o link ──
-  if (caso === 'hogarnet') {
-    // 1. Intentar código numérico primero
-    const codigoMatch = textBody.match(CODE_PATTERNS.hogarnet);
-    if (codigoMatch?.[1]) return { codigo: codigoMatch[1], tipo: 'numerico' };
-    // 2. También buscar en HTML
-    if (htmlBody) {
-      const htmlCodigoMatch = htmlBody.match(CODE_PATTERNS.hogarnet);
-      if (htmlCodigoMatch?.[1]) return { codigo: htmlCodigoMatch[1], tipo: 'numerico' };
-    }
-    // 3. Fallback a link genérico que contenga netflix en el HTML
-    const linkMatch = htmlBody.match(/<a[^>]*href="([^"]*)"[^>]*>/i);
-    if (linkMatch?.[1]) {
-      const href = linkMatch[1];
-      if (href.includes('netflix.com') || href.includes('account.netflix.com')) {
-        return { codigo: href.startsWith('http') ? href : `https://www.netflix.com${href}`, tipo: 'link' };
-      }
-    }
-    return null;
-  }
-
-  // ── Casos default: extraer código numérico con el patrón específico ──
-  const pattern = CODE_PATTERNS[caso];
-  const bodyToSearch = textBody || htmlBody;
-
-  if (pattern) {
-    const match = bodyToSearch.match(pattern);
-    if (match?.[1]) return { codigo: match[1], tipo: 'numerico' };
-  }
-
-  // Fallback genérico
-  const fallback = bodyToSearch.match(GENERIC_CODE);
-  if (fallback?.[1]) return { codigo: fallback[1], tipo: 'numerico' };
-
-  return null;
+  return { codigo: result.codigo, tipo: result.tipo };
 }
 
 export async function buscarCodigoVerificacion(

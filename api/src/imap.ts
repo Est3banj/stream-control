@@ -34,15 +34,15 @@ const SENDER_MAP: Record<string, string[]> = {
 
 // Palabras clave en el ASUNTO para filtrar por tipo de código
 // Basado en asuntos reales de los emails de cada servicio
-const SUBJECT_KEYWORDS: Record<string, RegExp> = {
-  viajenet: /viaje|travel|acceso temporal|código.*acceso|dispositivo nuevo|nuevo dispositivo|estás viajando|fuera|solicitud.*código/i,
-  hogarnet: /hogar|home|tv en casa|código hogar|confirmación.*hogar|confirma.*hogar/i,
-  resetnet: /reset|restablecer|cambiar contraseña|password|restablecimiento/i,
-  ininet: /inicio.*sesi[óo]n|sign in|iniciar sesi[óo]n|código.*sesi[óo]n|código.*verificación/i,
-  wincode: /código|win/i,
-  cgptcode: /verification|código|chatgpt|openai/i,
-  univer1: /código|universal/i,
-  accmax: /max|acceso|código/i,
+export const SUBJECT_KEYWORDS: Record<string, RegExp> = {
+  viajenet: /viaje|viajando|travel|travelling|traveling|acceso temporal|temporary access|acesso tempor[aá]rio|access code|c[oó]digo.*(?:acceso|acesso|temporal|viaje|travel)|(?:temporary|travel|access).*code|dispositivo nuevo|novo dispositivo|nuevo dispositivo|new device|est[aá]s viajando|est[aá]s de viaje|voc[eê] est[aá] viajando|solicitud.*c[oó]digo|c[oó]digo.*solicitado|importante.*(?:c[oó]digo|code)|important.*code/i,
+  hogarnet: /hogar|household|resid[eê]ncia|home|tv en casa|c[oó]digo.*hogar|confirmaci[oó]n.*hogar|confirma.*hogar|actualiz.*hogar|actualizar.*hogar|update.*household|confirm.*household|primary location/i,
+  resetnet: /reset|restablecer|cambiar contrase[ñn]a|redefinir senha|password|restablecimiento|actualizar contrase[ñn]a/i,
+  ininet: /inicio.*sesi[oó]n|sign in|iniciar sesi[oó]n|c[oó]digo.*sesi[oó]n|c[oó]digo.*verificaci[oó]n|verification code|c[oó]digo de acesso|c[oó]digo de acceso/i,
+  wincode: /c[oó]digo|code|win/i,
+  cgptcode: /verification|c[oó]digo|code|chatgpt|openai/i,
+  univer1: /c[oó]digo|code|universal/i,
+  accmax: /max|acceso|c[oó]digo|code/i,
 };
 
 const CONNECTION_TIMEOUT = 10_000;
